@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { authPasswordExactMatch } from '../AuthPasswordSchema/authPasswordExactMatch.oa';
 import { authPasswordSyntax } from '../AuthPasswordSchema/authPasswordSyntax.oa';
 import {
@@ -12,7 +12,7 @@ import {
     _encode_AuthPasswordSyntax,
 } from '../AuthPasswordSchema/AuthPasswordSyntax.ta';
 import { id_at_openldap_schema } from '../AuthPasswordSchema/id-at-openldap-schema.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -26,9 +26,9 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { authPasswordExactMatch } from '../AuthPasswordSchema/authPasswordExactMatch.oa';
 export { authPasswordSyntax } from '../AuthPasswordSchema/authPasswordSyntax.oa';
 export {
@@ -73,7 +73,7 @@ export const authPassword: ATTRIBUTE<AuthPasswordSyntax> = {
     '&ldapName': ['authPassword'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'password authentication information' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [3, 4],
         id_at_openldap_schema
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

@@ -1,12 +1,12 @@
 import type {
     PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     LimitProblem,
     LimitProblem_administrativeLimitExceeded,
     LimitProblem_sizeLimitExceeded,
     LimitProblem_timeLimitExceeded,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { print as printAttribute } from "./Attribute";
 import { print as printContinuationRef } from "./ContinuationReference";
 import Context from "../types";

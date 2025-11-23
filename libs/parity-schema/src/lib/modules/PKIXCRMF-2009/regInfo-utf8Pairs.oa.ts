@@ -1,8 +1,8 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
+} from '@wildboar/x500/InformationFramework';
 import { id_regInfo_utf8Pairs } from '../PKIXCRMF-2009/id-regInfo-utf8Pairs.va';
 import {
     UTF8Pairs,

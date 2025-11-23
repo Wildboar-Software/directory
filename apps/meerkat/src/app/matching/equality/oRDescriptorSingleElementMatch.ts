@@ -1,9 +1,9 @@
-import type { ASN1Element } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import type { ASN1Element } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import { EqualityMatcher, teletexToString } from "@wildboar/x500";
-import { _decode_MSString } from "@wildboar/x400/src/lib/modules/MSMatchingRules/MSString.ta";
-import { _encode_ORName } from "@wildboar/x400/src/lib/modules/MTSAbstractService/ORName.ta";
-import { _decode_ORDescriptor } from "@wildboar/x400/src/lib/modules/IPMSInformationObjects/ORDescriptor.ta";
+import { _decode_MSString } from "@wildboar/x400/MSMatchingRules";
+import { _encode_ORName } from "@wildboar/x400/MTSAbstractService";
+import { _decode_ORDescriptor } from "@wildboar/x400/IPMSInformationObjects";
 import { msStringToString } from "./orAddressUtilities";
 import { oRNameSingleElementMatch } from "./oRNameSingleElementMatch";
 

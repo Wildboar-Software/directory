@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_samba } from '../SambaSchema/id-samba.va';
 export { id_samba } from '../SambaSchema/id-samba.va';
 
@@ -16,7 +16,7 @@ export { id_samba } from '../SambaSchema/id-samba.va';
  *
  * @constant
  */
-export const id_samba_oc: OBJECT_IDENTIFIER = new _OID([2, 2], id_samba);
+export const id_samba_oc: OBJECT_IDENTIFIER = _OID.fromParts([2, 2], id_samba);
 /* END_OF_SYMBOL_DEFINITION id_samba_oc */
 
 /* eslint-enable */

@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { ref } from '../LDAPReferral/ref.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -19,8 +19,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { ref } from '../LDAPReferral/ref.oa';
 
 /* START_OF_SYMBOL_DEFINITION referral */
@@ -55,7 +55,7 @@ export const referral: OBJECT_CLASS = {
     '&ldapName': ['referral'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'named subordinate reference object' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         2, 16, 840, 1, 113730, 3, 2, 6,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

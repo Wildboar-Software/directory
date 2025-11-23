@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { ASN1Element as _Element, ASN1TagClass as _TagClass } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+import { ASN1Element as _Element, ASN1TagClass as _TagClass } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     ComponentAssertion,
     _decode_ComponentAssertion,

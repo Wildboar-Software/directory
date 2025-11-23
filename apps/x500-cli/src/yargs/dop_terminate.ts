@@ -4,7 +4,7 @@ import bind from "../net/bind";
 import {
     do_terminate as command,
 } from "../commands/dop/terminate";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 
 export
 function create (ctx: Context): CommandModule {

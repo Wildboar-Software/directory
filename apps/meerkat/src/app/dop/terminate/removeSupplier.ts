@@ -1,9 +1,9 @@
 import { Context } from "@wildboar/meerkat-types";
 import { Knowledge } from "@prisma/client";
-import { BERElement } from "asn1-ts";
+import { BERElement } from "@wildboar/asn1";
 import {
     _decode_SupplierInformation,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 
 /**
  * @summary Remove supplier knowledge for a given shadow operational binding

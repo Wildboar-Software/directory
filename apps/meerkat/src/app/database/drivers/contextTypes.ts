@@ -12,19 +12,19 @@ import type {
     SpecialAttributeValueDetector,
     ContextTypeInfo,
 } from "@wildboar/meerkat-types";
-import { TRUE, ObjectIdentifier } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
-import { contextTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/contextTypes.oa";
-import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+import { TRUE, ObjectIdentifier } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
+import { contextTypes } from "@wildboar/x500/SchemaAdministration";
+import { subschema } from "@wildboar/x500/SchemaAdministration";
+import { directoryStringToString } from "@wildboar/x500";
 import {
     ContextDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ContextDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     ContextInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ContextInformation.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import type { Prisma } from "@prisma/client";
-import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
+import { compareElements } from "@wildboar/x500";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 

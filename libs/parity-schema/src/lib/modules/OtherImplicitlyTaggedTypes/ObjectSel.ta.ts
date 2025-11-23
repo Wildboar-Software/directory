@@ -4,8 +4,8 @@ import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     OBJECT_IDENTIFIER,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     ObjectSel_objSelect,
     _decode_ObjectSel_objSelect,

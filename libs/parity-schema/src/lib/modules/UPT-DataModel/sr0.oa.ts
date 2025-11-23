@@ -1,14 +1,14 @@
 /* eslint-disable */
-import { STRUCTURE_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/STRUCTURE-RULE.oca';
-import { countryNameForm } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/countryNameForm.oa';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
+import { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
+import { countryNameForm } from '@wildboar/x500/SelectedObjectClasses';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
 export {
     RuleIdentifier,
     _decode_RuleIdentifier,
     _encode_RuleIdentifier,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/RuleIdentifier.ta';
-export { STRUCTURE_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/STRUCTURE-RULE.oca';
-export { countryNameForm } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/countryNameForm.oa';
+} from '@wildboar/x500/InformationFramework';
+export { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
+export { countryNameForm } from '@wildboar/x500/SelectedObjectClasses';
 
 /* START_OF_SYMBOL_DEFINITION sr0 */
 /**

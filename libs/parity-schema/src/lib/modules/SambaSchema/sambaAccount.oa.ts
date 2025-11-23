@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-import { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
+import { uid } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { displayName } from '../InetOrgPerson/displayName.oa';
 import { acctFlags } from '../SambaSchema/acctFlags.oa';
 import { domain } from '../SambaSchema/domain.oa';
@@ -27,8 +27,8 @@ import { rid } from '../SambaSchema/rid.oa';
 import { scriptPath } from '../SambaSchema/scriptPath.oa';
 import { smbHome } from '../SambaSchema/smbHome.oa';
 import { userWorkstations } from '../SambaSchema/userWorkstations.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -40,10 +40,10 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-export { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
+} from '@wildboar/x500/InformationFramework';
+export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
+export { uid } from '@wildboar/x500/SelectedAttributeTypes';
 export { displayName } from '../InetOrgPerson/displayName.oa';
 export { acctFlags } from '../SambaSchema/acctFlags.oa';
 export { domain } from '../SambaSchema/domain.oa';
@@ -137,7 +137,7 @@ export const sambaAccount: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['sambaAccount'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'Samba Auxilary Account' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [3],
         id_samba_oc
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

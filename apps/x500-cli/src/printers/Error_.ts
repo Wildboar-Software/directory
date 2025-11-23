@@ -1,33 +1,33 @@
 import type { Context } from "../types";
-import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
+import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import { serviceError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
-import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
-import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
-import { updateError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
-import { referral } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/referral.oa";
-import { abandoned } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
-import { abandonFailed } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandonFailed.oa";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import * as secp from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import * as serp from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
-import * as attp from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
-import * as updp from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import * as namp from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
-import * as abfp from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonProblem.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { compareCode } from "@wildboar/x500";
+import { securityError } from "@wildboar/x500/DirectoryAbstractService";
+import { serviceError } from "@wildboar/x500/DirectoryAbstractService";
+import { nameError } from "@wildboar/x500/DirectoryAbstractService";
+import { attributeError } from "@wildboar/x500/DirectoryAbstractService";
+import { updateError } from "@wildboar/x500/DirectoryAbstractService";
+import { referral } from "@wildboar/x500/DirectoryAbstractService";
+import { abandoned } from "@wildboar/x500/DirectoryAbstractService";
+import { abandonFailed } from "@wildboar/x500/DirectoryAbstractService";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import * as secp from "@wildboar/x500/DirectoryAbstractService";
+import * as serp from "@wildboar/x500/DirectoryAbstractService";
+import * as attp from "@wildboar/x500/DirectoryAbstractService";
+import * as updp from "@wildboar/x500/DirectoryAbstractService";
+import * as namp from "@wildboar/x500/DirectoryAbstractService";
+import * as abfp from "@wildboar/x500/DirectoryAbstractService";
 import stringifyDN from "../utils/stringifyDN";
 import printAttributeValue from "./AttributeValue";
-import naddrToURI from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import { naddrToURI } from "@wildboar/x500";
 import {
     MasterOrShadowAccessPoint_category_master,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     AbandonedProblem_pagingAbandoned,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import chalk from "chalk";
 
 const colorize: (str: string) => string = process.env.NO_COLOR

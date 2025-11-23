@@ -1,11 +1,11 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type {
     EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import readAttributes, { ReadAttributesOptions } from "./readAttributes";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary Read the entry information of an entry

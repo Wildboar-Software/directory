@@ -1,22 +1,22 @@
 import type { Connection, Context } from "../../../types";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import * as selat from "@wildboar/x500/src/lib/collections/attributes";
-import * as seloc from "@wildboar/x500/src/lib/collections/objectClasses";
-import { TRUE_BIT, FALSE_BIT } from "asn1-ts";
+} from "@wildboar/x500/InformationFramework";
+import { attributes as selat } from "@wildboar/x500";
+import { objectClasses as seloc } from "@wildboar/x500";
+import { TRUE_BIT, FALSE_BIT } from "@wildboar/asn1";
 import {
     DER,
     _encodeObjectIdentifier,
     _encodeUTF8String,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     _encode_RDNSequence,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     NameAndOptionalUID,
     _encode_NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import destringifyDN from "../../../utils/destringifyDN";
 import do_addEntry from "../add";
 import type { ArgumentsCamelCase } from "yargs";

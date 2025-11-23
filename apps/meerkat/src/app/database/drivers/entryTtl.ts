@@ -16,11 +16,11 @@ import {
     ASN1TagClass,
     ASN1Construction,
     ASN1UniversalType,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { addSeconds, differenceInSeconds } from "date-fns";
 import {
     entryTtl,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

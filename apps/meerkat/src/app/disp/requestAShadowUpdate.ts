@@ -1,26 +1,26 @@
-import type { MeerkatContext } from "../ctx";
-import { BERElement } from "asn1-ts";
+import type { MeerkatContext } from "../ctx.js";
+import { BERElement } from "@wildboar/asn1";
 import {
     _decode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+} from "@wildboar/x500/DistributedOperations";
 import { bindForDISP } from "../net/bindToOtherDSA";
 import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+} from "@wildboar/x500/DirectoryOSIProtocols";
+import { OperationalBindingID } from "@wildboar/x500/OperationalBindingManagement";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import { compareCode, getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     id_errcode_shadowError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-shadowError.va";
-import { shadowError } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/shadowError.oa";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { shadowError } from "@wildboar/x500/DirectoryShadowAbstractService";
 import stringifyDN from "../x500/stringifyDN";
 import printCode from "../utils/printCode";
-import { id_opcode_requestShadowUpdate } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-requestShadowUpdate.va";
+import { id_opcode_requestShadowUpdate } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     RequestShadowUpdateArgumentData_requestedStrategy_standard_incremental,
     RequestShadowUpdateArgumentData_requestedStrategy_standard_total,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/RequestShadowUpdateArgumentData-requestedStrategy-standard.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 
 /**
  * @summary Request a shadow update from a shadow supplier

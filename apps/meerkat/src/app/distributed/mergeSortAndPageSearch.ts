@@ -17,71 +17,71 @@ import {
     unpackBits,
     BERElement,
     ASN1Construction,
-} from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
+import * as $ from "@wildboar/asn1/functional";
 import {
     SearchResult,
     _encode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchResultData_searchInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { strict as assert } from "assert";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import type { SearchState } from "./search_i";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters";
-import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+import { search } from "@wildboar/x500/DirectoryAbstractService";
 import {
     EntryInformation,
     _encode_EntryInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     SortKey,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
 import { MAX_RESULTS, MAX_SORT_KEYS } from "../constants";
 import {
     LimitProblem_sizeLimitExceeded,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchControlOptions_entryCount as entryCountBit,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { generateSignature } from "../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import {
     _encode_Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     _encode_PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _encode_SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     _encode_AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import { stringifyDN } from "../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
-import { _encode_Attribute } from "@wildboar/pkcs/src/lib/modules/PKCS-10/Attribute.ta";
+import { _encode_Attribute } from "@wildboar/pki-stub";
 
 export
 interface MergeSearchResultsReturn {
@@ -694,7 +694,7 @@ async function mergeSortAndPageSearch(
         : Buffer.allocUnsafe(0);
     const notificationBuffer = (searchState.notification.length > 0)
         ? (() => {
-            const seq = BERElement.fromSequence(searchState.notification.map((n) => _encode_Attribute(n, DER)));
+            const seq = BERElement.fromSequence(searchState.notification.map((n) => _encode_Attribute(n)));
             const outer = new BERElement();
             outer.tagClass = ASN1TagClass.context;
             outer.construction = ASN1Construction.constructed;

@@ -1,19 +1,19 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { caseIgnoreMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreMatch.oa';
-import { caseIgnoreOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreOrderingMatch.oa';
-import { caseIgnoreSubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreSubstringsMatch.oa';
-import { directoryString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/directoryString.oa';
+} from '@wildboar/x500/InformationFramework';
+import { caseIgnoreMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { caseIgnoreOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { caseIgnoreSubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { directoryString } from '@wildboar/x500/SelectedAttributeTypes';
 import {
     UnboundedDirectoryString,
     _decode_UnboundedDirectoryString,
     _encode_UnboundedDirectoryString,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 import { id_at_mailaccess } from '../InetMailSchema/id-at-mailaccess.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -27,18 +27,18 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { caseIgnoreMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreMatch.oa';
-export { caseIgnoreOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreOrderingMatch.oa';
-export { caseIgnoreSubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreSubstringsMatch.oa';
-export { directoryString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/directoryString.oa';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { caseIgnoreMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { caseIgnoreOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { caseIgnoreSubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { directoryString } from '@wildboar/x500/SelectedAttributeTypes';
 export {
     UnboundedDirectoryString,
     _decode_UnboundedDirectoryString,
     _encode_UnboundedDirectoryString,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 export { id_at_mailaccess } from '../InetMailSchema/id-at-mailaccess.va';
 
 /* START_OF_SYMBOL_DEFINITION mailaccess */

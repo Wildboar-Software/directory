@@ -1,26 +1,26 @@
 import type { Connection, Context } from "../../types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     administerPassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AdministerPasswordArgument,
     _encode_AdministerPasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AdministerPasswordArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_AdministerPasswordResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import destringifyDN from "../../utils/destringifyDN";
 import MutableWriteable from "../../utils/MutableWriteable";
 import * as readline from "readline";
 import printError from "../../printers/Error_";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 
 const mutedOut = new MutableWriteable();
 

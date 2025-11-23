@@ -1,6 +1,6 @@
-import { AttributeCombination } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
-import { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
+import { AttributeCombination } from "@wildboar/x500/ServiceAdministration";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { Filter } from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary Check attribute combinations in a search filter

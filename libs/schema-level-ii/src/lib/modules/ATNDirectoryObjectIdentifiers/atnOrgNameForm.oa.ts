@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
-import { organizationName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa";
+import { NAME_FORM } from "@wildboar/x500/InformationFramework";
+import { organizationName } from "@wildboar/x500/SelectedAttributeTypes";
 import { atn_organization } from "../ATNDirectoryObjectIdentifiers/atn-organization.oa";
 import { id_nf_atnOrgNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnOrgNameForm.va";
 

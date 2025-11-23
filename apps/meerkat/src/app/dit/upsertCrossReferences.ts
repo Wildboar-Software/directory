@@ -2,7 +2,7 @@ import type { Context, Vertex } from "@wildboar/meerkat-types";
 import dnToVertex from "./dnToVertex";
 import {
     CrossReference,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/CrossReference.ta";
+} from "@wildboar/x500/DistributedOperations";
 import { createDse } from "../database/createEntry";
 import saveAccessPoint from "../database/saveAccessPoint";
 import { Knowledge } from "@prisma/client";

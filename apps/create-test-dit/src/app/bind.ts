@@ -2,10 +2,10 @@ import type { Context, Connection } from "./types";
 import connect from "./connect";
 import {
     IdmBindError,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 
 export
 async function createConnection (

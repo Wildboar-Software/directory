@@ -1,7 +1,7 @@
 import type { Context, LDAPSyntaxInfo } from "../types";
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Higher-order function that returns an equality matcher function if it can be determined

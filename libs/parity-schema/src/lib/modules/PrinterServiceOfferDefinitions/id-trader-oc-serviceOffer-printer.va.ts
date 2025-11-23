@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_trader_oc_serviceOffer } from '../TraderDefinitions/id-trader-oc-serviceOffer.va';
 export { id_trader_oc_serviceOffer } from '../TraderDefinitions/id-trader-oc-serviceOffer.va';
 
@@ -16,7 +16,7 @@ export { id_trader_oc_serviceOffer } from '../TraderDefinitions/id-trader-oc-ser
  *
  * @constant
  */
-export const id_trader_oc_serviceOffer_printer: OBJECT_IDENTIFIER = new _OID(
+export const id_trader_oc_serviceOffer_printer: OBJECT_IDENTIFIER = _OID.fromParts(
     [0],
     id_trader_oc_serviceOffer
 );

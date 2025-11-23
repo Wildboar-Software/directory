@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_at } from '../Wildboar/id-at.va';
 export { id_at } from '../Wildboar/id-at.va';
 
@@ -16,7 +16,7 @@ export { id_at } from '../Wildboar/id-at.va';
  *
  * @constant
  */
-export const id_at_sizeOfRestocking: OBJECT_IDENTIFIER = new _OID(
+export const id_at_sizeOfRestocking: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* sizeOfRestocking */ 11],
     id_at
 );

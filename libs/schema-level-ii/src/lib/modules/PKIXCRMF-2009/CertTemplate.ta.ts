@@ -1,17 +1,17 @@
 /* eslint-disable */
-import { AlgorithmIdentifier, _decode_AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
-import { Extensions, _decode_Extensions, _encode_Extensions } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extensions.ta";
-import { SubjectPublicKeyInfo, _decode_SubjectPublicKeyInfo, _encode_SubjectPublicKeyInfo } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta";
-import { Version, _decode_Version, _encode_Version } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Version.ta";
-import { Name, _decode_Name, _encode_Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
-import { UniqueIdentifier, _decode_UniqueIdentifier, _encode_UniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UniqueIdentifier.ta";
+import { AlgorithmIdentifier, _decode_AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/x500/AuthenticationFramework";
+import { Extensions, _decode_Extensions, _encode_Extensions } from "@wildboar/x500/AuthenticationFramework";
+import { SubjectPublicKeyInfo, _decode_SubjectPublicKeyInfo, _encode_SubjectPublicKeyInfo } from "@wildboar/x500/AuthenticationFramework";
+import { Version, _decode_Version, _encode_Version } from "@wildboar/x500/AuthenticationFramework";
+import { Name, _decode_Name, _encode_Name } from "@wildboar/x500/InformationFramework";
+import { UniqueIdentifier, _decode_UniqueIdentifier, _encode_UniqueIdentifier } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     INTEGER,
     OPTIONAL,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { OptionalValidity, _decode_OptionalValidity, _encode_OptionalValidity } from "../PKIXCRMF-2009/OptionalValidity.ta";
 
 

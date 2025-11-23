@@ -1,7 +1,7 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
+import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import { auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { top } from "@wildboar/x500/InformationFramework";
 import { VOPersonAttributes } from "../VOPerson/VOPersonAttributes.osa";
 import { id_oc_voPersonObjectClass } from "../VOPerson/id-oc-voPersonObjectClass.va";
 

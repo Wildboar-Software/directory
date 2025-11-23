@@ -1,14 +1,14 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { printer_uri } from '../RFC7612Printer/printer-uri.oa';
 import { printer_xri_supported } from '../RFC7612Printer/printer-xri-supported.oa';
 import { printerAbstract } from '../RFC7612Printer/printerAbstract.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -20,7 +20,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { printer_uri } from '../RFC7612Printer/printer-uri.oa';
 export { printer_xri_supported } from '../RFC7612Printer/printer-xri-supported.oa';
 export { printerAbstract } from '../RFC7612Printer/printerAbstract.oa';
@@ -59,7 +59,7 @@ export const printerService: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['printerService'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'Printer information.' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 18, 0, 2, 6, 255,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

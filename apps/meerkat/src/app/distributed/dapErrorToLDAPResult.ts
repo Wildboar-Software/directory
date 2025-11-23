@@ -2,7 +2,7 @@ import type { Context } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import {
     LDAPResult,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+} from "@wildboar/ldap";
 import {
     // LDAPResult_resultCode_success,
     // LDAPResult_resultCode_operationsError,
@@ -43,18 +43,15 @@ import {
     LDAPResult_resultCode_objectClassModsProhibited,
     LDAPResult_resultCode_affectsMultipleDSAs,
     LDAPResult_resultCode_other,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+} from "@wildboar/ldap";
 import {
-    canceled,
-    cannotCancel,
-    tooLate,
-    noSuchOperation,
-} from "@wildboar/ldap/src/lib/resultCodes";
+    resultCodes,
+} from "@wildboar/ldap";
 import {
     AbandonProblem_cannotAbandon,
     AbandonProblem_noSuchOperation,
     AbandonProblem_tooLate,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeProblem_noSuchAttributeOrValue,
     AttributeProblem_invalidAttributeSyntax,
@@ -63,13 +60,13 @@ import {
     AttributeProblem_constraintViolation,
     AttributeProblem_attributeOrValueAlreadyExists,
     // AttributeProblem_contextViolation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     NameProblem_aliasDereferencingProblem,
     NameProblem_aliasProblem,
     NameProblem_invalidAttributeSyntax,
     NameProblem_noSuchObject,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_inappropriateAuthentication,
     SecurityProblem_invalidCredentials,
@@ -82,7 +79,7 @@ import {
     SecurityProblem_unsupportedAuthenticationMethod,
     // SecurityProblem_passwordExpired,
     // SecurityProblem_inappropriateAlgorithms,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_busy,
     ServiceProblem_unavailable,
@@ -102,7 +99,7 @@ import {
     // ServiceProblem_ambiguousKeyAttributes,
     ServiceProblem_saslBindInProgress,
     // ServiceProblem_notSupportedByLDAP,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateProblem_namingViolation,
     UpdateProblem_objectClassViolation,
@@ -119,15 +116,22 @@ import {
     // UpdateProblem_insufficientPasswordQuality,
     // UpdateProblem_passwordInHistory,
     // UpdateProblem_noPasswordSlot,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import type {
     AccessPointInformation,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
-import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+} from "@wildboar/x500/DistributedOperations";
+import { naddrToURI } from "@wildboar/x500";
+
+const {
+    canceled,
+    cannotCancel,
+    tooLate,
+    noSuchOperation,
+} = resultCodes;
 
 function ldapErr (code: number, message: string): LDAPResult {
     return new LDAPResult(

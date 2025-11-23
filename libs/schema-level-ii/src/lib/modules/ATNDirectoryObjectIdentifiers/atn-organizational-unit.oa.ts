@@ -1,14 +1,11 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import { organizationalUnit } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalUnit.oa";
+import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { organizationalUnit } from "@wildboar/x500/SelectedObjectClasses";
 import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa";
 import { atn_facility_name } from "../ATNDirectoryObjectIdentifiers/atn-facility-name.oa";
 import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa";
 import { id_oc_atn_OrganisationalUnit } from "./id-oc-atn-OrganisationalUnit.va";
-
-
-
 
 /* START_OF_SYMBOL_DEFINITION atn_organizational_unit */
 /**

@@ -1,44 +1,44 @@
 import type { ClientAssociation } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import type {
     MasterAndShadowAccessPoints,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
-import { BOOLEAN, INTEGER, FALSE } from "asn1-ts";
+} from "@wildboar/x500/DistributedOperations";
+import { BOOLEAN, INTEGER, FALSE } from "@wildboar/asn1";
 import * as errors from "@wildboar/meerkat-types";
 import {
     UpdateErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateProblem_entryAlreadyExists,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import splitIntoMastersAndShadows from "@wildboar/x500/src/lib/utils/splitIntoMastersAndShadows";
-import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { splitIntoMastersAndShadows } from "@wildboar/x500";
+import { chainedRead } from "@wildboar/x500/DistributedOperations";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     OperationProgress,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     OperationProgress_nameResolutionPhase_proceeding,
     OperationProgress_nameResolutionPhase_completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ChainingArguments,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ReferenceType_nonSpecificSubordinate,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     updateError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     InvokeId,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import { addMilliseconds } from "date-fns";
 import { printInvokeId } from "../utils/printInvokeId";
 import { bindForChaining } from "../net/bindToOtherDSA";

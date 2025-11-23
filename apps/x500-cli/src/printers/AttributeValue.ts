@@ -1,10 +1,10 @@
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 import type { Context, AttributeInfo } from "../types";
 import {
     _decode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import printValue from "./Value";
-import { dn } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa";
+import { dn } from "@wildboar/x500/SelectedAttributeTypes";
 import stringifyDN from "../utils/stringifyDN";
 import { getLDAPSyntax } from "../getLDAPSyntax";
 

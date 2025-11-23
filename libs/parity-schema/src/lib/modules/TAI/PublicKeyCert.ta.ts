@@ -3,28 +3,28 @@ import {
     CertificateSerialNumber,
     _decode_CertificateSerialNumber,
     _encode_CertificateSerialNumber,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateSerialNumber.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 import {
     KeyUsage,
     _decode_KeyUsage,
     _encode_KeyUsage,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta';
+} from '@wildboar/x500/CertificateExtensions';
 import {
     Name,
     _decode_Name,
     _encode_Name,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/Name.ta';
+} from '@wildboar/x500/InformationFramework';
 import {
     ASN1ConstructionError as _ConstructionError,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 export {
     CertificateSerialNumber,
     _decode_CertificateSerialNumber,
     _encode_CertificateSerialNumber,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateSerialNumber.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 export {
     contentCommitment /* IMPORTED_SHORT_NAMED_BIT */,
     cRLSign /* IMPORTED_SHORT_NAMED_BIT */,
@@ -47,12 +47,12 @@ export {
     KeyUsage_keyEncipherment /* IMPORTED_LONG_NAMED_BIT */,
     _decode_KeyUsage,
     _encode_KeyUsage,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta';
+} from '@wildboar/x500/CertificateExtensions';
 export {
     Name,
     _decode_Name,
     _encode_Name,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/Name.ta';
+} from '@wildboar/x500/InformationFramework';
 
 /* START_OF_SYMBOL_DEFINITION PublicKeyCert */
 /**

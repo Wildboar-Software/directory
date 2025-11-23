@@ -2,12 +2,12 @@ import type { Context } from "@wildboar/meerkat-types";
 import { generateSignature } from "./generateSignature";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
-import { DER, ASN1Encoder } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/AuthenticationFramework";
+import { DER, ASN1Encoder } from "@wildboar/asn1/functional";
 import type {
     OPTIONALLY_PROTECTED,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
-import { unpackBits } from "asn1-ts";
+} from "@wildboar/x500/EnhancedSecurity";
+import { unpackBits } from "@wildboar/asn1";
 import type { KeyObject } from "node:crypto";
 
 /**

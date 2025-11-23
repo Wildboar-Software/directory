@@ -12,10 +12,10 @@ import type {
 } from "@wildboar/meerkat-types";
 import {
     hierarchyTop,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyTop.oa";
+} from "@wildboar/x500/InformationFramework";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import { DER } from "@wildboar/asn1/functional";
+import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 

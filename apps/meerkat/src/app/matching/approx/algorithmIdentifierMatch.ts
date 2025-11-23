@@ -1,9 +1,9 @@
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
 import {
     AlgorithmIdentifier,
     _decode_AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 
 export
 const algorithmIdentifierMatch: EqualityMatcher = (

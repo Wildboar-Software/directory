@@ -3,8 +3,8 @@ import {
     BOOLEAN,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { EncryptedKey, _decode_EncryptedKey, _encode_EncryptedKey } from "../PKIXCRMF-2009/EncryptedKey.ta";
 import { KeyGenParameters, _decode_KeyGenParameters, _encode_KeyGenParameters } from "../PKIXCRMF-2009/KeyGenParameters.ta";
 

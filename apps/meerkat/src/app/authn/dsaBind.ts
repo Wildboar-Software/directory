@@ -1,69 +1,69 @@
 import { DSABindError, BindReturn } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
 import {
     DSABindArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import dnToVertex from "../dit/dnToVertex";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_simple,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import attemptPassword from "../authn/attemptPassword";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     SecurityProblem_unsupportedAuthenticationMethod,
     SecurityProblem_inappropriateAuthentication,
     SecurityProblem_invalidCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import versions from "../versions";
 import { attemptStrongAuth } from "../authn/attemptStrongAuth";
 import {
     PwdResponseValue_error_passwordExpired,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import stringifyDN from "../x500/stringifyDN";
 import { read_unique_id, read_clearance } from "../database/utils";
 import { OperationDispatcher } from "../distributed/OperationDispatcher";
 import type {
     CompareArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     CompareArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeValueAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { userPwd } from "@wildboar/x500/src/lib/collections/attributes";
+} from "@wildboar/x500/InformationFramework";
+import { userPwd } from "@wildboar/x500/PasswordPolicy";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     _decode_CompareResult,
     _encode_CompareResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
-import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { UserPwd } from "@wildboar/x500/PasswordPolicy";
+import { DER } from "@wildboar/asn1/functional";
 import {
     ServiceControls,
     ServiceControls_priority_high,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import { pwdResponseValue } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/pwdResponseValue.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { pwdResponseValue } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     PwdResponseValue,
     _decode_PwdResponseValue,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import { strict as assert } from "assert";
 import attemptSPKMAuth from "./attemptSPKMAuth";
 import attemptExternalAuth from "./attemptExternalAuth";

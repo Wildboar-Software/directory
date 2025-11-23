@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_contract } from '../IN-CS3-object-identifiers/id-contract.va';
 export { id_contract } from '../IN-CS3-object-identifiers/id-contract.va';
 
@@ -16,7 +16,7 @@ export { id_contract } from '../IN-CS3-object-identifiers/id-contract.va';
  *
  * @constant
  */
-export const id_contract_tfc: OBJECT_IDENTIFIER = new _OID(
+export const id_contract_tfc: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* tfc */ 22],
     id_contract
 );

@@ -1,10 +1,10 @@
 import {
     Certificate, _encode_Certificate,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Certificate.ta";
+} from "@wildboar/pki-stub";
 import {
     TrustAnchorChoice,
-} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorChoice.ta";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/tal";
+import { DER } from "@wildboar/asn1/functional";
 
 /**
  * @summary Determine whether a certificate matches a trust anchor

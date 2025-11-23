@@ -3,13 +3,13 @@ import {
     AttributeTypeAndValue as SingleAttribute,
     _decode_AttributeTypeAndValue as _decode_SingleAttribute,
     _encode_AttributeTypeAndValue as _encode_SingleAttribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     OPTIONAL,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta";
 import { ProofOfPossession, _decode_ProofOfPossession, _encode_ProofOfPossession } from "../PKIXCRMF-2009/ProofOfPossession.ta";
 

@@ -1,6 +1,6 @@
 import type {
     Time,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/Time.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 
 /**
  * @summary Convert an operational binding time into a JavaScript Date object.

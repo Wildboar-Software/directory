@@ -1,20 +1,20 @@
-import type { MeerkatContext } from "../ctx";
-import { DERElement, packBits, TRUE_BIT } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import type { MeerkatContext } from "../ctx.js";
+import { DERElement, packBits, TRUE_BIT } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import type {
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { verifyAnyCertPath } from "./verifyAnyCertPath";
 import { verifySignature, VCP_RETURN_OK } from "./verifyCertPath";
 import {
     Token,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _encode_TokenContent,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TokenContent.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     KeyUsage_digitalSignature,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants";
 
 export const VT_RETURN_CODE_OK: number = 0;

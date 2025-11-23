@@ -1,17 +1,17 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { uidNumber } from '../NIS/uidNumber.oa';
 import { nisPublicKey } from '../RFC2307bis/nisPublicKey.oa';
 import { nisSecretKey } from '../RFC2307bis/nisSecretKey.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -23,10 +23,10 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-export { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
+export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
 export { uidNumber } from '../NIS/uidNumber.oa';
 export { nisPublicKey } from '../RFC2307bis/nisPublicKey.oa';
 export { nisSecretKey } from '../RFC2307bis/nisSecretKey.oa';
@@ -69,7 +69,7 @@ export const nisKeyObject: OBJECT_CLASS = {
     '&ldapName': ['nisKeyObject'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'An object with a public and secret key' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 1, 1, 2, 14,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

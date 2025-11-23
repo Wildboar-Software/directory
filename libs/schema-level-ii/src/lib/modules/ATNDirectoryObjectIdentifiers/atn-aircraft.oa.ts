@@ -1,7 +1,7 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
+import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { top } from "@wildboar/x500/InformationFramework";
 import { atn_aircraftIDName } from "../ATNDirectoryObjectIdentifiers/atn-aircraftIDName.oa";
 import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa";
 import { id_oc_atn_Aircraft } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-Aircraft.va";

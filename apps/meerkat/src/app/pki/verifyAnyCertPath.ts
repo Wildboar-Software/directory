@@ -4,12 +4,12 @@ import {
 } from "../pki/verifyCertPath";
 import type {
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     anyPolicy,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/anyPolicy.va";
-import { MeerkatContext } from "../ctx";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+} from "@wildboar/x500/CertificateExtensions";
+import { MeerkatContext } from "../ctx.js";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type { SigningInfo } from "@wildboar/meerkat-types";
 
 /**

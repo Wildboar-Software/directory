@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION id_pbact */
 /**
@@ -14,7 +14,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const id_pbact: OBJECT_IDENTIFIER = new _OID([
+export const id_pbact: OBJECT_IDENTIFIER = _OID.fromParts([
     /* joint-iso-itu-t */ 2, /* telebiometrics */ 42, /* e-health-protocol */ 3,
     /* pbact */ 20,
 ]);

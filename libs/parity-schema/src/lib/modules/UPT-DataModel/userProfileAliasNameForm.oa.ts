@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { id_nf_userProfileAliasNameForm } from '../UPT-DataModel/id-nf-userProfileAliasNameForm.va';
 import { uptNumber } from '../UPT-DataModel/uptNumber.oa';
 import { userProfileAlias } from '../UPT-DataModel/userProfileAlias.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export { id_nf_userProfileAliasNameForm } from '../UPT-DataModel/id-nf-userProfileAliasNameForm.va';
 export { uptNumber } from '../UPT-DataModel/uptNumber.oa';
 export { userProfileAlias } from '../UPT-DataModel/userProfileAlias.oa';

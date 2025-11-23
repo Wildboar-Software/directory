@@ -1,9 +1,9 @@
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
 import {
     _decode_UnboundedDirectoryString as _decode_UDS,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { directoryStringToString } from "@wildboar/x500";
 import fl from "fast-levenshtein";
 
 export

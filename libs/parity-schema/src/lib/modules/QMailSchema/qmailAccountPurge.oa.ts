@@ -1,14 +1,14 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { numericString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/numericString.oa';
-import { numericStringMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/numericStringMatch.oa';
-import { NumericString, ObjectIdentifier as _OID } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/InformationFramework';
+import { numericString } from '@wildboar/x500/SelectedAttributeTypes';
+import { numericStringMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { NumericString, ObjectIdentifier as _OID } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import { id_at } from '../QMailSchema/id-at.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -22,11 +22,11 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { numericString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/numericString.oa';
-export { numericStringMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/numericStringMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { numericString } from '@wildboar/x500/SelectedAttributeTypes';
+export { numericStringMatch } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_at } from '../QMailSchema/id-at.va';
 
 /* START_OF_SYMBOL_DEFINITION qmailAccountPurge */
@@ -66,7 +66,7 @@ export const qmailAccountPurge: ATTRIBUTE<NumericString> = {
     '&ldapName': ['qmailAccountPurge'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'The earliest date when a mailMessageStore will be purged' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [13],
         id_at
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

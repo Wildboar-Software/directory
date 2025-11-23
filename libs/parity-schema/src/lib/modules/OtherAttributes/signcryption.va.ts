@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION signcryption */
 /**
@@ -15,7 +15,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const signcryption: OBJECT_IDENTIFIER = new _OID([
+export const signcryption: OBJECT_IDENTIFIER = _OID.fromParts([
     /* iso */ 1, /* identified-organization */ 3, /* tc68 */ 133,
     /* country */ 16, /* x9 */ 840, /* x9Standards */ 9, /* x9-73 */ 73,
     /* signcryption */ 4,

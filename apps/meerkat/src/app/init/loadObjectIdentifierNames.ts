@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 
 /**
  * @summary Initialize Meerkat DSA's internal index of object identifier names.
@@ -28,7 +28,7 @@ async function loadObjectIdentifierNames (ctx: Context): Promise<void> {
     // Apache Directory Studio will fail to enumerate subentries without this.
     // NOTE: ADS's capitalization is different! ADS lowercases the E.
     ctx.objectIdentifierToName.set("2.16.840.1.113719.2.142.6.1.1", "ldapSubentry");
-    ctx.nameToObjectIdentifier.set("ldapSubentry", new ObjectIdentifier([ 2,16,840,1,113719,2,142,6,1,1 ]));
+    ctx.nameToObjectIdentifier.set("ldapSubentry", ObjectIdentifier.fromParts([ 2,16,840,1,113719,2,142,6,1,1 ]));
     /**
      * For some reason, LDAP redefines `aliasedEntryName` as `aliasedObjectName`.
      *

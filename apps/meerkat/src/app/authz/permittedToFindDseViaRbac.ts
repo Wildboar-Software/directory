@@ -1,13 +1,13 @@
 import type { ClientAssociation, Context, Vertex } from "@wildboar/meerkat-types";
-import { ASN1Construction, BERElement, ObjectIdentifier } from "asn1-ts";
+import { ASN1Construction, BERElement, ObjectIdentifier } from "@wildboar/asn1";
 import {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
-import { attributeValueSecurityLabelContext } from "@wildboar/x500/src/lib/collections/contexts";
+} from "@wildboar/x500";
+import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 import { rbacACDF } from "./rbacACDF";
-import { _decode_SignedSecurityLabel } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
+import { _decode_SignedSecurityLabel } from "@wildboar/x500/EnhancedSecurity";
 
 /**
  * @summary Whether a user is permitted to find a given DSE under RBAC.

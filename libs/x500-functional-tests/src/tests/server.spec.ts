@@ -1,112 +1,112 @@
 import { Readable } from "stream";
 import * as net from "net";
 import { strict as assert } from "assert";
-import { ASN1Element, BERElement } from "asn1-ts";
-import { BER, DER, _encodeObjectIdentifier, _encodeOctetString } from "asn1-ts/dist/node/functional";
+import { ASN1Element, BERElement } from "@wildboar/asn1";
+import { BER, DER, _encodeObjectIdentifier, _encodeOctetString } from "@wildboar/asn1/functional";
 import { IDMConnection } from "@wildboar/idm";
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     dap_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+} from "@wildboar/x500/DirectoryIDMProtocols";
 import {
     TLSResponse_success,
     TLSResponse_operationsError,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _encode_UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     applicationProcess,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+} from "@wildboar/x500/InformationFramework";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgument,
     _encode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     read,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadArgument,
     _encode_ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { LDAPSocket } from "@wildboar/ldap-socket";
 import {
     LDAPMessage,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
+} from "@wildboar/ldap";
 import {
     LDAPResult_resultCode_success,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
+} from "@wildboar/ldap";
 import {
     BindRequest,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindRequest.ta";
+} from "@wildboar/ldap";
 import {
     SearchRequest,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest.ta";
+} from "@wildboar/ldap";
 import {
     SearchRequest_scope_baseObject,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
+} from "@wildboar/ldap";
 import {
     SearchRequest_derefAliases_neverDerefAliases,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-derefAliases.ta";
+} from "@wildboar/ldap";
 import {
     list,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _encode_ListArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
-import { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
-import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { Request } from "@wildboar/x500/IDMProtocolSpecification";
+import { SimpleCredentials } from "@wildboar/x500/DirectoryAbstractService";
 
 vi.setConfig({ testTimeout: 5_000 });
 

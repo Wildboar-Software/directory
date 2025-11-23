@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import dnToVertex from "../../dit/dnToVertex";
 import deleteEntry from "../../database/deleteEntry";
 

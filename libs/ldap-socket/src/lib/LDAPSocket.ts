@@ -1,23 +1,23 @@
 import * as net from "net";
 import * as tls from "tls";
-import { BER } from "asn1-ts/dist/node/functional";
-import { BERElement, ObjectIdentifier } from "asn1-ts";
+import { BER } from "@wildboar/asn1/functional";
+import { BERElement, ObjectIdentifier } from "@wildboar/asn1";
 import {
     LDAPMessage,
     _decode_LDAPMessage,
     _encode_LDAPMessage,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
-import { EventEmitter } from "events";
+} from "@wildboar/ldap";
+import { EventEmitter } from "node:events";
 import type LDAPSocketOptions from "./LDAPSocketOptions";
-import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
-import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
-import { startTLS } from "@wildboar/ldap/src/lib/extensions";
+import { decodeLDAPOID } from "@wildboar/ldap";
+import { encodeLDAPOID } from "@wildboar/ldap";
+import { extensions } from "@wildboar/ldap";
 import {
     ExtendedResponse,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedResponse.ta";
+} from "@wildboar/ldap";
 import {
     LDAPResult_resultCode_success,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
+} from "@wildboar/ldap";
 
 /**
  * @summary An LDAP Socket
@@ -107,7 +107,7 @@ class LDAPSocket extends EventEmitter {
             if ("extendedReq" in message.protocolOp) {
                 const req = message.protocolOp.extendedReq;
                 const oid = decodeLDAPOID(req.requestName);
-                if (!oid.isEqualTo(startTLS)) {
+                if (!oid.isEqualTo(extensions.startTLS)) {
                     return;
                 }
                 if (this.socket instanceof tls.TLSSocket) {
@@ -123,7 +123,7 @@ class LDAPSocket extends EventEmitter {
                             // No diagnostic text to avoid any information disclosure.
                             Buffer.alloc(0),
                             undefined,
-                            encodeLDAPOID(new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 1466, 20037 ])),
+                            encodeLDAPOID(ObjectIdentifier.fromParts([ 1, 3, 6, 1, 4, 1, 1466, 20037 ])),
                             undefined,
                         ),
                     },

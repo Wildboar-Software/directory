@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { aRecord } from '../Cosine/aRecord.oa';
 import { cNAMERecord } from '../Cosine/cNAMERecord.oa';
 import { domain } from '../Cosine/domain.oa';
@@ -22,7 +22,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { aRecord } from '../Cosine/aRecord.oa';
 export { sOARecord } from '../Cosine/sOARecord.oa';
 
@@ -69,7 +69,7 @@ export const dNSDomain: OBJECT_CLASS = {
         cNAMERecord,
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['dNSDomain'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         0, 9, 2342, 19200300, 100, 4, 15,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

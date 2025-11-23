@@ -11,24 +11,24 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { ObjectIdentifier } from "asn1-ts";
-import { DER, _encodeUTF8String } from "asn1-ts/dist/node/functional";
+import { ObjectIdentifier } from "@wildboar/asn1";
+import { DER, _encodeUTF8String } from "@wildboar/asn1/functional";
 import {
     subschemaSubentryList,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subschemaSubentryList.oa";
+} from "@wildboar/x500/InformationFramework";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import {
     id_soc_subschema,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+} from "@wildboar/x500/InformationFramework";
+import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 
 const SUBENTRY_CLASS: string = id_soc_subschema.toString();
 
@@ -45,7 +45,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
                 value: _encode_DistinguishedName([
                     [
                         new AttributeTypeAndValue(
-                            new ObjectIdentifier([ 2, 5, 4, 3 ]), // CN
+                            ObjectIdentifier.fromParts([ 2, 5, 4, 3 ]), // CN
                             _encodeUTF8String("subschema", DER),
                         ),
                     ],

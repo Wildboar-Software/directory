@@ -1,13 +1,13 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
     SearchResultEntry,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
+} from "@wildboar/ldap";
 import type {
     EntryInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     PartialAttribute,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
+} from "@wildboar/ldap";
 import getPartialAttributeFromEntryInfoItem from "./getPartialAttributeFromEntryInfoItem";
 import encodeLDAPDN from "./encodeLDAPDN";
 

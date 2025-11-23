@@ -6,88 +6,86 @@ import {
 } from "@wildboar/meerkat-types";
 import {
     PkiPath,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
+} from "@wildboar/pki-stub";
 import {
     ACPathData,
     AttributeCertificate,
     AttributeCertificationPath,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     compareGeneralName,
     compareName, getDateFromTime, groupByOID,
 } from "@wildboar/x500";
-import {
-    evaluateTemporalContext,
-} from "@wildboar/x500/src/lib/matching/context/temporalContext";
+import { evaluateTemporalContext } from "@wildboar/x500/matching/context";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { Name } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Name.ta";
-import { Certificate, _encode_Certificate } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Certificate.ta";
-import { issuerAltName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/issuerAltName.oa";
-import { BOOLEAN, DERElement, packBits } from "asn1-ts";
-import { subjectAltName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
+import { Name } from "@wildboar/pki-stub";
+import { Certificate, _encode_Certificate } from "@wildboar/pki-stub";
+import { issuerAltName } from "@wildboar/x500/CertificateExtensions";
+import { BOOLEAN, DERElement, packBits } from "@wildboar/asn1";
+import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { digestOIDToNodeHash } from "./digestOIDToNodeHash";
 import { createHash } from "crypto";
 import {
     ObjectDigestInfo_digestedObjectType_publicKeyCert,
     ObjectDigestInfo_digestedObjectType_publicKey,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/ObjectDigestInfo-digestedObjectType.ta";
-import { DER } from "asn1-ts/dist/node/functional";
-import { SubjectPublicKeyInfo, _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/SubjectPublicKeyInfo.ta";
-import { noAssertion } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/noAssertion.oa";
-import { Holder } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Holder.ta";
-import { sOAIdentifier } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/sOAIdentifier.oa";
-import { TrustAnchorChoice, TrustAnchorList } from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
+import { DER } from "@wildboar/asn1/functional";
+import { SubjectPublicKeyInfo, _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub";
+import { noAssertion } from "@wildboar/x500/AttributeCertificateDefinitions";
+import { Holder } from "@wildboar/pki-stub";
+import { sOAIdentifier } from "@wildboar/x500/AttributeCertificateDefinitions";
+import { TrustAnchorChoice, TrustAnchorList } from "@wildboar/tal";
 import { isCertInTrustAnchor } from "../pki/isCertInTrustAnchor";
-import { AttCertIssuer } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttCertIssuer.ta";
-import { TBSCertificate } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/TBSCertificate.ta";
-import { issuedOnBehalfOf } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/issuedOnBehalfOf.oa";
+import { AttCertIssuer } from "@wildboar/pki-stub";
+import { TBSCertificate } from "@wildboar/pki-stub";
+import { issuedOnBehalfOf } from "@wildboar/x500/AttributeCertificateDefinitions";
 import stringifyDN from "../x500/stringifyDN";
 import { getReadDispatcher, verifySignature } from "./verifyCertPath";
-import { singleUse } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/singleUse.oa";
-import { groupAC } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/groupAC.oa";
-import { targetingInformation } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/targetingInformation.oa";
-import { noRevAvail } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/noRevAvail.oa";
-import { timeSpecification } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/timeSpecification.oa";
+import { singleUse } from "@wildboar/x500/AttributeCertificateDefinitions";
+import { groupAC } from "@wildboar/x500/AttributeCertificateDefinitions";
+import { targetingInformation } from "@wildboar/x500/AttributeCertificateDefinitions";
+import { noRevAvail } from "@wildboar/x500/AttributeCertificateDefinitions";
+import { timeSpecification } from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     _encode_TimeAssertion,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeAssertion.ta";
-import { GeneralName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/GeneralName.ta";
-import { IssuerSerial } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/IssuerSerial.ta";
-import { ObjectDigestInfo } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/ObjectDigestInfo.ta";
-import { MeerkatContext } from "../ctx";
-import { NameAndOptionalUID } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { GeneralName } from "@wildboar/pki-stub";
+import { IssuerSerial } from "@wildboar/pki-stub";
+import { ObjectDigestInfo } from "@wildboar/pki-stub";
+import { MeerkatContext } from "../ctx.js";
+import { NameAndOptionalUID } from "@wildboar/x500/SelectedAttributeTypes";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import { checkRemoteCRLs } from "./verifyCertPath";
 import {
     cRLDistributionPoints,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/cRLDistributionPoints.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     authorityKeyIdentifier,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/authorityKeyIdentifier.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     AltSignatureAlgorithm,
     _decode_AltSignatureAlgorithm,
     altSignatureAlgorithm,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/altSignatureAlgorithm.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     altSignatureValue,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/altSignatureValue.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     authorityInfoAccess,
-} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/authorityInfoAccess.oa";
+} from "@wildboar/x500/PkiPmiExternalDataTypes";
 import {
     subjectInfoAccess,
-} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/subjectInfoAccess.oa";
+} from "@wildboar/x500/PkiPmiExternalDataTypes";
 import {
     subjectKeyIdentifier,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectKeyIdentifier.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     _decode_SubjectAltPublicKeyInfo,
     subjectAltPublicKeyInfo,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltPublicKeyInfo.oa";
-import { Extension } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extension.ta";
-import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
-import { TBSAttributeCertificate, _encode_TBSAttributeCertificate } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/TBSAttributeCertificate.ta";
+} from "@wildboar/x500/CertificateExtensions";
+import { Extension } from "@wildboar/x500/AuthenticationFramework";
+import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub";
+import { TBSAttributeCertificate, _encode_TBSAttributeCertificate } from "@wildboar/pki-stub";
 import { checkOCSP } from "./verifyCertPath";
 import { general_name_matches_cert } from "./general_name_matches_cert";
 
@@ -316,7 +314,7 @@ function verifyAltSignature (subjectCert: AttributeCertificate, issuerExts?: Ext
             // The altSignatureValue extension is supposed to be removed.
             subjectCert.toBeSigned.extensions
                 ?.filter((ext) => !ext.extnId.isEqualTo(altSignatureValue["&id"]!)),
-        ), DER),
+        )),
         _encode_AlgorithmIdentifier(subjectCert.algorithmIdentifier, DER),
         // The native signature is supposed to be excluded.
     ]).toBytes();
@@ -1051,7 +1049,7 @@ async function verifyAttrCert (
             const tbs = el.sequence[0];
             return tbs.toBytes();
         })()
-        : _encode_TBSAttributeCertificate(acert.toBeSigned, DER).toBytes();
+        : _encode_TBSAttributeCertificate(acert.toBeSigned).toBytes();
 
     const acert_hasher = createHash("sha256");
     acert_hasher.update(acert_bytes);

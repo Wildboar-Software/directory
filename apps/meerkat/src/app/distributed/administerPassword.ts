@@ -1,79 +1,79 @@
 import type { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
-import { ASN1TagClass, ASN1UniversalType, ObjectIdentifier, unpackBits } from "asn1-ts";
+import { ASN1TagClass, ASN1UniversalType, ObjectIdentifier, unpackBits } from "@wildboar/asn1";
 import * as errors from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     AdministerPasswordArgument,
     _decode_AdministerPasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AdministerPasswordResult,
     _encode_AdministerPasswordResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AdministerPasswordResultData,
     _encode_AdministerPasswordResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordResultData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ChainingResults,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DistributedOperations";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import setEntryPassword from "../database/setEntryPassword";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_inappropriateAlgorithms,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
-import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import { type ACDFTuple } from "@wildboar/x500";
+import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_MODIFY,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
-import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+} from "@wildboar/x500";
+import { getACDFTuplesFromACIItem } from "@wildboar/x500";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import {
     userPassword,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     userPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     id_opcode_administerPassword,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-administerPassword.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import getACIItems from "../authz/getACIItems";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import bacSettings from "../authz/bacSettings";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import preprocessTuples from "../authz/preprocessTuples";
 import { generateSignature } from "../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
 import {
     UpdateErrorData,
     UpdateProblem_insufficientPasswordQuality,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
-import { updateError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { updateError } from "@wildboar/x500/DirectoryAbstractService";
 import {
     checkPasswordQualityAndHistory,
     CHECK_PWD_QUALITY_NO_SLOTS,
@@ -81,12 +81,12 @@ import {
     CHECK_PWD_QUALITY_OK,
     CHECK_PWD_QUALITY_REUSE,
 } from "../password/checkPasswordQuality";
-import { EncPwdInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EncPwdInfo.ta";
-import { pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
-import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
-import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
-import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
-import { pwdHistorySlots } from "@wildboar/x500/src/lib/collections/attributes";
+import { EncPwdInfo } from "@wildboar/x500/DirectoryAbstractService";
+import { pwdAdminSubentry } from "@wildboar/x500/InformationFramework";
+import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/InformationFramework";
+import { userPwdHistory } from "@wildboar/x500/PasswordPolicy";
+import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa.js";
+import { pwdHistorySlots } from "@wildboar/x500/PasswordPolicy";
 import { id_scrypt } from "@wildboar/scrypt-0";
 import { validateAlgorithmParameters } from "../authn/validateAlgorithmParameters";
 import { acdf } from "../authz/acdf";

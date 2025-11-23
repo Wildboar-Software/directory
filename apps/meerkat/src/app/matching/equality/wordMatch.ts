@@ -1,10 +1,10 @@
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
 import {
     _decode_UnboundedDirectoryString as _decode_UDS,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
-import { prepString } from "@wildboar/x500/src/lib/utils/prepString";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { directoryStringToString } from "@wildboar/x500";
+import { prepString } from "@wildboar/x500";
 
 export
 const wordMatch: EqualityMatcher = (

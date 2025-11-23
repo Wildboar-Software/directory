@@ -1,18 +1,18 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
+} from '@wildboar/x500/InformationFramework';
 import {
     DistinguishedName,
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta';
-import { distinguishedNameMatch } from '@wildboar/x500/src/lib/modules/InformationFramework/distinguishedNameMatch.oa';
-import { distinguishedName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/distinguishedName.oa';
-import { dn } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+} from '@wildboar/x500/InformationFramework';
+import { distinguishedNameMatch } from '@wildboar/x500/InformationFramework';
+import { distinguishedName } from '@wildboar/x500/SelectedAttributeTypes';
+import { dn } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -26,17 +26,17 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
+} from '@wildboar/x500/InformationFramework';
 export {
     DistinguishedName,
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta';
-export { distinguishedNameMatch } from '@wildboar/x500/src/lib/modules/InformationFramework/distinguishedNameMatch.oa';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { distinguishedName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/distinguishedName.oa';
-export { dn } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa';
+} from '@wildboar/x500/InformationFramework';
+export { distinguishedNameMatch } from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { distinguishedName } from '@wildboar/x500/SelectedAttributeTypes';
+export { dn } from '@wildboar/x500/SelectedAttributeTypes';
 
 /* START_OF_SYMBOL_DEFINITION ads_partitionSuffix */
 /**
@@ -76,7 +76,7 @@ export const ads_partitionSuffix: ATTRIBUTE<DistinguishedName> = {
     '&ldapSyntax': dn['&id'] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['ads-partitionSuffix'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'The partition suffix' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 18060, 0, 4, 1, 2, 151,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
     '&Type': 0 as never /* OBJECT_FIELD_SETTING OBJECT_TYPE_FIELD_SETTING */,

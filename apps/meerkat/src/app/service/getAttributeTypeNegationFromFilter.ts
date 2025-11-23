@@ -1,7 +1,7 @@
 import { IndexableOID } from "@wildboar/meerkat-types";
-import { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
-import { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
+import { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary Extract the attribute type from a filter and whether it was present in a non-negated filter item.

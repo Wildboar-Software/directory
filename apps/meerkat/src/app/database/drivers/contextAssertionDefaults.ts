@@ -11,16 +11,16 @@
 //     SpecialAttributeDetector,
 //     SpecialAttributeValueDetector,
 // } from "@wildboar/meerkat-types";
-// import { BOOLEAN, TRUE } from "asn1-ts";
-// import { DER } from "asn1-ts/dist/node/functional";
+// import { BOOLEAN, TRUE } from "@wildboar/asn1";
+// import { DER } from "@wildboar/asn1/functional";
 // import {
 //     contextAssertionDefaults,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionDefaults.oa";
+// } from "@wildboar/x500/InformationFramework";
 // import {
 //     TypeAndContextAssertion,
 //     _decode_TypeAndContextAssertion,
 //     _encode_TypeAndContextAssertion,
-// } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+// } from "@wildboar/x500/DirectoryAbstractService";
 
 // export
 // const readValues: SpecialAttributeDatabaseReader = async (

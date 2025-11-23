@@ -1,21 +1,21 @@
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     id_at_objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
+} from "@wildboar/x500/InformationFramework";
 import type {
     Filter,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     FilterItem,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     id_oa_allAttributeTypes,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+} from "@wildboar/x500/InformationFramework";
 import { Context, IndexableOID } from "@wildboar/meerkat-types";
-import { ClassAttributeSelection } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
+import { ClassAttributeSelection } from "@wildboar/x500/DirectoryShadowAbstractService";
 import getAncestorObjectClasses from "./getAncestorObjectClasses";
 import { ALL_USER_ATTRIBUTES_KEY } from "../constants";
 

@@ -1,17 +1,17 @@
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import { verifyCertPath, VerifyCertPathArgs } from "./verifyCertPath";
 import {
     Certificate,
     _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { PEMObject } from "pem-ts";
-import { DERElement, ObjectIdentifier } from "asn1-ts";
+import { DERElement, ObjectIdentifier } from "@wildboar/asn1";
 import type {
     TrustAnchorList,
-} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+} from "@wildboar/tal";
 import {
     caseIgnoreMatch,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreMatch.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 
 const ctx: MeerkatContext = {
     attributeTypes: {
@@ -24,7 +24,7 @@ const ctx: MeerkatContext = {
     equalityMatchingRules: {
         get: (key: string) => {
             return {
-                id: new ObjectIdentifier([ 2, 5, 17, 3 ]),
+                id: ObjectIdentifier.fromParts([ 2, 5, 17, 3 ]),
                 matcher: (a, b) => {
                     return a.utf8String.toUpperCase() === b.utf8String.toUpperCase();
                 },

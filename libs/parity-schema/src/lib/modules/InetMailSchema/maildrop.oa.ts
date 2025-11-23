@@ -1,15 +1,15 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { caseIgnoreIA5Match } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreIA5Match.oa';
-import { caseIgnoreIA5SubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreIA5SubstringsMatch.oa';
-import { ia5String } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ia5String.oa';
-import { IA5String } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/InformationFramework';
+import { caseIgnoreIA5Match } from '@wildboar/x500/SelectedAttributeTypes';
+import { caseIgnoreIA5SubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { ia5String } from '@wildboar/x500/SelectedAttributeTypes';
+import { IA5String } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import { id_at_maildrop } from '../InetMailSchema/id-at-maildrop.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -23,12 +23,12 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { caseIgnoreIA5Match } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreIA5Match.oa';
-export { caseIgnoreIA5SubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreIA5SubstringsMatch.oa';
-export { ia5String } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ia5String.oa';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { caseIgnoreIA5Match } from '@wildboar/x500/SelectedAttributeTypes';
+export { caseIgnoreIA5SubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { ia5String } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_at_maildrop } from '../InetMailSchema/id-at-maildrop.va';
 
 /* START_OF_SYMBOL_DEFINITION maildrop */

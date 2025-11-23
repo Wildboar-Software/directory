@@ -1,4 +1,4 @@
-import { ASN1Element, ASN1TagClass } from "asn1-ts";
+import { ASN1Element, ASN1TagClass } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
 import { oRDescriptorSingleElementMatch } from "./oRDescriptorSingleElementMatch";
 

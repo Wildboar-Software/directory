@@ -5,8 +5,8 @@ import {
     OBJECT_IDENTIFIER,
     OPTIONAL,
     TRUE_BIT,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     ClassList,
     ClassList_unclassified /* IMPORTED_LONG_NAMED_BIT */,

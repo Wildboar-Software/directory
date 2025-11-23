@@ -1,14 +1,14 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-import { organization } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/organization.oa';
+} from '@wildboar/x500/InformationFramework';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
+import { organization } from '@wildboar/x500/SelectedObjectClasses';
 import { id_oc_uptProvider } from '../UPT-DataModel/id-oc-uptProvider.va';
 import { providerId } from '../UPT-DataModel/providerId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -20,9 +20,9 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-export { organization } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/organization.oa';
+} from '@wildboar/x500/InformationFramework';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
+export { organization } from '@wildboar/x500/SelectedObjectClasses';
 export { id_oc_uptProvider } from '../UPT-DataModel/id-oc-uptProvider.va';
 export { providerId } from '../UPT-DataModel/providerId.oa';
 

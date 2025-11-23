@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_kerberos } from '../KerberosSchema/id-kerberos.va';
 export { id_kerberos } from '../KerberosSchema/id-kerberos.va';
 
@@ -16,7 +16,7 @@ export { id_kerberos } from '../KerberosSchema/id-kerberos.va';
  *
  * @constant
  */
-export const id_at: OBJECT_IDENTIFIER = new _OID([4], id_kerberos);
+export const id_at: OBJECT_IDENTIFIER = _OID.fromParts([4], id_kerberos);
 /* END_OF_SYMBOL_DEFINITION id_at */
 
 /* eslint-enable */

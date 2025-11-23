@@ -1,9 +1,9 @@
 import type { Context } from "../types";
-import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
-import stringifyLDAPDN from "@wildboar/ldap/src/lib/stringifiers/RDNSequence";
+import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { stringifyRDNSequence } from "@wildboar/ldap";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { getLDAPSyntax } from "../getLDAPSyntax";
 
 export
@@ -11,7 +11,7 @@ function stringifyDN (
     ctx: Context,
     dn: DistinguishedName,
 ): string {
-    return stringifyLDAPDN(dn
+    return stringifyRDNSequence(dn
         .map((rdn) => rdn
             .map((atav) => [ atav.type_, atav.value ])),
         (syntax: OBJECT_IDENTIFIER) => {

@@ -1,9 +1,9 @@
 import { Context, IndexableOID } from "@wildboar/meerkat-types";
 import { compareElements } from "@wildboar/x500";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
-import { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import { ContextProfile } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextProfile.ta";
-import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import { ContextProfile } from "@wildboar/x500/ServiceAdministration";
+import { ContextAssertion } from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Identify any disallowed context types in a search filter

@@ -1,8 +1,8 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-import { ASN1Element as _Element } from 'asn1-ts';
+import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import { ASN1Element as _Element } from '@wildboar/asn1';
 import { id_lsx_open } from '../RFC3687ComponentMatching/id-lsx-open.va';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { id_lsx_open } from '../RFC3687ComponentMatching/id-lsx-open.va';
 
 /* START_OF_SYMBOL_DEFINITION open */

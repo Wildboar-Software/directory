@@ -3,36 +3,36 @@ import {
     UserPwd,
     UserPwd_encrypted,
     _encode_UserPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+} from "@wildboar/x500/PasswordPolicy";
 import encryptPassword from "../x500/encryptPassword";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
 import { Prisma } from "@prisma/client";
 import anyPasswordsExist from "../authz/anyPasswordsExist";
-import { DER, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
+import { DER, _encodeGeneralizedTime } from "@wildboar/asn1/functional";
 import {
     pwdStartTime,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     userPwdRecentlyExpired,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdGracesUsed,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGracesUsed.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdExpiryTime,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryTime.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdEndTime,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEndTime.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdGraceUseTime,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa.js";
 import { getAdministrativePoints } from "../dit/getAdministrativePoints";
 import { getRelevantSubentries } from "../dit/getRelevantSubentries";
 import { getDistinguishedName } from "../x500/getDistinguishedName";
 import { addSeconds } from "date-fns";
-import { pwdEncAlg, pwdExpiryAge, pwdMaxAge } from "@wildboar/x500/src/lib/collections/attributes";
-import { AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+import { pwdEncAlg, pwdExpiryAge, pwdMaxAge } from "@wildboar/x500/PasswordPolicy";
+import { AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/pki-stub";
 import {
     ASN1Construction,
     ASN1Element,
@@ -40,7 +40,7 @@ import {
     ASN1UniversalType,
     DERElement,
     ObjectIdentifier,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 
 /**
  * @summary Set the password of an entry

@@ -3,9 +3,9 @@ import {
     GeneralName,
     _decode_GeneralName,
     _encode_GeneralName,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta';
-import { ASN1Element as _Element, ASN1TagClass as _TagClass } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/CertificateExtensions';
+import { ASN1Element as _Element, ASN1TagClass as _TagClass } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     PKMACValue,
     _decode_PKMACValue,
@@ -15,7 +15,7 @@ export {
     GeneralName,
     _decode_GeneralName,
     _encode_GeneralName,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta';
+} from '@wildboar/x500/CertificateExtensions';
 export {
     PKMACValue,
     _decode_PKMACValue,

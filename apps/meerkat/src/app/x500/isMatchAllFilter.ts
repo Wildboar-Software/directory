@@ -1,5 +1,5 @@
-import type { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import { objectClass } from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Determine whether a filter is a "match-all" filter

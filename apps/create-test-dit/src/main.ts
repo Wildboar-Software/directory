@@ -1,7 +1,7 @@
 import { program } from "commander";
-import ctx from "./app/ctx";
+import ctx from "./app/ctx.js";
 import bind from "./app/bind";
-import { DER, _encodeUTF8String } from "asn1-ts/dist/node/functional";
+import { DER, _encodeUTF8String } from "@wildboar/asn1/functional";
 import createCountries from "./app/create-countries";
 import createAdmin from "./app/create-admin";
 import { seedUS } from "./app/create-us";
@@ -11,17 +11,17 @@ import { seedMoscow } from "./app/create-moscow";
 import { adminDN } from "./app/constants";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     countryName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa";
-import { _encodePrintableString } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { _encodePrintableString } from "@wildboar/asn1/functional";
 import {
     localityName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import { sleep } from "./app/utils";
 import seedUN from "./app/create-un";
 import seedCA from "./app/create-ca";

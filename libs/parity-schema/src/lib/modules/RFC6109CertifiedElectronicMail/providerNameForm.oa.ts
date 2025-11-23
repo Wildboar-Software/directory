@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { provider } from '../RFC6109CertifiedElectronicMail/provider.oa';
 import { providerName } from '../RFC6109CertifiedElectronicMail/providerName.oa';
 import { id_nf } from '../Wildboar/id-nf.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export { provider } from '../RFC6109CertifiedElectronicMail/provider.oa';
 export { providerName } from '../RFC6109CertifiedElectronicMail/providerName.oa';
 export { id_nf } from '../Wildboar/id-nf.va';
@@ -38,7 +38,7 @@ export const providerNameForm: NAME_FORM = {
     '&namedObjectClass': provider /* OBJECT_FIELD_SETTING */,
     '&MandatoryAttributes': [providerName] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['providerNameForm'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [7],
         id_nf
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

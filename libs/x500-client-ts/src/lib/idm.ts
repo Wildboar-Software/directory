@@ -21,7 +21,7 @@ import {
     IdmReject_reason_unsupportedIdmVersion,
     IdmReject_reason_unsuitableIdmVersion,
     IdmReject_reason_invalidIdmVersion,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     Abort,
     Abort_mistypedPDU,
@@ -31,12 +31,12 @@ import {
     Abort_connectionFailed,
     Abort_invalidProtocol,
     Abort_reasonNotSpecified,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     _encode_Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { BER } from "asn1-ts/dist/node/functional";
-import { protocol_id_to_rose_protocol, app_context_to_protocol_id } from "./utils";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { BER } from "@wildboar/asn1/functional";
+import { protocol_id_to_rose_protocol, app_context_to_protocol_id } from "./utils.js";
 
 const idm_reject_to_rose_reject: Map<IdmReject_reason, RejectReason> = new Map([
     [ IdmReject_reason_mistypedPDU, RejectReason.mistyped_pdu ],

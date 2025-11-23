@@ -1,24 +1,24 @@
 import type { Connection, Context } from "../../types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     modifyDN,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyDNArgument,
     _encode_ModifyDNArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyDNArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_ModifyDNResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import destringifyDN from "../../utils/destringifyDN";
 import printError from "../../printers/Error_";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import stringifyDN from "../../utils/stringifyDN";
 
 export

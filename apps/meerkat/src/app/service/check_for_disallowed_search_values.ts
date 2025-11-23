@@ -1,7 +1,7 @@
 import { IndexableOID } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
-import { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary Check a filter for filter items that assert values when prohibited

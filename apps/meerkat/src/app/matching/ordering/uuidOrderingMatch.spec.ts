@@ -1,5 +1,5 @@
 import { uuidOrderingMatch } from "./uuidOrderingMatch";
-import { DER, _encodeOctetString } from "asn1-ts/dist/node/functional";
+import { DER, _encodeOctetString } from "@wildboar/asn1/functional";
 
 describe("uuidOrderingMatch", () => {
     it("works with unequal UUIDs", () => {

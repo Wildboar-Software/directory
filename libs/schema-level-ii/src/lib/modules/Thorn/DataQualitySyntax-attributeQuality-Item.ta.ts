@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { AttributeType, _decode_AttributeType, _encode_AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import { AttributeType, _decode_AttributeType, _encode_AttributeType } from "@wildboar/x500/InformationFramework";
 import {
     ASN1ConstructionError as _ConstructionError,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { AttributeQuality, _decode_AttributeQuality, _encode_AttributeQuality } from "../Thorn/AttributeQuality.ta";
 
 

@@ -1,6 +1,6 @@
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
-import { _decode_InformationCategory } from "@wildboar/x400/src/lib/modules/IPMSHeadingExtensions/InformationCategory.ta";
+import { _decode_InformationCategory } from "@wildboar/x400/IPMSHeadingExtensions";
 import { univOrBmpToString } from "./orAddressUtilities";
 
 // InformationCategory ::= SEQUENCE {

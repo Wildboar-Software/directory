@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import {
     AuthPasswordSyntax,
     _decode_AuthPasswordSyntax,
     _encode_AuthPasswordSyntax,
 } from '../AuthPasswordSchema/AuthPasswordSyntax.ta';
 import { id_at_openldap_schema } from '../AuthPasswordSchema/id-at-openldap-schema.va';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export {
     AuthPasswordSyntax,
     _decode_AuthPasswordSyntax,
@@ -43,7 +43,7 @@ export const authPasswordSyntax: SYNTAX_NAME<AuthPasswordSyntax> = {
         '&Type': _encode_AuthPasswordSyntax,
     },
     '&ldapDesc': 'authentication password syntax' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [1, 2],
         id_at_openldap_schema
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

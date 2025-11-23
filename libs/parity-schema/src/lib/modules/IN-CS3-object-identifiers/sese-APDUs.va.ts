@@ -3,7 +3,7 @@ import {
     joint_iso_itu_t,
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER,
-} from 'asn1-ts';
+} from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION sese_APDUs */
 /**
@@ -18,7 +18,7 @@ import {
  *
  * @constant
  */
-export const sese_APDUs: OBJECT_IDENTIFIER = new _OID(
+export const sese_APDUs: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* genericULS */ 20, /* modules */ 1, /* seseAPDUs */ 6],
     joint_iso_itu_t
 );

@@ -1,16 +1,16 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     directoryOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { objectIdentifierFirstComponentMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/objectIdentifierFirstComponentMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+import { objectIdentifierFirstComponentMatch } from '@wildboar/x500/SelectedAttributeTypes';
 import { id_soa_methodRuleUse } from '../IN-CS3-object-identifiers/id-soa-methodRuleUse.va';
 import {
     MethodUseDescription,
     _decode_MethodUseDescription,
     _encode_MethodUseDescription,
 } from '../IN-CS3-SCF-SDF-datatypes/MethodUseDescription.ta';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -24,10 +24,10 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { objectIdentifierFirstComponentMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/objectIdentifierFirstComponentMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { objectIdentifierFirstComponentMatch } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_soa_methodRuleUse } from '../IN-CS3-object-identifiers/id-soa-methodRuleUse.va';
 export {
     MethodUseDescription,

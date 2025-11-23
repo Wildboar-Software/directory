@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { id_trader_nf_proxyOffer } from '../TraderDefinitions/id-trader-nf-proxyOffer.va';
 import { proxyOfferEntry } from '../TraderDefinitions/proxyOfferEntry.oa';
 import { proxyOfferId } from '../TraderDefinitions/proxyOfferId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export { id_trader_nf_proxyOffer } from '../TraderDefinitions/id-trader-nf-proxyOffer.va';
 export { proxyOfferEntry } from '../TraderDefinitions/proxyOfferEntry.oa';
 export { proxyOfferId } from '../TraderDefinitions/proxyOfferId.oa';

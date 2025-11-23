@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_openldap } from '../OpenLDAP/id-openldap.va';
 export { id_openldap } from '../OpenLDAP/id-openldap.va';
 
@@ -16,7 +16,7 @@ export { id_openldap } from '../OpenLDAP/id-openldap.va';
  *
  * @constant
  */
-export const id_openldap_oc: OBJECT_IDENTIFIER = new _OID([4], id_openldap);
+export const id_openldap_oc: OBJECT_IDENTIFIER = _OID.fromParts([4], id_openldap);
 /* END_OF_SYMBOL_DEFINITION id_openldap_oc */
 
 /* eslint-enable */

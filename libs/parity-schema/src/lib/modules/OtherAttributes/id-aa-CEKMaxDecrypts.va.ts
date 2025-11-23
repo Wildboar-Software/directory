@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_aa } from '../OtherAttributes/id-aa.va';
 export { id_aa } from '../OtherAttributes/id-aa.va';
 
@@ -16,7 +16,7 @@ export { id_aa } from '../OtherAttributes/id-aa.va';
  *
  * @constant
  */
-export const id_aa_CEKMaxDecrypts: OBJECT_IDENTIFIER = new _OID([31], id_aa);
+export const id_aa_CEKMaxDecrypts: OBJECT_IDENTIFIER = _OID.fromParts([31], id_aa);
 /* END_OF_SYMBOL_DEFINITION id_aa_CEKMaxDecrypts */
 
 /* eslint-enable */

@@ -7,12 +7,12 @@ import {
     RemoteCRLOptions,
     SigningInfo,
 } from "@wildboar/meerkat-types";
-import { Certificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+import { Certificate } from "@wildboar/x500/AuthenticationFramework";
 import {
     SubjectPublicKeyInfo,
     _encode_SubjectPublicKeyInfo,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta";
-import { Extension } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extension.ta";
+} from "@wildboar/x500/AuthenticationFramework";
+import { Extension } from "@wildboar/x500/AuthenticationFramework";
 import {
     DERElement,
     packBits,
@@ -24,188 +24,186 @@ import {
     ASN1Element,
     ASN1TagClass,
     ASN1UniversalType,
-} from "asn1-ts";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+} from "@wildboar/asn1";
+import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { DER } from "asn1-ts/dist/node/functional";
-import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import { DER } from "@wildboar/asn1/functional";
+import { getDateFromTime } from "@wildboar/x500";
 import { createVerify, createPublicKey, KeyObject } from "crypto";
 import {
     AlgorithmIdentifier, _encode_AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta"
+} from "@wildboar/x500/AuthenticationFramework"
 import {
     AltSignatureAlgorithm,
     _decode_AltSignatureAlgorithm,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/AltSignatureAlgorithm.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     SubjectAltPublicKeyInfo, _decode_SubjectAltPublicKeyInfo, _encode_SubjectAltPublicKeyInfo,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/SubjectAltPublicKeyInfo.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     TBSCertificate,
     _encode_TBSCertificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/TBSCertificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import type {
     GeneralSubtree,
     GeneralSubtrees,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralSubtrees.ta";
-import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
+} from "@wildboar/x500/CertificateExtensions";
+import { compareElements } from "@wildboar/x500";
 import type {
     NAME_FORM,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
+} from "@wildboar/x500/InformationFramework";
 import {
     PolicyInformation,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyInformation.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import type {
     PolicyMappingsSyntax_Item,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyMappingsSyntax-Item.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import type {
     GeneralName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     anyPolicy,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/anyPolicy.va";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     PolicyQualifierInfo,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyQualifierInfo.ta";
-import dnWithinGeneralSubtree from "@wildboar/x500/src/lib/utils/dnWithinGeneralSubtree";
-import groupByOID from "../utils/groupByOID";
+} from "@wildboar/x500/CertificateExtensions";
+import { dnWithinGeneralSubtree } from "@wildboar/x500";
+import groupByOID from "../utils/groupByOID.js";
 import { strict as assert } from "assert";
-import generalNameToString from "@wildboar/x500/src/lib/stringifiers/generalNameToString";
+import { generalNameToString } from "@wildboar/x500";
 import type {
     TrustAnchorList,
-} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+} from "@wildboar/tal";
 import {
     sha1WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha1WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     sha256WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha256WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     sha384WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha384WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     sha512WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha512WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     sha224WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha224WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_RSASSA_PSS,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-RSASSA-PSS.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_dsa_with_sha1,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha1.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_dsa_with_sha224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_dsa_with_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA384,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA384.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_Ed25519,
-} from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/id-Ed25519.va";
-import {
     id_Ed448,
-} from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/id-Ed448.va";
+} from "@wildboar/safecurves-pkix-18";
 import {
     id_ad_ocsp,
-} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/id-ad-ocsp.va";
+} from "@wildboar/x500/PkiPmiExternalDataTypes";
 import { URL } from "url";
 import { getOCSPResponse, SignFunction } from "@wildboar/ocsp-client";
-import { crlCurl, ReadDispatcherFunction } from "./crlCurl";
+import { crlCurl, ReadDispatcherFunction } from "./crlCurl.js";
 import type {
     ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadResult, _decode_ReadResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
-import { OperationDispatcher } from "../distributed/OperationDispatcher";
-import type { MeerkatContext } from "../ctx";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { OperationDispatcher } from "../distributed/OperationDispatcher.js";
+import type { MeerkatContext } from "../ctx.js";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     CertificateList, _encode_CertificateList, _encode_CertificateListContent,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     KeyUsage,
     KeyUsage_keyCertSign,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import type {
     KeyPurposeId,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyPurposeId.ta";
-import { subjectDirectoryAttributes } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectDirectoryAttributes.oa";
-import { subjectKeyIdentifier } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectKeyIdentifier.oa";
+} from "@wildboar/x500/CertificateExtensions";
+import { subjectDirectoryAttributes } from "@wildboar/x500/CertificateExtensions";
+import { subjectKeyIdentifier } from "@wildboar/x500/CertificateExtensions";
 import {
     keyUsage,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/keyUsage.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     privateKeyUsagePeriod,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/privateKeyUsagePeriod.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     subjectAltName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     issuerAltName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/issuerAltName.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     basicConstraints,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/basicConstraints.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     nameConstraints,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/nameConstraints.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     cRLDistributionPoints,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/cRLDistributionPoints.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     certificatePolicies,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/certificatePolicies.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     policyMappings,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/policyMappings.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     authorityKeyIdentifier,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/authorityKeyIdentifier.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     policyConstraints,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/policyConstraints.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     extKeyUsage,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/extKeyUsage.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     inhibitAnyPolicy,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/inhibitAnyPolicy.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     subjectAltPublicKeyInfo,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltPublicKeyInfo.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     altSignatureAlgorithm,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/altSignatureAlgorithm.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     altSignatureValue,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/altSignatureValue.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     associatedInformation,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/associatedInformation.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     authorizationValidation,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/authorizationValidation.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     authorityInfoAccess,
-} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/authorityInfoAccess.oa";
+} from "@wildboar/x500/PkiPmiExternalDataTypes";
 import {
     subjectInfoAccess,
-} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/subjectInfoAccess.oa";
+} from "@wildboar/x500/PkiPmiExternalDataTypes";
 import { generateSignature } from "./generateSignature";
 import {
     verifyOCSPResponse,
@@ -214,7 +212,7 @@ import {
     VOR_RETURN_UNKNOWN_INTOLERABLE,
 } from "./verifyOCSPResponse";
 import _ from "lodash";
-import { Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+import { Name } from "@wildboar/x500/InformationFramework";
 
 // So that arguments can be modified by reference.
 type Box<T> = {
@@ -300,7 +298,7 @@ const extensionMandatoryCriticality: Map<IndexableOID, BOOLEAN> = new Map([
     [ subjectInfoAccess["&id"]!.toString(), false ], // Always non-critical.
 ]);
 
-const ietfUserNoticeOID: OBJECT_IDENTIFIER = new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]);
+const ietfUserNoticeOID: OBJECT_IDENTIFIER = ObjectIdentifier.fromParts([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]);
 
 /**
  * @summary Convert `DisplayText` to a `string`
@@ -1142,7 +1140,7 @@ function verifyAltSignature (subjectCert: Certificate, issuerCert: Certificate):
             subjectCert.toBeSigned.extensions
                 ?.filter((ext) => !ext.extnId.isEqualTo(altSignatureValue["&id"]!)),
             subjectCert._unrecognizedExtensionsList,
-        ), DER),
+        )),
         _encode_AlgorithmIdentifier(subjectCert.algorithmIdentifier, DER),
         // The native signature is supposed to be excluded.
     ]).toBytes();
@@ -1170,7 +1168,7 @@ function verifyNativeSignature (subjectCert: Certificate, issuerCert: Certificat
             const tbs = el.sequence[0];
             return tbs.toBytes();
         })()
-        : _encode_TBSCertificate(subjectCert.toBeSigned, DER).toBytes();
+        : _encode_TBSCertificate(subjectCert.toBeSigned).toBytes();
     if (!subjectCert.algorithmIdentifier.algorithm.isEqualTo(subjectCert.toBeSigned.signature.algorithm)) {
         return false; // Signature algorithm OID was altered.
     }

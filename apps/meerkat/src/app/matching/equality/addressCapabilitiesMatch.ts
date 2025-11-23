@@ -1,11 +1,11 @@
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_AddressCapabilities,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/AddressCapabilities.ta";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     Capability,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/Capability.ta";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import { orAddressesMatch } from "./orAddressUtilities";
 
 // addressCapabilitiesMatch MATCHING-RULE ::= {

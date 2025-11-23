@@ -1,18 +1,18 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type {
     OPTIONALLY_PROTECTED,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+} from "@wildboar/x500/EnhancedSecurity";
 import type {
     OPTIONALLY_PROTECTED_SEQ,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED-SEQ.ta";
-import { unpackBits } from "asn1-ts";
+} from "@wildboar/x500/EnhancedSecurity";
+import { unpackBits } from "@wildboar/asn1";
 import {
     DER,
     ASN1Encoder,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { generateSignature } from "./generateSignature";
 
 /**

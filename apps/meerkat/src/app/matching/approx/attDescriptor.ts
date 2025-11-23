@@ -1,10 +1,10 @@
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
 import {
     AttributeDescriptorSyntax,
     _decode_AttributeDescriptorSyntax,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeDescriptorSyntax.ta";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
+import { directoryStringToString } from "@wildboar/x500";
 
 export
 const attDescriptor: EqualityMatcher = (

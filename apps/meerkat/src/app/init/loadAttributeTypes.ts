@@ -1,19 +1,19 @@
 import type { Context } from "@wildboar/meerkat-types";
-import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
-import * as x500mr from "@wildboar/x500/src/lib/collections/matchingRules";
+import { attributes as x500at } from "@wildboar/x500";
+import { matchingRules as x500mr } from "@wildboar/x500";
 import attributeFromInformationObject from "./attributeFromInformationObject";
 import { AttributeUsage } from "@prisma/client";
 import entryUUID from "../schema/attributes/entryUUID";
-import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
-import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+import { userPwdHistory } from "@wildboar/x500/PasswordPolicy";
+import { userPwdRecentlyExpired } from "@wildboar/x500/PasswordPolicy";
 import asn1SyntaxInfo from "../x500/asn1SyntaxToInfo";
 import {
     AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { ObjectIdentifier } from "asn1-ts";
+} from "@wildboar/x500/InformationFramework";
+import { ObjectIdentifier } from "@wildboar/asn1";
 // TODO: Apparently, I forgot to add these to `x500at`... whoops.
-import { uid } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa";
-import { dc } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dc.oa";
+import { uid } from "@wildboar/x500/SelectedAttributeTypes";
+import { dc } from "@wildboar/x500/SelectedAttributeTypes";
 
 // Drivers
 import accessControlSubentryListDriver from "../database/drivers/accessControlSubentryList";
@@ -82,451 +82,433 @@ import vendorVersionDriver from "../database/drivers/vendorVersion";
 // X.400 Attribute Types
 import {
     mhs_acceptable_eits,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-acceptable-eits.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_deliverable_classes,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-deliverable-classes.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_deliverable_content_types,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-deliverable-content-types.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_dl_archive_service,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-archive-service.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_dl_members,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-members.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_dl_policy,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-policy.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_dl_related_lists,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-related-lists.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_dl_submit_permissions,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-submit-permissions.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_dl_subscription_service,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-subscription-service.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_exclusively_acceptable_eits,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-exclusively-acceptable-eits.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_maximum_content_length,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-maximum-content-length.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_message_store_dn,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-message-store-dn.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_or_addresses,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-or-addresses.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_or_addresses_with_capabilities,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-or-addresses-with-capabilities.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_supported_attributes,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-supported-attributes.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_supported_automatic_actions,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-supported-automatic-actions.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_supported_content_types,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-supported-content-types.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_supported_matching_rules,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-supported-matching-rules.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mhs_unacceptable_eits,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-unacceptable-eits.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     routingCollectiveName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/routingCollectiveName.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     connectionGroupName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/connectionGroupName.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     entryConnectionGroupName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/entryConnectionGroupName.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     transitExitConnectionGroupName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/transitExitConnectionGroupName.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     localExitConnectionGroupName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/localExitConnectionGroupName.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     oRAddressSubtrees,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/oRAddressSubtrees.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     mHSMessageTransferAgentName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/mHSMessageTransferAgentName.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     enumeratedFlag,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/enumeratedFlag.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     connectionType,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/connectionType.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     groupMTAPassword,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/groupMTAPassword.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     memberMTA,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/memberMTA.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     securityContext,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/securityContext.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     mTAName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/mTAName.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     globalDomainIdentifier,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/globalDomainIdentifier.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     mTAPassword,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/mTAPassword.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     specificPasswords,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/specificPasswords.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     callingPSAPs,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/callingPSAPs.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     routingAdvice,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/routingAdvice.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     expressionMatches,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/expressionMatches.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     nextLevelComplete,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/nextLevelComplete.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     recipientMDAssignedAlternateRecipient,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/recipientMDAssignedAlternateRecipient.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     oRAddressElementName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/oRAddressElementName.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSCountryName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSCountryName.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSADMDName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSADMDName.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSPRMDName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPRMDName.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSOrganizationName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSOrganizationName.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSOrganizationalUnitName,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSOrganizationalUnitName.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSCommonNameAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSCommonNameAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSSurnameAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSSurnameAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSGivenNameAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSGivenNameAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSInitialsAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSInitialsAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSGenerationQualifierAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSGenerationQualifierAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSNetworkAddressAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSNetworkAddressAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSExtendedNetworkAddressAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSExtendedNetworkAddressAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSTerminalIdentifierAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSTerminalIdentifierAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSTerminalTypeAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSTerminalTypeAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSNumericUserIdentifierAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSNumericUserIdentifierAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSPDSNameAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPDSNameAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSPostalCodeAttribute,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPostalCodeAttribute.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     edi_name,
-} from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-name.oa";
+} from "@wildboar/x400/EDIMUseOfDirectory";
 import {
     edi_routing_address,
-} from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-routing-address.oa";
+} from "@wildboar/x400/EDIMUseOfDirectory";
 import {
     edi_capabilities,
-} from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-capabilities.oa";
+} from "@wildboar/x400/EDIMUseOfDirectory";
 
 // X.700 Attribute Types
 import {
     actions,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/actions.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     additionalInformation,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/additionalInformation.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     andAttributeIds,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/andAttributeIds.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     asn1ModuleContents,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/asn1ModuleContents.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     asn1Version,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/asn1Version.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     attributeGroups,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/attributeGroups.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     attributes,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/attributes.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     behaviour,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/behaviour.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     characterizedBy,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/characterizedBy.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     conditionalPackages,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/conditionalPackages.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     context,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/context.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     create,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/create.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     definedAs,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/definedAs.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     delete_,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/delete.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     derivedFrom,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/derivedFrom.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     derivedOrWithSyntaxChoice,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/derivedOrWithSyntaxChoice.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     description as x700description,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/description.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     documentName,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/documentName.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     documentObjectIdentifier,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/documentObjectIdentifier.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     fixed,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/fixed.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     groupElements,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/groupElements.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     informationStatus,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/informationStatus.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     matchesFor,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/matchesFor.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     modeConfirmed,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/modeConfirmed.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     moduleReference,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/moduleReference.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     namedBySuperiorObjectClass,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/namedBySuperiorObjectClass.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     nameForm,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/nameForm.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     notifications,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/notifications.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     optionallyRegisteredAs,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/optionallyRegisteredAs.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     parameters,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/parameters.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     registeredAs,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/registeredAs.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     specification,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/specification.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     subordinateObjectClass,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/subordinateObjectClass.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     syntaxOrAttribute,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/syntaxOrAttribute.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     templateDefinition,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/templateDefinition.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     templateName,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/templateName.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     withAttribute,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withAttribute.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     withInformationSyntax,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withInformationSyntax.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     withReplySyntax,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withReplySyntax.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 import {
     mappedRelationshipClass,
-} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/mappedRelationshipClass.oa";
+} from "@wildboar/x700/GrmDefinitionDirectoryASN1Module";
 import {
     operationsMapping,
-} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/operationsMapping.oa";
+} from "@wildboar/x700/GrmDefinitionDirectoryASN1Module";
 import {
     qualifiedBy,
-} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/qualifiedBy.oa";
+} from "@wildboar/x700/GrmDefinitionDirectoryASN1Module";
 import {
     relationshipObject,
-} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/relationshipObject.oa";
+} from "@wildboar/x700/GrmDefinitionDirectoryASN1Module";
 import {
     roleMappingSpecificationSet,
-} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/roleMappingSpecificationSet.oa";
+} from "@wildboar/x700/GrmDefinitionDirectoryASN1Module";
 import {
     roleSpecifier,
-} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/roleSpecifier.oa";
+} from "@wildboar/x700/GrmDefinitionDirectoryASN1Module";
 import {
     supports,
-} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/supports.oa";
+} from "@wildboar/x700/GrmDefinitionDirectoryASN1Module";
 import {
     supportedCmipProfiles,
-} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportedCmipProfiles.oa";
+} from "@wildboar/x700/RepertoireDirectoryASN1Module";
 import {
     supportedCmipVersion,
-} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportedCmipVersion.oa";
+} from "@wildboar/x700/RepertoireDirectoryASN1Module";
 import {
     supportedCmisFunctionalUnits,
-} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportedCmisFunctionalUnits.oa";
+} from "@wildboar/x700/RepertoireDirectoryASN1Module";
 import {
     supportedSmaseFunctionalUnits,
-} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportedSmaseFunctionalUnits.oa";
+} from "@wildboar/x700/RepertoireDirectoryASN1Module";
 import {
     supportsMKMglobalNames,
-} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportsMKMglobalNames.oa";
+} from "@wildboar/x700/RepertoireDirectoryASN1Module";
 
 // Platform Certificate Attribute Types
 import {
     tCGPlatformSpecification,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/tCGPlatformSpecification.oa";
-import {
     tCGCredentialType,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/tCGCredentialType.oa";
-import {
     platformManufacturerStr,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformManufacturerStr.oa";
-import {
     platformModel,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformModel.oa";
-import {
     platformVersion,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformVersion.oa";
-import {
     platformSerial,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformSerial.oa";
-import {
     platformManufacturerId,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformManufacturerId.oa";
-import {
     tBBSecurityAssertions,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/tBBSecurityAssertions.oa";
-import {
     platformConfiguration,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformConfiguration.oa";
-import {
     platformConfigUri,
-} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformConfigUri.oa";
+} from "@wildboar/platcert";
 
 // PKCS #9 Attribute Types
 import {
     pKCS7PDU,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pKCS7PDU.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     userPKCS12,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/userPKCS12.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     pKCS15Token,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pKCS15Token.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     encryptedPrivateKeyInfo,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/encryptedPrivateKeyInfo.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     emailAddress,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/emailAddress.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     unstructuredName,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredName.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     unstructuredAddress,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredAddress.oa";
+} from "@wildboar/pkcs/PKCS-9";
 // import {
 //     dateOfBirth,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/dateOfBirth.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 // import {
 //     placeOfBirth,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/placeOfBirth.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 // import {
 //     gender,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/gender.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 // import {
 //     countryOfCitizenship,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfCitizenship.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 // import {
 //     countryOfResidence,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfResidence.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 // import { // This has the same ID as pseudonym from X.520, but different matching rules!
 //     pseudonym,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/pseudonym.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 // import {
 //     contentType,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/contentType.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 // import {
 //     messageDigest,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/messageDigest.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 // import {
 //     signingTime,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingTime.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 import {
     randomNonce,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/randomNonce.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     counterSignature,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/counterSignature.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     challengePassword,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/challengePassword.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     extensionRequest,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/extensionRequest.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     extendedCertificateAttributes,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/extendedCertificateAttributes.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     friendlyName,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/friendlyName.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     localKeyId,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/localKeyId.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     signingDescription,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingDescription.oa";
+} from "@wildboar/pkcs/PKCS-9";
 // import {
 //     smimeCapabilities,
-// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/smimeCapabilities.oa";
+// } from "@wildboar/pkcs/PKCS-9";
 
 // IANA / LDAP Parity Schema
 // import {
@@ -972,127 +954,127 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsTtl.oa";
 // import {
 //     authPassword,
-// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPassword.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPassword.oa.js";
 // import {
 //     supportedAuthPasswordSchemes,
-// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/supportedAuthPasswordSchemes.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/supportedAuthPasswordSchemes.oa.js";
 import {
     automountInformation,
 } from "@wildboar/parity-schema/src/lib/modules/AutoFS-Schema/automountInformation.oa";
 import {
     corbaIor,
-} from "@wildboar/parity-schema/src/lib/modules/CORBA/corbaIor.oa";
+} from "@wildboar/parity-schema/src/lib/modules/CORBA/corbaIor.oa.js";
 import {
     corbaRepositoryId,
-} from "@wildboar/parity-schema/src/lib/modules/CORBA/corbaRepositoryId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/CORBA/corbaRepositoryId.oa.js";
 import {
     aRecord,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/aRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/aRecord.oa.js";
 import {
     associatedDomain,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/associatedDomain.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/associatedDomain.oa.js";
 import {
     associatedName,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/associatedName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/associatedName.oa.js";
 import {
     audio,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/audio.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/audio.oa.js";
 import {
     buildingName,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/buildingName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/buildingName.oa.js";
 import {
     cNAMERecord,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/cNAMERecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/cNAMERecord.oa.js";
 import {
     dITRedirect,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/dITRedirect.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/dITRedirect.oa.js";
 import {
     documentAuthor,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentAuthor.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentAuthor.oa.js";
 import {
     documentIdentifier,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentIdentifier.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentIdentifier.oa.js";
 import {
     documentLocation,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentLocation.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentLocation.oa.js";
 import {
     documentPublisher,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentPublisher.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentPublisher.oa.js";
 import {
     documentTitle,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentTitle.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentTitle.oa.js";
 import {
     documentVersion,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentVersion.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentVersion.oa.js";
 import {
     favouriteDrink,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/favouriteDrink.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/favouriteDrink.oa.js";
 import {
     friendlyCountryName,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/friendlyCountryName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/friendlyCountryName.oa.js";
 import {
     homePostalAddress,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/homePostalAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/homePostalAddress.oa.js";
 import {
     homeTelephoneNumber,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/homeTelephoneNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/homeTelephoneNumber.oa.js";
 import {
     host,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/host.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/host.oa.js";
 import {
     info,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/info.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/info.oa.js";
 import {
     janetMailbox,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/janetMailbox.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/janetMailbox.oa.js";
 import {
     mail,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/mail.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/mail.oa.js";
 import {
     mailPreferenceOption,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/mailPreferenceOption.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/mailPreferenceOption.oa.js";
 import {
     manager,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/manager.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/manager.oa.js";
 import {
     mDRecord,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/mDRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/mDRecord.oa.js";
 import {
     mobileTelephoneNumber,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/mobileTelephoneNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/mobileTelephoneNumber.oa.js";
 import {
     mxRecord,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/mxRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/mxRecord.oa.js";
 import {
     nSRecord,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/nSRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/nSRecord.oa.js";
 import {
     organizationalStatus,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/organizationalStatus.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/organizationalStatus.oa.js";
 import {
     pagerTelephoneNumber,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/pagerTelephoneNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/pagerTelephoneNumber.oa.js";
 import {
     personalTitle,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/personalTitle.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/personalTitle.oa.js";
 import {
     roomNumber,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/roomNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/roomNumber.oa.js";
 import {
     secretary,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/secretary.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/secretary.oa.js";
 import {
     sOARecord,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/sOARecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/sOARecord.oa.js";
 import {
     textEncodedORAddress,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/textEncodedORAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/textEncodedORAddress.oa.js";
 import {
     uniqueIdentifier,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/uniqueIdentifier.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/uniqueIdentifier.oa.js";
 import {
     userClass,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/userClass.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/userClass.oa.js";
 import {
     dhcpAddressState,
 } from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpAddressState.oa";
@@ -1212,1207 +1194,1207 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpVersion.oa";
 import {
     numSubordinates,
-} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa.js";
 import {
     changeNumber,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/changeNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/changeNumber.oa.js";
 import {
     changes,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/changes.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/changes.oa.js";
 import {
     changeTime,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/changeTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/changeTime.oa.js";
 import {
     changeType,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/changeType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/changeType.oa.js";
 import {
     deleteOldRdn,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/deleteOldRdn.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/deleteOldRdn.oa.js";
 import {
     newRdn,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/newRdn.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/newRdn.oa.js";
 import {
     newSuperior,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/newSuperior.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/newSuperior.oa.js";
 import {
     nsUniqueId,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/nsUniqueId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/nsUniqueId.oa.js";
 import {
     targetDn,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/targetDn.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/targetDn.oa.js";
 import {
     targetUniqueId,
-} from "@wildboar/parity-schema/src/lib/modules/DSEE/targetUniqueId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DSEE/targetUniqueId.oa.js";
 import {
     attributeMap,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/attributeMap.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/attributeMap.oa.js";
 import {
     authenticationMethod,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/authenticationMethod.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/authenticationMethod.oa.js";
 import {
     bindTimeLimit,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/bindTimeLimit.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/bindTimeLimit.oa.js";
 import {
     credentialLevel,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/credentialLevel.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/credentialLevel.oa.js";
 import {
     defaultSearchBase,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/defaultSearchBase.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/defaultSearchBase.oa.js";
 import {
     defaultSearchScope,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/defaultSearchScope.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/defaultSearchScope.oa.js";
 import {
     defaultServerList,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/defaultServerList.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/defaultServerList.oa.js";
 import {
     dereferenceAliases,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/dereferenceAliases.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/dereferenceAliases.oa.js";
 import {
     followReferrals,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/followReferrals.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/followReferrals.oa.js";
 import {
     objectclassMap,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/objectclassMap.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/objectclassMap.oa.js";
 import {
     preferredServerList,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/preferredServerList.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/preferredServerList.oa.js";
 import {
     profileTTL,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/profileTTL.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/profileTTL.oa.js";
 import {
     searchTimeLimit,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/searchTimeLimit.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/searchTimeLimit.oa.js";
 import {
     serviceAuthenticationMethod,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/serviceAuthenticationMethod.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/serviceAuthenticationMethod.oa.js";
 import {
     serviceCredentialLevel,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/serviceCredentialLevel.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/serviceCredentialLevel.oa.js";
 import {
     serviceSearchDescriptor,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/serviceSearchDescriptor.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/serviceSearchDescriptor.oa.js";
 import {
     dgIdentity,
-} from "@wildboar/parity-schema/src/lib/modules/DynGroup/dgIdentity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DynGroup/dgIdentity.oa.js";
 import {
     memberURL,
-} from "@wildboar/parity-schema/src/lib/modules/DynGroup/memberURL.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DynGroup/memberURL.oa.js";
 import {
     eduPersonAffiliation,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonAffiliation.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonAffiliation.oa.js";
 import {
     eduPersonAssurance,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonAssurance.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonAssurance.oa.js";
 import {
     eduPersonEntitlement,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonEntitlement.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonEntitlement.oa.js";
 import {
     eduPersonNickName,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonNickName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonNickName.oa.js";
 import {
     eduPersonOrcid,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonOrcid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonOrcid.oa.js";
 import {
     eduPersonOrgDN,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonOrgDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonOrgDN.oa.js";
 import {
     eduPersonOrgUnitDN,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonOrgUnitDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonOrgUnitDN.oa.js";
 import {
     eduPersonPrimaryAffiliation,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonPrimaryAffiliation.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonPrimaryAffiliation.oa.js";
 import {
     eduPersonPrimaryOrgUnitDN,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonPrimaryOrgUnitDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonPrimaryOrgUnitDN.oa.js";
 import {
     eduPersonPrincipalName,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonPrincipalName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonPrincipalName.oa.js";
 import {
     eduPersonPrincipalNamePrior,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonPrincipalNamePrior.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonPrincipalNamePrior.oa.js";
 import {
     eduPersonScopedAffiliation,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonScopedAffiliation.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonScopedAffiliation.oa.js";
 import {
     eduPersonTargetedID,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonTargetedID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonTargetedID.oa.js";
 import {
     eduPersonUniqueId,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonUniqueId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonUniqueId.oa.js";
 import {
     fedfsAnnotation,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsAnnotation.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsAnnotation.oa.js";
 import {
     fedfsDescr,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsDescr.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsDescr.oa.js";
 import {
     fedfsFslUuid,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsFslUuid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsFslUuid.oa.js";
 import {
     fedfsFsnTTL,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsFsnTTL.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsFsnTTL.oa.js";
 import {
     fedfsFsnUuid,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsFsnUuid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsFsnUuid.oa.js";
 import {
     fedfsNceDN,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNceDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNceDN.oa.js";
 import {
     fedfsNfsClassChange,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassChange.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassChange.oa.js";
 import {
     fedfsNfsClassFileid,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassFileid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassFileid.oa.js";
 import {
     fedfsNfsClassHandle,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassHandle.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassHandle.oa.js";
 import {
     fedfsNfsClassReaddir,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassReaddir.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassReaddir.oa.js";
 import {
     fedfsNfsClassSimul,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassSimul.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassSimul.oa.js";
 import {
     fedfsNfsClassWritever,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassWritever.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsClassWritever.oa.js";
 import {
     fedfsNfsCurrency,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsCurrency.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsCurrency.oa.js";
 import {
     fedfsNfsGenFlagGoing,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsGenFlagGoing.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsGenFlagGoing.oa.js";
 import {
     fedfsNfsGenFlagSplit,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsGenFlagSplit.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsGenFlagSplit.oa.js";
 import {
     fedfsNfsGenFlagWritable,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsGenFlagWritable.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsGenFlagWritable.oa.js";
 import {
     fedfsNfsReadOrder,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsReadOrder.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsReadOrder.oa.js";
 import {
     fedfsNfsReadRank,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsReadRank.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsReadRank.oa.js";
 import {
     fedfsNfsTransFlagRdma,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsTransFlagRdma.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsTransFlagRdma.oa.js";
 import {
     fedfsNfsURI,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsURI.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsURI.oa.js";
 import {
     fedfsNfsValidFor,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsValidFor.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsValidFor.oa.js";
 import {
     fedfsNfsVarSub,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsVarSub.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsVarSub.oa.js";
 import {
     fedfsNfsWriteOrder,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsWriteOrder.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsWriteOrder.oa.js";
 import {
     fedfsNfsWriteRank,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsWriteRank.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsWriteRank.oa.js";
 import {
     fedfsUuid,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsUuid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsUuid.oa.js";
 import {
     mailaccess,
-} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/mailaccess.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/mailaccess.oa.js";
 import {
     mailbox,
-} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/mailbox.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/mailbox.oa.js";
 import {
     maildest,
-} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/maildest.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/maildest.oa.js";
 import {
     maildrop,
-} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/maildrop.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/maildrop.oa.js";
 import {
     mailRoutingAddress,
-} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/mailRoutingAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/mailRoutingAddress.oa.js";
 import {
     transport,
-} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/transport.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetMailSchema/transport.oa.js";
 import {
     carLicense,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/carLicense.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/carLicense.oa.js";
 import {
     departmentNumber,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/departmentNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/departmentNumber.oa.js";
 import {
     displayName,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/displayName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/displayName.oa.js";
 import {
     employeeNumber,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/employeeNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/employeeNumber.oa.js";
 import {
     employeeType,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/employeeType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/employeeType.oa.js";
 import {
     preferredLanguage,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/preferredLanguage.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/preferredLanguage.oa.js";
 import {
     javaClassName,
-} from "@wildboar/parity-schema/src/lib/modules/Java/javaClassName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Java/javaClassName.oa.js";
 import {
     javaClassNames,
-} from "@wildboar/parity-schema/src/lib/modules/Java/javaClassNames.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Java/javaClassNames.oa.js";
 import {
     javaCodebase,
-} from "@wildboar/parity-schema/src/lib/modules/Java/javaCodebase.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Java/javaCodebase.oa.js";
 import {
     javaDoc,
-} from "@wildboar/parity-schema/src/lib/modules/Java/javaDoc.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Java/javaDoc.oa.js";
 import {
     javaFactory,
-} from "@wildboar/parity-schema/src/lib/modules/Java/javaFactory.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Java/javaFactory.oa.js";
 import {
     javaReferenceAddress,
-} from "@wildboar/parity-schema/src/lib/modules/Java/javaReferenceAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Java/javaReferenceAddress.oa.js";
 import {
     javaSerializedData,
-} from "@wildboar/parity-schema/src/lib/modules/Java/javaSerializedData.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Java/javaSerializedData.oa.js";
 import {
     krbHostServer,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbHostServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbHostServer.oa.js";
 import {
     krbKdcServers,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbKdcServers.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbKdcServers.oa.js";
 import {
     krbLdapServers,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbLdapServers.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbLdapServers.oa.js";
 import {
     krbMaxRenewableAge,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbMaxRenewableAge.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbMaxRenewableAge.oa.js";
 import {
     krbMaxTicketLife,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbMaxTicketLife.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbMaxTicketLife.oa.js";
 import {
     krbPrincipalExpiration,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPrincipalExpiration.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPrincipalExpiration.oa.js";
 import {
     krbPrincipalName,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPrincipalName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPrincipalName.oa.js";
 import {
     krbPrincipalReferences,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPrincipalReferences.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPrincipalReferences.oa.js";
 import {
     krbPrincipalType,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPrincipalType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPrincipalType.oa.js";
 import {
     krbPwdServers,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPwdServers.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbPwdServers.oa.js";
 import {
     krbRealmReferences,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbRealmReferences.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbRealmReferences.oa.js";
 import {
     krbSearchScope,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbSearchScope.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbSearchScope.oa.js";
 import {
     krbTicketFlags,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbTicketFlags.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbTicketFlags.oa.js";
 import {
     krbUPEnabled,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbUPEnabled.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosSchema/krbUPEnabled.oa.js";
 import {
     krb5AccountDisabled,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5AccountDisabled.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5AccountDisabled.oa.js";
 import {
     krb5AccountExpirationTime,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5AccountExpirationTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5AccountExpirationTime.oa.js";
 import {
     krb5AccountLockedOut,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5AccountLockedOut.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5AccountLockedOut.oa.js";
 import {
     krb5EncryptionType,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5EncryptionType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5EncryptionType.oa.js";
 import {
     krb5KDCFlags,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5KDCFlags.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5KDCFlags.oa.js";
 import {
     krb5Key,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5Key.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5Key.oa.js";
 import {
     krb5KeyVersionNumber,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5KeyVersionNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5KeyVersionNumber.oa.js";
 import {
     krb5MaxLife,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5MaxLife.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5MaxLife.oa.js";
 import {
     krb5MaxRenew,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5MaxRenew.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5MaxRenew.oa.js";
 import {
     krb5PasswordEnd,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5PasswordEnd.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5PasswordEnd.oa.js";
 import {
     krb5PrincipalName,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5PrincipalName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5PrincipalName.oa.js";
 import {
     krb5PrincipalRealm,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5PrincipalRealm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5PrincipalRealm.oa.js";
 import {
     krb5RealmName,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5RealmName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5RealmName.oa.js";
 import {
     krb5ValidEnd,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5ValidEnd.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5ValidEnd.oa.js";
 import {
     krb5ValidStart,
-} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5ValidStart.oa";
+} from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5ValidStart.oa.js";
 import {
     pwdAccountLockedTime,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa.js";
 import {
     pwdAllowUserChange,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAllowUserChange.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAllowUserChange.oa.js";
 // import {
 //     pwdAttribute,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAttribute.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAttribute.oa.js";
 import {
     pwdChangedTime,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdChangedTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdChangedTime.oa.js";
 import {
     pwdCheckQuality,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdCheckQuality.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdCheckQuality.oa.js";
 // import {
 //     pwdEndTime,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdEndTime.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdEndTime.oa.js";
 import {
     pwdExpireWarning,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdExpireWarning.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdExpireWarning.oa.js";
 import {
     pwdFailureCountInterval,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdFailureCountInterval.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdFailureCountInterval.oa.js";
 // import {
 //     pwdFailureTime,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdFailureTime.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdFailureTime.oa.js";
 import {
     pwdGraceAuthNLimit,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceAuthNLimit.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceAuthNLimit.oa.js";
 import {
     pwdGraceExpire,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceExpire.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceExpire.oa.js";
 import {
     pwdGraceUseTime,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa.js";
 // import {
 //     pwdHistory,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdHistory.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdHistory.oa.js";
 import {
     pwdInHistory,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdInHistory.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdInHistory.oa.js";
 import {
     pwdLastSuccess,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa.js";
 import {
     pwdLockout,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa.js";
 // import {
 //     pwdLockoutDuration,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockoutDuration.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockoutDuration.oa.js";
 // import {
 //     pwdMaxAge,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxAge.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxAge.oa.js";
 import {
     pwdMaxDelay,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxDelay.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxDelay.oa.js";
 import {
     pwdMaxFailure,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxFailure.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxFailure.oa.js";
 import {
     pwdMaxIdle,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxIdle.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxIdle.oa.js";
 import {
     pwdMaxLength,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa.js";
 import {
     pwdMinAge,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMinAge.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMinAge.oa.js";
 import {
     pwdMinDelay,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMinDelay.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMinDelay.oa.js";
 // import {
 //     pwdMinLength,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMinLength.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMinLength.oa.js";
 import {
     pwdMustChange,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMustChange.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMustChange.oa.js";
 import {
     pwdPolicySubentry,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdPolicySubentry.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdPolicySubentry.oa.js";
 import {
     pwdReset,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa.js";
 import {
     pwdSafeModify,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdSafeModify.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdSafeModify.oa.js";
 // import {
 //     pwdStartTime,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdStartTime.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdStartTime.oa.js";
 // import {
 //     ref,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPReferral/ref.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPReferral/ref.oa.js";
 import {
     gpgFingerprint,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/gpgFingerprint.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/gpgFingerprint.oa.js";
 import {
     gpgMailbox,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/gpgMailbox.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/gpgMailbox.oa.js";
 import {
     gpgSubCertID,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/gpgSubCertID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/gpgSubCertID.oa.js";
 import {
     gpgSubFingerprint,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/gpgSubFingerprint.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/gpgSubFingerprint.oa.js";
 import {
     pgpBaseKeySpaceDN,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpBaseKeySpaceDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpBaseKeySpaceDN.oa.js";
 import {
     pgpCertID,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpCertID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpCertID.oa.js";
 import {
     pgpDisabled,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpDisabled.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpDisabled.oa.js";
 import {
     pgpKey,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKey.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKey.oa.js";
 import {
     pgpKeyCreateTime,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyCreateTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyCreateTime.oa.js";
 import {
     pgpKeyExpireTime,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyExpireTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyExpireTime.oa.js";
 import {
     pgpKeyID,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyID.oa.js";
 import {
     pgpKeySize,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeySize.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeySize.oa.js";
 import {
     pgpKeyType,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyType.oa.js";
 import {
     pgpRevoked,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpRevoked.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpRevoked.oa.js";
 import {
     pgpSignerID,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpSignerID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpSignerID.oa.js";
 import {
     pgpSoftware,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpSoftware.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpSoftware.oa.js";
 import {
     pgpSubKeyID,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpSubKeyID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpSubKeyID.oa.js";
 import {
     pgpUserID,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpUserID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpUserID.oa.js";
 import {
     pgpVersion,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpVersion.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpVersion.oa.js";
 import {
     mailHost,
-} from "@wildboar/parity-schema/src/lib/modules/Misc/mailHost.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Misc/mailHost.oa.js";
 // import {
 //     mailLocalAddress,
-// } from "@wildboar/parity-schema/src/lib/modules/Misc/mailLocalAddress.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/Misc/mailLocalAddress.oa.js";
 import { // Duplicate attribute type name. Using the other one, because it is multi-valued and subtypes `mail`.
     mailRoutingAddress as openldapMailRoutingAddress,
-} from "@wildboar/parity-schema/src/lib/modules/Misc/mailRoutingAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Misc/mailRoutingAddress.oa.js";
 import {
     associatedDomain as associatedX400Domain,
-} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/associatedDomain.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/associatedDomain.oa.js";
 import {
     associatedInternetGateway,
-} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/associatedInternetGateway.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/associatedInternetGateway.oa.js";
 import {
     associatedORAddress,
-} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/associatedORAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/associatedORAddress.oa.js";
 import {
     associatedX400Gateway,
-} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/associatedX400Gateway.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/associatedX400Gateway.oa.js";
 import {
     mcgamTables,
-} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/mcgamTables.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/mcgamTables.oa.js";
 import {
     oRAddressComponentType,
-} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/oRAddressComponentType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MIXERAddressMapping/oRAddressComponentType.oa.js";
 import {
     custom1,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/custom1.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/custom1.oa.js";
 import {
     custom2,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/custom2.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/custom2.oa.js";
 import {
     custom3,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/custom3.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/custom3.oa.js";
 import {
     custom4,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/custom4.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/custom4.oa.js";
 import {
     homeurl,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/homeurl.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/homeurl.oa.js";
 import {
     mozillaHomeCountryName,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomeCountryName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomeCountryName.oa.js";
 import {
     mozillaHomeFriendlyCountryName,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomeFriendlyCountryName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomeFriendlyCountryName.oa.js";
 import {
     mozillaHomeLocalityName,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomeLocalityName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomeLocalityName.oa.js";
 import {
     mozillaHomePostalAddress2,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomePostalAddress2.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomePostalAddress2.oa.js";
 import {
     mozillaHomePostalCode,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomePostalCode.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomePostalCode.oa.js";
 import {
     mozillaHomeState,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomeState.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaHomeState.oa.js";
 import {
     mozillaPostalAddress2,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaPostalAddress2.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaPostalAddress2.oa.js";
 import {
     mozillaSecondEmail,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaSecondEmail.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/mozillaSecondEmail.oa.js";
 import {
     nsAIMid,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/nsAIMid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/nsAIMid.oa.js";
 import {
     workurl,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/workurl.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/workurl.oa.js";
 import {
     xmozillanickname,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/xmozillanickname.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/xmozillanickname.oa.js";
 import {
     xmozillausehtmlmail,
-} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/xmozillausehtmlmail.oa";
+} from "@wildboar/parity-schema/src/lib/modules/MozillaSchema/xmozillausehtmlmail.oa.js";
 import {
     authorizedService,
-} from "@wildboar/parity-schema/src/lib/modules/NameServiceAdditionalSchema/authorizedService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NameServiceAdditionalSchema/authorizedService.oa.js";
 import {
     bootFile,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/bootFile.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/bootFile.oa.js";
 import {
     bootParameter,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/bootParameter.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/bootParameter.oa.js";
 import {
     gecos,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/gecos.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/gecos.oa.js";
 import {
     gidNumber,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/gidNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/gidNumber.oa.js";
 import {
     homeDirectory,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/homeDirectory.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/homeDirectory.oa.js";
 import {
     ipHostNumber,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ipHostNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipHostNumber.oa.js";
 import {
     ipNetmaskNumber,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ipNetmaskNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipNetmaskNumber.oa.js";
 import {
     ipNetworkNumber,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ipNetworkNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipNetworkNumber.oa.js";
 import {
     ipProtocolNumber,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ipProtocolNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipProtocolNumber.oa.js";
 import {
     ipServicePort,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ipServicePort.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipServicePort.oa.js";
 import {
     ipServiceProtocol,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ipServiceProtocol.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipServiceProtocol.oa.js";
 import {
     loginShell,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/loginShell.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/loginShell.oa.js";
 import {
     macAddress,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/macAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/macAddress.oa.js";
 import {
     memberNisNetgroup,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/memberNisNetgroup.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/memberNisNetgroup.oa.js";
 import {
     memberUid,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/memberUid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/memberUid.oa.js";
 import {
     nisMapEntry,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/nisMapEntry.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/nisMapEntry.oa.js";
 import {
     nisMapName,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/nisMapName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/nisMapName.oa.js";
 import {
     nisNetgroupTriple,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/nisNetgroupTriple.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/nisNetgroupTriple.oa.js";
 import {
     oncRpcNumber,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/oncRpcNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/oncRpcNumber.oa.js";
 import {
     shadowExpire,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowExpire.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowExpire.oa.js";
 import {
     shadowFlag,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowFlag.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowFlag.oa.js";
 import {
     shadowInactive,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowInactive.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowInactive.oa.js";
 import {
     shadowLastChange,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowLastChange.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowLastChange.oa.js";
 import {
     shadowMax,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowMax.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowMax.oa.js";
 import {
     shadowMin,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowMin.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowMin.oa.js";
 import {
     shadowWarning,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowWarning.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowWarning.oa.js";
 import {
     uidNumber,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/uidNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/uidNumber.oa.js";
 import {
     legalName,
-} from "@wildboar/parity-schema/src/lib/modules/NSCommonSchema/legalName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NSCommonSchema/legalName.oa.js";
 import {
     administratorsAddress,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/administratorsAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/administratorsAddress.oa.js";
 // import {
 //     emailAddress,
-// } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/emailAddress.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/emailAddress.oa.js";
 // import { // TODO: Eventually support this, when you track the change number.
 //     etag,
-// } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/etag.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/etag.oa.js";
 import {
     fullVendorVersion,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa.js";
 import {
     isMemberOf,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa.js";
 // import {
 //     configContext,
-// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/configContext.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/configContext.oa.js";
 // import {
 //     monitorContext,
-// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/monitorContext.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/monitorContext.oa.js";
 import {
     superiorUUID,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa.js";
 // import {
 //     syncreplCookie,
-// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncreplCookie.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncreplCookie.oa.js";
 import {
     syncTimestamp,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa.js";
 import {
     labeledURI,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAPCoreSchema/labeledURI.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAPCoreSchema/labeledURI.oa.js";
 import {
     pamExcludeSuffix,
-} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamExcludeSuffix.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamExcludeSuffix.oa.js";
 import {
     pamFallback,
-} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamFallback.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamFallback.oa.js";
 import {
     pamFilter,
-} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamFilter.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamFilter.oa.js";
 import {
     pamIDAttr,
-} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamIDAttr.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamIDAttr.oa.js";
 import {
     pamIDMapMethod,
-} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamIDMapMethod.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamIDMapMethod.oa.js";
 import {
     pamIncludeSuffix,
-} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamIncludeSuffix.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamIncludeSuffix.oa.js";
 import {
     pamMissingSuffix,
-} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamMissingSuffix.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamMissingSuffix.oa.js";
 import {
     pamSecure,
-} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamSecure.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamSecure.oa.js";
 import {
     pamService,
-} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PAMSchema/pamService.oa.js";
 import {
     ftpDownloadBandwidth,
-} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpDownloadBandwidth.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpDownloadBandwidth.oa.js";
 import {
     ftpDownloadRatio,
-} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpDownloadRatio.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpDownloadRatio.oa.js";
 import {
     ftpGid,
-} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpGid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpGid.oa.js";
 import {
     ftpQuotaFiles,
-} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpQuotaFiles.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpQuotaFiles.oa.js";
 import {
     ftpQuotaMBytes,
-} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpQuotaMBytes.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpQuotaMBytes.oa.js";
 import {
     ftpStatus,
-} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpStatus.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpStatus.oa.js";
 import {
     ftpUid,
-} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpUid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpUid.oa.js";
 import {
     ftpUploadBandwidth,
-} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpUploadBandwidth.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpUploadBandwidth.oa.js";
 import {
     ftpUploadRatio,
-} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpUploadRatio.oa";
+} from "@wildboar/parity-schema/src/lib/modules/PureFTPdSchema/ftpUploadRatio.oa.js";
 import {
     accountStatus,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/accountStatus.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/accountStatus.oa.js";
 import {
     confirmtext,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/confirmtext.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/confirmtext.oa.js";
 import {
     deliveryMode,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/deliveryMode.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/deliveryMode.oa.js";
 import {
     deliveryProgramPath,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/deliveryProgramPath.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/deliveryProgramPath.oa.js";
 import {
     dnmember,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/dnmember.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/dnmember.oa.js";
 import {
     dnmoderator,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/dnmoderator.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/dnmoderator.oa.js";
 import {
     dnsender,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/dnsender.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/dnsender.oa.js";
 import {
     filtermember,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/filtermember.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/filtermember.oa.js";
 import {
     filtersender,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/filtersender.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/filtersender.oa.js";
 import {
     mailAlternateAddress,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailAlternateAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailAlternateAddress.oa.js";
 import {
     mailForwardingAddress,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailForwardingAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailForwardingAddress.oa.js";
 import {
     mailHost as qmailHost,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailHost.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailHost.oa.js";
 import {
     mailMessageStore,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailMessageStore.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailMessageStore.oa.js";
 import {
     mailQuotaCount,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailQuotaCount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailQuotaCount.oa.js";
 import {
     mailQuotaSize,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailQuotaSize.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailQuotaSize.oa.js";
 import {
     mailReplyText,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailReplyText.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailReplyText.oa.js";
 import {
     mailSizeMax,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailSizeMax.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailSizeMax.oa.js";
 import {
     membersonly,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/membersonly.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/membersonly.oa.js";
 import {
     moderatortext,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/moderatortext.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/moderatortext.oa.js";
 import {
     qladnmanager,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qladnmanager.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qladnmanager.oa.js";
 import {
     qlaDomainList,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaDomainList.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaDomainList.oa.js";
 import {
     qlaMailHostList,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailHostList.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailHostList.oa.js";
 import {
     qlaMailMStorePrefix,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailMStorePrefix.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailMStorePrefix.oa.js";
 import {
     qlaMailQuotaCount,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailQuotaCount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailQuotaCount.oa.js";
 import {
     qlaMailQuotaSize,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailQuotaSize.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailQuotaSize.oa.js";
 import {
     qlaMailSizeMax,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailSizeMax.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaMailSizeMax.oa.js";
 import {
     qlaQmailGid,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaQmailGid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaQmailGid.oa.js";
 import {
     qlaQmailUid,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaQmailUid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaQmailUid.oa.js";
 import {
     qlaUidPrefix,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaUidPrefix.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qlaUidPrefix.oa.js";
 import {
     qmailAccountPurge,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailAccountPurge.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailAccountPurge.oa.js";
 import {
     qmailDotMode,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailDotMode.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailDotMode.oa.js";
 import {
     qmailGID,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailGID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailGID.oa.js";
 import {
     qmailUID,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailUID.oa.js";
 import {
     rfc822member,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/rfc822member.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/rfc822member.oa.js";
 import {
     rfc822moderator,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/rfc822moderator.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/rfc822moderator.oa.js";
 import {
     rfc822sender,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/rfc822sender.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/rfc822sender.oa.js";
 import {
     senderconfirm,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/senderconfirm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/senderconfirm.oa.js";
 import {
     dialupAccess,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/dialupAccess.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/dialupAccess.oa.js";
 import {
     freeradiusDhcpv4Attribute,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv4Attribute.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv4Attribute.oa.js";
 import {
     freeradiusDhcpv4GatewayAddr,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv4GatewayAddr.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv4GatewayAddr.oa.js";
 import {
     freeradiusDhcpv4GatewayIdentifier,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv4GatewayIdentifier.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv4GatewayIdentifier.oa.js";
 import {
     freeradiusDhcpv4PoolName,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv4PoolName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv4PoolName.oa.js";
 import {
     freeradiusDhcpv6Attribute,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6Attribute.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6Attribute.oa.js";
 import {
     freeradiusDhcpv6GatewayAddr,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6GatewayAddr.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6GatewayAddr.oa.js";
 import {
     freeradiusDhcpv6GatewayIdentifier,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6GatewayIdentifier.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6GatewayIdentifier.oa.js";
 import {
     freeradiusDhcpv6PoolNameNA,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6PoolNameNA.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6PoolNameNA.oa.js";
 import {
     freeradiusDhcpv6PoolNamePD,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6PoolNamePD.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6PoolNamePD.oa.js";
 import {
     freeradiusDhcpv6PoolNameTA,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6PoolNameTA.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/freeradiusDhcpv6PoolNameTA.oa.js";
 import {
     radiusAcctAuthentic,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctAuthentic.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctAuthentic.oa.js";
 import {
     radiusAcctInputOctets,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctInputOctets.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctInputOctets.oa.js";
 import {
     radiusAcctInterval,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctInterval.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctInterval.oa.js";
 import {
     radiusAcctOutputOctets,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctOutputOctets.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctOutputOctets.oa.js";
 import {
     radiusAcctSessionId,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctSessionId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctSessionId.oa.js";
 import {
     radiusAcctSessionTime,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctSessionTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctSessionTime.oa.js";
 import {
     radiusAcctStartTime,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctStartTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctStartTime.oa.js";
 import {
     radiusAcctStopTime,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctStopTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctStopTime.oa.js";
 import {
     radiusAcctTerminateCause,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctTerminateCause.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctTerminateCause.oa.js";
 import {
     radiusAcctUniqueId,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctUniqueId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctUniqueId.oa.js";
 import {
     radiusAcctUpdateTime,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctUpdateTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAcctUpdateTime.oa.js";
 import {
     radiusArapFeatures,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusArapFeatures.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusArapFeatures.oa.js";
 import {
     radiusArapSecurity,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusArapSecurity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusArapSecurity.oa.js";
 import {
     radiusArapZoneAccess,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusArapZoneAccess.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusArapZoneAccess.oa.js";
 import {
     radiusAttribute,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAttribute.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAttribute.oa.js";
 import {
     radiusAuthType,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAuthType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusAuthType.oa.js";
 import {
     radiusCallbackId,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusCallbackId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusCallbackId.oa.js";
 import {
     radiusCallbackNumber,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusCallbackNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusCallbackNumber.oa.js";
 import {
     radiusCalledStationId,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusCalledStationId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusCalledStationId.oa.js";
 import {
     radiusCallingStationId,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusCallingStationId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusCallingStationId.oa.js";
 import {
     radiusClass,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClass.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClass.oa.js";
 import {
     radiusClientComment,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientComment.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientComment.oa.js";
 import {
     radiusClientIdentifier,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientIdentifier.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientIdentifier.oa.js";
 import {
     radiusClientIPAddress,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientIPAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientIPAddress.oa.js";
 import {
     radiusClientRequireMa,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientRequireMa.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientRequireMa.oa.js";
 import {
     radiusClientSecret,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientSecret.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientSecret.oa.js";
 import {
     radiusClientShortname,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientShortname.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientShortname.oa.js";
 import {
     radiusClientType,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientType.oa.js";
 import {
     radiusClientVirtualServer,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientVirtualServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusClientVirtualServer.oa.js";
 import {
     radiusConnectInfoStart,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusConnectInfoStart.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusConnectInfoStart.oa.js";
 import {
     radiusConnectInfoStop,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusConnectInfoStop.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusConnectInfoStop.oa.js";
 import {
     radiusControlAttribute,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusControlAttribute.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusControlAttribute.oa.js";
 import {
     radiusExpiration,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusExpiration.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusExpiration.oa.js";
 import {
     radiusFilterId,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFilterId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFilterId.oa.js";
 import {
     radiusFramedAppleTalkLink,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedAppleTalkLink.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedAppleTalkLink.oa.js";
 import {
     radiusFramedAppleTalkNetwork,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedAppleTalkNetwork.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedAppleTalkNetwork.oa.js";
 import {
     radiusFramedAppleTalkZone,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedAppleTalkZone.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedAppleTalkZone.oa.js";
 import {
     radiusFramedCompression,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedCompression.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedCompression.oa.js";
 import {
     radiusFramedIPAddress,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedIPAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedIPAddress.oa.js";
 import {
     radiusFramedIPNetmask,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedIPNetmask.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedIPNetmask.oa.js";
 import {
     radiusFramedIPXNetwork,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedIPXNetwork.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedIPXNetwork.oa.js";
 import {
     radiusFramedMTU,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedMTU.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedMTU.oa.js";
 import {
     radiusFramedProtocol,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedProtocol.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedProtocol.oa.js";
 import {
     radiusFramedRoute,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedRoute.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedRoute.oa.js";
 import {
     radiusFramedRouting,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedRouting.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusFramedRouting.oa.js";
 import {
     radiusGroupName,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusGroupName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusGroupName.oa.js";
 import {
     radiusHint,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusHint.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusHint.oa.js";
 import {
     radiusHuntgroupName,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusHuntgroupName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusHuntgroupName.oa.js";
 import {
     radiusIdleTimeout,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusIdleTimeout.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusIdleTimeout.oa.js";
 import {
     radiusLoginIPHost,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginIPHost.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginIPHost.oa.js";
 import {
     radiusLoginLATGroup,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginLATGroup.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginLATGroup.oa.js";
 import {
     radiusLoginLATNode,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginLATNode.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginLATNode.oa.js";
 import {
     radiusLoginLATPort,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginLATPort.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginLATPort.oa.js";
 import {
     radiusLoginLATService,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginLATService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginLATService.oa.js";
 import {
     radiusLoginService,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginService.oa.js";
 import {
     radiusLoginTCPPort,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginTCPPort.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginTCPPort.oa.js";
 import {
     radiusLoginTime,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusLoginTime.oa.js";
 import {
     radiusNASIdentifier,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASIdentifier.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASIdentifier.oa.js";
 import {
     radiusNASIpAddress,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASIpAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASIpAddress.oa.js";
 import {
     radiusNASPort,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASPort.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASPort.oa.js";
 import {
     radiusNASPortId,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASPortId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASPortId.oa.js";
 import {
     radiusNASPortType,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASPortType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusNASPortType.oa.js";
 import {
     radiusPasswordRetry,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusPasswordRetry.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusPasswordRetry.oa.js";
 import {
     radiusPortLimit,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusPortLimit.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusPortLimit.oa.js";
 import {
     radiusProfileDN,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusProfileDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusProfileDN.oa.js";
 import {
     radiusPrompt,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusPrompt.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusPrompt.oa.js";
 import {
     radiusProxyToRealm,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusProxyToRealm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusProxyToRealm.oa.js";
 import {
     radiusRealm,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusRealm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusRealm.oa.js";
 import {
     radiusReplicateToRealm,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusReplicateToRealm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusReplicateToRealm.oa.js";
 import {
     radiusReplyAttribute,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusReplyAttribute.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusReplyAttribute.oa.js";
 import {
     radiusReplyMessage,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusReplyMessage.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusReplyMessage.oa.js";
 import {
     radiusRequestAttribute,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusRequestAttribute.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusRequestAttribute.oa.js";
 import {
     radiusServiceType,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusServiceType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusServiceType.oa.js";
 import {
     radiusSessionTimeout,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusSessionTimeout.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusSessionTimeout.oa.js";
 import {
     radiusSimultaneousUse,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusSimultaneousUse.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusSimultaneousUse.oa.js";
 import {
     radiusStripUserName,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusStripUserName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusStripUserName.oa.js";
 import {
     radiusTerminationAction,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTerminationAction.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTerminationAction.oa.js";
 import {
     radiusTunnelAssignmentId,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelAssignmentId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelAssignmentId.oa.js";
 import {
     radiusTunnelClientEndpoint,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelClientEndpoint.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelClientEndpoint.oa.js";
 import {
     radiusTunnelMediumType,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelMediumType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelMediumType.oa.js";
 import {
     radiusTunnelPassword,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelPassword.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelPassword.oa.js";
 import {
     radiusTunnelPreference,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelPreference.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelPreference.oa.js";
 import {
     radiusTunnelPrivateGroupId,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelPrivateGroupId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelPrivateGroupId.oa.js";
 import {
     radiusTunnelServerEndpoint,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelServerEndpoint.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelServerEndpoint.oa.js";
 import {
     radiusTunnelType,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusTunnelType.oa.js";
 import {
     radiusUserCategory,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusUserCategory.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusUserCategory.oa.js";
 import {
     radiusUserName,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusUserName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusUserName.oa.js";
 import {
     radiusVSA,
-} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusVSA.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RADIUSSchema/radiusVSA.oa.js";
 import {
     automountKey,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/automountKey.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/automountKey.oa.js";
 import {
     automountMapName,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/automountMapName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/automountMapName.oa.js";
 import {
     nisDomain,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/nisDomain.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/nisDomain.oa.js";
 import {
     nisPublicKey,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/nisPublicKey.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/nisPublicKey.oa.js";
 import {
     nisSecretKey,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/nisSecretKey.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2307bis/nisSecretKey.oa.js";
 import {
     dynamicSubtrees,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa.js";
 import {
     entryTtl,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
 import {
     calCalAdrURI,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calCalAdrURI.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calCalAdrURI.oa.js";
 import {
     calCalURI,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calCalURI.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calCalURI.oa.js";
 import {
     calCAPURI,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calCAPURI.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calCAPURI.oa.js";
 import {
     calFBURL,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calFBURL.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calFBURL.oa.js";
 import {
     calOtherCalAdrURIs,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calOtherCalAdrURIs.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calOtherCalAdrURIs.oa.js";
 import {
     calOtherCalURIs,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calOtherCalURIs.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calOtherCalURIs.oa.js";
 import {
     calOtherCAPURIs,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calOtherCAPURIs.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calOtherCAPURIs.oa.js";
 import {
     calOtherFBURLs,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calOtherFBURLs.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2739Calendar/calOtherFBURLs.oa.js";
 import {
     service_advert_attribute_authenticator,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2926ServiceLocationProtocolSchema/service-advert-attribute-authenticator.oa";
@@ -2436,34 +2418,34 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/RFC2926ServiceLocationProtocolSchema/template-url-syntax.oa";
 import {
     vendorName,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa.js";
 import {
     vendorVersion,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa.js";
 import {
     entryDN,
-} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa.js";
 import {
     ldifLocationURL,
-} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/ldifLocationURL.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/ldifLocationURL.oa.js";
 import {
     mailReceipt,
-} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/mailReceipt.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/mailReceipt.oa.js";
 import {
     managedDomains,
-} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/managedDomains.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/managedDomains.oa.js";
 import {
     providerCertificate,
-} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerCertificate.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerCertificate.oa.js";
 import {
     providerCertificateHash,
-} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerCertificateHash.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerCertificateHash.oa.js";
 import {
     providerName,
-} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerName.oa.js";
 import {
     providerUnit,
-} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerUnit.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerUnit.oa.js";
 import {
     printer_aliases,
 } from "@wildboar/parity-schema/src/lib/modules/RFC7612Printer/printer-aliases.oa";
@@ -2589,250 +2571,250 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/RFC7612Printer/printer-xri-supported.oa";
 import {
     sabayonProfileName,
-} from "@wildboar/parity-schema/src/lib/modules/SabayonSchema/sabayonProfileName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SabayonSchema/sabayonProfileName.oa.js";
 import {
     sabayonProfileURL,
-} from "@wildboar/parity-schema/src/lib/modules/SabayonSchema/sabayonProfileURL.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SabayonSchema/sabayonProfileURL.oa.js";
 import {
     acctFlags,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/acctFlags.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/acctFlags.oa.js";
 import {
     domain,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/domain.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/domain.oa.js";
 import {
     homeDrive,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/homeDrive.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/homeDrive.oa.js";
 import {
     kickoffTime,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/kickoffTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/kickoffTime.oa.js";
 import {
     lmPassword,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/lmPassword.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/lmPassword.oa.js";
 import {
     logoffTime,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/logoffTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/logoffTime.oa.js";
 import {
     logonTime,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/logonTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/logonTime.oa.js";
 import {
     ntPassword,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/ntPassword.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/ntPassword.oa.js";
 import {
     primaryGroupID,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/primaryGroupID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/primaryGroupID.oa.js";
 import {
     profilePath,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/profilePath.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/profilePath.oa.js";
 import {
     pwdCanChange,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/pwdCanChange.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/pwdCanChange.oa.js";
 import {
     pwdLastSet,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/pwdLastSet.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/pwdLastSet.oa.js";
 // import {
 //     pwdMustChange,
-// } from "@wildboar/parity-schema/src/lib/modules/SambaSchema/pwdMustChange.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/SambaSchema/pwdMustChange.oa.js";
 import {
     rid,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/rid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/rid.oa.js";
 import {
     scriptPath,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/scriptPath.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/scriptPath.oa.js";
 import {
     smbHome,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/smbHome.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/smbHome.oa.js";
 import {
     userWorkstations,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/userWorkstations.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/userWorkstations.oa.js";
 import {
     sambaAcctFlags,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaAcctFlags.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaAcctFlags.oa.js";
 import {
     sambaAlgorithmicRidBase,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaAlgorithmicRidBase.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaAlgorithmicRidBase.oa.js";
 import {
     sambaBadPasswordCount,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaBadPasswordCount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaBadPasswordCount.oa.js";
 import {
     sambaBadPasswordTime,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaBadPasswordTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaBadPasswordTime.oa.js";
 import {
     sambaBoolOption,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaBoolOption.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaBoolOption.oa.js";
 import {
     sambaDomainName,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaDomainName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaDomainName.oa.js";
 import {
     sambaForceLogoff,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaForceLogoff.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaForceLogoff.oa.js";
 import {
     sambaGroupType,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaGroupType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaGroupType.oa.js";
 import {
     sambaHomeDrive,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaHomeDrive.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaHomeDrive.oa.js";
 import {
     sambaHomePath,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaHomePath.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaHomePath.oa.js";
 import {
     sambaIntegerOption,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaIntegerOption.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaIntegerOption.oa.js";
 import {
     sambaKickoffTime,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaKickoffTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaKickoffTime.oa.js";
 import {
     sambaLMPassword,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLMPassword.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLMPassword.oa.js";
 import {
     sambaLockoutDuration,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLockoutDuration.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLockoutDuration.oa.js";
 import {
     sambaLockoutObservationWindow,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLockoutObservationWindow.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLockoutObservationWindow.oa.js";
 import {
     sambaLockoutThreshold,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLockoutThreshold.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLockoutThreshold.oa.js";
 import {
     sambaLogoffTime,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogoffTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogoffTime.oa.js";
 import {
     sambaLogonHours,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogonHours.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogonHours.oa.js";
 import {
     sambaLogonScript,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogonScript.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogonScript.oa.js";
 import {
     sambaLogonTime,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogonTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogonTime.oa.js";
 import {
     sambaLogonToChgPwd,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogonToChgPwd.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaLogonToChgPwd.oa.js";
 import {
     sambaMaxPwdAge,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaMaxPwdAge.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaMaxPwdAge.oa.js";
 import {
     sambaMinPwdAge,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaMinPwdAge.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaMinPwdAge.oa.js";
 import {
     sambaMinPwdLength,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaMinPwdLength.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaMinPwdLength.oa.js";
 import {
     sambaMungedDial,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaMungedDial.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaMungedDial.oa.js";
 import {
     sambaNextGroupRid,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaNextGroupRid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaNextGroupRid.oa.js";
 import {
     sambaNextRid,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaNextRid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaNextRid.oa.js";
 import {
     sambaNextUserRid,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaNextUserRid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaNextUserRid.oa.js";
 import {
     sambaNTPassword,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaNTPassword.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaNTPassword.oa.js";
 import {
     sambaOptionName,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaOptionName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaOptionName.oa.js";
 import {
     sambaPasswordHistory,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPasswordHistory.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPasswordHistory.oa.js";
 import {
     sambaPrimaryGroupSID,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPrimaryGroupSID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPrimaryGroupSID.oa.js";
 import {
     sambaPrivilegeList,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPrivilegeList.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPrivilegeList.oa.js";
 import {
     sambaPrivName,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPrivName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPrivName.oa.js";
 import {
     sambaProfilePath,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaProfilePath.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaProfilePath.oa.js";
 import {
     sambaPwdCanChange,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPwdCanChange.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPwdCanChange.oa.js";
 import {
     sambaPwdHistoryLength,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPwdHistoryLength.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPwdHistoryLength.oa.js";
 import {
     sambaPwdLastSet,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPwdLastSet.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPwdLastSet.oa.js";
 import {
     sambaPwdMustChange,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPwdMustChange.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaPwdMustChange.oa.js";
 import {
     sambaRefuseMachinePwdChange,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaRefuseMachinePwdChange.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaRefuseMachinePwdChange.oa.js";
 import {
     sambaShareName,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaShareName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaShareName.oa.js";
 import {
     sambaSID,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSID.oa.js";
 import {
     sambaSIDList,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSIDList.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSIDList.oa.js";
 import {
     sambaStringListOption,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaStringListOption.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaStringListOption.oa.js";
 import {
     sambaStringOption,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaStringOption.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaStringOption.oa.js";
 import {
     sambaTrustFlags,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaTrustFlags.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaTrustFlags.oa.js";
 import {
     sambaUserWorkstations,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaUserWorkstations.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaUserWorkstations.oa.js";
 import {
     mailHost as sendmailMailHost,
-} from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailHost.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailHost.oa.js";
 import {
     mailLocalAddress,
-} from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailLocalAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailLocalAddress.oa.js";
 import {
     mailRoutingAddress as sendmailRoutingAddress,
-} from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailRoutingAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailRoutingAddress.oa.js";
 import {
     sudoCommand,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoCommand.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoCommand.oa.js";
 import {
     sudoHost,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoHost.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoHost.oa.js";
 import {
     sudoNotAfter,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoNotAfter.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoNotAfter.oa.js";
 import {
     sudoNotBefore,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoNotBefore.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoNotBefore.oa.js";
 import {
     sudoOption,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoOption.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoOption.oa.js";
 import {
     sudoOrder,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoOrder.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoOrder.oa.js";
 import {
     sudoRunAs,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoRunAs.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoRunAs.oa.js";
 import {
     sudoRunAsGroup,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoRunAsGroup.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoRunAsGroup.oa.js";
 import {
     sudoRunAsUser,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoRunAsUser.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoRunAsUser.oa.js";
 import {
     sudoUser,
-} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoUser.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoUser.oa.js";
 import {
     distinguishedNameTableKey,
-} from "@wildboar/parity-schema/src/lib/modules/TableFramework/distinguishedNameTableKey.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TableFramework/distinguishedNameTableKey.oa.js";
 import {
     textTableKey,
-} from "@wildboar/parity-schema/src/lib/modules/TableFramework/textTableKey.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TableFramework/textTableKey.oa.js";
 import {
     textTableValue,
-} from "@wildboar/parity-schema/src/lib/modules/TableFramework/textTableValue.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TableFramework/textTableValue.oa.js";
 import {
     uddiAccessPoint,
 } from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiAccessPoint.oa";
@@ -2973,227 +2955,213 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3TModelKey.oa";
 // import {
 //     entryUUID,
-// } from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa.js";
 import {
     vPIMExtendedAbsenceStatus,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMExtendedAbsenceStatus.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMExtendedAbsenceStatus.oa.js";
 import {
     vPIMMaxMessageSize,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMMaxMessageSize.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMMaxMessageSize.oa.js";
 import {
     vPIMRfc822Mailbox,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMRfc822Mailbox.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMRfc822Mailbox.oa.js";
 import {
     vPIMSpokenName,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSpokenName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSpokenName.oa.js";
 import {
     vPIMSubMailboxes,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSubMailboxes.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSubMailboxes.oa.js";
 import {
     vPIMSupportedAudioMediaTypes,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSupportedAudioMediaTypes.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSupportedAudioMediaTypes.oa.js";
 import {
     vPIMSupportedMessageContext,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSupportedMessageContext.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSupportedMessageContext.oa.js";
 import {
     vPIMSupportedUABehaviors,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSupportedUABehaviors.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMSupportedUABehaviors.oa.js";
 import {
     vPIMTelephoneNumber,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMTelephoneNumber.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMTelephoneNumber.oa.js";
 import {
     vPIMTextName,
-} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMTextName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMTextName.oa.js";
 
 // CMS Attribute Types
 import {
     aa_contentLocation,
-} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-contentLocation.oa";
+} from "@wildboar/cms";
 import {
     aa_contentLocations,
-} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-contentLocations.oa";
+} from "@wildboar/cms";
 import {
     aa_parentBlock,
-} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-parentBlock.oa";
+} from "@wildboar/cms";
 import {
     aa_precedingBlock,
-} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-precedingBlock.oa";
+} from "@wildboar/cms";
 import {
     aa_sidechains,
-} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-sidechains.oa";
+} from "@wildboar/cms";
 import {
     aa_signerInfo,
-} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-signerInfo.oa";
+} from "@wildboar/cms";
 import {
     aa_signerInfos,
-} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-signerInfos.oa";
+} from "@wildboar/cms";
 import {
     aa_timeStamped,
-} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-timeStamped.oa";
-// import {
+} from "@wildboar/cms";
+import {
 //     signcryptedEnvelope,
-// } from "@wildboar/cms/src/lib/modules/CMSSigncryption/signcryptedEnvelope.oa";
-// import {
 //     aa_contentType,
-// } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/aa-contentType.oa";
-import {
     aa_countersignature,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/aa-countersignature.oa";
-// import {
 //     aa_messageDigest,
-// } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/aa-messageDigest.oa";
-// import {
 //     aa_signingTime,
-// } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/aa-signingTime.oa";
-import {
     aa_encrypKeyPref,
-} from "@wildboar/cms/src/lib/modules/SecureMimeMessageV3dot1-2009/aa-encrypKeyPref.oa";
-// import {
 //     aa_smimeCapabilities,
-// } from "@wildboar/cms/src/lib/modules/SecureMimeMessageV3dot1-2009/aa-smimeCapabilities.oa";
-// import {
 //     tokenizedParts,
-// } from "@wildboar/cms/src/lib/modules/TokenizationManifest/tokenizedParts.oa";
+} from "@wildboar/cms";
 
 // ITU Schema
 import {
     cEKReference,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/cEKReference.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/cEKReference.oa.js";
 import {
     cEKMaxDecrypts,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/cEKMaxDecrypts.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/cEKMaxDecrypts.oa.js";
 import {
     kEKDerivationAlg,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/kEKDerivationAlg.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/kEKDerivationAlg.oa.js";
 import {
     accessService,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/accessService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/accessService.oa.js";
 import {
     dateOfBirth,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/dateOfBirth.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/dateOfBirth.oa.js";
 import {
     placeOfBirth,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/placeOfBirth.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/placeOfBirth.oa.js";
 import {
     gender,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/gender.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/gender.oa.js";
 import {
     countryOfCitizenship,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/countryOfCitizenship.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/countryOfCitizenship.oa.js";
 import {
     countryOfResidence,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/countryOfResidence.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/countryOfResidence.oa.js";
 import {
     deviceOwner,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/deviceOwner.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/deviceOwner.oa.js";
 import {
     clearanceSponsor,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/clearanceSponsor.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/clearanceSponsor.oa.js";
 import {
     binarySigningTime,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/binarySigningTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/binarySigningTime.oa.js";
 import {
     tokenizedParts,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/tokenizedParts.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/tokenizedParts.oa.js";
 import {
     authenticationInfo,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/authenticationInfo.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/authenticationInfo.oa.js";
 import {
     accesIdentity,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/accesIdentity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/accesIdentity.oa.js";
 import {
     chargingIdentity,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/chargingIdentity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/chargingIdentity.oa.js";
 import {
     group,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/group.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/group.oa.js";
 import {
     clearance_RFC3281,
 } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/clearance-RFC3281.oa";
 import {
     encAttrs,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/encAttrs.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/encAttrs.oa.js";
 import {
     smimeCapabilities,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/smimeCapabilities.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/smimeCapabilities.oa.js";
 // import {
 //     signerInfo,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signerInfo.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signerInfo.oa.js";
 // import {
 //     signerInfos,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signerInfos.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signerInfos.oa.js";
 // import {
 //     contentLocation,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/contentLocation.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/contentLocation.oa.js";
 // import {
 //     contentLocations,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/contentLocations.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/contentLocations.oa.js";
 // import {
 //     precedingBlock,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/precedingBlock.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/precedingBlock.oa.js";
 // import {
 //     timeStamped,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/timeStamped.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/timeStamped.oa.js";
 // import {
 //     sidechains,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/sidechains.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/sidechains.oa.js";
 // import {
 //     parentBlock,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/parentBlock.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/parentBlock.oa.js";
 import {
     signcryptedEnvelope,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signcryptedEnvelope.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signcryptedEnvelope.oa.js";
 // import {
 //     encrypKeyPref,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/encrypKeyPref.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/encrypKeyPref.oa.js";
 import {
     firmwarePackageID,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/firmwarePackageID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/firmwarePackageID.oa.js";
 import {
     targetHardwareIDs,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/targetHardwareIDs.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/targetHardwareIDs.oa.js";
 import {
     decryptKeyID,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/decryptKeyID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/decryptKeyID.oa.js";
 import {
     implCryptoAlgs,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/implCryptoAlgs.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/implCryptoAlgs.oa.js";
 import {
     implCompressAlgs,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/implCompressAlgs.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/implCompressAlgs.oa.js";
 import {
     communityIdentifiers,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/communityIdentifiers.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/communityIdentifiers.oa.js";
 import {
     firmwarePackageInfo,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/firmwarePackageInfo.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/firmwarePackageInfo.oa.js";
 import {
     wrappedFirmwareKey,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/wrappedFirmwareKey.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/wrappedFirmwareKey.oa.js";
 import {
     contentType,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/contentType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/contentType.oa.js";
 import {
     messageDigest,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/messageDigest.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/messageDigest.oa.js";
 import {
     signingTime,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signingTime.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signingTime.oa.js";
 // import {
 //     countersignature,
-// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/countersignature.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/countersignature.oa.js";
 import {
     extension_req,
 } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/extension-req.oa";
 import {
     unsignedData,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/unsignedData.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/unsignedData.oa.js";
 import {
     multipleSignatures,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/multipleSignatures.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/multipleSignatures.oa.js";
 import {
     wlanSSID,
-} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/wlanSSID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/wlanSSID.oa.js";
 
 import {
     commUniqueId,
@@ -3467,292 +3435,292 @@ import {
 // Telebiometrics Authentication Infrastructure (TAI) Attribute Types
 import {
     biometricInformationTemplate,
-} from "@wildboar/parity-schema/src/lib/modules/TAI/biometricInformationTemplate.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TAI/biometricInformationTemplate.oa.js";
 import {
     bioSecLevelReference,
-} from "@wildboar/parity-schema/src/lib/modules/TAI/bioSecLevelReference.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TAI/bioSecLevelReference.oa.js";
 import {
     bDCReportContentInformation,
-} from "@wildboar/parity-schema/src/lib/modules/TAI/bDCReportContentInformation.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TAI/bDCReportContentInformation.oa.js";
 
 // X.952 Printer Service Offer Definitions (Commented out because it turns out this is just an example module.)
 // import {
 //     printerType,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/printerType.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/printerType.oa.js";
 // import {
 //     locationRoom,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/locationRoom.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/locationRoom.oa.js";
 // import {
 //     locationBuilding,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/locationBuilding.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/locationBuilding.oa.js";
 // import {
 //     costPerPage,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/costPerPage.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/costPerPage.oa.js";
 // import {
 //     languagesSupported,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/languagesSupported.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/languagesSupported.oa.js";
 // import {
 //     pagesPerMinute,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/pagesPerMinute.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/pagesPerMinute.oa.js";
 // import {
 //     pageSize,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/pageSize.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/pageSize.oa.js";
 // import {
 //     dotsPerInch,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/dotsPerInch.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/dotsPerInch.oa.js";
 // import {
 //     colourCapable,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/colourCapable.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/colourCapable.oa.js";
 // import {
 //     driverName,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/driverName.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/driverName.oa.js";
 // import {
 //     queueLength,
-// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/queueLength.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/queueLength.oa.js";
 
 // X.952 Trader Definitions
 import {
     traderInterface,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderInterface.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderInterface.oa.js";
 import {
     dsaName,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/dsaName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/dsaName.oa.js";
 import {
     typeRepos,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/typeRepos.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/typeRepos.oa.js";
 import {
     defSearchCard,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defSearchCard.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defSearchCard.oa.js";
 import {
     maxSearchCard,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxSearchCard.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxSearchCard.oa.js";
 import {
     defMatchCard,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defMatchCard.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defMatchCard.oa.js";
 import {
     maxMatchCard,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxMatchCard.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxMatchCard.oa.js";
 import {
     defReturnCard,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defReturnCard.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defReturnCard.oa.js";
 import {
     maxReturnCard,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxReturnCard.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxReturnCard.oa.js";
 import {
     defHopCount,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defHopCount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defHopCount.oa.js";
 import {
     maxHopCount,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxHopCount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxHopCount.oa.js";
 import {
     defFollowPolicy,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defFollowPolicy.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defFollowPolicy.oa.js";
 import {
     maxFollowPolicy,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxFollowPolicy.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxFollowPolicy.oa.js";
 import {
     maxLinkFollowPolicy,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxLinkFollowPolicy.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxLinkFollowPolicy.oa.js";
 import {
     supportsModifiableProperties,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/supportsModifiableProperties.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/supportsModifiableProperties.oa.js";
 import {
     supportsDynamicProperties,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/supportsDynamicProperties.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/supportsDynamicProperties.oa.js";
 import {
     supportsProxyOffers,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/supportsProxyOffers.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/supportsProxyOffers.oa.js";
 import {
     maxList,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxList.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxList.oa.js";
 import {
     requestIdStem,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/requestIdStem.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/requestIdStem.oa.js";
 import {
     typeManagementConstraint,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/typeManagementConstraint.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/typeManagementConstraint.oa.js";
 import {
     searchConstraint,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/searchConstraint.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/searchConstraint.oa.js";
 import {
     offerAcceptanceConstraint,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/offerAcceptanceConstraint.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/offerAcceptanceConstraint.oa.js";
 import {
     sOfferId,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/sOfferId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/sOfferId.oa.js";
 import {
     serviceInterfaceId,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceInterfaceId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceInterfaceId.oa.js";
 import {
     serviceTypeId,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceTypeId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceTypeId.oa.js";
 import {
     hasDynamicProperties,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/hasDynamicProperties.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/hasDynamicProperties.oa.js";
 import {
     hasModifiableProperties,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/hasModifiableProperties.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/hasModifiableProperties.oa.js";
 import {
     dynamicProps,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/dynamicProps.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/dynamicProps.oa.js";
 import {
     linkName,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/linkName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/linkName.oa.js";
 import {
     linkId,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/linkId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/linkId.oa.js";
 import {
     targetTraderInterfaceId,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/targetTraderInterfaceId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/targetTraderInterfaceId.oa.js";
 import {
     defPassOnFollowRule,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defPassOnFollowRule.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defPassOnFollowRule.oa.js";
 import {
     limitingFollowRule,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/limitingFollowRule.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/limitingFollowRule.oa.js";
 import {
     proxyOfferId,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyOfferId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyOfferId.oa.js";
 import {
     proxyLookUpInterfaceId,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyLookUpInterfaceId.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyLookUpInterfaceId.oa.js";
 import {
     constraintRecipe,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/constraintRecipe.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/constraintRecipe.oa.js";
 import {
     ifMatchAll,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/ifMatchAll.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/ifMatchAll.oa.js";
 import {
     interfaceReference,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/interfaceReference.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/interfaceReference.oa.js";
 import {
     interfaceType,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/interfaceType.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/interfaceType.oa.js";
 
 // Matching Rules Suitable for Naming
 import {
     addressCapabilitiesMatch,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/addressCapabilitiesMatch.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     capabilityMatch,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/capabilityMatch.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     oRNameExactMatch,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/oRNameExactMatch.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mSStringMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSStringCaseSensitiveMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringCaseSensitiveMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSStringListMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringListMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSStringListElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringListElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSSingleSubstringListMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringListMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSSingleSubstringListElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringListElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRAddressMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRAddressElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRAddressSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressSubstringElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRNameMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRNameElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRNameSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameSubstringElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     redirectionOrDLExpansionMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     redirectionOrDLExpansionElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     redirectionOrDLExpansionSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionSubstringElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mTSIdentifierMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mTSIdentifierMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     contentCorrelatorMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/contentCorrelatorMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     contentIdentifierMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/contentIdentifierMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     iPMIdentifierMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/iPMIdentifierMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     oRDescriptorMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     oRDescriptorElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     oRDescriptorSingleElementMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorSingleElementMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     recipientSpecifierMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     recipientSpecifierElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     recipientSpecifierSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierSubstringElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     circulationMemberMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     circulationMemberElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     circulationMemberSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberSubstringElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     distributionCodeMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/distributionCodeMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     informationCategoryMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/informationCategoryMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     policySpecificationMatch,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/policySpecificationMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/policySpecificationMatch.oa.js";
 import {
     pkcs9CaseIgnoreMatch,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pkcs9CaseIgnoreMatch.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     signingTimeMatch,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingTimeMatch.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     directoryStringApproxMatch,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/directoryStringApproxMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/directoryStringApproxMatch.oa.js";
 import {
     ia5StringApproxMatch,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/ia5StringApproxMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/ia5StringApproxMatch.oa.js";
 import {
     integerBitAndMatch,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitAndMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitAndMatch.oa.js";
 import {
     integerBitOrMatch,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitOrMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitOrMatch.oa.js";
 import {
     uuidMatch,
-} from "@wildboar/parity-schema/src/lib/modules/UUID/uuidMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UUID/uuidMatch.oa.js";
 import { attributes as schemaLevelIIAttributes } from "@wildboar/schema-level-ii";
 
 /**

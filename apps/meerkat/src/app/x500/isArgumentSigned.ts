@@ -1,10 +1,10 @@
 import {
     ASN1Element,
     ASN1UniversalType,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 
 const signedAltTagNumberByOpCode: Map<number, number> = new Map([
     [1, ASN1UniversalType.sequence], // read

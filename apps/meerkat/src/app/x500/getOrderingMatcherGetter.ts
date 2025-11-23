@@ -1,9 +1,9 @@
 import type { Context, IndexableOID } from "@wildboar/meerkat-types";
-import type OrderingMatcher from "@wildboar/x500/src/lib/types/OrderingMatcher";
+import { type OrderingMatcher } from "@wildboar/x500";
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+} from "@wildboar/x500/InformationFramework";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 
 /**
  * @summary Higher-order function that returns an ordering matcher function if it can be determined

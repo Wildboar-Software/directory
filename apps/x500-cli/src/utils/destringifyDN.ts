@@ -1,13 +1,13 @@
 import type { Context } from "../types";
-import type { ASN1Element } from "asn1-ts";
-import destringifyLDAPDN from "@wildboar/ldap/src/lib/destringifiers/RDNSequence";
+import type { ASN1Element } from "@wildboar/asn1";
+import { destringifyRDNSequence } from "@wildboar/ldap";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+} from "@wildboar/x500/InformationFramework";
+import { normalizeAttributeDescription } from "@wildboar/ldap";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import { getLDAPSyntax } from "../getLDAPSyntax";
 
 export
@@ -15,7 +15,7 @@ function destringifyDN (
     ctx: Context,
     dn: string,
 ): DistinguishedName {
-    return Array.from(destringifyLDAPDN(
+    return Array.from(destringifyRDNSequence(
         dn,
         (syntax: string) => {
             const desc = normalizeAttributeDescription(Buffer.from(syntax));

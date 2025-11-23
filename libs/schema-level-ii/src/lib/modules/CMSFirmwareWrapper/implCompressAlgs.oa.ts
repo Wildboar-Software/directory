@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { ImplementedCompressAlgorithms, _decode_ImplementedCompressAlgorithms, _encode_ImplementedCompressAlgorithms } from "../CMSFirmwareWrapper/ImplementedCompressAlgorithms.ta";
 import { id_aa_implCompressAlgs } from "../CMSFirmwareWrapper/id-aa-implCompressAlgs.va";
 

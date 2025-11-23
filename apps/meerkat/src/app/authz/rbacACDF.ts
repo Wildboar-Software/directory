@@ -2,24 +2,24 @@ import { Context, Vertex, ClientAssociation, RBAC_ACDF } from "@wildboar/meerkat
 import { compareDistinguishedName } from "@wildboar/x500";
 import {
     SignedSecurityLabel,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
+} from "@wildboar/x500/EnhancedSecurity";
 import {
     _encode_SignedSecurityLabelContent,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabelContent.ta";
+} from "@wildboar/x500/EnhancedSecurity";
 import {
     Context as X500Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
-import { ASN1Element, DERElement, ObjectIdentifier, TRUE_BIT, packBits } from "asn1-ts";
+} from "@wildboar/x500/InformationFramework";
+import { ASN1Element, DERElement, ObjectIdentifier, TRUE_BIT, packBits } from "@wildboar/asn1";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { KeyObject } from "node:crypto";
 import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
 import * as crypto from "node:crypto";
-import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import { AttributeType } from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
     _encode_AttributeTypeAndValue,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/pki-stub";
+import { DER } from "@wildboar/asn1/functional";
 import { verifySignature } from "../pki/verifyCertPath";
 import {
     ClassList_confidential,
@@ -27,7 +27,7 @@ import {
     ClassList_secret,
     ClassList_topSecret,
     ClassList_unmarked,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/ClassList.ta";
+} from "@wildboar/x500/EnhancedSecurity";
 import {
     SecurityClassification,
     SecurityClassification_confidential,
@@ -36,17 +36,17 @@ import {
     SecurityClassification_top_secret,
     SecurityClassification_unclassified,
     SecurityClassification_unmarked,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SecurityClassification.ta";
-import { ds } from "@wildboar/parity-schema/src/lib/modules/Wildboar/ds.va";
-import { attributeValueSecurityLabelContext } from "@wildboar/x500/src/lib/collections/contexts";
+} from "@wildboar/x500/EnhancedSecurity";
+import { ds } from "@wildboar/parity-schema/src/lib/modules/Wildboar/ds.va.js";
+import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
 import {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_MODIFY,
     PERMISSION_CATEGORY_REMOVE,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
+} from "@wildboar/x500";
 
 // TODO: Add this to the registry.
-export const id_simpleSecurityPolicy = new ObjectIdentifier([ 403, 1 ], ds);
+export const id_simpleSecurityPolicy = ObjectIdentifier.fromParts([ 403, 1 ], ds);
 
 const modification_permissions: number[] = [
     PERMISSION_CATEGORY_ADD,
@@ -204,7 +204,7 @@ export function rbacACDF (
         return userHasTopSecretClearance; // Hash algorithm not understood.
     }
     const atav = new AttributeTypeAndValue(attributeType, value);
-    const atav_bytes = _encode_AttributeTypeAndValue(atav, DER).toBytes();
+    const atav_bytes = _encode_AttributeTypeAndValue(atav).toBytes();
     const hasher = crypto.createHash(atav_hash_alg);
     hasher.update(atav_bytes);
     const calculated_digest = hasher.digest();

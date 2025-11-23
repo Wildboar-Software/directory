@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { integer } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa";
-import { integerMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerMatch.oa";
-import { integerOrderingMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerOrderingMatch.oa";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { integer } from "@wildboar/x500/SelectedAttributeTypes";
+import { integerMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { integerOrderingMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { _decode_atn_amhs_addressing_scheme_Type, _encode_atn_amhs_addressing_scheme_Type, atn_amhs_addressing_scheme_Type } from "../ATNDirectoryObjectIdentifiers/atn-amhs-addressing-scheme-Type.ta";
 import { id_at_atn_Amhs_addressing_scheme } from "../ATNDirectoryObjectIdentifiers/id-at-atn-Amhs-addressing-scheme.va";
 

@@ -1,8 +1,8 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
-import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import { auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { top } from "@wildboar/x500/InformationFramework";
+import { commonName } from "@wildboar/x500/SelectedAttributeTypes";
 import { eduOrgHomePageURI } from "../EduOrgSchema/eduOrgHomePageURI.oa";
 import { eduOrgIdentityAuthNPolicyURI } from "../EduOrgSchema/eduOrgIdentityAuthNPolicyURI.oa";
 import { eduOrgLegalName } from "../EduOrgSchema/eduOrgLegalName.oa";

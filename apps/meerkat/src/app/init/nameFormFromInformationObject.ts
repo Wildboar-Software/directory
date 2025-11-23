@@ -1,6 +1,6 @@
 import type {
     NAME_FORM,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
+} from "@wildboar/x500/InformationFramework";
 import type { NameFormInfo } from "@wildboar/meerkat-types";
 
 /**

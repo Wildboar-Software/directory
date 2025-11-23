@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { displayName } from '../InetOrgPerson/displayName.oa';
 import { id_openldap_oc } from '../OpenLDAP/id-openldap-oc.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -19,7 +19,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { id_openldap_oc } from '../OpenLDAP/id-openldap-oc.va';
 
 /* START_OF_SYMBOL_DEFINITION openLDAPdisplayableObject */
@@ -51,7 +51,7 @@ export const openLDAPdisplayableObject: OBJECT_CLASS = {
     '&OptionalAttributes': [displayName] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['OpenLDAPdisplayableObject'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'OpenLDAP Displayable Object' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [6],
         id_openldap_oc
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

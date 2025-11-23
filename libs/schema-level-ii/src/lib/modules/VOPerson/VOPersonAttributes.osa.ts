@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { voPersonAffiliation } from "../VOPerson/voPersonAffiliation.oa";
 import { voPersonApplicationPassword } from "../VOPerson/voPersonApplicationPassword.oa";
 import { voPersonApplicationUID } from "../VOPerson/voPersonApplicationUID.oa";

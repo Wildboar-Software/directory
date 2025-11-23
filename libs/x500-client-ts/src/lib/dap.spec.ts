@@ -8,17 +8,17 @@ import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { strict as assert } from "node:assert";
 import {
     DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     id_idm_dap,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/id-idm-dap.va";
+} from "@wildboar/x500/DirectoryIDMProtocols";
 import {
     createTimestamp,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
+} from "@wildboar/x500/InformationFramework";
 import { TLSSocket } from "node:tls";
-import { ListResultData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";
-import { SearchResultData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import { ReadResultData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResultData.ta";
+import { ListResultData } from "@wildboar/x500/DirectoryAbstractService";
+import { SearchResultData } from "@wildboar/x500/DirectoryAbstractService";
+import { ReadResultData } from "@wildboar/x500/DirectoryAbstractService";
 
 describe("DAP Client", () => {
     it("works with IDM transport", async () => {

@@ -1,7 +1,7 @@
 import type {
     Refinement,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
-import { ObjectIdentifier } from "asn1-ts";
+} from "@wildboar/x500/InformationFramework";
+import { ObjectIdentifier } from "@wildboar/asn1";
 
 interface RefinementLexingReturn {
     readonly refinement: Refinement;

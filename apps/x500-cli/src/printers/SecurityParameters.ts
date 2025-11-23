@@ -1,7 +1,7 @@
 import { getDateFromTime } from "@wildboar/x500";
 import {
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { EOL } from "node:os";
 import Context from "../types";
 import stringifyDN from "../utils/stringifyDN";

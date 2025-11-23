@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION id_at_mailaccess */
 /**
@@ -14,7 +14,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const id_at_mailaccess: OBJECT_IDENTIFIER = new _OID([
+export const id_at_mailaccess: OBJECT_IDENTIFIER = _OID.fromParts([
     1, 3, 6, 1, 4, 1, 15347, 2, 111,
 ]);
 /* END_OF_SYMBOL_DEFINITION id_at_mailaccess */

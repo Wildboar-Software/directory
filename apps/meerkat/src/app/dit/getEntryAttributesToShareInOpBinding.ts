@@ -1,23 +1,23 @@
 import { Context, Vertex } from "@wildboar/meerkat-types";
-import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
-import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
+import { Attribute } from "@wildboar/pki-stub";
+import { attributes as x500at } from "@wildboar/x500";
 import {
     entryUUID,
-} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa.js";
 import {
     entryDN,
-} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa.js";
 import {
     superiorUUID,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa.js";
 import {
     isMemberOf,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa.js";
 import { readAttributes } from "../database/entry/readAttributes";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import { TRUE } from "asn1-ts";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { TRUE } from "@wildboar/asn1";
 
 export
 async function getEntryAttributesToShareInOpBinding (ctx: Context, vertex: Vertex): Promise<Attribute[]> {

@@ -1,17 +1,17 @@
 import type { Context } from "../types";
 import {
     SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     ChopSpecification_specificExclusions_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ChopSpecification-specificExclusions-Item.ta";
+} from "@wildboar/x500/InformationFramework";
 import decodeLDAPDN from "../utils/destringifyDN";
 import type {
     Refinement,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+} from "@wildboar/x500/InformationFramework";
 import isDigit from "../utils/isDigit";
-import { ObjectIdentifier } from "asn1-ts";
-import { ctx } from "../ctx";
+import { ObjectIdentifier } from "@wildboar/asn1";
+import { ctx } from "../ctx.js";
 
 const BASE_STRING: string = "base";
 const SPEX_STRING: string = "specificExclusions";

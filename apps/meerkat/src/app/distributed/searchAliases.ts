@@ -1,55 +1,56 @@
 import type { Vertex, ClientAssociation } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
-import { BOOLEAN, TRUE } from "asn1-ts";
+import type { MeerkatContext } from "../ctx.js";
+import { BOOLEAN, TRUE } from "@wildboar/asn1";
 import isPrefix from "../x500/isPrefix";
 import {
     SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+    SearchResultData,
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     ChainingArguments,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
+} from "@wildboar/x500/DistributedOperations";
 import OperationDispatcher from "./OperationDispatcher";
 import type {
     SearchState,
 } from "./search_i";
-import type { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+import type { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
 import { strict as assert } from "assert";
-import { referral } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/referral.oa";
-import { serviceError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+import { referral } from "@wildboar/x500/DirectoryAbstractService";
+import { serviceError } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_unavailable,
     ServiceProblem_busy,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { compareCode } from "@wildboar/x500";
 import {
     PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ContinuationReference,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ReferenceType_self,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     OperationProgress,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     OperationProgress_nameResolutionPhase_notStarted,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     AccessPointInformation,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary The Search Aliases Procedure, as defined in ITU Recommendation X.518.
@@ -139,7 +140,7 @@ async function searchAliases (
         newChaining,
     );
     if ("result" in outcome) {
-        const data = getOptionallyProtectedValue(outcome.result);
+        const data = getOptionallyProtectedValue<SearchResultData>(outcome.result);
         if ("searchInfo" in data) {
             ret.results.push(...data.searchInfo.entries);
         } else if ("uncorrelatedSearchInfo" in data) {

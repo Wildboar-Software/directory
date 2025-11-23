@@ -12,25 +12,25 @@ import type {
     SpecialAttributeValueDetector,
     SpecialAttributeBatchDatabaseEditor,
 } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
-import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { ObjectIdentifier, OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     child,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     parent,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     alias,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     subentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import { getEntryExistsFilter } from "../../database/entryExistsFilter";
-import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
+import type { Attribute } from "@wildboar/pki-stub";
 
 const PARENT: string = parent["&id"].toString();
 

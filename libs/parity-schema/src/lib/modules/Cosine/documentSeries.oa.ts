@@ -1,20 +1,20 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-import { localityName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa';
-import { organizationalUnitName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa';
-import { organizationName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa';
-import { seeAlso } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/seeAlso.oa';
-import { telephoneNumber } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumber.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
+import { localityName } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationalUnitName } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
+import { seeAlso } from '@wildboar/x500/SelectedAttributeTypes';
+import { telephoneNumber } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { pilotObjectClass } from '../Cosine/pilotObjectClass.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -26,15 +26,15 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-export { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-export { localityName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa';
-export { organizationalUnitName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa';
-export { organizationName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa';
-export { seeAlso } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/seeAlso.oa';
-export { telephoneNumber } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumber.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
+export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
+export { localityName } from '@wildboar/x500/SelectedAttributeTypes';
+export { organizationalUnitName } from '@wildboar/x500/SelectedAttributeTypes';
+export { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
+export { seeAlso } from '@wildboar/x500/SelectedAttributeTypes';
+export { telephoneNumber } from '@wildboar/x500/SelectedAttributeTypes';
 export { pilotObjectClass } from '../Cosine/pilotObjectClass.va';
 
 /* START_OF_SYMBOL_DEFINITION documentSeries */
@@ -84,7 +84,7 @@ export const documentSeries: OBJECT_CLASS = {
         organizationalUnitName,
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['documentSeries'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [9],
         pilotObjectClass
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

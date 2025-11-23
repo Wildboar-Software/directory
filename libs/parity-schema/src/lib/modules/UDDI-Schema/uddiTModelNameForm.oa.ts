@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_uddi } from '../UDDI-Schema/id-uddi.va';
 import { uddiTModel } from '../UDDI-Schema/uddiTModel.oa';
 import { uddiTModelKey } from '../UDDI-Schema/uddiTModelKey.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export { id_uddi } from '../UDDI-Schema/id-uddi.va';
 export { uddiTModel } from '../UDDI-Schema/uddiTModel.oa';
 export { uddiTModelKey } from '../UDDI-Schema/uddiTModelKey.oa';
@@ -37,7 +37,7 @@ export const uddiTModelNameForm: NAME_FORM = {
     '&namedObjectClass': uddiTModel /* OBJECT_FIELD_SETTING */,
     '&MandatoryAttributes': [uddiTModelKey] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['uddiTModelNameForm'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [15, 7],
         id_uddi
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

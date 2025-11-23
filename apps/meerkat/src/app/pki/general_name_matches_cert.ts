@@ -1,10 +1,10 @@
 import { Context } from "@wildboar/meerkat-types";
-import { Certificate } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Certificate.ta";
-import { GeneralName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
+import { Certificate } from "@wildboar/pki-stub";
+import { GeneralName } from "@wildboar/x500/CertificateExtensions";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { compareGeneralName, compareName } from "@wildboar/x500";
-import { DERElement } from "asn1-ts";
-import { subjectAltName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
+import { DERElement } from "@wildboar/asn1";
+import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 
 /**
  * @summary Determine whether a general name matches a public key certificate

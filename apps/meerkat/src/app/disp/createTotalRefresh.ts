@@ -2,21 +2,21 @@ import type { Context, Vertex } from "@wildboar/meerkat-types";
 import {
     ShadowingAgreementInfo,
     _decode_ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import { Subtree } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Subtree.ta";
-import { SDSEContent } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SDSEContent.ta";
-import { TotalRefresh } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/TotalRefresh.ta";
-import { BERElement, BOOLEAN, FALSE, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { Subtree } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { SDSEContent } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { TotalRefresh } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { BERElement, BOOLEAN, FALSE, ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
 import dnToVertex from "../dit/dnToVertex";
 import readSubordinates from "../dit/readSubordinates";
 import bPromise from "bluebird";
-import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/LocalName.ta";
+import { LocalName } from "@wildboar/x500/InformationFramework";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { compareDistinguishedName, getRDN } from "@wildboar/x500";
 import getSDSEContent from "./getSDSEContent";
 import { objectClassesWithinRefinement } from "@wildboar/x500";
-import { DSEType_glue } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
-import { child } from "@wildboar/x500/src/lib/collections/objectClasses";
+import { DSEType_glue } from "@wildboar/x500/DSAOperationalAttributeTypes";
+import { child } from "@wildboar/x500/InformationFramework";
 
 const MAX_DEPTH: number = 10_000;
 

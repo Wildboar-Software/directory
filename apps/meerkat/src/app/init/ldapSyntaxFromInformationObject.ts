@@ -1,6 +1,6 @@
 import type {
     SYNTAX_NAME,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca";
+} from "@wildboar/x500/InformationFramework";
 import { LDAPSyntaxInfo } from "@wildboar/meerkat-types";
 
 /**

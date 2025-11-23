@@ -1,10 +1,10 @@
 import type { Context, IndexableOID } from "@wildboar/meerkat-types"
-import { ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
-import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
+import { ObjectIdentifier, OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { top } from "@wildboar/x500/InformationFramework";
 import {
     ObjectClassKind_structural,
     ObjectClassKind_abstract,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Get the structural object class among a set of object classes

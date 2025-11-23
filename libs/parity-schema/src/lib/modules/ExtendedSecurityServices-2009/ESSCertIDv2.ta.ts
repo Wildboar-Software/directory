@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { id_sha256 } from '@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va';
-import { AlgorithmIdentifier } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta';
+import { id_sha256 } from '@wildboar/x500/AlgorithmObjectIdentifiers';
+import { AlgorithmIdentifier } from '@wildboar/x500/AuthenticationFramework';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     OPTIONAL,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     Hash,
     _decode_Hash,

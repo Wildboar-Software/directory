@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_nis_lsx } from '../NIS/id-nis-lsx.va';
 import {
     NISNetgroupTripleSyntax,
     _decode_NISNetgroupTripleSyntax,
     _encode_NISNetgroupTripleSyntax,
 } from '../NIS/NISNetgroupTripleSyntax.ta';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { id_nis_lsx } from '../NIS/id-nis-lsx.va';
 export {
     NISNetgroupTripleSyntax,
@@ -42,7 +42,7 @@ export const nisNetgroupTripleSyntax: SYNTAX_NAME<NISNetgroupTripleSyntax> = {
         '&Type': _encode_NISNetgroupTripleSyntax,
     },
     '&ldapDesc': 'NIS netgroup triple' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [0],
         id_nis_lsx
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

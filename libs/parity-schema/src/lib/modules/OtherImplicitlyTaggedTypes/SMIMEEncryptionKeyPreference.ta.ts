@@ -1,11 +1,14 @@
 /* eslint-disable */
 import {
+    ASN1Element as _Element,
+    ASN1TagClass as _TagClass,
+} from "@wildboar/asn1";
+import {
     IssuerAndSerialNumber,
     _decode_IssuerAndSerialNumber,
     _encode_IssuerAndSerialNumber,
-} from '@wildboar/x500/src/lib/modules/EnhancedSecurity/IssuerAndSerialNumber.ta';
-import { ASN1Element as _Element, ASN1TagClass as _TagClass } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/EnhancedSecurity';
+import * as $ from '@wildboar/asn1/functional';
 import {
     RecipientKeyIdentifier,
     _decode_RecipientKeyIdentifier,
@@ -20,7 +23,7 @@ export {
     IssuerAndSerialNumber,
     _decode_IssuerAndSerialNumber,
     _encode_IssuerAndSerialNumber,
-} from '@wildboar/x500/src/lib/modules/EnhancedSecurity/IssuerAndSerialNumber.ta';
+} from '@wildboar/x500/EnhancedSecurity';
 export {
     RecipientKeyIdentifier,
     _decode_RecipientKeyIdentifier,

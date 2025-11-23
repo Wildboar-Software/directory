@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
 import { colourCapable } from '../PrinterServiceOfferDefinitions/colourCapable.oa';
 import { costPerPage } from '../PrinterServiceOfferDefinitions/costPerPage.oa';
 import { dotsPerInch } from '../PrinterServiceOfferDefinitions/dotsPerInch.oa';
@@ -16,8 +16,8 @@ import { pageSize } from '../PrinterServiceOfferDefinitions/pageSize.oa';
 import { pagesPerMinute } from '../PrinterServiceOfferDefinitions/pagesPerMinute.oa';
 import { printerType } from '../PrinterServiceOfferDefinitions/printerType.oa';
 import { queueLength } from '../PrinterServiceOfferDefinitions/queueLength.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -29,8 +29,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { colourCapable } from '../PrinterServiceOfferDefinitions/colourCapable.oa';
 export { costPerPage } from '../PrinterServiceOfferDefinitions/costPerPage.oa';
 export { dotsPerInch } from '../PrinterServiceOfferDefinitions/dotsPerInch.oa';

@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { EnvelopedData, _decode_EnvelopedData, _encode_EnvelopedData } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/EnvelopedData.ta";
+import { EnvelopedData, _decode_EnvelopedData, _encode_EnvelopedData } from "@wildboar/cms";
 import {
     BIT_STRING,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { PKMACValue, _decode_PKMACValue, _encode_PKMACValue } from "../PKIXCRMF-2009/PKMACValue.ta";
 import { SubsequentMessage, _decode_SubsequentMessage, _encode_SubsequentMessage } from "../PKIXCRMF-2009/SubsequentMessage.ta";
 

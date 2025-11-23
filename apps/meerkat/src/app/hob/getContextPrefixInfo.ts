@@ -1,24 +1,24 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import {
     MasterOrShadowAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     MasterAndShadowAccessPoints,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     MasterOrShadowAccessPoint_category_master,
     MasterOrShadowAccessPoint_category_shadow,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     DITcontext,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/DITcontext.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     SubentryInfo,
     Vertex as X500Vertex,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import readSubordinates from "../dit/readSubordinates";
 import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";

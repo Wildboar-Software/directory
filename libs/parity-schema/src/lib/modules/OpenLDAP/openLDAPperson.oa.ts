@@ -1,19 +1,19 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-import { givenName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/givenName.oa';
-import { organizationName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa';
-import { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+import { givenName } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
+import { uid } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { pilotPerson } from '../Cosine/pilotPerson.oa';
 import { inetOrgPerson } from '../InetOrgPerson/inetOrgPerson.oa';
 import { id_openldap_oc } from '../OpenLDAP/id-openldap-oc.va';
 import { labeledURI } from '../OpenLDAPCoreSchema/labeledURI.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -25,8 +25,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
+} from '@wildboar/x500/InformationFramework';
+export { uid } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_openldap_oc } from '../OpenLDAP/id-openldap-oc.va';
 
 /* START_OF_SYMBOL_DEFINITION openLDAPperson */
@@ -66,7 +66,7 @@ export const openLDAPperson: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['OpenLDAPperson'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'OpenLDAP Person' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [5],
         id_openldap_oc
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

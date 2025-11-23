@@ -1,7 +1,7 @@
 import type { CommonArgumentsStatistics, TypeAndContextAssertionStatistics } from "@wildboar/meerkat-types";
 import type {
     CommonArguments,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getStatisticsFromServiceControls from "./getStatisticsFromServiceControls";
 import getStatisticsFromSecurityParameters from "./getStatisticsFromSecurityParameters";
 

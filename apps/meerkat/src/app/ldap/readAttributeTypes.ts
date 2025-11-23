@@ -5,7 +5,7 @@ import {
     AttributeUsage_directoryOperation,
     AttributeUsage_distributedOperation,
     AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 
 function escape (str: string): string {
     return str

@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { integerMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+import { integerMatch } from '@wildboar/x500/SelectedAttributeTypes';
 import { id_at_supplServId } from '../UPT-DataModel/id-at-supplServId.va';
 import {
     SS_Code,

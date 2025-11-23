@@ -3,9 +3,9 @@ import {
     SIGNED,
     _get_decoder_for_SIGNED,
     _get_encoder_for_SIGNED,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta';
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/AuthenticationFramework';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     BiometricPolicyCertificateInfo,
     _decode_BiometricPolicyCertificateInfo,
@@ -15,7 +15,7 @@ export {
     SIGNED,
     _get_decoder_for_SIGNED,
     _get_encoder_for_SIGNED,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 export {
     BiometricPolicyCertificateInfo,
     _decode_BiometricPolicyCertificateInfo,

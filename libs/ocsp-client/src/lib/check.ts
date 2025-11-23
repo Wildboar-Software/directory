@@ -1,61 +1,61 @@
 import {
     OCSPRequest,
     _encode_OCSPRequest,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPRequest.ta";
+} from "@wildboar/ocsp";
 import {
     TBSRequest,
     _encode_TBSRequest,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/TBSRequest.ta";
+} from "@wildboar/ocsp";
 import {
     Request,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/Request.ta";
+} from "@wildboar/ocsp";
 import {
     CertID,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/CertID.ta";
+} from "@wildboar/ocsp";
 import {
     OCSPResponse,
     _decode_OCSPResponse,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponse.ta";
+} from "@wildboar/ocsp";
 import type {
     BasicOCSPResponse,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/BasicOCSPResponse.ta";
+} from "@wildboar/ocsp";
 import type {
     SingleResponse,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/SingleResponse.ta";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/ocsp";
+import { DER } from "@wildboar/asn1/functional";
 import { URL } from "url";
 import * as http from "http";
 import * as https from "https";
 import { TlsOptions } from "tls";
-import { BERElement, unpackBits } from "asn1-ts";
+import { BERElement, unpackBits } from "@wildboar/asn1";
 import {
     id_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     SubjectPublicKeyInfo,
     _encode_SubjectPublicKeyInfo,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     DistinguishedName,
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { createHash } from "crypto";
 import {
     id_pkix_ocsp_basic,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/id-pkix-ocsp-basic.va";
+} from "@wildboar/ocsp";
 import {
     _decode_BasicOCSPResponse,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/BasicOCSPResponse.ta";
+} from "@wildboar/ocsp";
 import type {
     PkiPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     Signature,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/Signature.ta";
-import { CertificateSerialNumber } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/CertificateSerialNumber.ta";
+} from "@wildboar/ocsp";
+import { CertificateSerialNumber } from "@wildboar/pki-stub";
 
 // Yes, I realize I could have done this with .reduce(), but for loops are more performant.
 function getReceivedDataSize (chunks: Buffer[]) {

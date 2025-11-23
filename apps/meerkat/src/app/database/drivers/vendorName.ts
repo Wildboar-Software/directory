@@ -11,14 +11,14 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import { directoryStringToString } from "@wildboar/x500";
 import {
     vendorName,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa.js";
 import {
     _decode_UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 
 const VENDOR_NAME: string = "Wildboar Software";
 

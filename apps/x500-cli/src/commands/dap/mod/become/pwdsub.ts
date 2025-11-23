@@ -1,96 +1,96 @@
 import type { Connection, Context } from "../../../../types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     DER,
     _encodeObjectIdentifier,
     _encodeBoolean,
     _encodeInteger,
     _encodeUTF8String,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     modifyEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgument,
     _encode_ModifyEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     EntryModification,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/InformationFramework";
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
 import {
     pwdAdminSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import type {
     PwdSubArgs,
 } from "../../../../yargs/dap_mod_become_pwdsub";
 import {
     pwdModifyEntryAllowed,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdChangeAllowed,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdChangeAllowed.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdMaxAge,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxAge.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdExpiryAge,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryAge.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdMinLength,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinLength.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdAlphabet,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdDictionaries,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdDictionaries.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdExpiryWarning,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryWarning.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdGraces,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGraces.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdFailureDuration,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureDuration.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdLockoutDuration,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdLockoutDuration.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdMaxFailures,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxFailures.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdMaxTimeInHistory,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxTimeInHistory.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdMinTimeInHistory,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinTimeInHistory.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdHistorySlots,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdRecentlyExpiredDuration,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdEncAlg,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 
 export
 async function do_modify_become_pwdsub (

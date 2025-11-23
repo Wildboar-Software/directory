@@ -1,22 +1,22 @@
 import type { Vertex, Context } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import accessControlSchemesThatUseEntryACI from "./accessControlSchemesThatUseEntryACI";
 import accessControlSchemesThatUsePrescriptiveACI from "./accessControlSchemesThatUsePrescriptiveACI";
 import accessControlSchemesThatUseSubentryACI from "./accessControlSchemesThatUseSubentryACI";
 import accessControlSchemesThatUseInnerAreas from "./accessControlSchemesThatUseInnerAreas";
 import {
     ACIItem, _decode_ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     accessControlSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_accessControlSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_accessControlInnerArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
-import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
+} from "@wildboar/x500/InformationFramework";
+import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/BasicAccessControl";
 import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
 import { Prisma } from "@prisma/client";
 import accessControlSchemesThatUseASingleAdminPoint from "./accessControlSchemesThatUseASingleAdminPoint";

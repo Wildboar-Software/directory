@@ -5,43 +5,43 @@ import type {
     Value,
     SpecialAttributeDatabaseReader,
 } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
 import type {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 import attributeFromDatabaseAttribute from "../attributeFromDatabaseAttribute";
 import readCollectiveValues from "./readCollectiveValues";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import type {
     ContextSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     id_soc_subschema,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
+} from "@wildboar/x500/SchemaAdministration";
 import groupByOID from "../../utils/groupByOID";
 import {
     TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ContextAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_oa_allAttributeTypes,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+} from "@wildboar/x500/InformationFramework";
 import getAttributeParentTypes from "../../x500/getAttributeParentTypes";
-import evaluateContextAssertion from "@wildboar/x500/src/lib/utils/evaluateContextAssertion";
+import { evaluateContextAssertion } from "@wildboar/x500";
 import {
     Context as X500Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+} from "@wildboar/x500/InformationFramework";
 import getAttributeSubtypes from "../../x500/getAttributeSubtypes";
 import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults";
-import { ContextProfile, ResultAttribute } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ResultAttribute.ta";
+import { ContextProfile, ResultAttribute } from "@wildboar/x500/ServiceAdministration";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 

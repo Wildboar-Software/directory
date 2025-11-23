@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import { aa_contentHint } from '../ExtendedSecurityServices-2009/aa-contentHint.oa';
 import { aa_contentIdentifier } from '../ExtendedSecurityServices-2009/aa-contentIdentifier.oa';
 import { aa_contentReference } from '../ExtendedSecurityServices-2009/aa-contentReference.oa';
@@ -10,7 +10,7 @@ import { aa_receiptRequest } from '../ExtendedSecurityServices-2009/aa-receiptRe
 import { aa_securityLabel } from '../ExtendedSecurityServices-2009/aa-securityLabel.oa';
 import { aa_signingCertificate } from '../ExtendedSecurityServices-2009/aa-signingCertificate.oa';
 import { aa_signingCertificateV2 } from '../ExtendedSecurityServices-2009/aa-signingCertificateV2.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export { aa_contentHint } from '../ExtendedSecurityServices-2009/aa-contentHint.oa';
 export { aa_contentIdentifier } from '../ExtendedSecurityServices-2009/aa-contentIdentifier.oa';
 export { aa_contentReference } from '../ExtendedSecurityServices-2009/aa-contentReference.oa';

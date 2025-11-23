@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { ftpDownloadBandwidth } from '../PureFTPdSchema/ftpDownloadBandwidth.oa';
 import { ftpDownloadRatio } from '../PureFTPdSchema/ftpDownloadRatio.oa';
 import { ftpGid } from '../PureFTPdSchema/ftpGid.oa';
@@ -14,8 +14,8 @@ import { ftpStatus } from '../PureFTPdSchema/ftpStatus.oa';
 import { ftpUid } from '../PureFTPdSchema/ftpUid.oa';
 import { ftpUploadBandwidth } from '../PureFTPdSchema/ftpUploadBandwidth.oa';
 import { ftpUploadRatio } from '../PureFTPdSchema/ftpUploadRatio.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -27,7 +27,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { ftpDownloadBandwidth } from '../PureFTPdSchema/ftpDownloadBandwidth.oa';
 export { ftpDownloadRatio } from '../PureFTPdSchema/ftpDownloadRatio.oa';
 export { ftpGid } from '../PureFTPdSchema/ftpGid.oa';
@@ -90,7 +90,7 @@ export const pureFTPdUser: OBJECT_CLASS = {
     '&ldapName': ['pureFTPdUser'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'PureFTPd user with optional quota, throttling and ratio' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 6981, 11, 2, 3,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

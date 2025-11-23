@@ -12,9 +12,9 @@ import type {
 } from "@wildboar/meerkat-types";
 import {
     hierarchyLevel,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyLevel.oa";
+} from "@wildboar/x500/InformationFramework";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

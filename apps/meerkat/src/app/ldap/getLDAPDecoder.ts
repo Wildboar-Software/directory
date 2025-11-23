@@ -1,13 +1,13 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
-import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+import type { LDAPSyntaxDecoder } from "@wildboar/ldap";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { normalizeAttributeDescription } from "@wildboar/ldap";
 import {
     LDAPOID,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPOID.ta";
+} from "@wildboar/ldap";
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+} from "@wildboar/x500/InformationFramework";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 
 /**

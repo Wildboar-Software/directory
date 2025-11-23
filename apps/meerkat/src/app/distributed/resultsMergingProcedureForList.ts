@@ -1,12 +1,12 @@
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import type { ClientAssociation } from "@wildboar/meerkat-types";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import type {
     ListArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import lcrProcedure from "./lcrProcedure";
 import type { ListState } from "./list_i";
 

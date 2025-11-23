@@ -1,56 +1,56 @@
 import type { IndexableOID } from "@wildboar/meerkat-types";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     sha1WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha1WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     sha256WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha256WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     sha384WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha384WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     sha512WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha512WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     sha224WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha224WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_dsa_with_sha1,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha1.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_dsa_with_sha224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_dsa_with_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA384,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA384.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha1,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha384,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha384.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 
 /**
  * @summary A mapping of signature algorithm object identifiers and their hash algorithm object identifiers.

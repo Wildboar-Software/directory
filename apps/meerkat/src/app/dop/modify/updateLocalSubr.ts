@@ -1,51 +1,51 @@
 import { Vertex, ClientAssociation, OperationalBindingError } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../../ctx";
+import type { MeerkatContext } from "../../ctx.js";
 import {
     HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     SubordinateToSuperior,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import dnToVertex from "../../dit/dnToVertex";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
     SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import { OpBindingErrorParam } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { OpBindingErrorParam } from "@wildboar/x500/OperationalBindingManagement";
 import {
     OpBindingErrorParam_problem_roleAssignment,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import createEntry from "../../database/createEntry";
-import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
+import { compareRelativeDistinguishedName as compareRDN } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import addAttributes from "../../database/entry/addAttributes";
 import removeAttribute from "../../database/entry/removeAttribute";
 import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
 import {
     InvokeId,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     OpBindingErrorParam_problem_invalidAgreement,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     id_err_operationalBindingError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_op_binding_non_specific_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
-import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
+import { operationalBindingError } from "@wildboar/x500/OperationalBindingManagement";
 import saveAccessPoint from "../../database/saveAccessPoint";
-import { ASN1Construction } from "asn1-ts";
+import { ASN1Construction } from "@wildboar/asn1";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
-import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 
 /**

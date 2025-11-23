@@ -2,8 +2,8 @@ import {
     Versions,
     Versions_v1,
     Versions_v2,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
-import { TRUE_BIT } from "asn1-ts";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { TRUE_BIT } from "@wildboar/asn1";
 
 /**
  * @summary Versions of the Directory Protocols supported by Meerkat DSA.

@@ -2,20 +2,20 @@ import type { Context } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     DSACredentials,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     HASH,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/HASH.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
-import { BERElement, ObjectIdentifier, unpackBits } from "asn1-ts";
+} from "@wildboar/x500/AuthenticationFramework";
+import { BERElement, ObjectIdentifier, unpackBits } from "@wildboar/asn1";
 
 /**
  * @summary Get credentials to try when establishing a connection to a remote DSA

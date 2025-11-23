@@ -1,7 +1,7 @@
 /* eslint-disable */
-import { mhs_distribution_list } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-distribution-list.oa";
-import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import { mhs_distribution_list } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
+import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { atn_AF_address } from "../ATNDirectoryObjectIdentifiers/atn-AF-address.oa";
 import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa";
 import { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa";

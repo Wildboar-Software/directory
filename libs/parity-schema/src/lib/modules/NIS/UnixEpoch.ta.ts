@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import { Uint32, _decode_Uint32, _encode_Uint32 } from '../NIS/Uint32.ta';
 
 /* START_OF_SYMBOL_DEFINITION UnixEpoch */

@@ -1,19 +1,17 @@
-import { MeerkatContext } from "../../ctx";
+import { MeerkatContext } from "../../ctx.js";
 import { Vertex, Context, ShadowError, Value, UnknownError, IndexableOID } from "@wildboar/meerkat-types";
 import {
     UpdateShadowArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateShadowArgument.ta";
-import {
     UpdateShadowResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateShadowResult.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import DISPAssociation from "../DISPConnection";
 import { verifySIGNED } from "../../pki/verifySIGNED";
 import {
     UpdateWindow,
     _encode_UpdateShadowArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateShadowArgumentData.ta";
-import { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
-import { Versions_v2 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
+import { Versions_v2 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     TRUE_BIT,
     FALSE,
@@ -26,7 +24,7 @@ import {
     ASN1Construction,
     ASN1UniversalType,
     ASN1Element,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
     compareDistinguishedName,
     dnWithinSubtreeSpecification,
@@ -36,41 +34,37 @@ import {
 } from "@wildboar/x500";
 import {
     id_op_binding_shadow,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
-import { ShadowErrorData } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowErrorData.ta";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
+import { ShadowErrorData } from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     ShadowProblem_invalidAgreementID,
     ShadowProblem_invalidInformationReceived,
     ShadowProblem_unsuitableTiming,
     ShadowProblem_updateAlreadyReceived,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     id_errcode_shadowError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-shadowError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     ShadowProblem_unsupportedStrategy,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
-import {
     ShadowingAgreementInfo,
-    _decode_AccessPoint,
     _decode_ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import dnToVertex from "../../dit/dnToVertex";
 import { becomeShadowConsumer } from "../../dop/establish/becomeShadowConsumer";
 import {
+    _decode_AccessPoint,
+} from "@wildboar/x500/DistributedOperations";
+import {
     OperationalBindingID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     Subtree,
     TotalRefresh,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/TotalRefresh.ta";
-import {
     IncrementalStepRefresh,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/IncrementalStepRefresh.ta";
-import {
     SDSEType
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SDSEType.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     DSEType,
     DSEType_shadow,
@@ -84,26 +78,31 @@ import {
     DSEType_subentry,
     DSEType_subr,
     DSEType_familyMember,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import deleteEntry from "../../database/deleteEntry";
-import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
-import { clearance, createTimestamp, dseType, objectClass } from "@wildboar/x500/src/lib/collections/attributes";
-import { DER, _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { Attribute } from "@wildboar/pki-stub";
+import { dseType } from "@wildboar/x500/DSAOperationalAttributeTypes";
+import { DER, _decodeObjectIdentifier } from "@wildboar/asn1/functional";
 import addAttributes from "../../database/entry/addAttributes";
 import bPromise from "bluebird";
-import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/LocalName.ta";
+import {
+    LocalName,
+    createTimestamp,
+    objectClass,
+} from "@wildboar/x500/InformationFramework";
+import { clearance } from "@wildboar/x500/EnhancedSecurity";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import readSubordinates from "../../dit/readSubordinates";
-import { Refinement } from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+import { Refinement } from "@wildboar/x500/InformationFramework";
 import { OperationalBindingInitiator, Prisma } from "@prisma/client";
 import createEntry, { createDse } from "../../database/createEntry";
 import stringifyDN from "../../x500/stringifyDN";
-import { ContentChange } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ContentChange.ta";
+import { ContentChange } from "@wildboar/x500/DirectoryShadowAbstractService";
 import rdnToID from "../../dit/rdnToID";
 import { renameEntry } from "../../database/renameEntry";
 import removeAttribute from "../../database/entry/removeAttribute";
 import addValues from "../../database/entry/addValues";
-import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
+import { EntryModification } from "@wildboar/x500/DirectoryAbstractService";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import removeValues from "../../database/entry/removeValues";
 import readValuesOfType from "../../utils/readValuesOfType";
@@ -112,19 +111,17 @@ import subtreeIntersection from "../../x500/subtreeIntersection";
 import { updateShadowConsumer } from "../createShadowUpdate";
 import {
     ShadowProblem_unwillingToPerform,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
-import {
     ClassAttributeSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     AttributeUsage_userApplications,
     AttributeUsage_dSAOperation,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 import { addSeconds } from "date-fns";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import { stripEntry } from "../../database/stripEntry";
 import getDistinguishedName from "../../x500/getDistinguishedName";
-import { child } from "@wildboar/x500/src/lib/collections/objectClasses";
+import { child } from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Convert an SDSEType into its equivalent DSEType

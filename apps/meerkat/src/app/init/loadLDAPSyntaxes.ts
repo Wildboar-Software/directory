@@ -1,88 +1,88 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type { ASN1Element } from "asn1-ts";
-import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import type { ASN1Element } from "@wildboar/asn1";
+import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import ldapSyntaxFromInformationObject from "./ldapSyntaxFromInformationObject";
-import { attributeTypeDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/attributeTypeDescription.oa";
-import { bitString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/bitString.oa";
-import { boolean_ } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/boolean.oa";
-import { countryString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryString.oa";
-import { dn } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa";
-import { deliveryMethod } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/deliveryMethod.oa";
-import { directoryString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/directoryString.oa";
-import { dITContentRuleDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dITContentRuleDescription.oa";
-import { dITStructureRuleDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dITStructureRuleDescription.oa";
-import { enhancedGuide } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/enhancedGuide.oa";
-import { facsimileTelephoneNr } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/facsimileTelephoneNr.oa";
-import { fax } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/fax.oa";
-import { generalizedTime } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/generalizedTime.oa";
-import { guide } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/guide.oa";
-import { ia5String } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ia5String.oa";
-import { integer } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa";
-import { jpeg } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/jpeg.oa";
-import { matchingRuleDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/matchingRuleDescription.oa";
-import { matchingRuleUseDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/matchingRuleUseDescription.oa";
-import { nameAndOptionalUID } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/nameAndOptionalUID.oa";
-import { nameFormDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/nameFormDescription.oa";
-import { numericString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/numericString.oa";
-import { objectClassDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/objectClassDescription.oa";
-import { oid } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oid.oa";
-import { otherMailbox } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/otherMailbox.oa";
-import { octetString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetString.oa";
-import { postalAddr } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalAddr.oa";
-import { presentationAddr } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/presentationAddr.oa";
-import { printableString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/printableString.oa";
-import { subtreeSpec } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/subtreeSpec.oa";
-import { telephoneNr } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNr.oa";
-import { telexNr } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telexNr.oa";
-import { utcTime } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/utcTime.oa";
-import { ldapSyntaxDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapSyntaxDescription.oa";
-import { substringAssertion } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/substringAssertion.oa";
-import { utmCoords } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/utmCoords.oa";
-import { uiiForm } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uiiForm.oa";
-import { epcForm } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/epcForm.oa";
-import { countryString3c } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryString3c.oa";
-import { countryString3n } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryString3n.oa";
-import { dnsString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dnsString.oa";
-import { intEmailString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/intEmailString.oa";
-import { jidString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/jidString.oa";
-import * as decoders from "@wildboar/ldap/src/lib/syntaxDecoders";
-import * as encoders from "@wildboar/ldap/src/lib/syntaxEncoders";
-import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+import { attributeTypeDescription } from "@wildboar/x500/SelectedAttributeTypes";
+import { bitString } from "@wildboar/x500/SelectedAttributeTypes";
+import { boolean_ } from "@wildboar/x500/SelectedAttributeTypes";
+import { countryString } from "@wildboar/x500/SelectedAttributeTypes";
+import { dn } from "@wildboar/x500/SelectedAttributeTypes";
+import { deliveryMethod } from "@wildboar/x500/SelectedAttributeTypes";
+import { directoryString } from "@wildboar/x500/SelectedAttributeTypes";
+import { dITContentRuleDescription } from "@wildboar/x500/SelectedAttributeTypes";
+import { dITStructureRuleDescription } from "@wildboar/x500/SelectedAttributeTypes";
+import { enhancedGuide } from "@wildboar/x500/SelectedAttributeTypes";
+import { facsimileTelephoneNr } from "@wildboar/x500/SelectedAttributeTypes";
+import { fax } from "@wildboar/x500/SelectedAttributeTypes";
+import { generalizedTime } from "@wildboar/x500/SelectedAttributeTypes";
+import { guide } from "@wildboar/x500/SelectedAttributeTypes";
+import { ia5String } from "@wildboar/x500/SelectedAttributeTypes";
+import { integer } from "@wildboar/x500/SelectedAttributeTypes";
+import { jpeg } from "@wildboar/x500/SelectedAttributeTypes";
+import { matchingRuleDescription } from "@wildboar/x500/SelectedAttributeTypes";
+import { matchingRuleUseDescription } from "@wildboar/x500/SelectedAttributeTypes";
+import { nameAndOptionalUID } from "@wildboar/x500/SelectedAttributeTypes";
+import { nameFormDescription } from "@wildboar/x500/SelectedAttributeTypes";
+import { numericString } from "@wildboar/x500/SelectedAttributeTypes";
+import { objectClassDescription } from "@wildboar/x500/SelectedAttributeTypes";
+import { oid } from "@wildboar/x500/SelectedAttributeTypes";
+import { otherMailbox } from "@wildboar/x500/SelectedAttributeTypes";
+import { octetString } from "@wildboar/x500/SelectedAttributeTypes";
+import { postalAddr } from "@wildboar/x500/SelectedAttributeTypes";
+import { presentationAddr } from "@wildboar/x500/SelectedAttributeTypes";
+import { printableString } from "@wildboar/x500/SelectedAttributeTypes";
+import { subtreeSpec } from "@wildboar/x500/SelectedAttributeTypes";
+import { telephoneNr } from "@wildboar/x500/SelectedAttributeTypes";
+import { telexNr } from "@wildboar/x500/SelectedAttributeTypes";
+import { utcTime } from "@wildboar/x500/SelectedAttributeTypes";
+import { ldapSyntaxDescription } from "@wildboar/x500/SelectedAttributeTypes";
+import { substringAssertion } from "@wildboar/x500/SelectedAttributeTypes";
+import { utmCoords } from "@wildboar/x500/SelectedAttributeTypes";
+import { uiiForm } from "@wildboar/x500/SelectedAttributeTypes";
+import { epcForm } from "@wildboar/x500/SelectedAttributeTypes";
+import { countryString3c } from "@wildboar/x500/SelectedAttributeTypes";
+import { countryString3n } from "@wildboar/x500/SelectedAttributeTypes";
+import { dnsString } from "@wildboar/x500/SelectedAttributeTypes";
+import { intEmailString } from "@wildboar/x500/SelectedAttributeTypes";
+import { jidString } from "@wildboar/x500/SelectedAttributeTypes";
+import { syntaxDecoders as decoders } from "@wildboar/ldap";
+import { syntaxEncoders as encoders } from "@wildboar/ldap";
+import { normalizeAttributeDescription } from "@wildboar/ldap";
 import decodeLDAPDN from "../ldap/decodeLDAPDN";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import {
     DistinguishedName,
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import * as localEncoders from "../ldap/syntaxEncoders";
 import * as localDecoders from "../ldap/syntaxDecoders";
 
 // IANA LDAP Syntaxes
 import {
     authPasswordSyntax,
-} from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordSyntax.oa";
+} from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordSyntax.oa.js";
 import {
     bootParameterSyntax,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/bootParameterSyntax.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/bootParameterSyntax.oa.js";
 import {
     nisNetgroupTripleSyntax,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/nisNetgroupTripleSyntax.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/nisNetgroupTripleSyntax.oa.js";
 import {
     componentFilter,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/componentFilter.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/componentFilter.oa.js";
 import {
     null_,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/null.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/null.oa.js";
 import {
     open,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/open.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/open.oa.js";
 import {
     rdn,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/rdn.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/rdn.oa.js";
 import {
     uuid,
-} from "@wildboar/parity-schema/src/lib/modules/UUID/uuid.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UUID/uuid.oa.js";
 
 const ldapSyntaxes = {
     attributeTypeDescription,

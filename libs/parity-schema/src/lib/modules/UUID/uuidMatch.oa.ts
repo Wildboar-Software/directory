@@ -1,20 +1,20 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
+import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
 import {
     UUID,
     _decode_UUID,
     _encode_UUID,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UUID.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 import { uuid } from '../UUID/uuid.oa';
 import { id_uuidMatch } from './id-uuidMatch.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export {
     UUID,
     _decode_UUID,
     _encode_UUID,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UUID.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 export { uuid } from '../UUID/uuid.oa';
 
 /* START_OF_SYMBOL_DEFINITION uuidMatch */

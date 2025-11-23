@@ -1,10 +1,10 @@
-import type { ASN1Element } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import type { ASN1Element } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_Capability,
     _encode_Capability,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/Capability.ta";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 
 // addressCapabilitiesMatch MATCHING-RULE ::= {
 //     SYNTAX  AddressCapabilities

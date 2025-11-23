@@ -1,6 +1,6 @@
 import {
     ChainingArguments,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
+} from "@wildboar/x500/DistributedOperations";
 
 /**
  * @summary Clone a `ChainingArguments` object, and possibly update some of its fields

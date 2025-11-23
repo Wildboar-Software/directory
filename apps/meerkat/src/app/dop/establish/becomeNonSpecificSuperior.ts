@@ -1,57 +1,57 @@
 import type { ClientAssociation } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../../ctx";
+import type { MeerkatContext } from "../../ctx.js";
 import {
     SuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import dnToVertex from "../../dit/dnToVertex";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
     SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     OpBindingErrorParam,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     OpBindingErrorParam_problem_roleAssignment,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     operationalBindingError,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import saveAccessPoint from "../../database/saveAccessPoint";
 import DOPAssociation from "../DOPConnection";
 import {
     ServiceProblem_unwillingToPerform,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding";
 import {
     NHOBSubordinateToSuperior,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSubordinateToSuperior.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     NHOBSuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     NonSpecificHierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import { randomInt } from "crypto";
-import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 
 /**

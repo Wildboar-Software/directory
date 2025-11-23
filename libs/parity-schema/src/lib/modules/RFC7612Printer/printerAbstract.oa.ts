@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { printer_charge_info_uri } from '../RFC7612Printer/printer-charge-info-uri.oa';
 import { printer_charge_info } from '../RFC7612Printer/printer-charge-info.oa';
 import { printer_charset_configured } from '../RFC7612Printer/printer-charset-configured.oa';
@@ -41,8 +41,8 @@ import { printer_service_person } from '../RFC7612Printer/printer-service-person
 import { printer_sides_supported } from '../RFC7612Printer/printer-sides-supported.oa';
 import { printer_stacking_order_supported } from '../RFC7612Printer/printer-stacking-order-supported.oa';
 import { printer_uuid } from '../RFC7612Printer/printer-uuid.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -54,8 +54,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { printer_charge_info_uri } from '../RFC7612Printer/printer-charge-info-uri.oa';
 export { printer_charge_info } from '../RFC7612Printer/printer-charge-info.oa';
 export { printer_charset_configured } from '../RFC7612Printer/printer-charset-configured.oa';
@@ -198,7 +198,7 @@ export const printerAbstract: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['printerAbstract'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'Printer-related information.' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 18, 0, 2, 6, 258,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

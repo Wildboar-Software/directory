@@ -1,4 +1,4 @@
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 import { EqualityMatcher } from "@wildboar/x500";
 
 export

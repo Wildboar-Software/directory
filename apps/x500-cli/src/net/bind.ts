@@ -5,34 +5,34 @@ import MutableWriteable from "../utils/MutableWriteable";
 import connect from "./connect";
 import {
     IdmBindError,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import type {
     ConfigDSA,
     ConfigContext,
     ConfigAccessPoint,
     ConfigStrongCredentials,
 } from "@wildboar/x500-cli-config";
-import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
-import { OBJECT_IDENTIFIER, BERElement } from "asn1-ts";
+import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
+import { OBJECT_IDENTIFIER, BERElement } from "@wildboar/asn1";
 import { KeyObject, createPrivateKey } from "crypto";
-import { CertificatePair, CertificationPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+import { CertificatePair, CertificationPath } from "@wildboar/x500/AuthenticationFramework";
 import { PEMObject } from "pem-ts";
 import {
     Certificate,
     _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import type {
     PkiPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     AttributeCertificationPath,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     _decode_AttributeCertificate,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificate.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     ACPathData,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/ACPathData.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import destringifyDN from "../utils/destringifyDN";
 
 /**

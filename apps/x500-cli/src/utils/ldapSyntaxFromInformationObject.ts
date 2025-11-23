@@ -1,6 +1,6 @@
 import {
     SYNTAX_NAME,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca";
+} from "@wildboar/x500/InformationFramework";
 import type { LDAPSyntaxInfo } from "../types";
 
 export

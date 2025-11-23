@@ -1,8 +1,8 @@
 import type { Context } from "../types";
-import { TRUE, FALSE } from "asn1-ts";
+import { TRUE, FALSE } from "@wildboar/asn1";
 import {
     EntryInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import printValue from "./Value";
 import stringifyDN from "../utils/stringifyDN";
 import printAttributeValue from "./AttributeValue";

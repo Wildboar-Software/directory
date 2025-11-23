@@ -1,10 +1,10 @@
 
 
 import type { Context, Vertex } from "@wildboar/meerkat-types";
-import type { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
-import { UserPwd_encrypted } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd-encrypted.ta";
-import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
-import { DERElement, ObjectIdentifier } from "asn1-ts";
+import type { UserPwd } from "@wildboar/x500/PasswordPolicy";
+import { UserPwd_encrypted } from "@wildboar/x500/PasswordPolicy";
+import { AlgorithmIdentifier } from "@wildboar/pki-stub";
+import { DERElement, ObjectIdentifier } from "@wildboar/asn1";
 
 /**
  * @summary Read the password of an entry from the database

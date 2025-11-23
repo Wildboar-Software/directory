@@ -1,16 +1,16 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-import { name } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa';
+} from '@wildboar/x500/InformationFramework';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
+import { name } from '@wildboar/x500/SelectedAttributeTypes';
 import { allowedRegistrationAddress } from '../UPT-DataModel/allowedRegistrationAddress.oa';
 import { defaultChargingReference } from '../UPT-DataModel/defaultChargingReference.oa';
 import { icRegistrationAddress } from '../UPT-DataModel/icRegistrationAddress.oa';
 import { id_oc_calledUptUser } from '../UPT-DataModel/id-oc-calledUptUser.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -22,9 +22,9 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-export { name } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa';
+} from '@wildboar/x500/InformationFramework';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
+export { name } from '@wildboar/x500/SelectedAttributeTypes';
 export { allowedRegistrationAddress } from '../UPT-DataModel/allowedRegistrationAddress.oa';
 export { defaultChargingReference } from '../UPT-DataModel/defaultChargingReference.oa';
 export { icRegistrationAddress } from '../UPT-DataModel/icRegistrationAddress.oa';

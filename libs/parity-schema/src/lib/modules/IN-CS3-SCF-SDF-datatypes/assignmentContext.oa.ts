@@ -1,17 +1,17 @@
 /* eslint-disable */
-import { CONTEXT } from '@wildboar/x500/src/lib/modules/InformationFramework/CONTEXT.oca';
+import { CONTEXT } from '@wildboar/x500/InformationFramework';
 import {
     DistinguishedName,
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta';
+} from '@wildboar/x500/InformationFramework';
 import { id_avc_assignment } from '../IN-CS3-object-identifiers/id-avc-assignment.va';
-export { CONTEXT } from '@wildboar/x500/src/lib/modules/InformationFramework/CONTEXT.oca';
+export { CONTEXT } from '@wildboar/x500/InformationFramework';
 export {
     DistinguishedName,
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta';
+} from '@wildboar/x500/InformationFramework';
 export { id_avc_assignment } from '../IN-CS3-object-identifiers/id-avc-assignment.va';
 
 /* START_OF_SYMBOL_DEFINITION assignmentContext */

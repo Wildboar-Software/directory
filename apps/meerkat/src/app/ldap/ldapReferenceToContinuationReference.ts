@@ -1,23 +1,23 @@
 import {
     ContinuationReference,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     OperationProgress,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     OperationProgress_nameResolutionPhase_notStarted,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     AccessPointInformation,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     ReferenceType_cross,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
-import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
-import type { URI } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/URI.ta";
+} from "@wildboar/x500/DistributedOperations";
+import { uriToNSAP } from "@wildboar/x500";
+import type { URI } from "@wildboar/ldap";
 
 /**
  * @summary Converts LDAP referral URIs into an X.500 `ContinuationReference`

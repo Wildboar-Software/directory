@@ -4,110 +4,104 @@ import {
 } from "winston";
 import {
     ObjectClassKind,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeUsage,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     EqualityMatcher,
-} from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type {
     OrderingMatcher,
-} from "@wildboar/x500/src/lib/types/OrderingMatcher";
-import type {
     SubstringsMatcher,
-} from "@wildboar/x500/src/lib/types/SubstringsMatcher";
-import type {
     ContextMatcher,
-} from "@wildboar/x500/src/lib/types/ContextMatcher";
-import type { ASN1Element, OBJECT_IDENTIFIER, BOOLEAN, EXTERNAL } from "asn1-ts";
+} from "@wildboar/x500";
+import type { ASN1Element, OBJECT_IDENTIFIER, BOOLEAN, EXTERNAL } from "@wildboar/asn1";
 import type {
     PagedResultsRequest_newRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
-import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
+} from "@wildboar/x500/InformationFramework";
+import type { LDAPSyntaxDecoder } from "@wildboar/ldap";
+import type { LDAPSyntaxEncoder } from "@wildboar/ldap";
 import type { PrismaClient, Prisma, Entry } from "@prisma/client";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { SupplierInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
-import type { ConsumerInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
-import type { SupplierAndConsumers } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierAndConsumers.ta";
-import type { MasterAndShadowAccessPoints } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterAndShadowAccessPoints.ta";
-import type { DitBridgeKnowledge } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
-import type { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
+import type { SupplierInformation } from "@wildboar/x500/DSAOperationalAttributeTypes";
+import type { ConsumerInformation } from "@wildboar/x500/DSAOperationalAttributeTypes";
+import type { SupplierAndConsumers } from "@wildboar/x500/DSAOperationalAttributeTypes";
+import type { MasterAndShadowAccessPoints } from "@wildboar/x500/DistributedOperations";
+import type { DitBridgeKnowledge } from "@wildboar/x500/DistributedOperations";
+import type { AuthenticationLevel } from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels_level_none,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import type {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import type { KeyObject } from "crypto";
-import type { PkiPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
-import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+import type { PkiPath } from "@wildboar/x500/AuthenticationFramework";
+import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
 import type { cpus, networkInterfaces } from "os";
 import type { Socket } from "net";
 import {
     OPTIONALLY_PROTECTED,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+} from "@wildboar/x500/EnhancedSecurity";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     DITStructureRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContentRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     MatchingRuleUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     FriendsDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContextUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
-import { EventEmitter } from "events";
+} from "@wildboar/x500/SchemaAdministration";
+import { EventEmitter } from "node:events";
 import type { i18n } from "i18next";
 import {
     Context as X500Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+} from "@wildboar/x500/InformationFramework";
 import type { TlsOptions, TLSSocket } from "tls";
 import type {
     CertificateList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import type {
     TrustAnchorList,
-} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+} from "@wildboar/tal";
 import type {
     AttributeCertificationPath,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import type {
     PwdResponseValue,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { Timeout } from "safe-timers";
-import { Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
+import { Clearance } from "@wildboar/x500/EnhancedSecurity";
 import {
     SignedSecurityLabel,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
-import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
+} from "@wildboar/x500/EnhancedSecurity";
+import { DSACredentials } from "@wildboar/x500/DistributedOperations";
 import { DirectoryBindError, DSABindError } from "./errors";
 import type { URL } from "url";
 

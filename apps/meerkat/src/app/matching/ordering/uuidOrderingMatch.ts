@@ -1,5 +1,5 @@
-import OrderingMatcher from "@wildboar/x500/src/lib/types/OrderingMatcher";
-import type { ASN1Element } from "asn1-ts";
+import { type OrderingMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
 
 export
 const uuidOrderingMatch: OrderingMatcher = (

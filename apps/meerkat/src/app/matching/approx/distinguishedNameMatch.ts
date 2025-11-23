@@ -1,10 +1,10 @@
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { compareDistinguishedName } from "@wildboar/x500";
 import {
     DistinguishedName,
     _decode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 
 export
 const distinguishedNameMatch: EqualityMatcher = (

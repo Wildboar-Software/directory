@@ -17,7 +17,7 @@ import {
     ASN1Construction,
     ASN1UniversalType,
     ObjectIdentifier,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import bytesToUUID from "../../utils/bytesToUUID";
 
 export
@@ -30,7 +30,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
     }
     return [
         {
-            type: new ObjectIdentifier([ 1, 3, 6, 1, 1, 16, 4 ]),
+            type: ObjectIdentifier.fromParts([ 1, 3, 6, 1, 1, 16, 4 ]),
             value: new DERElement(
                 ASN1TagClass.universal,
                 ASN1Construction.primitive,

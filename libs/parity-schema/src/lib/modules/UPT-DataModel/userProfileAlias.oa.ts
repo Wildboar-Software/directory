@@ -1,15 +1,15 @@
 /* eslint-disable */
-import { alias } from '@wildboar/x500/src/lib/modules/InformationFramework/alias.oa';
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { alias } from '@wildboar/x500/InformationFramework';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
+} from '@wildboar/x500/InformationFramework';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
 import { id_oc_userProfileAlias } from '../UPT-DataModel/id-oc-userProfileAlias.va';
 import { uptNumber } from '../UPT-DataModel/uptNumber.oa';
-export { alias } from '@wildboar/x500/src/lib/modules/InformationFramework/alias.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { alias } from '@wildboar/x500/InformationFramework';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -21,8 +21,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
+} from '@wildboar/x500/InformationFramework';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_oc_userProfileAlias } from '../UPT-DataModel/id-oc-userProfileAlias.va';
 export { uptNumber } from '../UPT-DataModel/uptNumber.oa';
 

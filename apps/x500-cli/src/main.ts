@@ -1,6 +1,6 @@
 import yargs from "yargs/yargs";
 import type { Argv } from "yargs";
-import ctx from "./ctx";
+import ctx from "./ctx.js";
 import loadAttributeTypes from "./utils/loadAttributeTypes";
 import loadObjectClasses from "./utils/loadObjectClasses";
 import loadLDAPSyntaxes from "./utils/loadLDAPSyntaxes";

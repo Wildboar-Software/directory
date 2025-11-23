@@ -3,14 +3,14 @@ import {
     ContentInfo,
     _decode_ContentInfo,
     _encode_ContentInfo,
-} from '@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/ContentInfo.ta';
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/cms';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 export {
     ContentInfo,
     _decode_ContentInfo,
     _encode_ContentInfo,
-} from '@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/ContentInfo.ta';
+} from '@wildboar/cms';
 
 /* START_OF_SYMBOL_DEFINITION TimeStampToken */
 /**

@@ -1,8 +1,8 @@
 /* eslint-disable */
 import {
     ASN1Element as _Element
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { CommunityIdentifier, _decode_CommunityIdentifier, _encode_CommunityIdentifier } from "../CMSFirmwareWrapper/CommunityIdentifier.ta";
 
 

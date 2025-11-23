@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { sunroot } from '../DSEE/sunroot.va';
 export { sunroot } from '../DSEE/sunroot.va';
 
@@ -16,7 +16,7 @@ export { sunroot } from '../DSEE/sunroot.va';
  *
  * @constant
  */
-export const sunds: OBJECT_IDENTIFIER = new _OID([2, 27], sunroot);
+export const sunds: OBJECT_IDENTIFIER = _OID.fromParts([2, 27], sunroot);
 /* END_OF_SYMBOL_DEFINITION sunds */
 
 /* eslint-enable */

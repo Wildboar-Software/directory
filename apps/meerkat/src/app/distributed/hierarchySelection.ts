@@ -1,11 +1,9 @@
 import type { Vertex, ClientAssociation, Context, IndexableDN } from "@wildboar/meerkat-types";
 import { OperationDispatcher } from "./OperationDispatcher";
-import { ASN1Construction, BERElement, FALSE, FALSE_BIT, TRUE, TRUE_BIT } from "asn1-ts";
+import { ASN1Construction, BERElement, FALSE, FALSE_BIT, TRUE, TRUE_BIT } from "@wildboar/asn1";
 import {
-    Attribute,
+    SearchResultData,
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
-import {
     HierarchySelections,
     HierarchySelections_all,
     HierarchySelections_children,
@@ -17,32 +15,8 @@ import {
     HierarchySelections_self,
     HierarchySelections_subtree,
     HierarchySelections_top,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
-import {
     SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
-import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
-import {
-    ChainingArguments, OperationProgress,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import {
-    DistinguishedName, _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { SearchArgumentData_subset_baseObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
-import { SearchState } from "./search_i";
-import { EntryInformation } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
-import { strict as assert } from "node:assert";
-import {
-    RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
-import { MeerkatContext } from "../ctx";
-import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
-import type { DistinguishedValue } from "@prisma/client";
-import { OperationProgress_nameResolutionPhase_notStarted } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
-import { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
-import {
     ServiceControlOptions_chainingProhibited,
     ServiceControlOptions_countFamily,
     ServiceControlOptions_dontDereferenceAliases,
@@ -52,36 +26,52 @@ import {
     ServiceControlOptions_manageDSAIT,
     ServiceControlOptions_noSubtypeSelection,
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import {
     SearchControlOptions_matchedValuesOnly,
     SearchControlOptions_searchAliases,
     SearchControlOptions_separateFamilyMembers,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import {
+    ChainingArguments, OperationProgress,
+} from "@wildboar/x500/DistributedOperations";
+import {
+    Attribute,
+    DistinguishedName,
+    _encode_DistinguishedName,
+    RelativeDistinguishedName,
+    AttributeTypeAndValue,
+} from "@wildboar/pki-stub";
+import { SearchArgumentData_subset_baseObject } from "@wildboar/x500/DirectoryAbstractService";
+import { SearchState } from "./search_i";
+import { EntryInformation } from "@wildboar/x500/DirectoryAbstractService";
+import { strict as assert } from "node:assert";
+import { MeerkatContext } from "../ctx.js";
+import type { DistinguishedValue } from "@prisma/client";
+import { OperationProgress_nameResolutionPhase_notStarted } from "@wildboar/x500/DistributedOperations";
+import { TraceItem } from "@wildboar/x500/DistributedOperations";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 import { addSeconds } from "date-fns";
 import {
     PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     LimitProblem_timeLimitExceeded,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
-import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
-import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { id_ar_serviceSpecificArea } from "@wildboar/x500/InformationFramework";
+import { id_ar_autonomousArea } from "@wildboar/x500/InformationFramework";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import isPrefix from "../x500/isPrefix";
 import {
     EntryInformationSelection,
     FamilyReturn,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyReturn_memberSelect_compoundEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { stringifyDN } from "../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
-import { DER } from "asn1-ts/dist/node/functional";
-import { family_information } from "@wildboar/x500/src/lib/collections/attributes";
-import { FamilyEntries, FamilyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntry.ta";
+import { DER } from "@wildboar/asn1/functional";
+import { family_information } from "@wildboar/x500/DirectoryAbstractService";
+import { FamilyEntries, FamilyEntry } from "@wildboar/x500/DirectoryAbstractService";
 import iterateOverSearchResults from "../x500/iterateOverSearchResults";
 import { compareDistinguishedName, getOptionallyProtectedValue } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
@@ -619,7 +609,7 @@ async function hierarchySelectionProcedure (
         );
         if ("result" in response && response.result) {
             const results = Array.from(iterateOverSearchResults(response.result));
-            const data = getOptionallyProtectedValue(response.result);
+            const data = getOptionallyProtectedValue<SearchResultData>(response.result);
             const baseDN = ("searchInfo" in data)
                 ? (data.searchInfo.name?.rdnSequence ?? dn)
                 : dn;

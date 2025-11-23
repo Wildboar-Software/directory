@@ -1,19 +1,19 @@
-import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
-import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
-import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
-import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import type { Request } from "@wildboar/x500/src/lib/types/Request";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import type { LDAPSyntaxDecoder } from "@wildboar/ldap";
+import type { LDAPSyntaxEncoder } from "@wildboar/ldap";
+import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
+import type { Request } from "@wildboar/x500";
+import type { ResultOrError } from "@wildboar/x500";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
 import type { Logger } from "winston";
 import { KeyObject } from "crypto";
-import { CertificationPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+import { CertificationPath } from "@wildboar/x500/AuthenticationFramework";
 import {
     AttributeCertificationPath,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 
 export
 type UUID = string;

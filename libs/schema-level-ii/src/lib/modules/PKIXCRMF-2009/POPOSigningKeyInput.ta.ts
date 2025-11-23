@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { SubjectPublicKeyInfo, _decode_SubjectPublicKeyInfo, _encode_SubjectPublicKeyInfo } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta";
+import { SubjectPublicKeyInfo, _decode_SubjectPublicKeyInfo, _encode_SubjectPublicKeyInfo } from "@wildboar/x500/AuthenticationFramework";
 import {
     ASN1ConstructionError as _ConstructionError,
     ASN1Element as _Element
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { POPOSigningKeyInput_authInfo, _decode_POPOSigningKeyInput_authInfo, _encode_POPOSigningKeyInput_authInfo } from "../PKIXCRMF-2009/POPOSigningKeyInput-authInfo.ta";
 
 

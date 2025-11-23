@@ -1,8 +1,8 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 
 export
 function isOperationalAttributeType (ctx: Context, type_: OBJECT_IDENTIFIER): boolean {

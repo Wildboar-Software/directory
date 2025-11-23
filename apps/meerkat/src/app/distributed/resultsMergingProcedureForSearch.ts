@@ -1,13 +1,13 @@
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import type { ClientAssociation } from "@wildboar/meerkat-types";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import scrProcedure from "./scrProcedure";
 import type { SearchState } from "./search_i";
 import {
     SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { OperationDispatcherState } from "./OperationDispatcher";
 import printInvokeId from "../utils/printInvokeId";
 import printCode from "../utils/printCode";

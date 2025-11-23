@@ -4,8 +4,8 @@ import {
     ASN1ConstructionError as _ConstructionError,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { BodyPartPath, _decode_BodyPartPath, _encode_BodyPartPath } from "../EnrollmentMessageSyntax-2009/BodyPartPath.ta";
 
 

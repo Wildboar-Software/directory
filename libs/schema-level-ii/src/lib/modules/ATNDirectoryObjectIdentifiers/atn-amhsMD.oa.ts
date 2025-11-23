@@ -1,8 +1,8 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
-import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { top } from "@wildboar/x500/InformationFramework";
+import { commonName } from "@wildboar/x500/SelectedAttributeTypes";
 import { atn_amhsMD_naming_context } from "../ATNDirectoryObjectIdentifiers/atn-amhsMD-naming-context.oa";
 import { atn_global_domain_identifier } from "../ATNDirectoryObjectIdentifiers/atn-global-domain-identifier.oa";
 import { atn_icao_designator } from "../ATNDirectoryObjectIdentifiers/atn-icao-designator.oa";

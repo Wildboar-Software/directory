@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { mail } from '../Cosine/mail.oa';
 import { confirmtext } from '../QMailSchema/confirmtext.oa';
 import { dnmember } from '../QMailSchema/dnmember.oa';
@@ -20,8 +20,8 @@ import { rfc822member } from '../QMailSchema/rfc822member.oa';
 import { rfc822moderator } from '../QMailSchema/rfc822moderator.oa';
 import { rfc822sender } from '../QMailSchema/rfc822sender.oa';
 import { senderconfirm } from '../QMailSchema/senderconfirm.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -33,7 +33,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { confirmtext } from '../QMailSchema/confirmtext.oa';
 export { dnmember } from '../QMailSchema/dnmember.oa';
 export { dnmoderator } from '../QMailSchema/dnmoderator.oa';
@@ -116,7 +116,7 @@ export const qmailGroup: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['qmailGroup'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'QMail-LDAP Group' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 7914, 1, 3, 2, 1,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

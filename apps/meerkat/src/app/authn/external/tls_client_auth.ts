@@ -1,28 +1,28 @@
 import { Context, BindReturn, DirectoryBindError, DSABindError } from "@wildboar/meerkat-types";
 import { TLSSocket } from "node:tls";
 import { Socket } from "node:net";
-import { BERElement, EXTERNAL, ObjectIdentifier } from "asn1-ts";
+import { BERElement, EXTERNAL, ObjectIdentifier } from "@wildboar/asn1";
 import {
     AuthenticationLevel_basicLevels,
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_strong,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
-import { NameAndOptionalUID } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/AuthenticationFramework";
+import { NameAndOptionalUID } from "@wildboar/x500/SelectedAttributeTypes";
 import dnToVertex from "../../dit/dnToVertex";
 import { read_clearance } from "../../database/utils";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import versions from "../../versions";
 import {
     SecurityProblem_invalidCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import { ds } from "@wildboar/parity-schema/src/lib/modules/Wildboar/ds.va";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { ds } from "@wildboar/parity-schema/src/lib/modules/Wildboar/ds.va.js";
 
-export const id_tls_client_auth = new ObjectIdentifier([ 401, 1 ], ds);
+export const id_tls_client_auth = ObjectIdentifier.fromParts([ 401, 1 ], ds);
 
 export
 async function tls_client_auth (

@@ -13,40 +13,40 @@ import {
     DERElement,
     ASN1Construction,
     OCTET_STRING,
-} from "asn1-ts";
-import type { MeerkatContext } from "../ctx";
+} from "@wildboar/asn1";
+import type { MeerkatContext } from "../ctx.js";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadResult,
     _encode_ReadResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadResultData,
     _encode_ReadResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResultData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ChainingResults,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DistributedOperations";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     EntryInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_invalidSignature,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
-import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import type ProtectedItem from "@wildboar/x500/src/lib/types/ProtectedItem";
+import { type ACDFTuple } from "@wildboar/x500";
+import { type ACDFTupleExtended } from "@wildboar/x500";
+import { type ProtectedItem } from "@wildboar/x500";
 import {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
@@ -54,102 +54,102 @@ import {
     PERMISSION_CATEGORY_RENAME,
     PERMISSION_CATEGORY_EXPORT,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
-import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+} from "@wildboar/x500";
+import { getACDFTuplesFromACIItem } from "@wildboar/x500";
 import getIsGroupMember from "../authz/getIsGroupMember";
-import type { ModifyRights } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights.ta";
-import { ModifyRights_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights-Item.ta";
+import type { ModifyRights } from "@wildboar/x500/DirectoryAbstractService";
+import { ModifyRights_Item } from "@wildboar/x500/DirectoryAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     id_opcode_read,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-read.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import { DER, _encodeBitString } from "asn1-ts/dist/node/functional";
+import { DER, _encodeBitString } from "@wildboar/asn1/functional";
 import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
-import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
+import { codeToString } from "@wildboar/x500";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
 import failover from "../utils/failover";
 import {
     AbandonedData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyReturn_memberSelect_contributingEntriesOnly,
     FamilyReturn_memberSelect_participatingEntriesOnly,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import readFamily from "../database/family/readFamily";
 import readCompoundEntry from "../database/family/readCompoundEntry";
 import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation";
 import {
     EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyEntries,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntries.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     family_information,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeErrorData_problems_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeProblem_noSuchAttributeOrValue,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getACIItems from "../authz/getACIItems";
 import { MINIMUM_MAX_ATTR_SIZE, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import {
     ServiceControlOptions_noSubtypeSelection,
     ServiceControlOptions_dontSelectFriends,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import bacSettings from "../authz/bacSettings";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import preprocessTuples from "../authz/preprocessTuples";
-import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import { attributeError } from "@wildboar/x500/DirectoryAbstractService";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { generateSignature } from "../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import { stringifyDN } from "../x500/stringifyDN";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { printInvokeId } from "../utils/printInvokeId";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
 import {
     TBSAttributeCertificate,
     _encode_TBSAttributeCertificate,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/TBSAttributeCertificate.ta";
-import { AttCertVersion_v2 } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttCertVersion.ta";
-import { Holder } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Holder.ta";
-import { AttCertIssuer } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttCertIssuer.ta";
-import { IssuerSerial } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/IssuerSerial.ta";
+} from "@wildboar/pki-stub";
+import { AttCertVersion_v2 } from "@wildboar/pki-stub";
+import { Holder } from "@wildboar/pki-stub";
+import { AttCertIssuer } from "@wildboar/pki-stub";
+import { IssuerSerial } from "@wildboar/pki-stub";
 import * as crypto from "node:crypto";
-import { AttCertValidityPeriod } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttCertValidityPeriod.ta";
+import { AttCertValidityPeriod } from "@wildboar/pki-stub";
 import { addSeconds } from "date-fns";
-import { Extension } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Extension.ta";
-import { singleUse } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/singleUse.oa";
-import { noAssertion } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/noAssertion.oa";
-import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+import { Extension } from "@wildboar/pki-stub";
+import { singleUse } from "@wildboar/x500/AttributeCertificateDefinitions";
+import { noAssertion } from "@wildboar/x500/AttributeCertificateDefinitions";
+import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub";
 import { acdf } from "../authz/acdf";
 
 function createAttributeCertificate (
@@ -232,7 +232,7 @@ function createAttributeCertificate (
         undefined,
         (extensions.length > 0) ? extensions : undefined,
     );
-    const tbsElement = _encode_TBSAttributeCertificate(tbs, DER);
+    const tbsElement = _encode_TBSAttributeCertificate(tbs);
     const tbsBytes = tbsElement.toBytes();
     const signingResult = generateSignature(key, tbsBytes);
     if (!signingResult) {

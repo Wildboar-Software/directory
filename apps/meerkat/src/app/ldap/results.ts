@@ -1,7 +1,7 @@
-import { LDAPResult } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+import { LDAPResult } from "@wildboar/ldap";
 import {
     LDAPResult_resultCode_noSuchObject,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
+} from "@wildboar/ldap";
 
 // LDAPResult ::= SEQUENCE {
 //     resultCode         ENUMERATED {

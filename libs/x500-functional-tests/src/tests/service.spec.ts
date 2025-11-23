@@ -4,8 +4,8 @@ import {
     ObjectIdentifier,
     TRUE,
     TRUE_BIT,
-} from "asn1-ts";
-import { DER, _encodePrintableString } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { DER, _encodePrintableString } from "@wildboar/asn1/functional";
 import {
     IDMConnection,
 } from "@wildboar/idm";
@@ -14,29 +14,29 @@ import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgument,
     _encode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     connect,
     createTestNode,
@@ -47,35 +47,35 @@ import {
     createEntry,
     oid,
 } from "../utils";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
-import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
-import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
-import { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { searchRules } from "@wildboar/x500/src/lib/modules/InformationFramework/searchRules.oa";
-import { ControlOptions, EntryLimit, FamilyGrouping_compoundEntry, ImposedSubset_baseObject, RelaxationPolicy, RequestAttribute, ResultAttribute, SearchRuleDescription } from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
-import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-import { subentry, subtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
-import { serviceAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
-import { SubtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
-import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { applicationProcess, description, organizationalUnitName } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
-import { EntryInformationSelection, FamilyReturn } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import { FamilyReturn_memberSelect_compoundEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
-import { family_information } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub";
+import { AttributeTypeAndValue } from "@wildboar/pki-stub";
+import { commonName } from "@wildboar/x500/SelectedAttributeTypes";
+import { Attribute } from "@wildboar/x500/InformationFramework";
+import { searchRules } from "@wildboar/x500/InformationFramework";
+import { ControlOptions, EntryLimit, FamilyGrouping_compoundEntry, ImposedSubset_baseObject, RelaxationPolicy, RequestAttribute, ResultAttribute, SearchRuleDescription } from "@wildboar/x500/InformationFramework";
+import { objectClass } from "@wildboar/x500/InformationFramework";
+import { subentry, subtreeSpecification } from "@wildboar/x500/InformationFramework";
+import { serviceAdminSubentry } from "@wildboar/x500/InformationFramework";
+import { SubtreeSpecification } from "@wildboar/x500/InformationFramework";
+import { AttributeValueAssertion } from "@wildboar/x500/InformationFramework";
+import { applicationProcess, description, organizationalUnitName } from "@wildboar/x500/SelectedObjectClasses";
+import { EntryInformationSelection, FamilyReturn } from "@wildboar/x500/DirectoryAbstractService";
+import { ServiceControls } from "@wildboar/x500/DirectoryAbstractService";
+import { FamilyReturn_memberSelect_compoundEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { family_information } from "@wildboar/x500/DirectoryAbstractService";
 import { strict as assert } from "node:assert";
-import { MRMapping, MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRMapping.ta";
-import { id_mr_systemProposedMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-systemProposedMatch.va";
-import { SearchControlOptions, SearchControlOptions_noSystemRelaxation, SearchControlOptions_useSubset } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import { MRMapping, MRSubstitution } from "@wildboar/x500/ServiceAdministration";
+import { id_mr_systemProposedMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { SearchControlOptions, SearchControlOptions_noSystemRelaxation, SearchControlOptions_useSubset } from "@wildboar/x500/DirectoryAbstractService";
 import { Context } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Context.ta";
-import { ContextProfile } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextProfile.ta";
-import { languageContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
-import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
-import { localeContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
-import { name } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa";
+import { ContextProfile } from "@wildboar/x500/ServiceAdministration";
+import { languageContext } from "@wildboar/x500/SelectedAttributeTypes";
+import { ContextAssertion } from "@wildboar/x500/InformationFramework";
+import { localeContext } from "@wildboar/x500/SelectedAttributeTypes";
+import { name } from "@wildboar/x500/SelectedAttributeTypes";
 import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
-import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { RequestAttribute_defaultValues_Item } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RequestAttribute-defaultValues-Item.ta";
+import { DistinguishedName } from "@wildboar/x500/InformationFramework";
+import { RequestAttribute_defaultValues_Item } from "@wildboar/x500/ServiceAdministration";
 
 vi.setConfig({ testTimeout: 30_000 });
 
@@ -159,8 +159,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -273,8 +273,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [
                                 new RequestAttribute(
@@ -415,8 +415,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [
                                 new RequestAttribute(
@@ -588,8 +588,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -704,8 +704,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -809,8 +809,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -932,8 +932,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -1065,8 +1065,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -1165,8 +1165,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [ // We need this so we can have a filter.
                                 new RequestAttribute(
@@ -1295,8 +1295,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [ // We need this so we can have a filter.
                                 new RequestAttribute(
@@ -1428,8 +1428,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -1523,8 +1523,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -1620,8 +1620,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -1737,8 +1737,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -1845,8 +1845,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [ // We need this so we can have a filter.
                                 new RequestAttribute(
@@ -1992,8 +1992,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [ // We need this so we can have a filter.
                                 new RequestAttribute(
@@ -2130,8 +2130,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [ // We need this so we can have a filter.
                                 new RequestAttribute(
@@ -2270,8 +2270,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [
                                 new RequestAttribute(
@@ -2330,7 +2330,7 @@ describe("Meerkat DSA", () => {
                                         localeContext["&id"],
                                         [
                                             localeContext.encoderFor["&Type"]!({
-                                                localeID1: new ObjectIdentifier([ 2, 5, 234, 20 ]),
+                                                localeID1: ObjectIdentifier.fromParts([ 2, 5, 234, 20 ]),
                                             }, DER),
                                         ],
                                     ),
@@ -2436,8 +2436,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [
                                 new RequestAttribute(
@@ -2603,8 +2603,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [
                                 new RequestAttribute(
@@ -2720,7 +2720,7 @@ describe("Meerkat DSA", () => {
                                         localeContext["&id"],
                                         [
                                             localeContext.encoderFor["&Type"]!({
-                                                localeID1: new ObjectIdentifier([ 2, 5, 423, 30 ]),
+                                                localeID1: ObjectIdentifier.fromParts([ 2, 5, 423, 30 ]),
                                             }, DER),
                                         ],
                                     ),
@@ -2790,8 +2790,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [
                                 new RequestAttribute(
@@ -2932,8 +2932,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -2989,7 +2989,7 @@ describe("Meerkat DSA", () => {
                                 localeContext["&id"],
                                 [
                                     localeContext.encoderFor["&Type"]!({
-                                        localeID1: new ObjectIdentifier([ 2, 5, 42, 23 ]),
+                                        localeID1: ObjectIdentifier.fromParts([ 2, 5, 42, 23 ]),
                                     }, DER),
                                 ],
                             ),
@@ -3090,8 +3090,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             undefined,
                             undefined,
@@ -3152,7 +3152,7 @@ describe("Meerkat DSA", () => {
                                 localeContext["&id"],
                                 [
                                     localeContext.encoderFor["&Type"]!({
-                                        localeID1: new ObjectIdentifier([ 2, 5, 42, 23 ]),
+                                        localeID1: ObjectIdentifier.fromParts([ 2, 5, 42, 23 ]),
                                     }, DER),
                                 ],
                             ),
@@ -3262,8 +3262,8 @@ describe("Meerkat DSA", () => {
                     [
                         searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
                             1,
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
-                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1 ]),
+                            ObjectIdentifier.fromParts([ 1, 3, 4, 6, 1, 4, 555 ]),
                             4,
                             [
                                 new RequestAttribute(

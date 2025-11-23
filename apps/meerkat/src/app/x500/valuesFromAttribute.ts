@@ -1,7 +1,7 @@
 import type { Value } from "@wildboar/meerkat-types";
 import type {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Convert an X.500 directory attribute into individual values

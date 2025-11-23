@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
+import { type LDAPSyntaxDecoder } from "@wildboar/ldap";
 import {
     ASN1Element,
     BERElement,
@@ -8,8 +8,8 @@ import {
     ASN1UniversalType,
     ObjectIdentifier,
     OBJECT_IDENTIFIER,
-} from "asn1-ts";
-import { BER, DER, _encodeNumericString, _encodePrintableString, _encodeUTF8String } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { BER, DER, _encodeNumericString, _encodePrintableString, _encodeUTF8String } from "@wildboar/asn1/functional";
 import lex from "./lexSchema";
 import isDigit from "../utils/isDigit";
 import {
@@ -17,80 +17,80 @@ import {
     ObjectClassKind_abstract,
     ObjectClassKind_auxiliary,
     ObjectClassKind_structural,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeUsage,
     AttributeUsage_dSAOperation,
     AttributeUsage_directoryOperation,
     AttributeUsage_distributedOperation,
     AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     ObjectClassDescription,
     _encode_ObjectClassDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     ObjectClassInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassInformation.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     AttributeTypeDescription,
     _encode_AttributeTypeDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     AttributeTypeInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeInformation.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     MatchingRuleDescription,
     _encode_MatchingRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     MatchingRuleUseDescription,
     _encode_MatchingRuleUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContentRuleDescription,
     _encode_DITContentRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITStructureRuleDescription,
     _encode_DITStructureRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     NameFormDescription,
     _encode_NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     LdapSyntaxDescription,
     _encode_LdapSyntaxDescription,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
+} from "@wildboar/x500/LdapSystemSchema";
 import {
     _encode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import { getSubtreeSpecLexer } from "./lexSubtreeSpec";
 import { phone } from "phone";
 import decodeLDAPDN from "./decodeLDAPDN";
 import {
     _encode_RelativeDistinguishedName,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
+} from "@wildboar/pki-stub";
 import {
     BootParameterSyntax,
     _encode_BootParameterSyntax,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta.js";
 import {
     NISNetgroupTripleSyntax,
     _encode_NISNetgroupTripleSyntax,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/NISNetgroupTripleSyntax.ta";
-import { UtmCoordinates, _encode_UtmCoordinates } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UtmCoordinates.ta";
-import { UiiFormat_subset, UiiFormat_subset_baseObject, UiiFormat_subset_oneLevel, UiiFormat_subset_wholeSubtree } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UiiFormat-subset.ta";
-import { UiiFilter, UiiFormat_next } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UiiFormat-next.ta";
-import { UiiFormat, _encode_UiiFormat } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UiiFormat.ta";
-import { UiiItem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UiiItem.ta";
-import { EpcFormat_fields_Item_charField } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/EpcFormat-fields-Item-charField.ta";
-import { EpcFormat_fields_Item, EpcFormat_fields_Item_result, EpcFormat_fields_Item_result_alpha7bits, EpcFormat_fields_Item_result_numeric, EpcFormat_fields_Item_result_numericPad } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/EpcFormat-fields-Item.ta";
-import { EpcFormat, _encode_EpcFormat } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/EpcFormat.ta";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/NISNetgroupTripleSyntax.ta.js";
+import { UtmCoordinates, _encode_UtmCoordinates } from "@wildboar/x500/SelectedAttributeTypes";
+import { UiiFormat_subset, UiiFormat_subset_baseObject, UiiFormat_subset_oneLevel, UiiFormat_subset_wholeSubtree } from "@wildboar/x500/SelectedAttributeTypes";
+import { UiiFilter, UiiFormat_next } from "@wildboar/x500/SelectedAttributeTypes";
+import { UiiFormat, _encode_UiiFormat } from "@wildboar/x500/SelectedAttributeTypes";
+import { UiiItem } from "@wildboar/x500/SelectedAttributeTypes";
+import { EpcFormat_fields_Item_charField } from "@wildboar/x500/SelectedAttributeTypes";
+import { EpcFormat_fields_Item, EpcFormat_fields_Item_result, EpcFormat_fields_Item_result_alpha7bits, EpcFormat_fields_Item_result_numeric, EpcFormat_fields_Item_result_numericPad } from "@wildboar/x500/SelectedAttributeTypes";
+import { EpcFormat, _encode_EpcFormat } from "@wildboar/x500/SelectedAttributeTypes";
 import { parseOneAddress } from "email-addresses";
 
 function qdstring (escaped: string): string {

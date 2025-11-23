@@ -1,6 +1,6 @@
 import {
     ATTRIBUTE,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
+} from "@wildboar/x500/InformationFramework";
 import type { AttributeInfo } from "../types";
 
 export

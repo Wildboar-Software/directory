@@ -1,24 +1,24 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-import { countryName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa';
-import { dc } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dc.oa';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-import { localityName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa';
-import { organizationalUnitName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa';
-import { organizationName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa';
-import { owner } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/owner.oa';
-import { seeAlso } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/seeAlso.oa';
-import { stateOrProvinceName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/stateOrProvinceName.oa';
-import { streetAddress } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/streetAddress.oa';
-import { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+import { countryName } from '@wildboar/x500/SelectedAttributeTypes';
+import { dc } from '@wildboar/x500/SelectedAttributeTypes';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
+import { localityName } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationalUnitName } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
+import { owner } from '@wildboar/x500/SelectedAttributeTypes';
+import { seeAlso } from '@wildboar/x500/SelectedAttributeTypes';
+import { stateOrProvinceName } from '@wildboar/x500/SelectedAttributeTypes';
+import { streetAddress } from '@wildboar/x500/SelectedAttributeTypes';
+import { uid } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -30,20 +30,20 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-export { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-export { countryName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa';
-export { dc } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dc.oa';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-export { localityName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa';
-export { organizationalUnitName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa';
-export { organizationName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa';
-export { owner } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/owner.oa';
-export { seeAlso } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/seeAlso.oa';
-export { stateOrProvinceName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/stateOrProvinceName.oa';
-export { streetAddress } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/streetAddress.oa';
-export { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
+export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+export { countryName } from '@wildboar/x500/SelectedAttributeTypes';
+export { dc } from '@wildboar/x500/SelectedAttributeTypes';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
+export { localityName } from '@wildboar/x500/SelectedAttributeTypes';
+export { organizationalUnitName } from '@wildboar/x500/SelectedAttributeTypes';
+export { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
+export { owner } from '@wildboar/x500/SelectedAttributeTypes';
+export { seeAlso } from '@wildboar/x500/SelectedAttributeTypes';
+export { stateOrProvinceName } from '@wildboar/x500/SelectedAttributeTypes';
+export { streetAddress } from '@wildboar/x500/SelectedAttributeTypes';
+export { uid } from '@wildboar/x500/SelectedAttributeTypes';
 
 /* START_OF_SYMBOL_DEFINITION untypedObject */
 /**
@@ -102,7 +102,7 @@ export const untypedObject: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['untypedObject'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'Entry of no particular type' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 26027, 1, 2, 900,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

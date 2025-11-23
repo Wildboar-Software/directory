@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
+import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
 import { componentFilter } from '../RFC3687ComponentMatching/componentFilter.oa';
 import {
     ComponentFilter,
@@ -7,9 +7,9 @@ import {
     _encode_ComponentFilter,
 } from '../RFC3687ComponentMatching/ComponentFilter.ta';
 import { id_mr_componentFilterMatch } from '../RFC3687ComponentMatching/id-mr-componentFilterMatch.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { componentFilter } from '../RFC3687ComponentMatching/componentFilter.oa';
 export {
     ComponentFilter,

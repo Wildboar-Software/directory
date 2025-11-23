@@ -1,4 +1,4 @@
-import { BIT_STRING, TRUE_BIT, FALSE_BIT } from "asn1-ts";
+import { BIT_STRING, TRUE_BIT, FALSE_BIT } from "@wildboar/asn1";
 import {
     EXT_BIT_SUBENTRIES,
     EXT_BIT_COPY_SHALL_DO,
@@ -30,7 +30,7 @@ import {
     EXT_BIT_ABANDON_OF_PAGED_RESULTS,
     EXT_BIT_PAGED_RESULTS_ON_THE_DSP,
     EXT_BIT_REPLACE_VALUES,
-} from "@wildboar/x500/src/lib/dap/extensions";
+} from "@wildboar/x500";
 
 export
 const criticalExtensionsSupportedByThisDSA: BIT_STRING = new Uint8ClampedArray(36);

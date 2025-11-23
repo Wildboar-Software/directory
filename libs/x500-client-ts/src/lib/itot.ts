@@ -13,7 +13,7 @@ import {
     dispatch_A_RLSrsp_accept,
     dispatch_A_RLSrsp_reject,
 } from "@wildboar/osi-net";
-import { BER } from "asn1-ts/dist/node/functional";
+import { BER } from "@wildboar/asn1/functional";
 import {
     INTEGER,
     ObjectIdentifier,
@@ -25,173 +25,152 @@ import {
     DERElement,
     packBits,
     ASN1Element,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import type {
     OsiRej_problem,
-} from "@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiRej-problem.ta";
+} from "@wildboar/x500/OSIProtocolSpecification";
 import {
     AARQ_apdu,
     _encode_AARQ_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/AARQ-apdu.ta';
+} from '@wildboar/acse';
 import {
     AARE_apdu,
     _encode_AARE_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/AARE-apdu.ta';
+} from '@wildboar/acse';
 import {
     RLRQ_apdu,
     _encode_RLRQ_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/RLRQ-apdu.ta';
+} from '@wildboar/acse';
 import {
     Release_response_reason_normal,
     Release_response_reason_not_finished,
     RLRE_apdu,
     _encode_RLRE_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/RLRE-apdu.ta';
+} from '@wildboar/acse';
 import {
     ABRT_apdu,
     _encode_ABRT_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-apdu.ta';
+} from '@wildboar/acse';
 import {
     Result_list_Item_provider_reason_abstract_syntax_not_supported,
     Result_list_Item_provider_reason_proposed_transfer_syntaxes_not_supported,
     Result_list_Item_provider_reason_reason_not_specified,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result-list-Item-provider-reason.ta';
+} from '@wildboar/copp';
 import {
     dispatch_A_ASCreq,
     dispatch_A_ASCrsp_accept,
     dispatch_A_RLSreq,
     dispatch_A_ABRreq,
 } from '@wildboar/osi-net';
-import { User_data } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/User-data.ta';
-import { PDV_list } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/PDV-list.ta';
-import { Context_list_Item } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Context-list-Item.ta';
-import { Result_list_Item } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result-list-Item.ta';
+import { User_data } from '@wildboar/copp';
+import { PDV_list } from '@wildboar/copp';
+import { Context_list_Item } from '@wildboar/copp';
+import { Result_list_Item } from '@wildboar/copp';
 import {
     Result_acceptance,
     Result_provider_rejection,
     Result_user_rejection,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result.ta';
+} from '@wildboar/copp';
 import {
     id_acseAS,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-acseAS.va";
-import {
     id_as_directoryAccessAS,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-as-directoryAccessAS.va";
-import {
     id_as_directorySystemAS,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-as-directorySystemAS.va";
-import {
     id_as_directoryOperationalBindingManagementAS,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-as-directoryOperationalBindingManagementAS.va";
-import {
     id_as_directoryShadowAS,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-as-directoryShadowAS.va";
-import {
     id_ac_directoryAccessAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
-import {
     id_ac_directorySystemAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directorySystemAC.va";
-import {
     id_ac_directoryOperationalBindingManagementAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
-import {
     id_ac_shadowConsumerInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAC.va";
-import {
     id_ac_shadowSupplierInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAC.va";
-import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
-import {
     id_ac_shadowConsumerInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAsynchronousAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     _decode_TheOsiBind,
     _encode_TheOsiBind,
-} from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBind.ta';
+} from "@wildboar/x500/OSIProtocolSpecification";
 import {
     _decode_TheOsiBindRes,
     _encode_TheOsiBindRes,
-} from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindRes.ta';
+} from "@wildboar/x500/OSIProtocolSpecification";
 import {
     _decode_TheOsiBindErr,
-} from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindErr.ta';
+} from "@wildboar/x500/OSIProtocolSpecification";
 import {
     Result_acceptance as ACSEResult_acceptance,
     Result_user_rejection as ACSEResult_user_rejection,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/Result.ta';
+} from '@wildboar/acse';
 import {
     OsiDirectoryOperation,
     OsiErr,
     _decode_OsiDirectoryOperation,
     _encode_OsiDirectoryOperation,
-} from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiDirectoryOperation.ta';
-import { OsiReq } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiReq.ta';
-import { OsiRes } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiRes.ta';
-import { OsiRes_result } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiRes-result.ta';
-import { OsiRej } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiRej.ta';
+} from "@wildboar/x500/OSIProtocolSpecification";
+import { OsiReq } from "@wildboar/x500/OSIProtocolSpecification";
+import { OsiRes } from "@wildboar/x500/OSIProtocolSpecification";
+import { OsiRes_result } from "@wildboar/x500/OSIProtocolSpecification";
+import { OsiRej } from "@wildboar/x500/OSIProtocolSpecification";
 import {
     GeneralProblem_unrecognizedPDU,
     GeneralProblem_badlyStructuredPDU,
     GeneralProblem_mistypedPDU,
-} from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/GeneralProblem.ta';
+} from "@wildboar/x500/OSIProtocolSpecification";
 import {
     InvokeProblem_duplicateInvocation,
     InvokeProblem_mistypedArgument,
     InvokeProblem_releaseInProgress,
     InvokeProblem_resourceLimitation,
     InvokeProblem_unrecognizedOperation,
-} from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/InvokeProblem.ta';
+} from "@wildboar/x500/OSIProtocolSpecification";
 import {
     ReturnResultProblem_mistypedResult,
     ReturnResultProblem_resultResponseUnexpected,
     ReturnResultProblem_unrecognizedInvocation,
-} from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/ReturnResultProblem.ta';
+} from "@wildboar/x500/OSIProtocolSpecification";
 import {
     ReturnErrorProblem_errorResponseUnexpected,
     ReturnErrorProblem_mistypedParameter,
     ReturnErrorProblem_unexpectedError,
     ReturnErrorProblem_unrecognizedError,
     ReturnErrorProblem_unrecognizedInvocation,
-} from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/ReturnErrorProblem.ta';
-import { ABRT_source_acse_service_provider, ABRT_source_acse_service_user } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-source.ta';
+} from "@wildboar/x500/OSIProtocolSpecification";
+import { ABRT_source_acse_service_provider, ABRT_source_acse_service_user } from '@wildboar/acse';
 import {
     ABRT_diagnostic,
-    ABRT_diagnostic_no_reason_given,
-    ABRT_diagnostic_authentication_failure,
-    ABRT_diagnostic_authentication_mechanism_name_not_recognized,
-    ABRT_diagnostic_authentication_mechanism_name_required,
-    ABRT_diagnostic_authentication_required,
-    ABRT_diagnostic_protocol_error,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta';
+    _enum_for_ABRT_diagnostic,
+    // ABRT_diagnostic_no_reason_given,
+    // ABRT_diagnostic_authentication_failure,
+    // ABRT_diagnostic_authentication_mechanism_name_not_recognized,
+    // ABRT_diagnostic_authentication_mechanism_name_required,
+    // ABRT_diagnostic_authentication_required,
+    // ABRT_diagnostic_protocol_error,
+} from '@wildboar/acse';
 import type {
     GeneralName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import type {
     AP_title,
-} from "@wildboar/acse/src/lib/modules/ACSE-1/AP-title.ta";
+} from "@wildboar/acse";
 import type {
     AE_qualifier,
-} from "@wildboar/acse/src/lib/modules/ACSE-1/AE-qualifier.ta";
+} from "@wildboar/acse";
 import {
     Release_request_reason_normal,
-} from "@wildboar/acse/src/lib/modules/ACSE-1/Release-request-reason.ta";
+} from "@wildboar/acse";
 import { getRDN } from "@wildboar/x500";
 import { IndexableOID } from "@wildboar/meerkat-types";
 import {
     Associate_source_diagnostic_acse_service_user_null_,
     Associate_source_diagnostic_acse_service_user_no_reason_given,
     Associate_source_diagnostic_acse_service_user_application_context_name_not_supported,
-} from "@wildboar/acse/src/lib/modules/ACSE-1/Associate-source-diagnostic-acse-service-user.ta";
-import { Provider_reason_reason_not_specified } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta";
-import { protocol_id_to_rose_protocol } from "./utils";
-import { _encode_Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/acse";
+import { Provider_reason_reason_not_specified } from "@wildboar/copp";
+import { protocol_id_to_rose_protocol } from "./utils.js";
+import { _encode_Code } from "@wildboar/x500/CommonProtocolSpecification";
 
-const id_ber = new ObjectIdentifier([2, 1, 1]);
-const id_cer = new ObjectIdentifier([2, 1, 2, 0]);
-const id_der = new ObjectIdentifier([2, 1, 2, 1]);
+const id_ber = ObjectIdentifier.fromParts([2, 1, 1]);
+const id_cer = ObjectIdentifier.fromParts([2, 1, 2, 0]);
+const id_der = ObjectIdentifier.fromParts([2, 1, 2, 1]);
 const implementation_data: GeneralString = "@wildboar/x500-client-ts";
 const default_reject: OsiRej_problem = {
     general: GeneralProblem_unrecognizedPDU,
@@ -239,27 +218,27 @@ const rose_reject_to_osi_reject: Map<RejectReason, OsiRej_problem> = new Map([
 
 
 const osi_abort_to_rose_abort: Map<ABRT_diagnostic, AbortReason> = new Map([
-    [ ABRT_diagnostic_no_reason_given, AbortReason.reason_not_specified ],
-    [ ABRT_diagnostic_authentication_failure, AbortReason.authentication_failure ],
+    [ _enum_for_ABRT_diagnostic.no_reason_given, AbortReason.reason_not_specified ],
+    [ _enum_for_ABRT_diagnostic.authentication_failure, AbortReason.authentication_failure ],
     [
-        ABRT_diagnostic_authentication_mechanism_name_not_recognized,
+        _enum_for_ABRT_diagnostic.authentication_mechanism_name_not_recognized,
         AbortReason.authentication_mechanism_name_not_recognized,
     ],
     [
-        ABRT_diagnostic_authentication_mechanism_name_required,
+        _enum_for_ABRT_diagnostic.authentication_mechanism_name_required,
         AbortReason.authentication_mechanism_name_required,
     ],
-    [ ABRT_diagnostic_authentication_required, AbortReason.authentication_required ],
-    [ ABRT_diagnostic_protocol_error, AbortReason.protocol_error ],
+    [ _enum_for_ABRT_diagnostic.authentication_required, AbortReason.authentication_required ],
+    [ _enum_for_ABRT_diagnostic.protocol_error, AbortReason.protocol_error ],
 ]);
 
 const rose_abort_to_osi_abort: Map<AbortReason, ABRT_diagnostic> = new Map([
-    [ AbortReason.reason_not_specified, ABRT_diagnostic_no_reason_given ],
-    [ AbortReason.authentication_failure, ABRT_diagnostic_authentication_failure ],
-    [ AbortReason.authentication_mechanism_name_not_recognized, ABRT_diagnostic_authentication_mechanism_name_not_recognized ],
-    [ AbortReason.authentication_mechanism_name_required, ABRT_diagnostic_authentication_mechanism_name_required ],
-    [ AbortReason.authentication_required, ABRT_diagnostic_authentication_required ],
-    [ AbortReason.protocol_error, ABRT_diagnostic_protocol_error ],
+    [ AbortReason.reason_not_specified, _enum_for_ABRT_diagnostic.no_reason_given ],
+    [ AbortReason.authentication_failure, _enum_for_ABRT_diagnostic.authentication_failure ],
+    [ AbortReason.authentication_mechanism_name_not_recognized, _enum_for_ABRT_diagnostic.authentication_mechanism_name_not_recognized ],
+    [ AbortReason.authentication_mechanism_name_required, _enum_for_ABRT_diagnostic.authentication_mechanism_name_required ],
+    [ AbortReason.authentication_required, _enum_for_ABRT_diagnostic.authentication_required ],
+    [ AbortReason.protocol_error, _enum_for_ABRT_diagnostic.protocol_error ],
 ]);
 
 const app_context_to_abstract_syntax: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
@@ -421,7 +400,7 @@ function break_down_ae_title (aet?: GeneralName): [ AP_title | undefined, AE_qua
         const prefix = aet.registeredID.nodes.slice(0, -1);
         return [
             {
-                ap_title_form2: new ObjectIdentifier(prefix),
+                ap_title_form2: ObjectIdentifier.fromParts(prefix),
             },
             {
                 aso_qualifier_form2: last_arc,
@@ -497,13 +476,13 @@ function merge_ap_and_ae (ap?: AP_title, ae?: AE_qualifier): GeneralName | null 
                 if (!Number.isSafeInteger(arc) || (arc < 0)) {
                     return null;
                 }
-                const oid = new ObjectIdentifier([ arc ], ap.ap_title_form2);
+                const oid = ObjectIdentifier.fromParts([ arc ], ap.ap_title_form2);
                 return {
                     registeredID: oid,
                 };
             }
             if ("aso_qualifier_form4" in ae) {
-                const oid = new ObjectIdentifier(ae.aso_qualifier_form4, ap.ap_title_form2);
+                const oid = ObjectIdentifier.fromParts(ae.aso_qualifier_form4, ap.ap_title_form2);
                 return {
                     registeredID: oid,
                 };
@@ -558,7 +537,7 @@ function handle_osi_operation (rose: ROSETransport, op: OsiDirectoryOperation): 
 function abort (itot: ISOTransportOverTCPStack) {
     const abrt = new ABRT_apdu(
         ABRT_source_acse_service_provider,
-        ABRT_diagnostic_protocol_error,
+        _enum_for_ABRT_diagnostic.protocol_error,
         undefined,
         undefined,
         [],
@@ -1250,7 +1229,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         const abrt: ABRT_apdu = new ABRT_apdu(
             ABRT_source_acse_service_user,
             rose_abort_to_osi_abort.get(reason)
-                ?? ABRT_diagnostic_no_reason_given,
+                ?? _enum_for_ABRT_diagnostic.no_reason_given,
             undefined,
             undefined,
             [],

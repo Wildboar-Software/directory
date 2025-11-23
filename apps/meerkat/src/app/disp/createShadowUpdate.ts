@@ -1,37 +1,39 @@
-import { BERElement } from "asn1-ts";
-import type { MeerkatContext } from "../ctx";
+import { BERElement } from "@wildboar/asn1";
+import type { MeerkatContext } from "../ctx.js";
 import {
     ShadowingAgreementInfo,
-    _decode_AccessPoint,
     _decode_ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import {
+    _decode_AccessPoint,
+} from "@wildboar/x500/DistributedOperations";
 import dnToVertex from "../dit/dnToVertex";
 import { ShadowUpdateStrategy } from "@prisma/client";
 import { bindForDISP } from "../net/bindToOtherDSA";
 import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+} from "@wildboar/x500/DirectoryOSIProtocols";
+import { OperationalBindingID } from "@wildboar/x500/OperationalBindingManagement";
 import {
     CoordinateShadowUpdateArgumentData_updateStrategy_standard_incremental,
     CoordinateShadowUpdateArgumentData_updateStrategy_standard_total,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/CoordinateShadowUpdateArgumentData-updateStrategy-standard.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     id_opcode_coordinateShadowUpdate,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-coordinateShadowUpdate.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     RefreshInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/RefreshInformation.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import { createTotalRefresh } from "./createTotalRefresh";
 import {
     _decode_IncrementalStepRefresh,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import { compareCode, getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     id_errcode_shadowError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-shadowError.va";
-import { shadowError } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/shadowError.oa";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { shadowError } from "@wildboar/x500/DirectoryShadowAbstractService";
 import stringifyDN from "../x500/stringifyDN";
 import printCode from "../utils/printCode";
 import isDebugging from "is-debugging";

@@ -1,7 +1,7 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import { device } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/device.oa";
+import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { device } from "@wildboar/x500/SelectedObjectClasses";
 import { atn_net } from "../ATNDirectoryObjectIdentifiers/atn-net.oa";
 import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa";
 import { atn_version } from "../ATNDirectoryObjectIdentifiers/atn-version.oa";

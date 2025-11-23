@@ -1,7 +1,7 @@
 /* eslint-disable */
-import { mhs_user_agent } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-user-agent.oa";
-import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import { mhs_user_agent } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
+import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa";
 import { id_oc_atn_AmhsUserAgent } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsUserAgent.va";
 

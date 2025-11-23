@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { CONTEXT } from '@wildboar/x500/src/lib/modules/InformationFramework/CONTEXT.oca';
+import { CONTEXT } from '@wildboar/x500/InformationFramework';
 import { id_avc_basicService } from '../IN-CS3-object-identifiers/id-avc-basicService.va';
 import {
     BasicService,

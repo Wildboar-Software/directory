@@ -1,18 +1,18 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { h320_id_oc } from '../H323-X500-Schema/h320-id-oc.va';
 import { h320IdentityCC } from '../H323-X500-Schema/h320IdentityCC.oa';
 import { h320IdentityExtension } from '../H323-X500-Schema/h320IdentityExtension.oa';
 import { h320IdentityNDC } from '../H323-X500-Schema/h320IdentityNDC.oa';
 import { h320IdentityServiceLevel } from '../H323-X500-Schema/h320IdentityServiceLevel.oa';
 import { h320IdentitySN } from '../H323-X500-Schema/h320IdentitySN.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -24,8 +24,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { h320_id_oc } from '../H323-X500-Schema/h320-id-oc.va';
 export { h320IdentityCC } from '../H323-X500-Schema/h320IdentityCC.oa';
 export { h320IdentityExtension } from '../H323-X500-Schema/h320IdentityExtension.oa';
@@ -66,7 +66,7 @@ export const h320Identity: OBJECT_CLASS = {
         h320IdentityServiceLevel,
         h320IdentityExtension,
     ] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [1],
         h320_id_oc
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

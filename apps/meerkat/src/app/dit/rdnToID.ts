@@ -1,8 +1,8 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { ASN1Construction, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Construction, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     RelativeDistinguishedName as RDN,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 import { Prisma } from "@prisma/client";

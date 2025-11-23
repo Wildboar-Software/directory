@@ -1,37 +1,37 @@
 import type { IndexableOID } from "@wildboar/meerkat-types";
 import {
     id_sha1,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha384,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha384.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_384,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-384.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_shake128,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-shake128.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_shake256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-shake256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 
 /**
  * @summary A mapping of algorithm object identifiers to their equivalent NodeJS hash name strings

@@ -1,52 +1,52 @@
 import type { Connection, Context } from "../../types";
-import { ASN1Construction, ASN1Element, ASN1TagClass, DERElement, ObjectIdentifier, TRUE, TRUE_BIT } from "asn1-ts";
-import { DER, _encodeBoolean } from "asn1-ts/dist/node/functional";
+import { ASN1Construction, ASN1Element, ASN1TagClass, DERElement, ObjectIdentifier, TRUE, TRUE_BIT } from "@wildboar/asn1";
+import { DER, _encodeBoolean } from "@wildboar/asn1/functional";
 import {
     read,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadArgument,
     _encode_ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadResult,
     _decode_ReadResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/InformationFramework";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import destringifyDN from "../../utils/destringifyDN";
 import stringifyDN from "../../utils/stringifyDN";
 import printEntryInformation from "../../printers/EntryInformation";
 import {
     AttributeValueAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
+} from "@wildboar/x500/InformationFramework";
 import printError from "../../printers/Error_";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { EOL } from "node:os";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import * as sco from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import * as sco from "@wildboar/x500/DirectoryAbstractService";
+import { ServiceControls } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_priority_low,
     ServiceControls_priority_medium,
     ServiceControls_priority_high,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-priority.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_scopeOfReferral_country,
     ServiceControls_scopeOfReferral_dmd,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-scopeOfReferral.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import * as fs from "node:fs/promises";
 import { PEMObject } from "pem-ts";
 

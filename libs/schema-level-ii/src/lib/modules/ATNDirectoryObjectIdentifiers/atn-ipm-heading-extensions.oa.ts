@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { boolean_ } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/boolean.oa";
-import { booleanMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/booleanMatch.oa";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { boolean_ } from "@wildboar/x500/SelectedAttributeTypes";
+import { booleanMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     BOOLEAN
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { id_at_atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/id-at-atn-ipm-heading-extensions.va";
 
 

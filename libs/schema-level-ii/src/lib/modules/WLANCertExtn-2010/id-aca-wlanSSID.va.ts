@@ -2,7 +2,7 @@
 import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { id_aca } from "./id-aca.va";
 
 /* START_OF_SYMBOL_DEFINITION id_aca_wlanSSID */
@@ -19,7 +19,7 @@ import { id_aca } from "./id-aca.va";
  * @constant
  */
 export
-const id_aca_wlanSSID: OBJECT_IDENTIFIER = new _OID([
+const id_aca_wlanSSID: OBJECT_IDENTIFIER = _OID.fromParts([
     7,
 ], id_aca);
 /* END_OF_SYMBOL_DEFINITION id_aca_wlanSSID */

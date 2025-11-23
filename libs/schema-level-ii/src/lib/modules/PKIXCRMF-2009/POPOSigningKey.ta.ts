@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { AlgorithmIdentifier, _decode_AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+import { AlgorithmIdentifier, _decode_AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/x500/AuthenticationFramework";
 import {
     ASN1UniversalType,
     BIT_STRING,
     OPTIONAL,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { POPOSigningKeyInput, _decode_POPOSigningKeyInput, _encode_POPOSigningKeyInput } from "../PKIXCRMF-2009/POPOSigningKeyInput.ta";
 
 

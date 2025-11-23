@@ -1,7 +1,7 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import rdnToID from "./rdnToID";
 import getVertexById from "../database/getVertexById";
 

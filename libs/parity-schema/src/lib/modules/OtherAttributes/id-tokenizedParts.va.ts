@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_tokenization_manifest } from '../OtherAttributes/id-tokenization-manifest.va';
 export { id_tokenization_manifest } from '../OtherAttributes/id-tokenization-manifest.va';
 
@@ -16,7 +16,7 @@ export { id_tokenization_manifest } from '../OtherAttributes/id-tokenization-man
  *
  * @constant
  */
-export const id_tokenizedParts: OBJECT_IDENTIFIER = new _OID(
+export const id_tokenizedParts: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* tokenizedParts */ 0],
     id_tokenization_manifest
 );

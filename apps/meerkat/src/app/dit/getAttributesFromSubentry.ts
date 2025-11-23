@@ -1,7 +1,7 @@
 import type { Vertex, Context } from "@wildboar/meerkat-types";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import { readAttributes } from "../database/entry/readAttributes";
 import subentryEIS from "../dop/subentryEIS";
 

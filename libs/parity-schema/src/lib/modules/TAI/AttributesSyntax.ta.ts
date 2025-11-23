@@ -3,14 +3,14 @@ import {
     Attribute,
     _decode_Attribute,
     _encode_Attribute,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta';
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/InformationFramework';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 export {
     Attribute,
     _decode_Attribute,
     _encode_Attribute,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta';
+} from '@wildboar/x500/InformationFramework';
 
 /* START_OF_SYMBOL_DEFINITION AttributesSyntax */
 /**

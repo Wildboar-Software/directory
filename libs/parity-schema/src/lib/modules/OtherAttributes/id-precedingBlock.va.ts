@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { itu_t, ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { itu_t, ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION id_precedingBlock */
 /**
@@ -14,7 +14,7 @@ import { itu_t, ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const id_precedingBlock: OBJECT_IDENTIFIER = new _OID(
+export const id_precedingBlock: OBJECT_IDENTIFIER = _OID.fromParts(
     [
         /* recommendation */ 0, /* x */ 24, /* cms-profile */ 894,
         /* attribute */ 2, /* precedingBlock */ 4,

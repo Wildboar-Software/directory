@@ -3,153 +3,153 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import { ACDFTupleExtended, ACDFTuple, getACDFTuplesFromACIItem } from "@wildboar/x500";
 import {
     serviceAdminSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     OperationProgress_nameResolutionPhase_completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     SearchRule,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
-import { SearchArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
-import { BERElement, ObjectIdentifier } from "asn1-ts";
+} from "@wildboar/x500/ServiceAdministration";
+import { SearchArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { BERElement, ObjectIdentifier } from "@wildboar/asn1";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_requestedServiceNotAvailable,
     ServiceProblem_unwillingToPerform,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import printInvokeId from "../utils/printInvokeId";
 import {
     searchServiceProblem,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/searchServiceProblem.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     serviceType,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/serviceType.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_unidentifiedOperation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-unidentifiedOperation.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_unavailableOperation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-unavailableOperation.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_missingSearchContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-missingSearchContext.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_missingSearchAttribute,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-missingSearchAttribute.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_hierarchySelectForbidden,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-hierarchySelectForbidden.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_invalidSearchValue,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-invalidSearchValue.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_invalidServiceControlOptions,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-invalidServiceControlOptions.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 // import {
 //     id_pr_attributeMatchingViolation,
-// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-attributeMatchingViolation.va";
+// } from "@wildboar/x500/SelectedAttributeTypes";
 // import {
 //     id_pr_invalidContextSearchValue,
-// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-invalidContextSearchValue.va";
+// } from "@wildboar/x500/SelectedAttributeTypes";
 // import {
 //     id_pr_matchingUseViolation,
-// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-matchingUseViolation.va";
+// } from "@wildboar/x500/SelectedAttributeTypes";
 // import {
 //     id_pr_relaxationNotSupported,
-// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-relaxationNotSupported.va";
+// } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_searchValueRequired,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchValueRequired.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_searchContextValueViolation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchContextValueViolation.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_invalidSearchControlOptions,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-invalidSearchControlOptions.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_invalidHierarchySelect,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-invalidHierarchySelect.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_unavailableHierarchySelect,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-unavailableHierarchySelect.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_searchContextViolation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchContextViolation.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_searchValueNotAllowed,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchValueNotAllowed.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_searchAttributeViolation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchAttributeViolation.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_attributeNegationViolation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-attributeNegationViolation.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_searchContextCombinationViolation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchContextCombinationViolation.va";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_searchAttributeCombinationViolation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchAttributeCombinationViolation.va";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { DER } from "@wildboar/asn1/functional";
 import {
     AttributeErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeProblem_inappropriateMatching,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     attributeError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import { AttributeErrorData_problems_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+} from "@wildboar/x500/InformationFramework";
+import { AttributeErrorData_problems_Item } from "@wildboar/x500/DirectoryAbstractService";
 import {
     attributeTypeList,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/attributeTypeList.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     contextTypeList,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/contextTypeList.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     attributeCombinations,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/attributeCombinations.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     contextCombinations,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/contextCombinations.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     contextList,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/contextList.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     filterItem,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/filterItem.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     hierarchySelectList,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/hierarchySelectList.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     searchControlOptionsList,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/searchControlOptionsList.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     serviceControlOptionsList,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/serviceControlOptionsList.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-import { searchRules } from "@wildboar/x500/src/lib/collections/attributes";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { searchRules } from "@wildboar/x500/InformationFramework";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
-import { _decode_SearchRuleDescription } from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
+import { _decode_SearchRuleDescription } from "@wildboar/x500/InformationFramework";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getAdministrativePoints from "../dit/getAdministrativePoints";
 import { ID_AC_SPECIFIC, ID_AUTONOMOUS } from "../../oidstr";
@@ -158,9 +158,9 @@ import getIsGroupMember from "../authz/getIsGroupMember";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import preprocessTuples from "../authz/preprocessTuples";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import { PERMISSION_CATEGORY_INVOKE } from "@wildboar/x500/src/lib/bac/bacACDF";
+import { PERMISSION_CATEGORY_INVOKE } from "@wildboar/x500";
 import { bacSettings } from "../authz/bacSettings";
-import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
+import { AttributeTypeAndValue } from "@wildboar/pki-stub";
 import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
 import { is_empty_search_rule } from "../service/is_empty_search_rule";
 import { general_check_of_search_filter } from "../service/general_check_of_search_filter";

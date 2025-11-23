@@ -1,7 +1,7 @@
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import {
     ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import { updateShadowConsumer } from "./createShadowUpdate";
 import { addSeconds, differenceInMilliseconds } from "date-fns";
 import { setTimeout as safeSetTimeout } from "safe-timers";

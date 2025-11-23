@@ -6,236 +6,94 @@ import type {
 } from "@wildboar/meerkat-types";
 import type {
     MATCHING_RULE,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type OrderingMatcher from "@wildboar/x500/src/lib/types/OrderingMatcher";
-import type SubstringsMatcher from "@wildboar/x500/src/lib/types/SubstringsMatcher";
-import * as x500mr from "@wildboar/x500/src/lib/collections/matchingRules";
+} from "@wildboar/x500/InformationFramework";
+import { type EqualityMatcher } from "@wildboar/x500";
+import { type OrderingMatcher } from "@wildboar/x500";
+import { type SubstringsMatcher } from "@wildboar/x500";
+import { matchingRules as x500mr } from "@wildboar/x500";
 import {
     caseIgnoreMatch,
-} from "@wildboar/x500/src/lib/matching/equality/caseIgnoreMatch";
-import {
     caseExactMatch,
-} from "@wildboar/x500/src/lib/matching/equality/caseExactMatch";
-import {
     acceptableCertPoliciesMatch,
-} from "@wildboar/x500/src/lib/matching/equality/acceptableCertPoliciesMatch";
-import {
     accessPointMatch,
-} from "@wildboar/x500/src/lib/matching/equality/accessPointMatch";
-import {
     algorithmIdentifierMatch,
-} from "@wildboar/x500/src/lib/matching/equality/algorithmIdentifierMatch";
-import {
     attDescriptor,
-} from "@wildboar/x500/src/lib/matching/equality/attDescriptor";
-import {
     attributeCertificateExactMatch,
-} from "@wildboar/x500/src/lib/matching/equality/attributeCertificateExactMatch";
-import {
     attributeCertificateMatch,
-} from "@wildboar/x500/src/lib/matching/equality/attributeCertificateMatch";
-import {
     authAttIdMatch,
-} from "@wildboar/x500/src/lib/matching/equality/authAttIdMatch";
-import {
     basicAttConstraintsMatch,
-} from "@wildboar/x500/src/lib/matching/equality/basicAttConstraintsMatch";
-import {
     bitStringMatch,
-} from "@wildboar/x500/src/lib/matching/equality/bitStringMatch";
-import {
     booleanMatch,
-} from "@wildboar/x500/src/lib/matching/equality/booleanMatch";
-import {
     caseExactIA5Match,
-} from "@wildboar/x500/src/lib/matching/equality/caseExactIA5Match";
-import {
     caseIgnoreIA5Match,
-} from "@wildboar/x500/src/lib/matching/equality/caseIgnoreIA5Match";
-import {
     caseIgnoreListMatch,
-} from "@wildboar/x500/src/lib/matching/equality/caseIgnoreListMatch";
-import {
     certificateExactMatch,
-} from "@wildboar/x500/src/lib/matching/equality/certificateExactMatch";
-import {
     certificateListExactMatch,
-} from "@wildboar/x500/src/lib/matching/equality/certificateListExactMatch";
-import {
     certificateListMatch,
-} from "@wildboar/x500/src/lib/matching/equality/certificateListMatch";
-import {
     certificateMatch,
-} from "@wildboar/x500/src/lib/matching/equality/certificateMatch";
-import {
     certificatePairExactMatch,
-} from "@wildboar/x500/src/lib/matching/equality/certificatePairExactMatch";
-import {
     certificatePairMatch,
-} from "@wildboar/x500/src/lib/matching/equality/certificatePairMatch";
-import {
     delegatedNameConstraintsMatch,
-} from "@wildboar/x500/src/lib/matching/equality/delegatedNameConstraintsMatch";
-import {
     delegationPathMatch,
-} from "@wildboar/x500/src/lib/matching/equality/delegationPathMatch";
-import {
     directoryStringFirstComponentMatch,
-} from "@wildboar/x500/src/lib/matching/equality/directoryStringFirstComponentMatch";
-import {
     distinguishedNameMatch,
-} from "@wildboar/x500/src/lib/matching/equality/distinguishedNameMatch";
-import {
     dnsNameMatch,
-} from "@wildboar/x500/src/lib/matching/equality/dnsNameMatch";
-import {
     dualStringMatch,
-} from "@wildboar/x500/src/lib/matching/equality/dualStringMatch";
-import {
     enhancedCertificateMatch,
-} from "@wildboar/x500/src/lib/matching/equality/enhancedCertificateMatch";
-import {
     extensionPresenceMatch,
-} from "@wildboar/x500/src/lib/matching/equality/extensionPresenceMatch";
-import {
     facsimileNumberMatch,
-} from "@wildboar/x500/src/lib/matching/equality/facsimileNumberMatch";
-// import {
 //     generalWordMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/generalWordMatch";
-import {
     generalizedTimeMatch,
-} from "@wildboar/x500/src/lib/matching/equality/generalizedTimeMatch";
-import {
     holderIssuerMatch,
-} from "@wildboar/x500/src/lib/matching/equality/holderIssuerMatch";
-import {
     intEmailMatch,
-} from "@wildboar/x500/src/lib/matching/equality/intEmailMatch";
-import {
     integerFirstComponentMatch,
-} from "@wildboar/x500/src/lib/matching/equality/integerFirstComponentMatch";
-import {
     integerMatch,
-} from "@wildboar/x500/src/lib/matching/equality/integerMatch";
-import {
     jidMatch,
-} from "@wildboar/x500/src/lib/matching/equality/jidMatch";
-import {
     masterAndShadowAccessPointsMatch,
-} from "@wildboar/x500/src/lib/matching/equality/masterAndShadowAccessPointsMatch";
-import {
     numericStringMatch,
-} from "@wildboar/x500/src/lib/matching/equality/numericStringMatch";
-import {
     objectIdentifierFirstComponentMatch,
-} from "@wildboar/x500/src/lib/matching/equality/objectIdentifierFirstComponentMatch";
-import {
     objectIdentifierMatch,
-} from "@wildboar/x500/src/lib/matching/equality/objectIdentifierMatch";
-import {
     octetStringMatch,
-} from "@wildboar/x500/src/lib/matching/equality/octetStringMatch";
-import {
     pkiPathMatch,
-} from "@wildboar/x500/src/lib/matching/equality/pkiPathMatch";
-import {
     policyMatch,
-} from "@wildboar/x500/src/lib/matching/equality/policyMatch";
-import {
     presentationAddressMatch,
-} from "@wildboar/x500/src/lib/matching/equality/presentationAddressMatch";
-import {
     protocolInformationMatch,
-} from "@wildboar/x500/src/lib/matching/equality/protocolInformationMatch";
-import {
     pwdEncAlgMatch,
-} from "@wildboar/x500/src/lib/matching/equality/pwdEncAlgMatch";
-import {
     roleSpecCertIdMatch,
-} from "@wildboar/x500/src/lib/matching/equality/roleSpecCertIdMatch";
-import {
     sOAIdentifierMatch,
-} from "@wildboar/x500/src/lib/matching/equality/sOAIdentifierMatch";
-import {
-    storedPrefixMatch,
-} from "@wildboar/x500/src/lib/matching/substring/storedPrefixMatch";
-import {
     supplierAndConsumersMatch,
-} from "@wildboar/x500/src/lib/matching/equality/supplierAndConsumersMatch";
-import {
     supplierOrConsumerInformationMatch,
-} from "@wildboar/x500/src/lib/matching/equality/supplierOrConsumerInformationMatch";
-import {
     telephoneNumberMatch,
-} from "@wildboar/x500/src/lib/matching/equality/telephoneNumberMatch";
-import {
     timeSpecificationMatch,
-} from "@wildboar/x500/src/lib/matching/equality/timeSpecificationMatch";
-import {
     uTCTimeMatch,
-} from "@wildboar/x500/src/lib/matching/equality/uTCTimeMatch";
-import {
     uUIDPairMatch,
-} from "@wildboar/x500/src/lib/matching/equality/uUIDPairMatch";
-import {
     uniqueMemberMatch,
-} from "@wildboar/x500/src/lib/matching/equality/uniqueMemberMatch";
-import {
     uriMatch,
-} from "@wildboar/x500/src/lib/matching/equality/uriMatch";
-// import {
 //     userPwdHistoryMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/userPwdHistoryMatch";
-// import {
 //     userPwdMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/userPwdMatch";
+} from "@wildboar/x500/matching/equality";
 import {
     wordMatch,
 } from "../matching/equality/wordMatch";
 import {
     caseExactOrderingMatch,
-} from "@wildboar/x500/src/lib/matching/ordering/caseExactOrderingMatch";
-import {
     caseIgnoreOrderingMatch,
-} from "@wildboar/x500/src/lib/matching/ordering/caseIgnoreOrderingMatch";
-import {
     generalizedTimeOrderingMatch,
-} from "@wildboar/x500/src/lib/matching/ordering/generalizedTimeOrderingMatch";
-import {
     integerOrderingMatch,
-} from "@wildboar/x500/src/lib/matching/ordering/integerOrderingMatch";
-import {
     numericStringOrderingMatch,
-} from "@wildboar/x500/src/lib/matching/ordering/numericStringOrderingMatch";
-import {
     octetStringOrderingMatch,
-} from "@wildboar/x500/src/lib/matching/ordering/octetStringOrderingMatch";
-import {
     uTCTimeOrderingMatch,
-} from "@wildboar/x500/src/lib/matching/ordering/uTCTimeOrderingMatch";
+} from "@wildboar/x500/matching/ordering";
 import {
     caseExactSubstringsMatch,
-} from "@wildboar/x500/src/lib/matching/substring/caseExactSubstringsMatch";
-import {
     caseIgnoreIA5SubstringsMatch,
-} from "@wildboar/x500/src/lib/matching/substring/caseIgnoreIA5SubstringsMatch";
-import {
     caseIgnoreSubstringsMatch,
-} from "@wildboar/x500/src/lib/matching/substring/caseIgnoreSubstringsMatch";
-import {
     numericStringSubstringsMatch,
-} from "@wildboar/x500/src/lib/matching/substring/numericStringSubstringsMatch";
-import {
     octetStringSubstringsMatch,
-} from "@wildboar/x500/src/lib/matching/substring/octetStringSubstringsMatch";
-import {
     telephoneNumberSubstringsMatch,
-} from "@wildboar/x500/src/lib/matching/substring/telephoneNumberSubstringsMatch";
-import {
     caseIgnoreListSubstringsMatch,
-} from "@wildboar/x500/src/lib/matching/substring/caseIgnoreListSubstringsMatch";
+    storedPrefixMatch,
+} from "@wildboar/x500/matching/substring";
 import approx_acceptableCertPoliciesMatch from "../matching/approx/acceptableCertPoliciesMatch";
 import approx_algorithmIdentifierMatch from "../matching/approx/algorithmIdentifierMatch";
 import approx_attDescriptor from "../matching/approx/attDescriptor";
@@ -258,151 +116,151 @@ import approx_uriMatch from "../matching/approx/uriMatch";
 import approx_uTCTimeMatch from "../matching/approx/uTCTimeMatch";
 import { uuidMatch as uuidMatcher } from "../matching/equality/uuidMatch";
 import { uuidOrderingMatch as uuidOrderingMatcher } from "../matching/ordering/uuidOrderingMatch";
-import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { directoryStringToString } from "@wildboar/x500";
 import {
     _decode_UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 
 // X.400 Matching Rules
 import {
     addressCapabilitiesMatch,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/addressCapabilitiesMatch.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     capabilityMatch,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/capabilityMatch.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     oRNameExactMatch,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/oRNameExactMatch.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     mSStringMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSStringOrderingMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringOrderingMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSSubstringsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSubstringsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSSingleSubstringMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSStringCaseSensitiveMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringCaseSensitiveMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSStringListMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringListMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSStringListElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringListElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSSingleSubstringListMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringListMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mSSingleSubstringListElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringListElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 // import {
 //     valueCountMatch,
-// } from "@wildboar/x400/src/lib/modules/MSMatchingRules/valueCountMatch.oa";
+// } from "@wildboar/x400/MSMatchingRules";
 import {
     oRAddressMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRAddressElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRAddressSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressSubstringElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRNameMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRNameElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRNameSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameSubstringElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     oRNameSingleElementMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameSingleElementMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     redirectionOrDLExpansionMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     redirectionOrDLExpansionElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     redirectionOrDLExpansionSingleElementMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionSingleElementMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     redirectionOrDLExpansionSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionSubstringElementsMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     redirectionReasonMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionReasonMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     mTSIdentifierMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mTSIdentifierMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     contentCorrelatorMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/contentCorrelatorMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     contentIdentifierMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/contentIdentifierMatch.oa";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     iPMIdentifierMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/iPMIdentifierMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     iPMLocationMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/iPMLocationMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     oRDescriptorMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     oRDescriptorElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     oRDescriptorSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorSubstringElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     oRDescriptorSingleElementMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorSingleElementMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     recipientSpecifierMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     recipientSpecifierElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     recipientSpecifierSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierSubstringElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     recipientSpecifierSingleElementMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierSingleElementMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     circulationMemberMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     circulationMemberElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     circulationMemberSubstringElementsMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberSubstringElementsMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     circulationMemberSingleElementMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberSingleElementMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     circulationMemberCheckmarkMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberCheckmarkMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     distributionCodeMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/distributionCodeMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     informationCategoryMatch,
-} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/informationCategoryMatch.oa";
+} from "@wildboar/x400/IPMSMessageStoreAttributes";
 import {
     policySpecificationMatch,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/policySpecificationMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/policySpecificationMatch.oa.js";
 import {
     addressCapabilitiesMatch as addressCapabilitiesMatchMatcher,
 } from "../matching/equality/addressCapabilitiesMatch";
@@ -537,10 +395,8 @@ import {
 // PKCS #9 Matching Rules
 import {
     pkcs9CaseIgnoreMatch,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pkcs9CaseIgnoreMatch.oa";
-import {
     signingTimeMatch,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingTimeMatch.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     pkcs9CaseIgnoreMatch as pkcs9CaseIgnoreMatchMatcher,
 } from "../matching/equality/pkcs9CaseIgnoreMatch";
@@ -551,46 +407,46 @@ import {
 // IANA LDAP Parity Matching Rules
 // import {
 //     authPasswordExactMatch,
-// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordExactMatch.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordExactMatch.oa.js";
 // import {
 //     authPasswordMatch,
-// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordMatch.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordMatch.oa.js";
 import {
     caseExactIA5SubstringsMatch,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/caseExactIA5SubstringsMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/caseExactIA5SubstringsMatch.oa.js";
 import {
     directoryStringApproxMatch,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/directoryStringApproxMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/directoryStringApproxMatch.oa.js";
 import {
     ia5StringApproxMatch,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/ia5StringApproxMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/ia5StringApproxMatch.oa.js";
 import {
     integerBitAndMatch,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitAndMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitAndMatch.oa.js";
 import {
     integerBitOrMatch,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitOrMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitOrMatch.oa.js";
 // import {
 //     allComponentsMatch,
-// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/allComponentsMatch.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/allComponentsMatch.oa.js";
 // import {
 //     componentFilterMatch,
-// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/componentFilterMatch.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/componentFilterMatch.oa.js";
 // import {
 //     directoryComponentsMatch,
-// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/directoryComponentsMatch.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/directoryComponentsMatch.oa.js";
 // import {
 //     presentMatch,
-// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/presentMatch.oa";
+// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/presentMatch.oa.js";
 import {
     rdnMatch,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/rdnMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/rdnMatch.oa.js";
 import {
     uuidMatch,
-} from "@wildboar/parity-schema/src/lib/modules/UUID/uuidMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UUID/uuidMatch.oa.js";
 import {
     uuidOrderingMatch,
-} from "@wildboar/parity-schema/src/lib/modules/UUID/uuidOrderingMatch.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UUID/uuidOrderingMatch.oa.js";
 import {
     caseExactIA5SubstringsMatch as caseExactIA5SubstringsMatcher,
 } from "../matching/substring/caseExactIA5SubstringsMatch";

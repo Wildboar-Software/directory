@@ -1,9 +1,9 @@
-import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
-import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
-import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
-import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import type { Request } from "@wildboar/x500/src/lib/types/Request";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { type LDAPSyntaxDecoder } from "@wildboar/ldap";
+import { type LDAPSyntaxEncoder } from "@wildboar/ldap";
+import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
+import type { Request } from "@wildboar/x500";
+import type { ResultOrError } from "@wildboar/x500";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
 import type { Logger } from "winston";
 

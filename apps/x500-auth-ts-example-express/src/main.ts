@@ -1,64 +1,64 @@
-import * as express from "express";
-import * as serveStatic from "serve-static";
-import * as cookieParser from "cookie-parser";
-import * as bodyParser from "body-parser";
-import * as expressSession from "express-session";
+import { default as express } from "express";
+import { default as serveStatic } from "serve-static";
+import { default as cookieParser } from "cookie-parser";
+import { default as bodyParser } from "body-parser";
+import { default as expressSession } from "express-session";
 import * as passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { get_auth_function } from "@wildboar/x500-auth";
-import { BER } from "asn1-ts/dist/node/functional";
+import { BER } from "@wildboar/asn1/functional";
 import type {
     CountryName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/CountryName.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import type {
     UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     EntryInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     countryName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     stateOrProvinceName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/stateOrProvinceName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     localityName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     uid,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     telephoneNumber,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumber.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     postalAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalAddress.oa";
-import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { AttributeValueAssertion } from "@wildboar/x500/InformationFramework";
 import { directoryStringToString } from "@wildboar/x500";
 import { engine } from 'express-handlebars';
 import {
     DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
-import { id_ac_directoryAccessAC } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
-import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
-import { TRUE_BIT } from "asn1-ts";
-import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { id_ac_directoryAccessAC } from "@wildboar/x500/DirectoryOSIProtocols";
+import { SimpleCredentials } from "@wildboar/x500/DirectoryAbstractService";
+import { TRUE_BIT } from "@wildboar/asn1";
+import { Attribute } from "@wildboar/pki-stub";
 
 const us_str: CountryName = "US";
 const gb_str: CountryName = "GB";

@@ -1,60 +1,60 @@
-import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+import { AlgorithmIdentifier } from "@wildboar/pki-stub";
 import { KeyObject, KeyType } from "node:crypto";
-import { sa_Ed25519 } from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/sa-Ed25519.oa";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+import { sa_Ed25519 } from "@wildboar/safecurves-pkix-18";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     sha512WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha512WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     rSASSA_PSS,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/rSASSA-PSS.oa";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_dsa_with_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha256.va";
-import { ASN1Element } from "asn1-ts";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
+import { ASN1Element } from "@wildboar/asn1";
 import {
     DER,
     _encodeNull,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     rSASSA_PSS_Type,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/rSASSA-PSS-Type.ta";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha1,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha384,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha384.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_384,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-384.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_shake128,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-shake128.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_shake256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-shake256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 
 /**
  * @summary A mapping of NodeJS hash name strings to their equivalent algorithm object identifiers

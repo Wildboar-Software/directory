@@ -11,10 +11,10 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     governingStructureRule,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
+} from "@wildboar/x500/SchemaAdministration";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

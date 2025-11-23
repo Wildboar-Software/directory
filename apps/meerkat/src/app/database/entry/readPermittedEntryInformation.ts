@@ -1,33 +1,34 @@
 import type { ClientAssociation, Context, Vertex } from "@wildboar/meerkat-types";
 import {
-    Attribute,
     type EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import readEntryInformation from "./readEntryInformation";
-import { TRUE, type OBJECT_IDENTIFIER } from "asn1-ts";
-import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import { TRUE, type OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { type ACDFTupleExtended } from "@wildboar/x500";
+import {
+    bacACDF,
     PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
+} from "@wildboar/x500";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import attributesFromValues from "../../x500/attributesFromValues";
 import {
+    Attribute,
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import accessControlSchemesThatUseACIItems from "../../authz/accessControlSchemesThatUseACIItems";
 import type { ReadAttributesOptions } from "./readAttributes";
 import type {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import bacSettings from "../../authz/bacSettings";
 import isOperationalAttributeType from "../../x500/isOperationalAttributeType";
 import accessControlSchemesThatUseRBAC from "../../authz/accessControlSchemesThatUseRBAC";
-import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import { attributeValueSecurityLabelContext } from "@wildboar/x500/src/lib/collections/contexts";
+import { EntryInformationSelection } from "@wildboar/x500/DirectoryAbstractService";
+import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
 import { rbacACDF } from "../../authz/rbacACDF";
-import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
-import { attributeTypesOnly } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub";
+import { attributeTypesOnly } from "@wildboar/x500/DirectoryAbstractService";
 
 export
 interface ReadPermittedEntryInformationReturn {

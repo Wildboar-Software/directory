@@ -11,13 +11,13 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     userPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     UserPwd_encrypted,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd-encrypted.ta";
+} from "@wildboar/x500/PasswordPolicy";
 import readEntryPassword from "../readEntryPassword";
 import setEntryPassword from "../setEntryPassword";
 import { validateAlgorithmParameters } from "../../authn/validateAlgorithmParameters";

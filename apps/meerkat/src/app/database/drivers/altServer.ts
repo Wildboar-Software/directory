@@ -14,10 +14,10 @@ import type {
 import {
     DER,
     _encodeIA5String,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     altServer,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/altServer.oa";
+} from "@wildboar/x500/LdapSystemSchema";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

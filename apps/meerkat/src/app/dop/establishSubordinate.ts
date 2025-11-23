@@ -1,34 +1,28 @@
 import { Vertex, ServiceError } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import type {
     AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import { bindForOBM } from "../net/bindToOtherDSA";
 import {
     establishOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     SuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
-import {
     HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+    Vertex as X500Vertex,
+    SubentryInfo,
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     Validity,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/Validity.ta";
-import type {
-    RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
+    RelativeDistinguishedName,
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/pki-stub";
 import {
     MasterAndShadowAccessPoints,
-    Vertex as X500Vertex,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
-import {
-    SubentryInfo,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubentryInfo.ta";
+} from "@wildboar/x500/DistributedOperations";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import readSubordinates from "../dit/readSubordinates";
 import admPointEIS from "./admPointEIS";
@@ -38,31 +32,32 @@ import { addMilliseconds } from "date-fns";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_unavailable,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { checkNameForm, getOptionallyProtectedValue } from "@wildboar/x500";
 import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     _encode_EstablishOperationalBindingResultData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResultData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     EstablishOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import { OperationOutcome } from "@wildboar/rose-transport";
 import { CommonEstablishOptions } from "@wildboar/x500-client-ts";
-import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dSAProblem.oa";
+import { dSAProblem } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_targetDsaUnavailable,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
-import { DER, _decodeObjectIdentifier, _encodeInteger } from "asn1-ts/dist/node/functional";
-import { governingStructureRule, objectClass } from "@wildboar/x500/src/lib/collections/attributes";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { DER, _decodeObjectIdentifier, _encodeInteger } from "@wildboar/asn1/functional";
+import { objectClass } from "@wildboar/x500/InformationFramework";
+import { governingStructureRule } from "@wildboar/x500/SchemaAdministration";
 import getSubschemaSubentry from "../dit/getSubschemaSubentry";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
 

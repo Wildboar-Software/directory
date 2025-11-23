@@ -14,19 +14,19 @@ import type {
 import {
     DERElement,
     BERElement,
-} from "asn1-ts";
-import { DER, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { DER, _encodeGeneralizedTime } from "@wildboar/asn1/functional";
 import {
     userPwdHistory,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import { subSeconds } from "date-fns";
 import {
     UserPwd,
     UserPwd_encrypted,
     _decode_UserPwd,
     _encode_UserPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
-import { PwdHistory } from "@wildboar/x500/src/lib/modules/InformationFramework/PwdHistory.ta";
+} from "@wildboar/x500/PasswordPolicy";
+import { PwdHistory } from "@wildboar/x500/InformationFramework";
 
 /**
  * NOTE: This implementation does NOT honor the `pwdMaxTimeInHistory` attribute.

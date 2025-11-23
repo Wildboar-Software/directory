@@ -5,21 +5,21 @@ import type {
 } from "@wildboar/meerkat-types";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_oa_excludeAllCollectiveAttributes,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-excludeAllCollectiveAttributes.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     collectiveAttributeSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_collectiveAttributeSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_collectiveAttributeInnerArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeInnerArea.va";
-import { collectiveExclusions } from "@wildboar/x500/src/lib/collections/attributes";
-import { _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/InformationFramework";
+import { collectiveExclusions } from "@wildboar/x500/InformationFramework";
+import { _decodeObjectIdentifier } from "@wildboar/asn1/functional";
 import { attributeValueFromDB } from "../attributeValueFromDB";
 
 const CA_SUBENTRY: string = collectiveAttributeSubentry["&id"].toString();

@@ -6,14 +6,14 @@ import {
     RemoteCRLCheckiness,
     Configuration,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
-import { EventEmitter } from "stream";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { EventEmitter } from "node:events";
 import winston from "winston";
 import isDebugging from "is-debugging";
 import i18n from "i18next";
@@ -30,18 +30,18 @@ import {
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
 import { PEMObject } from "pem-ts";
-import { BERElement, DERElement, ObjectIdentifier } from "asn1-ts";
+import { BERElement, DERElement, ObjectIdentifier } from "@wildboar/asn1";
 import {
     CertificateList,
     _decode_CertificateList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     TrustAnchorList,
     _decode_TrustAnchorList,
-} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+} from "@wildboar/tal";
 import {
     id_ct_trustAnchorList,
-} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/id-ct-trustAnchorList.va";
+} from "@wildboar/tal";
 import {
     id_stc_build_valid_pkc_path,
 } from "@wildboar/scvp/src/lib/modules/SCVP-2009/id-stc-build-valid-pkc-path.va";
@@ -80,27 +80,27 @@ import {
 import {
     Certificate,
     _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     _decode_AttributeCertificate,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificate.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     AttributeCertificationPath,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     ACPathData,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/ACPathData.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import { KeyObject, createPrivateKey, randomUUID } from "crypto";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels_level_none,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import { decodePkiPathFromPEM } from "./utils/decodePkiPathFromPEM";
 import type {
     PkiPath,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
+} from "@wildboar/pki-stub";
 import { rootCertificates } from "tls";
 import { strict as assert } from "assert";
 import * as x500at from "@wildboar/x500/src/lib/collections/attributes";

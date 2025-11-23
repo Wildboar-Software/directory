@@ -3,38 +3,38 @@ import {
     IssuerSerial,
     _decode_IssuerSerial,
     _encode_IssuerSerial,
-} from '@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/IssuerSerial.ta';
+} from '@wildboar/x500/AttributeCertificateDefinitions';
 import {
     ObjectDigestInfo,
     _decode_ObjectDigestInfo,
     _encode_ObjectDigestInfo,
-} from '@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/ObjectDigestInfo.ta';
+} from '@wildboar/x500/AttributeCertificateDefinitions';
 import {
     GeneralNames,
     _decode_GeneralNames,
     _encode_GeneralNames,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralNames.ta';
+} from '@wildboar/x500/CertificateExtensions';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     OPTIONAL,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 export {
     IssuerSerial,
     _decode_IssuerSerial,
     _encode_IssuerSerial,
-} from '@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/IssuerSerial.ta';
+} from '@wildboar/x500/AttributeCertificateDefinitions';
 export {
     ObjectDigestInfo,
     _decode_ObjectDigestInfo,
     _encode_ObjectDigestInfo,
-} from '@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/ObjectDigestInfo.ta';
+} from '@wildboar/x500/AttributeCertificateDefinitions';
 export {
     GeneralNames,
     _decode_GeneralNames,
     _encode_GeneralNames,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralNames.ta';
+} from '@wildboar/x500/CertificateExtensions';
 
 /* START_OF_SYMBOL_DEFINITION BioCert */
 /**

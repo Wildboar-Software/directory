@@ -1,9 +1,9 @@
 import {
     basicAccessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/basicAccessControlScheme.va";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     rule_and_basic_access_control,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/rule-and-basic-access-control.va";
+} from "@wildboar/x500/BasicAccessControl";
 import { IndexableOID } from "@wildboar/meerkat-types";
 
 /**

@@ -3,16 +3,16 @@ import {
     MessageDigest,
     _decode_MessageDigest,
     _encode_MessageDigest,
-} from '@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/MessageDigest.ta';
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+} from '@wildboar/cms';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { octetString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetString.oa';
-import { octetStringMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringMatch.oa';
-import { octetStringOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringOrderingMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+import { octetString } from '@wildboar/x500/SelectedAttributeTypes';
+import { octetStringMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { octetStringOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
 import { id_messageDigest } from '../OtherAttributes/id-messageDigest.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -26,12 +26,12 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { octetString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetString.oa';
-export { octetStringMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringMatch.oa';
-export { octetStringOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringOrderingMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { octetString } from '@wildboar/x500/SelectedAttributeTypes';
+export { octetStringMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { octetStringOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_messageDigest } from '../OtherAttributes/id-messageDigest.va';
 
 /* START_OF_SYMBOL_DEFINITION messageDigest */

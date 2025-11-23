@@ -1,8 +1,8 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     FriendsDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 
 /**
  * @summary Load an entry's FriendsDescription from the database

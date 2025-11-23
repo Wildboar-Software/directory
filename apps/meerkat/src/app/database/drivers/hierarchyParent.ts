@@ -12,33 +12,26 @@ import {
     SpecialAttributeValueDetector,
     UpdateError,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import rdnToJson from "../../x500/rdnToJson";
-import {
-    hierarchyParent,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
 import { Prisma } from "@prisma/client";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import {
-    UpdateErrorData, _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
-import {
+    UpdateErrorData,
     UpdateProblem_hierarchyRuleViolation,
     UpdateProblem_parentNotAncestor,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
+    hierarchyParent,
     id_oc_child,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+    _encode_DistinguishedName,
+    id_ar_autonomousArea,
+    id_ar_serviceSpecificArea,
+} from "@wildboar/x500/InformationFramework";
 import dnToVertex from "../../dit/dnToVertex";
 import { stringifyDN } from "../../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../../matching/normalizers";
-import {
-    id_ar_serviceSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
-import {
-    id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 
 const CHILD: string = id_oc_child.toString();
 const ID_AR_SVC: string = id_ar_serviceSpecificArea.toString();

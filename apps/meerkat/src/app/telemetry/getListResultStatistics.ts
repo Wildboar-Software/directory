@@ -1,6 +1,6 @@
 import type { ListResultStatistics } from "@wildboar/meerkat-types";
-import type { ListResult } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import type { ListResult } from "@wildboar/x500/DirectoryAbstractService";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 
 export
 function getListResultStatistics (lr: ListResult): ListResultStatistics {

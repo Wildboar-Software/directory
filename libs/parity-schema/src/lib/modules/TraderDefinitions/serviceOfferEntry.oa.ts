@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
 import { dynamicProps } from '../TraderDefinitions/dynamicProps.oa';
 import { hasDynamicProperties } from '../TraderDefinitions/hasDynamicProperties.oa';
 import { hasModifiableProperties } from '../TraderDefinitions/hasModifiableProperties.oa';
@@ -11,8 +11,8 @@ import { id_trader_oc_serviceOffer } from '../TraderDefinitions/id-trader-oc-ser
 import { serviceInterfaceId } from '../TraderDefinitions/serviceInterfaceId.oa';
 import { serviceTypeId } from '../TraderDefinitions/serviceTypeId.oa';
 import { sOfferId } from '../TraderDefinitions/sOfferId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -24,8 +24,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { dynamicProps } from '../TraderDefinitions/dynamicProps.oa';
 export { hasDynamicProperties } from '../TraderDefinitions/hasDynamicProperties.oa';
 export { hasModifiableProperties } from '../TraderDefinitions/hasModifiableProperties.oa';

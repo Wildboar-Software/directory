@@ -3,8 +3,8 @@ import {
     OPTIONAL,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { PKIPublicationInfo_action, _decode_PKIPublicationInfo_action, _encode_PKIPublicationInfo_action } from "../PKIXCRMF-2009/PKIPublicationInfo-action.ta";
 import { SinglePubInfo, _decode_SinglePubInfo, _encode_SinglePubInfo } from "../PKIXCRMF-2009/SinglePubInfo.ta";
 

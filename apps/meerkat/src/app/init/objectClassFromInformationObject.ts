@@ -1,9 +1,9 @@
 import type {
     OBJECT_CLASS,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
+} from "@wildboar/x500/InformationFramework";
 import {
     ObjectClassKind_structural,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     ObjectClassInfo,
 } from "@wildboar/meerkat-types";
@@ -32,7 +32,7 @@ function objectClassFromInformationObject (io: OBJECT_CLASS, name: string): Obje
         optionalAttributes: new Set(io["&OptionalAttributes"]?.map((attr) => attr["&id"]?.toString() ?? "") ?? []),
         ldapNames: io["&ldapName"]?.length
             ? io["&ldapName"]
-            : [ name ],   
+            : [ name ],
         ldapDescription: io["&ldapDesc"],
     };
 }

@@ -3,8 +3,8 @@ import {
     OPTIONAL,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
 import { ESSCertIDv2, _decode_ESSCertIDv2, _encode_ESSCertIDv2 } from "../MultipleSignatures-2010/ESSCertIDv2.ta";
 import { SignAttrsHash, _decode_SignAttrsHash, _encode_SignAttrsHash } from "../MultipleSignatures-2010/SignAttrsHash.ta";

@@ -1,6 +1,6 @@
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import { EntryInformation } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
-import { SearchResult } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+import { EntryInformation } from "@wildboar/x500/DirectoryAbstractService";
+import { SearchResult } from "@wildboar/x500/DirectoryAbstractService";
 
 export
 function* iterateOverSearchResults(result: SearchResult): Generator<EntryInformation, undefined> {

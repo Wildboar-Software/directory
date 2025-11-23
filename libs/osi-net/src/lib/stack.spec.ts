@@ -10,43 +10,43 @@ import {
     dispatch_A_ABRreq,
     dispatch_A_RLSrsp_reject,
 } from './acse';
-import { User_data } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/User-data.ta';
-import { PDV_list } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/PDV-list.ta';
-import { Context_list_Item } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Context-list-Item.ta';
-import { Result_list_Item } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result-list-Item.ta';
+import { User_data } from '@wildboar/copp';
+import { PDV_list } from '@wildboar/copp';
+import { Context_list_Item } from '@wildboar/copp';
+import { Result_list_Item } from '@wildboar/copp';
 import {
     Result_acceptance,
     Result_provider_rejection,
     Result_user_rejection,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result.ta';
+} from '@wildboar/copp';
 import {
     Result_acceptance as ACSEResult_acceptance,
     Result_provider_rejection as ACSEResult_provider_rejection,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/Result.ta';
-import { ObjectIdentifier, External, INTEGER } from 'asn1-ts';
+} from '@wildboar/acse';
+import { ObjectIdentifier, External, INTEGER } from '@wildboar/asn1';
 import { Socket } from 'node:net';
-import { BER, _encodeOctetString } from 'asn1-ts/dist/node/functional';
+import { BER, _encodeOctetString } from '@wildboar/asn1/functional';
 import {
     AARQ_apdu,
     _encode_AARQ_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/AARQ-apdu.ta';
+} from '@wildboar/acse';
 import {
     AARE_apdu,
     _encode_AARE_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/AARE-apdu.ta';
+} from '@wildboar/acse';
 import {
     RLRQ_apdu,
     _encode_RLRQ_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/RLRQ-apdu.ta';
+} from '@wildboar/acse';
 import {
     Release_response_reason_not_finished,
     RLRE_apdu,
     _encode_RLRE_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/RLRE-apdu.ta';
+} from '@wildboar/acse';
 import {
     ABRT_apdu,
     _encode_ABRT_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-apdu.ta';
+} from '@wildboar/acse';
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
@@ -70,16 +70,16 @@ import {
     _decode_ReadResult,
     _encode_ReadResult,
 } from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta';
-import { Attribute } from '@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta';
+import { Attribute } from '@wildboar/x500/InformationFramework';
 import { EntryInformation } from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta';
-import { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
+import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
 import {
     _decode_OsiDirectoryOperation,
     _encode_OsiDirectoryOperation,
-} from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiDirectoryOperation.ta';
-import { OsiReq } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiReq.ta';
-import { OsiRes } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiRes.ta';
-import { OsiRes_result } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiRes-result.ta';
+} from "@wildboar/x500/OSIProtocolSpecification";
+import { OsiReq } from "@wildboar/x500/OSIProtocolSpecification";
+import { OsiRes } from "@wildboar/x500/OSIProtocolSpecification";
+import { OsiRes_result } from "@wildboar/x500/OSIProtocolSpecification";
 import { id_opcode_read } from '@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-read.va';
 import {
     compareCode,
@@ -91,21 +91,21 @@ import {
     Result_list_Item_provider_reason_abstract_syntax_not_supported,
     Result_list_Item_provider_reason_proposed_transfer_syntaxes_not_supported,
     Result_list_Item_provider_reason_reason_not_specified,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result-list-Item-provider-reason.ta';
-import { _encode_TheOsiBind } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBind.ta';
-import { _encode_TheOsiBindRes } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindRes.ta';
-import { _encode_TheOsiBindErr } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindErr.ta';
-import { ABRT_source_acse_service_user } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-source.ta';
-import { ABRT_diagnostic_authentication_required } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta';
+} from '@wildboar/copp';
+import { _encode_TheOsiBind } from "@wildboar/x500/OSIProtocolSpecification";
+import { _encode_TheOsiBindRes } from "@wildboar/x500/OSIProtocolSpecification";
+import { _encode_TheOsiBindErr } from "@wildboar/x500/OSIProtocolSpecification";
+import { ABRT_source_acse_service_user } from '@wildboar/acse';
+import { ABRT_diagnostic_authentication_required } from '@wildboar/acse';
 import { randomBytes, randomInt } from 'node:crypto';
 import isDebugging from 'is-debugging';
 import { AttributeTypeAndValue } from '@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta';
-import { Provider_reason_user_data_not_readable } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta';
+import { Provider_reason_user_data_not_readable } from '@wildboar/copp';
 // import {  } from "vitest";
 
-const id_ber = new ObjectIdentifier([2, 1, 1]);
-const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
-const id_dap = new ObjectIdentifier([2, 5, 9, 1]);
+const id_ber = ObjectIdentifier.fromParts([2, 1, 1]);
+const id_acse = ObjectIdentifier.fromParts([2, 2, 1, 0, 1]);
+const id_dap = ObjectIdentifier.fromParts([2, 5, 9, 1]);
 
 const DEFAULT_PORT: number = 44005;
 

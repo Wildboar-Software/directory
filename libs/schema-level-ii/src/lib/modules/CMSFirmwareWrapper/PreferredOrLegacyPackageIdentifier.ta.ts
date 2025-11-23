@@ -2,8 +2,8 @@
 import {
     OCTET_STRING,
     ASN1Element as _Element
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { PreferredPackageIdentifier, _decode_PreferredPackageIdentifier, _encode_PreferredPackageIdentifier } from "../CMSFirmwareWrapper/PreferredPackageIdentifier.ta";
 
 

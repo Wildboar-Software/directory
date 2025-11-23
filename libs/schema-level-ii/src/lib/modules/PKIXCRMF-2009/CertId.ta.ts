@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { GeneralName, _decode_GeneralName, _encode_GeneralName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
+import { GeneralName, _decode_GeneralName, _encode_GeneralName } from "@wildboar/x500/CertificateExtensions";
 import {
     INTEGER,
     ASN1ConstructionError as _ConstructionError,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 
 
 /* START_OF_SYMBOL_DEFINITION CertId */

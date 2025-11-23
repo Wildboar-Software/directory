@@ -1,13 +1,13 @@
 import type { DIT, Vertex } from "@wildboar/meerkat-types";
 import {
     EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyEntries,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntries.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntry.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import groupByOID from "../utils/groupByOID";
 
 /**

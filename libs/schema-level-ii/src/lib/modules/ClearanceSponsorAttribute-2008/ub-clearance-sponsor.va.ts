@@ -1,5 +1,5 @@
 /* eslint-disable */
-import type { INTEGER } from "asn1-ts";
+import type { INTEGER } from "@wildboar/asn1";
 
 /* START_OF_SYMBOL_DEFINITION ub_clearance_sponsor */
 /**

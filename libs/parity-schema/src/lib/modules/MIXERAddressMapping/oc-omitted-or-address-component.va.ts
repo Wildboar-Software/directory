@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { oc } from '../MIXERAddressMapping/oc.va';
 export { oc } from '../MIXERAddressMapping/oc.va';
 
@@ -16,7 +16,7 @@ export { oc } from '../MIXERAddressMapping/oc.va';
  *
  * @constant
  */
-export const oc_omitted_or_address_component: OBJECT_IDENTIFIER = new _OID(
+export const oc_omitted_or_address_component: OBJECT_IDENTIFIER = _OID.fromParts(
     [3],
     oc
 );

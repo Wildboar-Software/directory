@@ -1,11 +1,11 @@
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_RedirectionReason,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/RedirectionReason.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_RedirectionHistory,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/RedirectionHistory.ta";
+} from "@wildboar/x400/MTSAbstractService";
 
 export
 const redirectionReasonMatch: EqualityMatcher = (

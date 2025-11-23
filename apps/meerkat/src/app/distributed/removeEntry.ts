@@ -1,109 +1,107 @@
 import { Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
-import { ObjectIdentifier, unpackBits } from "asn1-ts";
+import type { MeerkatContext } from "../ctx.js";
+import { ObjectIdentifier, unpackBits } from "@wildboar/asn1";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_RemoveEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     RemoveEntryResult,
     _encode_RemoveEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     RemoveEntryResultData,
     _encode_RemoveEntryResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResultData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import deleteEntry from "../database/deleteEntry";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ChainingResults,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import { BERElement } from "asn1-ts";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DistributedOperations";
+import { BERElement } from "@wildboar/asn1";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { strict as assert } from "assert";
 import {
     id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     AccessPoint,
     _decode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     OperationalBindingID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+} from "@wildboar/x500/InformationFramework";
+import { compareDistinguishedName } from "@wildboar/x500";
 import terminateByTypeAndBindingID from "../dop/terminateByTypeAndBindingID";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_invalidSignature,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
-import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import {
-    PERMISSION_CATEGORY_REMOVE,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
-import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import { type ACDFTuple } from "@wildboar/x500";
+import { type ACDFTupleExtended } from "@wildboar/x500";
+import { PERMISSION_CATEGORY_REMOVE } from "@wildboar/x500";
+import { getACDFTuplesFromACIItem } from "@wildboar/x500";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     id_opcode_removeEntry,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-removeEntry.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_timeLimitExceeded
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
-import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { getDateFromTime } from "@wildboar/x500";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import { DER } from "asn1-ts/dist/node/functional";
-import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
+import { DER } from "@wildboar/asn1/functional";
+import { codeToString } from "@wildboar/x500";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import failover from "../utils/failover";
 import {
     AbandonedData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     id_oc_parent,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_oc_child,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     FamilyGrouping_compoundEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     updateError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateProblem_notAncestor,
     UpdateProblem_notAllowedOnNonLeaf,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getACIItems from "../authz/getACIItems";
 import getRelevantOperationalBindings from "../dop/getRelevantOperationalBindings";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
@@ -111,20 +109,20 @@ import updateSuperiorDSA from "../dop/updateSuperiorDSA";
 import bacSettings from "../authz/bacSettings";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import preprocessTuples from "../authz/preprocessTuples";
 import removeAttribute from "../database/entry/removeAttribute";
 import {
     hierarchyParent,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { generateSignature } from "../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import { stringifyDN } from "../x500/stringifyDN";
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
@@ -132,7 +130,7 @@ import { getEntryExistsFilter } from "../database/entryExistsFilter";
 import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
 import {
     SubordinateChanges,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
 import { acdf } from "../authz/acdf";
 

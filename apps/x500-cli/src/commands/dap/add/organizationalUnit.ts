@@ -2,27 +2,27 @@ import type { Connection, Context } from "../../../types";
 import destringifyDN from "../../../utils/destringifyDN";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import * as selat from "@wildboar/x500/src/lib/collections/attributes";
-import * as seloc from "@wildboar/x500/src/lib/collections/objectClasses";
+} from "@wildboar/x500/InformationFramework";
+import { attributes as selat } from "@wildboar/x500";
+import { objectClasses as seloc } from "@wildboar/x500";
 import {
     DER,
     _encodeObjectIdentifier,
     _encodeUTF8String,
     _encodePrintableString,
     _encodeOctetString,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     _encode_RDNSequence,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     PostalAddress,
     _encode_PostalAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PostalAddress.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     FacsimileTelephoneNumber,
     _encode_FacsimileTelephoneNumber,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/FacsimileTelephoneNumber.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import do_addEntry from "../add";
 import type { ArgumentsCamelCase } from "yargs";
 import type { CommonAddOptions } from "../../../yargs/add_common_add_opts";

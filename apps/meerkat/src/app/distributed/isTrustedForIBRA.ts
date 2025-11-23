@@ -1,9 +1,9 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     DistinguishedName,
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { stringifyDN } from "../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
 

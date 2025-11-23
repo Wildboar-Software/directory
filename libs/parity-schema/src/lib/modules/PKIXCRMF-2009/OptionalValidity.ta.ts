@@ -3,18 +3,18 @@ import {
     Time,
     _decode_Time,
     _encode_Time,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/Time.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     OPTIONAL,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 export {
     Time,
     _decode_Time,
     _encode_Time,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/Time.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 
 /* START_OF_SYMBOL_DEFINITION OptionalValidity */
 /**

@@ -1,15 +1,15 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { caseIgnoreIA5Match } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreIA5Match.oa';
-import { caseIgnoreIA5SubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreIA5SubstringsMatch.oa';
-import { ia5String } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ia5String.oa';
-import { IA5String, ObjectIdentifier as _OID } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/InformationFramework';
+import { caseIgnoreIA5Match } from '@wildboar/x500/SelectedAttributeTypes';
+import { caseIgnoreIA5SubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { ia5String } from '@wildboar/x500/SelectedAttributeTypes';
+import { IA5String, ObjectIdentifier as _OID } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import { iana_assigned_oid } from '../VPIMSchema/iana-assigned-oid.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -23,9 +23,9 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { iana_assigned_oid } from '../VPIMSchema/iana-assigned-oid.va';
 
 /* START_OF_SYMBOL_DEFINITION vPIMSupportedMessageContext */
@@ -63,7 +63,7 @@ export const vPIMSupportedMessageContext: ATTRIBUTE<IA5String> = {
         caseIgnoreIA5SubstringsMatch /* OBJECT_FIELD_SETTING */,
     '&ldapSyntax': ia5String['&id'] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['vPIMSupportedMessageContext'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [2, 6],
         iana_assigned_oid
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

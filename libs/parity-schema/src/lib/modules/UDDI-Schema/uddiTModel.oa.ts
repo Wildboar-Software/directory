@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_uddi } from '../UDDI-Schema/id-uddi.va';
 import { uddiAuthorizedName } from '../UDDI-Schema/uddiAuthorizedName.oa';
 import { uddiCategoryBag } from '../UDDI-Schema/uddiCategoryBag.oa';
@@ -19,8 +19,8 @@ import { uddiTModelKey } from '../UDDI-Schema/uddiTModelKey.oa';
 import { uddiv3DigitalSignature } from '../UDDI-Schema/uddiv3DigitalSignature.oa';
 import { uddiv3NodeId } from '../UDDI-Schema/uddiv3NodeId.oa';
 import { uddiv3TModelKey } from '../UDDI-Schema/uddiv3TModelKey.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -32,8 +32,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { id_uddi } from '../UDDI-Schema/id-uddi.va';
 export { uddiAuthorizedName } from '../UDDI-Schema/uddiAuthorizedName.oa';
 export { uddiCategoryBag } from '../UDDI-Schema/uddiCategoryBag.oa';
@@ -106,7 +106,7 @@ export const uddiTModel: OBJECT_CLASS = {
         uddiv3NodeId,
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['uddiTModel'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [6, 7],
         id_uddi
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

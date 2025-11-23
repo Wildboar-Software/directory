@@ -1,6 +1,6 @@
 import type {
     AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { scrypt } from "@wildboar/scrypt-0";
 import * as crypto from "crypto";
 

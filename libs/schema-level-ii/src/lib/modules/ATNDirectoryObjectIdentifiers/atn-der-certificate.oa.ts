@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { Certificate, _decode_Certificate, _encode_Certificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
-import { x509Certificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/x509Certificate.oa";
-import { certificateExactMatch } from "@wildboar/x500/src/lib/modules/CertificateExtensions/certificateExactMatch.oa";
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { Certificate, _decode_Certificate, _encode_Certificate } from "@wildboar/x500/AuthenticationFramework";
+import { x509Certificate } from "@wildboar/x500/AuthenticationFramework";
+import { certificateExactMatch } from "@wildboar/x500/CertificateExtensions";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { id_at_atn_DerCertificate } from "../ATNDirectoryObjectIdentifiers/id-at-atn-DerCertificate.va";
 
 

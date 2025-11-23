@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_regCtrl } from '../PKIXCRMF-2009/id-regCtrl.va';
 export { id_regCtrl } from '../PKIXCRMF-2009/id-regCtrl.va';
 
@@ -16,7 +16,7 @@ export { id_regCtrl } from '../PKIXCRMF-2009/id-regCtrl.va';
  *
  * @constant
  */
-export const id_regCtrl_oldCertID: OBJECT_IDENTIFIER = new _OID(
+export const id_regCtrl_oldCertID: OBJECT_IDENTIFIER = _OID.fromParts(
     [5],
     id_regCtrl
 );

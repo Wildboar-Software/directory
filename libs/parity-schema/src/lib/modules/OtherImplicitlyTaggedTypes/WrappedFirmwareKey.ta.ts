@@ -3,9 +3,9 @@ import {
     EnvelopedData,
     _decode_EnvelopedData,
     _encode_EnvelopedData,
-} from '@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/EnvelopedData.ta';
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/cms';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 
 /* START_OF_SYMBOL_DEFINITION WrappedFirmwareKey */
 /**

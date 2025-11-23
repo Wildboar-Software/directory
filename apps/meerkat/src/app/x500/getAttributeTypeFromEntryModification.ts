@@ -1,9 +1,9 @@
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     EntryModification,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary Determine the attribute type named by an entry modification.

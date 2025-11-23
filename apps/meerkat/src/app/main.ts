@@ -4,7 +4,7 @@ import * as net from "net";
 import * as tls from "tls";
 import * as path from "path";
 import * as os from "os";
-import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+import { IdmBind } from "@wildboar/x500/IDMProtocolSpecification";
 import { rose_transport_from_idm_socket } from "./rose/idm";
 import { rose_transport_from_itot_stack } from "./rose/itot";
 import {
@@ -16,14 +16,14 @@ import {
     Abort_unboundRequest,
     Abort_resourceLimitation,
     Abort_invalidProtocol,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     IDMConnection,
     warnings,
 } from "@wildboar/idm";
-import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
-import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
+import { dsp_ip } from "@wildboar/x500/DirectoryIDMProtocols";
+import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import DAPAssociation from "./dap/DAPConnection";
 import DSPAssociation from "./dsp/DSPConnection";
 import DOPAssociation from "./dop/DOPConnection";
@@ -37,7 +37,7 @@ import loadContextTypes from "./init/loadContextTypes";
 import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames";
 import loadNameForms from "./init/loadNameForms";
 import { loadDSARelationships } from "./init/loadDSARelationships";
-import ctx, { MeerkatContext } from "./ctx";
+import ctx, { MeerkatContext } from "./ctx.js";
 import terminate from "./dop/terminateByID";
 import { differenceInMilliseconds, differenceInMinutes } from "date-fns";
 import * as dns from "dns/promises";
@@ -51,43 +51,43 @@ import { setTimeout as safeSetTimeout } from "safe-timers";
 import { randomUUID } from "crypto";
 import { flatten } from "flat";
 import { getServerStatistics } from "./telemetry/getServerStatistics";
-import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import { naddrToURI } from "@wildboar/x500";
 import { getOnOCSPRequestCallback } from "./pki/getOnOCSPRequestCallback";
 import cookieParser from "cookie-parser";
 import { parseFormData } from "./admin/parseFormData";
 import printCode from "./utils/printCode";
 import {
     id_ac_directoryAccessAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     id_ac_directorySystemAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directorySystemAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     id_ac_directoryOperationalBindingManagementAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     id_ac_shadowConsumerInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     id_ac_shadowConsumerInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAsynchronousAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     id_ac_shadowSupplierInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import { AbortReason } from "@wildboar/rose-transport";
 import { createWriteStream } from "node:fs";
-import { disp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
+import { disp_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import DISPAssociation from "./disp/DISPConnection";
-import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { OperationalBindingInitiator } from "@prisma/client";
 import {
     _decode_ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import scheduleShadowUpdates from "./disp/scheduleShadowUpdates";
-import { BERElement } from "asn1-ts";
+import { BERElement } from "@wildboar/asn1";
 import { cacheNamingContexts } from "./dit/cacheNamingContexts";
 import * as routes from "./admin/web";
 
@@ -1108,9 +1108,7 @@ async function main (): Promise<void> {
     });
 
     const packageJSON = await import("../../package.json").catch(() => {});
-    const versionSlug = packageJSON?.default
-        ? packageJSON?.default.version
-        : packageJSON?.version;
+    const versionSlug = packageJSON?.default.version;
     ctx.dsa.version = versionSlug ?? ctx.dsa.version;
     const preconnectTimestamp = Date.now();
     await ctx.db.$connect();

@@ -1,100 +1,100 @@
 import { Vertex, ClientAssociation, OperationReturn, Value } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
-import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT, unpackBits } from "asn1-ts";
+import type { MeerkatContext } from "../ctx.js";
+import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT, unpackBits } from "@wildboar/asn1";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_CompareArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     CompareArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     CompareResult,
     _encode_CompareResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     CompareResultData,
     _encode_CompareResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResultData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_unsupportedMatchingUse,
     ServiceProblem_unwillingToPerform,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ChainingResults,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DistributedOperations";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     readValues,
 } from "../database/entry/readValues";
-import evaluateContextAssertion from "@wildboar/x500/src/lib/utils/evaluateContextAssertion";
+import { evaluateContextAssertion } from "@wildboar/x500";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_invalidSignature,
     SecurityProblem_passwordExpired,
     SecurityProblem_invalidCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
-import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
+import { type ACDFTuple } from "@wildboar/x500";
+import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
     PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_COMPARE,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
-import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+} from "@wildboar/x500";
+import { getACDFTuplesFromACIItem } from "@wildboar/x500";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     id_opcode_compare,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-compare.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import { DER } from "asn1-ts/dist/node/functional";
-import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
+import { DER } from "@wildboar/asn1/functional";
+import { codeToString } from "@wildboar/x500";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
 import getStatisticsFromAttributeValueAssertion from "../telemetry/getStatisticsFromAttributeValueAssertion";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import failover from "../utils/failover";
 import {
     AbandonedData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getACIItems from "../authz/getACIItems";
 import getAttributeSubtypes from "../x500/getAttributeSubtypes";
 import {
     ServiceControlOptions_noSubtypeMatch,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import {
     FamilyGrouping_entryOnly,
     FamilyGrouping_compoundEntry,
     FamilyGrouping_strands,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import readFamily from "../database/family/readFamily";
 import readEntryOnly from "../database/family/readEntryOnly";
 import readCompoundEntry from "../database/family/readCompoundEntry";
@@ -102,50 +102,50 @@ import readStrands from "../database/family/readStrands";
 import bacSettings from "../authz/bacSettings";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import preprocessTuples from "../authz/preprocessTuples";
 import {
     AttributeErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeErrorData_problems_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeProblem_noSuchAttributeOrValue,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { generateSignature } from "../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import { stringifyDN } from "../x500/stringifyDN";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
-import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import { userPwd } from "@wildboar/x500/PasswordPolicy";
+import { userPassword } from "@wildboar/x500/AuthenticationFramework";
 import { EqualityMatcher } from "@wildboar/x500";
 import attemptPassword from "../authn/attemptPassword";
-import { SimpleCredentials_password } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-password.ta";
+import { SimpleCredentials_password } from "@wildboar/x500/DirectoryAbstractService";
 import {
     PwdResponseValue_error_passwordExpired,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { PwdResponseValue, _encode_PwdResponseValue } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
+} from "@wildboar/x500/InformationFramework";
+import { PwdResponseValue, _encode_PwdResponseValue } from "@wildboar/x500/DirectoryAbstractService";
 import {
     pwdResponseValue,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/pwdResponseValue.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { acdf } from "../authz/acdf";
 
 /**

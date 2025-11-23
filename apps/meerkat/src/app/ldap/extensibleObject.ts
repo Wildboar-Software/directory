@@ -1,4 +1,4 @@
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 
 /**
  * @summary The LDAP extensibleObject object class
@@ -10,7 +10,7 @@ import { ObjectIdentifier } from "asn1-ts";
  * @constant
  */
 export
-const extensibleObject = new ObjectIdentifier([
+const extensibleObject = ObjectIdentifier.fromParts([
     1, 3, 6, 1, 4, 1, 1466, 101, 120, 111,
 ]);
 

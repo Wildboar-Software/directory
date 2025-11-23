@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { EXTENSION } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/EXTENSION.oca';
+import { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 import { id_tai_ce_biometricSecurityLevelOfPrivilege } from '../TAI/id-tai-ce-biometricSecurityLevelOfPrivilege.va';
 import {
     SecurityLevelofPrivilege,
     _decode_SecurityLevelofPrivilege,
     _encode_SecurityLevelofPrivilege,
 } from '../TAI/SecurityLevelofPrivilege.ta';
-export { EXTENSION } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/EXTENSION.oca';
+export { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 export { id_tai_ce_biometricSecurityLevelOfPrivilege } from '../TAI/id-tai-ce-biometricSecurityLevelOfPrivilege.va';
 export {
     SecurityLevelofPrivilege,

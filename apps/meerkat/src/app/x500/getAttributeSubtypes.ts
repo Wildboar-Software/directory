@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Gets all subtypes of an attribute type

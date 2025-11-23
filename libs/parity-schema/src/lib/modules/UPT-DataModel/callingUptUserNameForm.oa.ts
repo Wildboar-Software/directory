@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-import { name } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import { name } from '@wildboar/x500/SelectedAttributeTypes';
 import { callingUptUser } from '../UPT-DataModel/callingUptUser.oa';
 import { id_nf_callingUptUserNameForm } from '../UPT-DataModel/id-nf-callingUptUserNameForm.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
-export { name } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+export { name } from '@wildboar/x500/SelectedAttributeTypes';
 export { callingUptUser } from '../UPT-DataModel/callingUptUser.oa';
 export { id_nf_callingUptUserNameForm } from '../UPT-DataModel/id-nf-callingUptUserNameForm.va';
 

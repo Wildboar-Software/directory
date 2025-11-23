@@ -11,15 +11,15 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     modifiersName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/modifiersName.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+} from "@wildboar/x500/InformationFramework";
+import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import rdnToJson from "../../x500/rdnToJson";
 import { Prisma } from "@prisma/client";

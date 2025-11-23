@@ -1,5 +1,5 @@
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
 
 // I can't find any documentation on how this is supposed to work, but I copied
 // this implementation from OpenLDAP.

@@ -7,34 +7,34 @@ import {
     rose_from_presentation_address,
     DISPClient,
 } from "@wildboar/x500-client-ts";
-import { MeerkatContext } from "../ctx";
+import { MeerkatContext } from "../ctx.js";
 import {
     id_ac_directorySystemAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directorySystemAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     id_ac_directoryOperationalBindingManagementAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 // import {
 //     id_ac_shadowConsumerInitiatedAC,
-// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAC.va";
+// } from "@wildboar/x500/DirectoryOSIProtocols";
 // import {
 //     id_ac_shadowConsumerInitiatedAsynchronousAC,
-// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAsynchronousAC.va";
+// } from "@wildboar/x500/DirectoryOSIProtocols";
 // import {
 //     id_ac_shadowSupplierInitiatedAC,
-// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAC.va";
+// } from "@wildboar/x500/DirectoryOSIProtocols";
 // import {
 //     id_ac_shadowSupplierInitiatedAsynchronousAC,
-// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
+// } from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     DSABindArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
+} from "@wildboar/x500/DistributedOperations";
 import { versions } from "../versions";
 import { compareDistinguishedName, compareGeneralName, naddrToURI } from "@wildboar/x500";
-import { BOOLEAN, OBJECT_IDENTIFIER } from "asn1-ts";
+import { BOOLEAN, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ClientAssociation,
     AbandonError,
@@ -43,19 +43,17 @@ import {
     BindReturn,
 } from "@wildboar/meerkat-types";
 import createSecurityParameters from "../x500/createSecurityParameters";
-import {
-    PresentationAddress,
-} from "@wildboar/pki-stub/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+import { PresentationAddress } from "@wildboar/pki-stub";
 import {
     AbandonedData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { ROSETransport, AsyncROSEClient, AbortReason } from "@wildboar/rose-transport";
 import { createStrongCredentials } from "../authn/createStrongCredentials";
 import getCredentialsForNSAP from "./getCredentialsForNSAP";
-import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
+import { DSACredentials } from "@wildboar/x500/DistributedOperations";
 import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import { URL } from "node:url";
@@ -63,7 +61,7 @@ import { Socket, createConnection } from "node:net";
 import { connect as tlsConnect, TLSSocket } from "node:tls";
 import isDebugging from "is-debugging";
 import stringifyDN from "../x500/stringifyDN";
-import { DSABindResult } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindResult.ta";
+import { DSABindResult } from "@wildboar/x500/DistributedOperations";
 import { createWriteStream } from "node:fs";
 import attemptSPKMAuth from "../authn/attemptSPKMAuth";
 import { attemptStrongAuth } from "../authn/attemptStrongAuth";

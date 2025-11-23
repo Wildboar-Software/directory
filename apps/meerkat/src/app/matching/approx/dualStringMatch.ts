@@ -1,10 +1,10 @@
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
 import {
     DualStringSyntax,
     _decode_DualStringSyntax,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/DualStringSyntax.ta";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
+import { directoryStringToString } from "@wildboar/x500";
 import fl from "fast-levenshtein";
 
 export

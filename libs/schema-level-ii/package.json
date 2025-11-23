@@ -3,7 +3,6 @@
     "version": "1.0.0",
     "description": "More X.500 directory schema from existing LDAP and X.500 schema",
     "private": true,
-    "type": "commonjs",
     "main": "./src/index.js",
     "types": "./src/index.d.ts",
     "dependencies": {

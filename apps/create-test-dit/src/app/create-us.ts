@@ -4,47 +4,35 @@ import {
     OBJECT_IDENTIFIER,
     ObjectIdentifier,
     TRUE_BIT,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { randomInt } from "crypto";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import {
     AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
-import {
     AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+    ServiceControls,
+    ServiceControlOptions,
+    SecurityParameters,
+    ProtectionRequest_none,
+    ErrorProtectionRequest_none,
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     DistinguishedName, _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import * as selat from "@wildboar/x500/src/lib/collections/attributes";
-import * as seloc from "@wildboar/x500/src/lib/collections/objectClasses";
-import {
-    ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import {
-    ServiceControlOptions,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
-import {
-    ProtectionRequest_none,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
-import {
-    ErrorProtectionRequest_none,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/InformationFramework";
+import { attributes as selat } from "@wildboar/x500";
+import { objectClasses as seloc } from "@wildboar/x500";
 import {
     DER,
     _encodeObjectIdentifier,
     _encodePrintableString,
     _encodeUTF8String,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import sleep, { idempotentAddEntry } from "./utils";
 import {
     createMockCertificate,
@@ -54,179 +42,141 @@ import {
     createMockUsername,
     createMockEmail,
 } from "./mock-entries";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import {
     _encode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
-import {
     CertificatePair,
     _encode_CertificatePair,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificatePair.ta";
-import {
     _encode_CertificateList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
-import {
     PolicySyntax,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PolicySyntax.ta";
-import {
     InfoSyntax,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/InfoSyntax.ta";
-import {
     InfoSyntax_pointer,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/InfoSyntax-pointer.ta";
+    SupportedAlgorithm,
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     AlgorithmIdentifier,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+} from "@wildboar/pki-stub";
 import {
     sha256WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha256WithRSAEncryption.va";
-import {
-    SupportedAlgorithm,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SupportedAlgorithm.ta";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     PolicyInformation,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyInformation.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     dynamicObject,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa.js";
 import {
     eduPerson,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPerson.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPerson.oa.js";
 import {
     eduPersonAffiliation,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonAffiliation.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonAffiliation.oa.js";
 import {
     gidNumber,
     homeDirectory,
     loginShell,
     posixAccount,
     uidNumber,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/posixAccount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/posixAccount.oa.js";
 import {
     uid,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     shadowAccount, shadowLastChange, shadowMax, shadowMin,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowAccount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowAccount.oa.js";
 import {
     openLDAPdisplayableObject,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/openLDAPdisplayableObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/openLDAPdisplayableObject.oa.js";
 import {
     mailQuotaSize, qmailUser,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailUser.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailUser.oa.js";
 import {
     displayName,
     kickoffTime,
     rid,
     sambaAccount,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/sambaAccount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/sambaAccount.oa.js";
 import {
     sambaDomainName,
     sambaProfilePath,
     sambaSamAccount, sambaSID,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSamAccount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSamAccount.oa.js";
 import {
     mhs_user,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-user.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 // import {
 //     edi_name,
 //     edi_user,
-// } from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-user.oa";
+// } from "@wildboar/x400/EDIMUseOfDirectory";
 import {
     entryTtl,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
-import { mail } from "@wildboar/parity-schema/src/lib/modules/Cosine/mail.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
+import { mail } from "@wildboar/parity-schema/src/lib/modules/Cosine/mail.oa.js";
 import {
     naturalPerson,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/naturalPerson.oa";
-import {
     emailAddress,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/emailAddress.oa";
-import {
     unstructuredName,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredName.oa";
-import {
     unstructuredAddress,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredAddress.oa";
-import {
     dateOfBirth,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/dateOfBirth.oa";
-import {
     placeOfBirth,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/placeOfBirth.oa";
-import {
     gender,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/gender.oa";
-import {
     countryOfCitizenship,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfCitizenship.oa";
-import {
     countryOfResidence,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfResidence.oa";
-import {
     pseudonym,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pseudonym.oa";
+} from "@wildboar/pkcs/PKCS-9";
 import {
     mhs_or_addresses,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-or-addresses.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     ORAddress,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/ORAddress.ta";
-import {
     BuiltInStandardAttributes,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/BuiltInStandardAttributes.ta";
-import {
     PersonalName,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/PersonalName.ta";
-import {
     BuiltInDomainDefinedAttribute,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/BuiltInDomainDefinedAttribute.ta";
-import {
     ExtensionAttribute,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/ExtensionAttribute.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import { Promise as bPromise } from "bluebird";
-import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import { id_ar_serviceSpecificArea } from "@wildboar/x500/InformationFramework";
 import {
     SubtreeSpecification,
     _encode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
-    EntryLimit,
-    ImposedSubset_oneLevel,
     SearchRuleDescription,
+    type ATTRIBUTE,
     _encode_SearchRuleDescription,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     RequestAttribute,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/RequestAttribute.ta";
+    ImposedSubset_oneLevel,
+    EntryLimit,
+} from "@wildboar/x500/ServiceAdministration";
 import {
-    ATTRIBUTE,
     ResultAttribute,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/ResultAttribute.ta";
+} from "@wildboar/x500/ServiceAdministration";
 import { OCALA_USERS, OCALA_USERS_SERVICES } from "./aci";
-import { _encode_ACIItem } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+import { _encode_ACIItem } from "@wildboar/x500/BasicAccessControl";
 import {
     id_ar_accessControlInnerArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     Guide,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/Guide.ta";
-import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
-import { Context as X500Context } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Context.ta";
-import { languageContext, temporalContext } from "@wildboar/x500/src/lib/collections/contexts";
-import { TimeSpecification } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification.ta";
-import { TimeSpecification_time_absolute } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification-time-absolute.ta";
+    PresentationAddress,
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { Attribute_valuesWithContext_Item, Context as X500Context } from "@wildboar/pki-stub";
+import { languageContext, temporalContext } from "@wildboar/x500/SelectedAttributeTypes";
+import { TimeSpecification } from "@wildboar/x500/SelectedAttributeTypes";
+import { TimeSpecification_time_absolute } from "@wildboar/x500/SelectedAttributeTypes";
 import { addDays } from "date-fns";
-import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
+import { uriToNSAP } from "@wildboar/x500";
 import {
-    AccessPoint, PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+    AccessPoint,
+} from "@wildboar/x500/DistributedOperations";
 
-const id_wildboar           = new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 56490 ]);
-const id_serviceTypes       = new ObjectIdentifier([ 59 ], id_wildboar);
-const id_svc_whitePages     = new ObjectIdentifier([ 1 ], id_serviceTypes);
-const id_svc_yellowPages    = new ObjectIdentifier([ 2 ], id_serviceTypes);
-const id_svc_greyPages      = new ObjectIdentifier([ 3 ], id_serviceTypes);
+const id_wildboar           = ObjectIdentifier.fromParts([ 1, 3, 6, 1, 4, 1, 56490 ]);
+const id_serviceTypes       = ObjectIdentifier.fromParts([ 59 ], id_wildboar);
+const id_svc_whitePages     = ObjectIdentifier.fromParts([ 1 ], id_serviceTypes);
+const id_svc_yellowPages    = ObjectIdentifier.fromParts([ 2 ], id_serviceTypes);
+const id_svc_greyPages      = ObjectIdentifier.fromParts([ 3 ], id_serviceTypes);
 
 function simpleSearchBy (attr: ATTRIBUTE): RequestAttribute {
     return new RequestAttribute(
@@ -1284,7 +1234,7 @@ async function seedUS (
                 new Uint8ClampedArray([ TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
                 [
                     new PolicyInformation(
-                        new ObjectIdentifier([ 2, 5, 3, 4, 6, 7, 1 ]),
+                        ObjectIdentifier.fromParts([ 2, 5, 3, 4, 6, 7, 1 ]),
                         undefined,
                     ),
                 ],
@@ -1407,7 +1357,7 @@ async function seedUS (
             rdn,
         ];
         const certPol = new PolicySyntax(
-            new ObjectIdentifier([ 2, 5, 2, 4, 7, 2, 1 ]),
+            ObjectIdentifier.fromParts([ 2, 5, 2, 4, 7, 2, 1 ]),
             {
                 content: {
                     uTF8String: "I just give you certificates in exchange for a bribe",
@@ -1425,7 +1375,7 @@ async function seedUS (
             ),
         };
         const privPol = new PolicySyntax(
-            new ObjectIdentifier([ 2, 5, 2, 4, 7, 2, 3 ]),
+            ObjectIdentifier.fromParts([ 2, 5, 2, 4, 7, 2, 3 ]),
             {
                 content: {
                     uTF8String: "I just give you certificates if you ask really nicely",
@@ -1786,7 +1736,7 @@ async function seedUS (
                 new Uint8ClampedArray([ TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
                 [
                     new PolicyInformation(
-                        new ObjectIdentifier([ 2, 5, 3, 4, 6, 7, 1 ]),
+                        ObjectIdentifier.fromParts([ 2, 5, 3, 4, 6, 7, 1 ]),
                         undefined,
                     ),
                 ],

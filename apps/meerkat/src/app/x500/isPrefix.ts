@@ -1,8 +1,8 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
+} from "@wildboar/x500/InformationFramework";
+import { compareRDNSequence } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 /**

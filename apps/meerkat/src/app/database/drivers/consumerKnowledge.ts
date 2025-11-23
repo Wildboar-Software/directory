@@ -11,13 +11,13 @@ import type {
     Vertex,
     PendingUpdates,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     consumerKnowledge,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/consumerKnowledge.oa";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { Knowledge } from "@prisma/client";
 import rdnToJson from "../../x500/rdnToJson";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import { compareDistinguishedName } from "@wildboar/x500";
 import saveAccessPoint from "../saveAccessPoint";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 

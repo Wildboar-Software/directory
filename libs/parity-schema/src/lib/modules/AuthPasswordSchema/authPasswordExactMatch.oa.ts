@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { authPasswordSyntax } from '../AuthPasswordSchema/authPasswordSyntax.oa';
 import {
     AuthPasswordSyntax,
@@ -8,9 +8,9 @@ import {
     _encode_AuthPasswordSyntax,
 } from '../AuthPasswordSchema/AuthPasswordSyntax.ta';
 import { id_at_openldap_schema } from '../AuthPasswordSchema/id-at-openldap-schema.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { authPasswordSyntax } from '../AuthPasswordSchema/authPasswordSyntax.oa';
 export {
     AuthPasswordSyntax,
@@ -52,7 +52,7 @@ export const authPasswordExactMatch: MATCHING_RULE<AuthPasswordSyntax> = {
     '&ldapName': ['authPasswordExactMatch'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'authentication password exact matching rule' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [2, 2],
         id_at_openldap_schema
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

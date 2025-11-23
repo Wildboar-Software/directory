@@ -3,7 +3,7 @@ import {
     joint_iso_itu_t,
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER,
-} from 'asn1-ts';
+} from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION guls_DirectoryProtectionMappings */
 /**
@@ -18,7 +18,7 @@ import {
  *
  * @constant
  */
-export const guls_DirectoryProtectionMappings: OBJECT_IDENTIFIER = new _OID(
+export const guls_DirectoryProtectionMappings: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* genericULS */ 20, /* modules */ 1, /* dirProtectionMappings */ 4],
     joint_iso_itu_t
 );

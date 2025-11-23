@@ -1,9 +1,9 @@
 import { SubstringsMatcher, SubstringSelection } from "@wildboar/x500";
 import {
     _decode_MSString,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/MSString.ta";
+} from "@wildboar/x400/MSMatchingRules";
 import { msStringToString } from "../equality/orAddressUtilities";
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 
 export
 const mSSingleSubstringMatch: SubstringsMatcher = (

@@ -1,4 +1,4 @@
-import { SearchRule } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
+import { SearchRule } from "@wildboar/x500/ServiceAdministration";
 
 /**
  * @summary Determine whether a search rule is the "empty search rule"

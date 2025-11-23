@@ -12,61 +12,61 @@ import {
     encodeUnsignedBigEndianInteger,
     unpackBits,
     TRUE,
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
+import { DER } from "@wildboar/asn1/functional";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { strict as assert } from "assert";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     ListArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListResult, _encode_ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters";
-import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
+import { list } from "@wildboar/x500/DirectoryAbstractService";
 import type {
     SortKey,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
 import { MAX_RESULTS, MAX_SORT_KEYS } from "../constants";
 import {
     LimitProblem_sizeLimitExceeded,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type { ListState } from "./list_i";
 import {
     ListResultData_listInfo_subordinates_Item as ListItem,
     ListResultData_listInfo_subordinates_Item,
     _encode_ListResultData_listInfo_subordinates_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListResultData_listInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { generateSignature } from "../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import {
     _encode_Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     _encode_PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _encode_SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     _encode_AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import { stringifyDN } from "../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";

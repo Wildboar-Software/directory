@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_uddi } from '../UDDI-Schema/id-uddi.va';
 import { uddiUUID } from '../UDDI-Schema/uddiUUID.oa';
 import { uddiv3EntityObituary } from '../UDDI-Schema/uddiv3EntityObituary.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export { id_uddi } from '../UDDI-Schema/id-uddi.va';
 export { uddiUUID } from '../UDDI-Schema/uddiUUID.oa';
 export { uddiv3EntityObituary } from '../UDDI-Schema/uddiv3EntityObituary.oa';
@@ -37,7 +37,7 @@ export const uddiv3EntityObituaryNameForm: NAME_FORM = {
     '&namedObjectClass': uddiv3EntityObituary /* OBJECT_FIELD_SETTING */,
     '&MandatoryAttributes': [uddiUUID] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['uddiv3EntityObituaryNameForm'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [15, 10],
         id_uddi
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

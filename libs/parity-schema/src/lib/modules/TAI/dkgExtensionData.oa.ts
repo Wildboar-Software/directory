@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { EXTENSION } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/EXTENSION.oca';
+import { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 import {
     DkgExtensionDataSyntax,
     _decode_DkgExtensionDataSyntax,
     _encode_DkgExtensionDataSyntax,
 } from '../TAI/DkgExtensionDataSyntax.ta';
 import { id_tai_ce_dgkExtensionData } from '../TAI/id-tai-ce-dgkExtensionData.va';
-export { EXTENSION } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/EXTENSION.oca';
+export { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 export {
     DkgExtensionDataSyntax,
     _decode_DkgExtensionDataSyntax,

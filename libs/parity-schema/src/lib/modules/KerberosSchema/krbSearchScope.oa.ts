@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { integer } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa';
-import { integerMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerMatch.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { integer } from '@wildboar/x500/SelectedAttributeTypes';
+import { integerMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_at } from '../KerberosSchema/id-at.va';
 import {
     SearchScope,
@@ -48,7 +48,7 @@ export const krbSearchScope: ATTRIBUTE<SearchScope> = {
     '&ldapName': ['krbSearchScope'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'This attribute holds the scope for searching the principals' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [25, 1],
         id_at
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

@@ -5,47 +5,47 @@ import {
     getUIIFormDecoder,
     epcForm,
 } from "./syntaxDecoders";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     ObjectClassDescription,
     _decode_ObjectClassDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     ObjectClassInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassInformation.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     ObjectClassKind_abstract,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     _decode_UtmCoordinates,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UtmCoordinates.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_EpcFormat,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/EpcFormat.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_UiiFormat,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UiiFormat.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import { strict as assert } from "node:assert";
 
 const ctx: Context = {
     objectClasses: {
         get: (key: string) => {
             return {
-                id: new ObjectIdentifier([ 2, 3, 4, 5 ]),
+                id: ObjectIdentifier.fromParts([ 2, 3, 4, 5 ]),
             };
         },
     },
     attributeTypes: {
         get: (key: string) => {
             return {
-                id: new ObjectIdentifier([ 2, 4, 3, 10 ]),
+                id: ObjectIdentifier.fromParts([ 2, 4, 3, 10 ]),
             };
         },
     },
     nameToObjectIdentifier: {
         get: (key: string) => {
             if (key === "commonname") {
-                return new ObjectIdentifier([ 2, 5, 4, 3 ]);
+                return ObjectIdentifier.fromParts([ 2, 5, 4, 3 ]);
             }
         },
     }
@@ -53,7 +53,7 @@ const ctx: Context = {
 
 const oc1 = "( 2.5.4.3 NAME 'person' DESC 'just a big boi' OBSOLETE SUP ( 1.2.3.4 $ top ) ABSTRACT )";
 const oc1desc = new ObjectClassDescription(
-    new ObjectIdentifier([ 2, 5, 4, 3 ]),
+    ObjectIdentifier.fromParts([ 2, 5, 4, 3 ]),
     [
         {
             uTF8String: "person",
@@ -65,8 +65,8 @@ const oc1desc = new ObjectClassDescription(
     true,
     new ObjectClassInformation(
         [
-            new ObjectIdentifier([ 1, 2, 3, 4 ]),
-            new ObjectIdentifier([ 2, 3, 4, 5 ]),
+            ObjectIdentifier.fromParts([ 1, 2, 3, 4 ]),
+            ObjectIdentifier.fromParts([ 2, 3, 4, 5 ]),
         ],
         ObjectClassKind_abstract,
         undefined,

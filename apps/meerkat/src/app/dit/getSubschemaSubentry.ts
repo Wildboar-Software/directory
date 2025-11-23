@@ -1,13 +1,13 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_subschemaAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_soc_subschema,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/id-soc-subschema.va";
+} from "@wildboar/x500/SchemaAdministration";
 import readSubordinates from "./readSubordinates";
 import { MAX_TRAVERSAL } from "../constants";
 

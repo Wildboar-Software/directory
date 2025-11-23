@@ -1,36 +1,36 @@
 import { ServiceError, ClientAssociation } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import type { MeerkatContext } from "../ctx.js";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     OperationalBindingID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import { bindForOBM } from "../net/bindToOtherDSA";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_unavailable,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { OperationOutcome } from "@wildboar/rose-transport";
 import {
     TerminateOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResult.ta";
-import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dSAProblem.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
+import { dSAProblem } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_targetDsaUnavailable,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
-import { DER } from "asn1-ts/dist/node/functional";
-import { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { DER } from "@wildboar/asn1/functional";
+import { Attribute } from "@wildboar/x500/InformationFramework";
 import {
     id_op_terminateOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-terminateOperationalBinding.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 
 /**
  * @summary Notifies another DSA about a termination of an operational binding.

@@ -1,4 +1,4 @@
-import { BIT_STRING, TRUE_BIT } from "asn1-ts";
+import { BIT_STRING, TRUE_BIT } from "@wildboar/asn1";
 
 /**
  * @summary Convert an ASN.1 BIT STRING into a signed 32-bit integer

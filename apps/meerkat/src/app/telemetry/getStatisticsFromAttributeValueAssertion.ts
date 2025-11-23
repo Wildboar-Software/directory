@@ -1,6 +1,6 @@
 import type {
     AttributeValueAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     AttributeValueAssertionStatistics,
     ContextStatistics,

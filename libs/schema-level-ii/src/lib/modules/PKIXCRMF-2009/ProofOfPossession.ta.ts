@@ -3,8 +3,8 @@ import {
     NULL,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { POPOPrivKey, _decode_POPOPrivKey, _encode_POPOPrivKey } from "../PKIXCRMF-2009/POPOPrivKey.ta";
 import { POPOSigningKey, _decode_POPOSigningKey, _encode_POPOSigningKey } from "../PKIXCRMF-2009/POPOSigningKey.ta";
 

@@ -4,9 +4,9 @@ import type {
     Value,
     PendingUpdates,
 } from "@wildboar/meerkat-types";
-import { ASN1Construction } from "asn1-ts";
+import { ASN1Construction } from "@wildboar/asn1";
 import type { Prisma } from "@prisma/client";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson";
 
 /**

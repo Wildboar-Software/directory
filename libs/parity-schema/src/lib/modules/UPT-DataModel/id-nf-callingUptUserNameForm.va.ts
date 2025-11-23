@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_nf } from '../UPT-DataModel/id-nf.va';
 export { id_nf } from '../UPT-DataModel/id-nf.va';
 
@@ -16,7 +16,7 @@ export { id_nf } from '../UPT-DataModel/id-nf.va';
  *
  * @constant
  */
-export const id_nf_callingUptUserNameForm: OBJECT_IDENTIFIER = new _OID(
+export const id_nf_callingUptUserNameForm: OBJECT_IDENTIFIER = _OID.fromParts(
     [8],
     id_nf
 );

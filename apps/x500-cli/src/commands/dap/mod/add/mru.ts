@@ -1,24 +1,24 @@
 import type { Connection, Context } from "../../../../types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     modifyEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgument,
     _encode_ModifyEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     EntryModification,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
 import type {
@@ -26,11 +26,11 @@ import type {
 } from "../../../../yargs/dap_mod_add_mru";
 import {
     matchingRuleUse,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     MatchingRuleUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
-import { ObjectIdentifier } from "asn1-ts";
+} from "@wildboar/x500/SchemaAdministration";
+import { ObjectIdentifier } from "@wildboar/asn1";
 
 export
 async function do_modify_add_mru (

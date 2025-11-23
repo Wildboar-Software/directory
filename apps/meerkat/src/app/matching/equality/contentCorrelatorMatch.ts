@@ -1,8 +1,8 @@
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_ContentCorrelator,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/ContentCorrelator.ta";
+} from "@wildboar/x400/MTSAbstractService";
 
 // ContentCorrelator ::= CHOICE {ia5text  IA5String,
 //     octets   OCTET STRING

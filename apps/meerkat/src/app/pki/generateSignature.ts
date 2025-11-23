@@ -1,21 +1,21 @@
 import { KeyObject, createSign, sign } from "crypto";
 import {
     AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
-import { sa_Ed25519 } from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/sa-Ed25519.oa";
-import { ASN1Element } from "asn1-ts";
+} from "@wildboar/x500/AuthenticationFramework";
+import { sa_Ed25519 } from "@wildboar/safecurves-pkix-18";
+import { ASN1Element } from "@wildboar/asn1";
 import {
     DER,
     _encodeNull,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     rSASSA_PSS,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/rSASSA-PSS.oa";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     rSASSA_PSS_Type,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/rSASSA-PSS-Type.ta";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import { nodeHashAlgStringToOID } from "./nodeHashAlgStringToOID";
-import { id_sha1 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
+import { id_sha1 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import { keyTypeToAlgOID } from "./keyTypeToAlgOID";
 
 /**

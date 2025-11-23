@@ -1,21 +1,21 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { businessCategory } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/businessCategory.oa';
-import { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-import { organizationalUnitName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa';
-import { organizationName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa';
-import { owner } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/owner.oa';
-import { seeAlso } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/seeAlso.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { businessCategory } from '@wildboar/x500/SelectedAttributeTypes';
+import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationalUnitName } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
+import { owner } from '@wildboar/x500/SelectedAttributeTypes';
+import { seeAlso } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_nsdsoc } from '../DynGroup/id-nsdsoc.va';
 import { memberURL } from '../DynGroup/memberURL.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -27,15 +27,15 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-export { businessCategory } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/businessCategory.oa';
-export { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-export { organizationalUnitName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa';
-export { organizationName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa';
-export { owner } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/owner.oa';
-export { seeAlso } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/seeAlso.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
+export { businessCategory } from '@wildboar/x500/SelectedAttributeTypes';
+export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
+export { organizationalUnitName } from '@wildboar/x500/SelectedAttributeTypes';
+export { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
+export { owner } from '@wildboar/x500/SelectedAttributeTypes';
+export { seeAlso } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_nsdsoc } from '../DynGroup/id-nsdsoc.va';
 export { memberURL } from '../DynGroup/memberURL.oa';
 
@@ -86,7 +86,7 @@ export const groupOfURLs: OBJECT_CLASS = {
         seeAlso,
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['groupOfURLs'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [33],
         id_nsdsoc
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

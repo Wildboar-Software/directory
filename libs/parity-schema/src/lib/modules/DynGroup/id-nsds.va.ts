@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_netscapeRoot } from './id-netscapeRoot.va';
 
 /* START_OF_SYMBOL_DEFINITION id_nsds */
@@ -15,7 +15,7 @@ import { id_netscapeRoot } from './id-netscapeRoot.va';
  *
  * @constant
  */
-export const id_nsds: OBJECT_IDENTIFIER = new _OID([3], id_netscapeRoot);
+export const id_nsds: OBJECT_IDENTIFIER = _OID.fromParts([3], id_netscapeRoot);
 /* END_OF_SYMBOL_DEFINITION id_nsds */
 
 /* eslint-enable */

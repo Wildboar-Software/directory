@@ -1,124 +1,124 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { ObjectIdentifier } from "asn1-ts";
-import * as x500nf from "@wildboar/x500/src/lib/collections/nameForms";
+import { ObjectIdentifier } from "@wildboar/asn1";
+import { nameForms as x500nf } from "@wildboar/x500";
 import nameFormFromInformationObject from "./nameFormFromInformationObject";
 
 // X.400 Name Forms
 import {
     routingCollectiveNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/routingCollectiveNameForm.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     connectionGroupNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/connectionGroupNameForm.oa";
+} from "@wildboar/x400/MHSRoutingDirectoryObjects";
 import {
     mHSCountryNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSCountryNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSADMDNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSADMDNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSPRMDNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPRMDNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSOrganizationNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSOrganizationNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSOrganizationalUnitNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSOrganizationalUnitNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSCommonNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSCommonNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSSurnameNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSSurnameNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSGivenNameNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSGivenNameNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSInitialsNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSInitialsNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSGenerationQualifierNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSGenerationQualifierNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSNetworkAddressNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSNetworkAddressNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSExtendedNetworkAddressNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSExtendedNetworkAddressNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSTerminalIdentifierNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSTerminalIdentifierNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSTerminalTypeNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSTerminalTypeNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSNumericUserIdentifierNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSNumericUserIdentifierNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSPDSNameNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPDSNameNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSPhysicalDeliveryCountryNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPhysicalDeliveryCountryNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 import {
     mHSPostalCodeNameForm,
-} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPostalCodeNameForm.oa";
+} from "@wildboar/x400/MHSRoutingORAddressSubtree";
 
 // X.700 Name Froms
 import {
     registeredInformationNameForm,
-} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/registeredInformationNameForm.oa";
+} from "@wildboar/x700/DefinitionDirectoryASN1Module";
 
 // IANA LDAP Parity Name Forms
 import {
     accountNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/accountNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/accountNameForm.oa.js";
 import {
     documentNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentNameForm.oa.js";
 import {
     documentSeriesNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentSeriesNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentSeriesNameForm.oa.js";
 import {
     domainNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/domainNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/domainNameForm.oa.js";
 import {
     friendlyCountryNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/friendlyCountryNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/friendlyCountryNameForm.oa.js";
 import {
     pilotPersonNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/pilotPersonNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/pilotPersonNameForm.oa.js";
 import {
     roomNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/Cosine/roomNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/roomNameForm.oa.js";
 import {
     duaConfigProfileNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/DUAConf/duaConfigProfileNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/duaConfigProfileNameForm.oa.js";
 import {
     fedfsFsnNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsFsnNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsFsnNameForm.oa.js";
 import {
     fedfsNfsFslNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsFslNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsFslNameForm.oa.js";
 import {
     inetOrgPersonNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa.js";
 import {
     groupOfEntriesNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/groupOfEntriesNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/groupOfEntriesNameForm.oa.js";
 import {
     providerNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerNameForm.oa.js";
 import {
     printerServiceNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/RFC7612Printer/printerServiceNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC7612Printer/printerServiceNameForm.oa.js";
 import {
     tableNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/TableFramework/tableNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TableFramework/tableNameForm.oa.js";
 import {
     textTableEntryNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/TableFramework/textTableEntryNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TableFramework/textTableEntryNameForm.oa.js";
 import {
     uddiAddressNameForm,
 } from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiAddressNameForm.oa";
@@ -152,16 +152,16 @@ import {
 
 import {
     traderPolicyEntryNF,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderPolicyEntryNF.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderPolicyEntryNF.oa.js";
 import {
     serviceOfferEntryNF,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceOfferEntryNF.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceOfferEntryNF.oa.js";
 import {
     traderLinkEntryNF,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderLinkEntryNF.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderLinkEntryNF.oa.js";
 import {
     proxyOfferEntryNF,
-} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyOfferEntryNF.oa";
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyOfferEntryNF.oa.js";
 import {
     uptProviderNameForm,
 } from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/uptProviderNameForm.oa";

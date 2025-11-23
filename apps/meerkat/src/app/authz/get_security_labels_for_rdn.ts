@@ -1,16 +1,16 @@
 import { Context, MistypedArgumentError, Value } from "@wildboar/meerkat-types";
-import { attributeValueSecurityLabelContext } from "@wildboar/x500/src/lib/collections/contexts";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
+import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
 import {
     SignedSecurityLabel, _decode_SignedSecurityLabel,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
+} from "@wildboar/x500/EnhancedSecurity";
 import {
     Context as X500Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+} from "@wildboar/x500/InformationFramework";
 import { groupByOID } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { BERElement, ObjectIdentifier } from "asn1-ts";
+import { BERElement, ObjectIdentifier } from "@wildboar/asn1";
 
 const AVSLC: string = attributeValueSecurityLabelContext["&id"].toString();
 

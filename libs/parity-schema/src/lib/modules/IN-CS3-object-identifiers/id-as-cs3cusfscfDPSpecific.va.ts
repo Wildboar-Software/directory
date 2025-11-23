@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_as } from '../IN-CS3-object-identifiers/id-as.va';
 export { id_as } from '../IN-CS3-object-identifiers/id-as.va';
 
@@ -16,7 +16,7 @@ export { id_as } from '../IN-CS3-object-identifiers/id-as.va';
  *
  * @constant
  */
-export const id_as_cs3cusfscfDPSpecific: OBJECT_IDENTIFIER = new _OID(
+export const id_as_cs3cusfscfDPSpecific: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* cusf-scf-DPSpecific */ 24],
     id_as
 );

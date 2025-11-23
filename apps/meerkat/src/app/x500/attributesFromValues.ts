@@ -1,13 +1,13 @@
 import type { IndexableOID, Value } from "@wildboar/meerkat-types";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Attribute_valuesWithContext_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+} from "@wildboar/x500/InformationFramework";
 import groupByOID from "../utils/groupByOID";
 
 /**

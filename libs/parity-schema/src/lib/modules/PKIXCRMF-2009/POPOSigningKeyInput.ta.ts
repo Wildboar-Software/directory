@@ -3,13 +3,13 @@ import {
     SubjectPublicKeyInfo,
     _decode_SubjectPublicKeyInfo,
     _encode_SubjectPublicKeyInfo,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 import {
     ASN1ConstructionError as _ConstructionError,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     POPOSigningKeyInput_authInfo,
     _decode_POPOSigningKeyInput_authInfo,
@@ -19,7 +19,7 @@ export {
     SubjectPublicKeyInfo,
     _decode_SubjectPublicKeyInfo,
     _encode_SubjectPublicKeyInfo,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 export {
     POPOSigningKeyInput_authInfo,
     _decode_POPOSigningKeyInput_authInfo,

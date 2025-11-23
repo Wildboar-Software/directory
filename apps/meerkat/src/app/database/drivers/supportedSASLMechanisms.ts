@@ -11,10 +11,10 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER, _encodeUTF8String } from "asn1-ts/dist/node/functional";
+import { DER, _encodeUTF8String } from "@wildboar/asn1/functional";
 import {
     supportedSASLMechanisms,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedSASLMechanisms.oa";
+} from "@wildboar/x500/LdapSystemSchema";
 
 const mechanisms: string[] = [];
 

@@ -1,9 +1,9 @@
 import type { Context, Value } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, BERElement } from "asn1-ts";
+import { ObjectIdentifier, BERElement } from "@wildboar/asn1";
 import groupByOID from "../utils/groupByOID";
 import {
     Context as X500Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+} from "@wildboar/x500/InformationFramework";
 import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
 
 // TODO: Use the Node-API to speed up this function a lot.

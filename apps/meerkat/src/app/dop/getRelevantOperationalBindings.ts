@@ -1,9 +1,9 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
     id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { OperationalBindingInitiator } from "@prisma/client";
-import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 
 /**
  * @summary Get active hierarchical operational bindings

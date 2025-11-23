@@ -1,21 +1,21 @@
 import type { ClientAssociation, Vertex } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
-import { BOOLEAN } from "asn1-ts";
-import { AccessPointInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPointInformation.ta";
-import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
+import type { MeerkatContext } from "../ctx.js";
+import { BOOLEAN } from "@wildboar/asn1";
+import { AccessPointInformation } from "@wildboar/x500/DistributedOperations";
+import { ChainingArguments } from "@wildboar/x500/DistributedOperations";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     chainedAbandon,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAbandon.oa";
+} from "@wildboar/x500/DistributedOperations";
 import {
     referral,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/referral.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_busy,
     ServiceProblem_unavailable,
@@ -23,31 +23,31 @@ import {
     ServiceProblem_invalidReference,
     ServiceProblem_loopDetected,
     ServiceProblem_timeLimitExceeded,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
-import type { Chained } from "@wildboar/x500/src/lib/types/Chained";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { compareCode } from "@wildboar/x500";
+import type { ChainedRequest } from "@wildboar/x500";
+import type { Chained } from "@wildboar/x500";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
     ChainingResults,
     _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
-import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/DistributedOperations";
+import { chainedRead } from "@wildboar/x500/DistributedOperations";
+import { DER } from "@wildboar/asn1/functional";
 import {
     MasterOrShadowAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     MasterOrShadowAccessPoint_category_shadow,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
-import isModificationOperation from "@wildboar/x500/src/lib/utils/isModificationOperation";
+} from "@wildboar/x500/DistributedOperations";
+import { isModificationOperation } from "@wildboar/x500";
 import {
     OperationProgress_nameResolutionPhase_proceeding as proceeding,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ReferenceType_cross,
     ReferenceType_immediateSuperior,
@@ -55,23 +55,23 @@ import {
     ReferenceType_subordinate,
     ReferenceType_superior,
     ReferenceType_nonSpecificSubordinate as nssr,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
+} from "@wildboar/x500/DistributedOperations";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
 import {
     TraceItem,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
-import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { loopDetected } from "@wildboar/x500";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     AbandonedData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { printInvokeId } from "../utils/printInvokeId";
 import { signChainedArgument } from "../pki/signChainedArgument";
 import { strict as assert } from "assert";
@@ -80,14 +80,14 @@ import stringifyDN from "../x500/stringifyDN";
 import { bindForChaining } from "../net/bindToOtherDSA";
 import { OperationOutcome } from "@wildboar/rose-transport";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
-import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
+import { ContinuationReference } from "@wildboar/x500/DistributedOperations";
 import { addMilliseconds, differenceInMilliseconds, differenceInSeconds } from "date-fns";
 import { upsertCrossReferences } from "../dit/upsertCrossReferences";
 import { Promise as bPromise } from "bluebird";
 import isPrefix from "../x500/isPrefix";
 import { compareDistinguishedName, getDateFromTime } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { CrossReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/CrossReference.ta";
+import { CrossReference } from "@wildboar/x500/DistributedOperations";
 import { signChainedResult } from "../pki/signChainedResult";
 import deleteEntry from "../database/deleteEntry";
 import DAPAssociation from "../dap/DAPConnection";

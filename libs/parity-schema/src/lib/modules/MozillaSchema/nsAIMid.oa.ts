@@ -1,18 +1,18 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { telephoneNr } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNr.oa';
+} from '@wildboar/x500/InformationFramework';
+import { telephoneNr } from '@wildboar/x500/SelectedAttributeTypes';
 import {
     TelephoneNumber,
     _decode_TelephoneNumber,
     _encode_TelephoneNumber,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TelephoneNumber.ta';
-import { telephoneNumberMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumberMatch.oa';
-import { telephoneNumberSubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumberSubstringsMatch.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+} from '@wildboar/x500/SelectedAttributeTypes';
+import { telephoneNumberMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { telephoneNumberSubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -26,17 +26,17 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { telephoneNr } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNr.oa';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { telephoneNr } from '@wildboar/x500/SelectedAttributeTypes';
 export {
     TelephoneNumber,
     _decode_TelephoneNumber,
     _encode_TelephoneNumber,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TelephoneNumber.ta';
-export { telephoneNumberMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumberMatch.oa';
-export { telephoneNumberSubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumberSubstringsMatch.oa';
+} from '@wildboar/x500/SelectedAttributeTypes';
+export { telephoneNumberMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { telephoneNumberSubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
 
 /* START_OF_SYMBOL_DEFINITION nsAIMid */
 /**
@@ -78,7 +78,7 @@ export const nsAIMid: ATTRIBUTE<TelephoneNumber> = {
     '&ldapName': ['nsAIMid'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'AOL Instant Messenger (AIM) Identity' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 13769, 2, 1, 13,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
     '&Type': 0 as never /* OBJECT_FIELD_SETTING OBJECT_TYPE_FIELD_SETTING */,

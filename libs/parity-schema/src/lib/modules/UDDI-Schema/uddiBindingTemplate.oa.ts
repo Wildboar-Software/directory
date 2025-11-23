@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_uddi } from '../UDDI-Schema/id-uddi.va';
 import { uddiAccessPoint } from '../UDDI-Schema/uddiAccessPoint.oa';
 import { uddiBindingKey } from '../UDDI-Schema/uddiBindingKey.oa';
@@ -17,8 +17,8 @@ import { uddiv3DigitalSignature } from '../UDDI-Schema/uddiv3DigitalSignature.oa
 import { uddiv3EntityCreationTime } from '../UDDI-Schema/uddiv3EntityCreationTime.oa';
 import { uddiv3NodeId } from '../UDDI-Schema/uddiv3NodeId.oa';
 import { uddiv3ServiceKey } from '../UDDI-Schema/uddiv3ServiceKey.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -30,8 +30,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { id_uddi } from '../UDDI-Schema/id-uddi.va';
 export { uddiAccessPoint } from '../UDDI-Schema/uddiAccessPoint.oa';
 export { uddiBindingKey } from '../UDDI-Schema/uddiBindingKey.oa';
@@ -97,7 +97,7 @@ export const uddiBindingTemplate: OBJECT_CLASS = {
         uddiv3NodeId,
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['uddiBindingTemplate'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [6, 5],
         id_uddi
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

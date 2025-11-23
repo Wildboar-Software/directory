@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { ds } from '../Wildboar/ds.va';
 import { ID } from '../Wildboar/ID.ta';
 export { ds } from '../Wildboar/ds.va';
@@ -18,7 +18,7 @@ export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
  *
  * @constant
  */
-export const problem: ID = new _OID([34], ds);
+export const problem: ID = _OID.fromParts([34], ds);
 /* END_OF_SYMBOL_DEFINITION problem */
 
 /* eslint-enable */

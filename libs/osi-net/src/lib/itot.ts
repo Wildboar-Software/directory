@@ -89,51 +89,51 @@ import {
 import {
     CP_type,
     _decode_CP_type,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CP-type.ta';
+} from '@wildboar/copp';
 import {
     CPR_PPDU,
     CPR_PPDU_normal_mode_parameters,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPR-PPDU.ta';
+} from '@wildboar/copp';
 import {
     CPA_PPDU,
     _decode_CPA_PPDU,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPA-PPDU.ta';
+} from '@wildboar/copp';
 import {
     ARP_PPDU,
     ARU_PPDU,
     _decode_Abort_type,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Abort-type.ta';
+} from '@wildboar/copp';
 import {
     User_data,
     _decode_User_data,
     _encode_User_data,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/User-data.ta';
-import { Mode_selector_mode_value_normal_mode } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Mode-selector-mode-value.ta';
-import { CP_type_normal_mode_parameters } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CP-type-normal-mode-parameters.ta';
-import { PDV_list } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/PDV-list.ta';
-import { CPA_PPDU_normal_mode_parameters } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPA-PPDU-normal-mode-parameters.ta';
-import { Result_acceptance as ACSEResult_acceptance } from '@wildboar/acse/src/lib/modules/ACSE-1/Result.ta';
-import { BERElement, ObjectIdentifier, OPTIONAL, ASN1Element } from 'asn1-ts';
+} from '@wildboar/copp';
+import { Mode_selector_mode_value_normal_mode } from '@wildboar/copp';
+import { CP_type_normal_mode_parameters } from '@wildboar/copp';
+import { PDV_list } from '@wildboar/copp';
+import { CPA_PPDU_normal_mode_parameters } from '@wildboar/copp';
+import { Result_acceptance as ACSEResult_acceptance } from '@wildboar/acse';
+import { BERElement, ObjectIdentifier, OPTIONAL, ASN1Element } from '@wildboar/asn1';
 import { Socket } from 'node:net';
-import { BER } from 'asn1-ts/dist/node/functional';
-import { ARU_PPDU_normal_mode_parameters } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARU-PPDU-normal-mode-parameters.ta';
-import { _decode_AARQ_apdu } from '@wildboar/acse/src/lib/modules/ACSE-1/AARQ-apdu.ta';
-import { _decode_AARE_apdu } from '@wildboar/acse/src/lib/modules/ACSE-1/AARE-apdu.ta';
+import { BER } from '@wildboar/asn1/functional';
+import { ARU_PPDU_normal_mode_parameters } from '@wildboar/copp';
+import { _decode_AARQ_apdu } from '@wildboar/acse';
+import { _decode_AARE_apdu } from '@wildboar/acse';
 import {
     ABRT_apdu,
     _encode_ABRT_apdu,
     _decode_ABRT_apdu,
-} from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-apdu.ta';
-import { ABRT_source_acse_service_provider } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-source.ta';
-import { ABRT_diagnostic_protocol_error } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta';
-import { _decode_RLRQ_apdu } from '@wildboar/acse/src/lib/modules/ACSE-1/RLRQ-apdu.ta';
-import { _decode_RLRE_apdu } from '@wildboar/acse/src/lib/modules/ACSE-1/RLRE-apdu.ta';
-import { Context_list_Item } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Context-list-Item.ta';
-import { Presentation_context_identifier_list_Item } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Presentation-context-identifier-list-Item.ta';
+} from '@wildboar/acse';
+import { ABRT_source_acse_service_provider } from '@wildboar/acse';
+import { _enum_for_ABRT_diagnostic } from '@wildboar/acse';
+import { _decode_RLRQ_apdu } from '@wildboar/acse';
+import { _decode_RLRE_apdu } from '@wildboar/acse';
+import { Context_list_Item } from '@wildboar/copp';
+import { Presentation_context_identifier_list_Item } from '@wildboar/copp';
 import { randomBytes, randomInt } from 'node:crypto';
 
-const id_ber = new ObjectIdentifier([2, 1, 1]);
-const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
+const id_ber = ObjectIdentifier.fromParts([2, 1, 1]);
+const id_acse = ObjectIdentifier.fromParts([2, 2, 1, 0, 1]);
 
 export const TIMER_TIME_IN_MS: number = 3000;
 export const UUID_LENGTH_BYTES: number = 16;
@@ -217,7 +217,7 @@ function get_aru(c: PresentationConnection): ARU_PPDU {
                             single_ASN1_type: _encode_ABRT_apdu(
                                 new ABRT_apdu(
                                     ABRT_source_acse_service_provider,
-                                    ABRT_diagnostic_protocol_error,
+                                    _enum_for_ABRT_diagnostic.protocol_error,
                                     undefined,
                                     undefined,
                                     [],

@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { h323_id_oc } from '../H323-X500-Schema/h323-id-oc.va';
 import { h323IdentitydialedDigits } from '../H323-X500-Schema/h323IdentitydialedDigits.oa';
 import { h323Identityemail_ID } from '../H323-X500-Schema/h323Identityemail-ID.oa';
@@ -16,8 +16,8 @@ import { h323IdentitypartyNumber } from '../H323-X500-Schema/h323IdentitypartyNu
 import { h323IdentityServiceLevel } from '../H323-X500-Schema/h323IdentityServiceLevel.oa';
 import { h323IdentitytransportID } from '../H323-X500-Schema/h323IdentitytransportID.oa';
 import { h323IdentityURL_ID } from '../H323-X500-Schema/h323IdentityURL-ID.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -29,8 +29,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { h323_id_oc } from '../H323-X500-Schema/h323-id-oc.va';
 export { h323IdentitydialedDigits } from '../H323-X500-Schema/h323IdentitydialedDigits.oa';
 export { h323Identityemail_ID } from '../H323-X500-Schema/h323Identityemail-ID.oa';
@@ -83,7 +83,7 @@ export const h323Identity: OBJECT_CLASS = {
         h323IdentityEndpointType,
         h323IdentityServiceLevel,
     ] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [1],
         h323_id_oc
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

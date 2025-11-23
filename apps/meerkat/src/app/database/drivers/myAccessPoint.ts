@@ -11,13 +11,13 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     myAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/myAccessPoint.oa";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     _encode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

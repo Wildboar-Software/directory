@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_sf } from '../IN-CS3-object-identifiers/id-sf.va';
 export { id_sf } from '../IN-CS3-object-identifiers/id-sf.va';
 
@@ -16,7 +16,7 @@ export { id_sf } from '../IN-CS3-object-identifiers/id-sf.va';
  *
  * @constant
  */
-export const id_sf_pwd: OBJECT_IDENTIFIER = new _OID([/* pwd */ 1], id_sf);
+export const id_sf_pwd: OBJECT_IDENTIFIER = _OID.fromParts([/* pwd */ 1], id_sf);
 /* END_OF_SYMBOL_DEFINITION id_sf_pwd */
 
 /* eslint-enable */

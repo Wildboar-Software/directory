@@ -11,15 +11,15 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     entryDN,
-} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa.js";
 import { getDistinguishedName } from "../../x500/getDistinguishedName";
 import {
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import { compareDistinguishedName } from "@wildboar/x500";
 

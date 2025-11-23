@@ -1,24 +1,24 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
     StrongCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     TokenContent,
     _encode_TokenContent,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TokenContent.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     CertificatePair,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificatePair.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { keyTypeToAlgOID } from "../pki/keyTypeToAlgOID";
-import { DERElement, unpackBits } from "asn1-ts";
+import { DERElement, unpackBits } from "@wildboar/asn1";
 import { randomBytes } from "crypto";
 import { generateSIGNED } from "../pki/generateSIGNED";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { addSeconds } from "date-fns";
 
 /**

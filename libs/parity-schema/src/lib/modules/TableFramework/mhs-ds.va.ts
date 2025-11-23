@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION mhs_ds */
 /**
@@ -15,7 +15,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const mhs_ds: OBJECT_IDENTIFIER = new _OID([
+export const mhs_ds: OBJECT_IDENTIFIER = _OID.fromParts([
     /* iso */ 1, /* org */ 3, /* dod */ 6, /* internet */ 1, /* private */ 4,
     /* enterprises */ 1, /* isode-consortium */ 453, /* mhs-ds */ 7,
 ]);

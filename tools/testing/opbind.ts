@@ -1,82 +1,82 @@
 import {
     AccessPoint, PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     EstablishOperationalBindingArgument,
     _encode_EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     EstablishOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     OperationalBindingID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     SuperiorToSubordinate,
     _encode_SuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     HierarchicalAgreement,
     _encode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import * as crypto from "crypto";
-import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     Request,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     DSABindArgument,
     _encode_DSABindArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     accessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     basicAccessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/basicAccessControlScheme.va";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     countryName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     SubentryInfo,
     Vertex,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import * as net from "net";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 const { IDMConnection } = require("../../dist/libs/idm/src/index");
-import { DER } from "asn1-ts/dist/node/functional";
-import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import { DER } from "@wildboar/asn1/functional";
+import { objectClass } from "@wildboar/x500/InformationFramework";
 import {
     applicationProcess,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 
 const US = new AttributeTypeAndValue(
     countryName["&id"],

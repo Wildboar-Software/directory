@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-import { ia5String } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ia5String.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { ia5String } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ia5String.oa';
+import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import { ia5String } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { ia5String } from '@wildboar/x500/SelectedAttributeTypes';
 
 /* START_OF_SYMBOL_DEFINITION caseExactIA5SubstringsMatch */
 /**
@@ -37,7 +37,7 @@ export const caseExactIA5SubstringsMatch: MATCHING_RULE = {
     '&AssertionType': 0 as never,
     '&ldapSyntax': ia5String['&id'],
     '&ldapName': ['caseExactIA5SubstringsMatch'],
-    '&id': new _OID([1, 3, 6, 1, 4, 1, 4203, 1, 2, 1]),
+    '&id': _OID.fromParts([1, 3, 6, 1, 4, 1, 4203, 1, 2, 1]),
 };
 /* END_OF_SYMBOL_DEFINITION caseExactIA5SubstringsMatch */
 

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_mt } from '../IN-CS3-object-identifiers/id-mt.va';
 export { id_mt } from '../IN-CS3-object-identifiers/id-mt.va';
 
@@ -16,7 +16,7 @@ export { id_mt } from '../IN-CS3-object-identifiers/id-mt.va';
  *
  * @constant
  */
-export const id_mt_verifyCredentials: OBJECT_IDENTIFIER = new _OID(
+export const id_mt_verifyCredentials: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* verifyCredentials */ 1],
     id_mt
 );

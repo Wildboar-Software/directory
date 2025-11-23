@@ -1,7 +1,7 @@
 import type { SecurityParametersStatistics } from "@wildboar/meerkat-types";
 import type {
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 export
 function getStatisticsFromSecurityParameters (sc: SecurityParameters): SecurityParametersStatistics {

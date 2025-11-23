@@ -1,11 +1,11 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     DITContextUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContextUseInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
+} from "@wildboar/x500/SchemaAdministration";
 
 /**
  * @summary Load an entry's DITContextUseDescriptions from the database

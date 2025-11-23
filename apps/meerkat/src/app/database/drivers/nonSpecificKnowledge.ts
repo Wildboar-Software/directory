@@ -13,13 +13,13 @@ import type {
 } from "@wildboar/meerkat-types";
 import {
     nonSpecificKnowledge,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/nonSpecificKnowledge.oa";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
+import { DER } from "@wildboar/asn1/functional";
 import { Prisma, Knowledge } from "@prisma/client";
 import { randomInt } from "crypto";
 import rdnToJson from "../../x500/rdnToJson";
 import rdnFromJson from "../../x500/rdnFromJson";
-import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
+import { compareRDNSequence } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import saveAccessPoint from "../saveAccessPoint";
 

@@ -1,14 +1,14 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { organization } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/organization.oa';
-import { organizationalUnit } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalUnit.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { organization } from '@wildboar/x500/SelectedObjectClasses';
+import { organizationalUnit } from '@wildboar/x500/SelectedObjectClasses';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { buildingName } from '../Cosine/buildingName.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -20,9 +20,9 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { organization } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/organization.oa';
-export { organizationalUnit } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalUnit.oa';
+} from '@wildboar/x500/InformationFramework';
+export { organization } from '@wildboar/x500/SelectedObjectClasses';
+export { organizationalUnit } from '@wildboar/x500/SelectedObjectClasses';
 export { buildingName } from '../Cosine/buildingName.oa';
 
 /* START_OF_SYMBOL_DEFINITION pilotOrganization */
@@ -57,7 +57,7 @@ export const pilotOrganization: OBJECT_CLASS = {
     '&kind': structural /* OBJECT_FIELD_SETTING */,
     '&OptionalAttributes': [buildingName] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['pilotOrganization'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         0, 9, 2342, 19200300, 100, 4, 20,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

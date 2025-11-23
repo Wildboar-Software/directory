@@ -1,5 +1,5 @@
 import type { AttributeValue } from "@prisma/client";
-import { BERElement, ASN1Construction } from "asn1-ts";
+import { BERElement, ASN1Construction } from "@wildboar/asn1";
 
 export
 interface DBAttributeValue {

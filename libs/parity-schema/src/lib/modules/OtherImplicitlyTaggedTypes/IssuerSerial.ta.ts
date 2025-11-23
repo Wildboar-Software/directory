@@ -3,28 +3,28 @@ import {
     CertificateSerialNumber,
     _decode_CertificateSerialNumber,
     _encode_CertificateSerialNumber,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateSerialNumber.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 import {
     GeneralNames,
     _decode_GeneralNames,
     _encode_GeneralNames,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralNames.ta';
+} from '@wildboar/x500/CertificateExtensions';
 import {
     ASN1ConstructionError as _ConstructionError,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 export {
     CertificateSerialNumber,
     _decode_CertificateSerialNumber,
     _encode_CertificateSerialNumber,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateSerialNumber.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 export {
     GeneralNames,
     _decode_GeneralNames,
     _encode_GeneralNames,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralNames.ta';
+} from '@wildboar/x500/CertificateExtensions';
 
 /* START_OF_SYMBOL_DEFINITION IssuerSerial */
 /**

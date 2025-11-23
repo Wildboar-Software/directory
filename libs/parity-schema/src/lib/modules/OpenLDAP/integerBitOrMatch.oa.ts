@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-import { integer } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { integer } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa';
+import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import { integer } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { integer } from '@wildboar/x500/SelectedAttributeTypes';
 
 /* START_OF_SYMBOL_DEFINITION integerBitOrMatch */
 /**
@@ -37,7 +37,7 @@ export const integerBitOrMatch: MATCHING_RULE = {
     '&AssertionType': 0 as never,
     '&ldapSyntax': integer['&id'],
     '&ldapName': ['integerBitOrMatch'],
-    '&id': new _OID([1, 2, 840, 113556, 1, 4, 804]),
+    '&id': _OID.fromParts([1, 2, 840, 113556, 1, 4, 804]),
 };
 /* END_OF_SYMBOL_DEFINITION integerBitOrMatch */
 

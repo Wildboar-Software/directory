@@ -1,18 +1,18 @@
 import type { Context } from "../types";
 import contextTypeFromInformationObject from "./contextTypeFromInformationObject";
-import * as x500c from "@wildboar/x500/src/lib/collections/contexts";
+import { contexts as x500c } from "@wildboar/x500";
 import type {
     CONTEXT,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/CONTEXT.oca";
+} from "@wildboar/x500/InformationFramework";
 import {
     dl_administrator_annotation,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-administrator-annotation.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     dl_nested_dl,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-nested-dl.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     dl_reset_originator,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-reset-originator.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 
 import {
     basicServiceContext,

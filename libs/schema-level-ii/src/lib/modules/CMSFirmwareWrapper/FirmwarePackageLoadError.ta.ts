@@ -5,8 +5,8 @@ import {
     OPTIONAL,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { CurrentFWConfig, _decode_CurrentFWConfig, _encode_CurrentFWConfig } from "../CMSFirmwareWrapper/CurrentFWConfig.ta";
 import { FWErrorVersion, _decode_FWErrorVersion, _encode_FWErrorVersion, v1 /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../CMSFirmwareWrapper/FWErrorVersion.ta";
 import { FirmwarePackageLoadErrorCode, _decode_FirmwarePackageLoadErrorCode, _encode_FirmwarePackageLoadErrorCode, _enum_for_FirmwarePackageLoadErrorCode } from "../CMSFirmwareWrapper/FirmwarePackageLoadErrorCode.ta";

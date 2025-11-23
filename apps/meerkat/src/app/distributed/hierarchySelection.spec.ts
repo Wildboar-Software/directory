@@ -1,14 +1,14 @@
 import { getNamesFromFamilyEntry, filterFamilyEntries } from "./hierarchySelection";
-import { FamilyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntry.ta";
-import { FamilyEntries } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntries.ta";
+import { FamilyEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { FamilyEntries } from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { commonName } from "@wildboar/x500/src/lib/collections/attributes";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import { organization } from "@wildboar/x500/src/lib/collections/objectClasses";
 import { getMockCtx } from "../testing.spec";
 import { IndexableDN } from "@wildboar/meerkat-types";

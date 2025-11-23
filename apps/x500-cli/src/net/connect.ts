@@ -2,71 +2,73 @@ import type { Context, Connection } from "../types";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     Request as IdmRequest,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     DSABindArgument,
     _encode_DSABindArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     Credentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Credentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import {
+    StrongCredentials,
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeCertificationPath,
-    StrongCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     CertificationData,
     SPKM_REQ,
-} from "@wildboar/x500/src/lib/modules/SpkmGssTokens/SPKM-REQ.ta";
+} from "@wildboar/x500/SpkmGssTokens";
 import {
     REQ_TOKEN, Req_contents, _encode_Req_contents,
-} from "@wildboar/x500/src/lib/modules/SpkmGssTokens/REQ-TOKEN.ta";
+} from "@wildboar/x500/SpkmGssTokens";
 import {
     Token,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     TokenContent,
     _encode_TokenContent,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TokenContent.ta";
-import type { Request } from "@wildboar/x500/src/lib/types/Request";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+} from "@wildboar/x500/DirectoryAbstractService";
+import type { Request } from "@wildboar/x500";
+import type { ResultOrError } from "@wildboar/x500";
 import * as net from "net";
 import * as tls from "tls";
-import { EventEmitter } from "stream";
+import { EventEmitter } from "node:events";
 import { IDMConnection } from "@wildboar/idm";
 import { URL } from "url";
 import * as crypto from "crypto";
 import destringifyDN from "../utils/destringifyDN";
 import generateSimpleCredsValidity from "../utils/generateSimpleCredsValidity";
-import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import { strict as assert } from "assert";
-import { DER } from "asn1-ts/dist/node/functional";
-import { OBJECT_IDENTIFIER, TRUE_BIT, unpackBits } from "asn1-ts";
+import { DER } from "@wildboar/asn1/functional";
+import { OBJECT_IDENTIFIER, TRUE_BIT, unpackBits } from "@wildboar/asn1";
 import {
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { KeyObject, sign, createSign } from "node:crypto";
 import { getAlgorithmInfoFromKey } from "../crypto/getAlgorithmInfoFromKey";
-import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import { addSeconds, addYears } from "date-fns";
-import { Name } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Name.ta";
-import { Context_Data } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/Context-Data.ta";
-import { Validity } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Validity.ta";
+import { Name } from "@wildboar/pki-stub";
+import { Context_Data } from "@wildboar/x500/SpkmGssTokens";
+import { Validity } from "@wildboar/pki-stub";
 import {
     CertificationPath as SpkmCertificationPath,
-} from "@wildboar/x500/src/lib/modules/SpkmGssTokens/CertificationPath.ta";
+} from "@wildboar/x500/SpkmGssTokens";
 import { ConfigDSA } from "@wildboar/x500-cli-config";
 import { readFile } from "node:fs/promises";
 
@@ -293,7 +295,7 @@ async function connect (
                     credentials,
                     // {
                     //     externalProcedure: new External(
-                    //         new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 56490, 401, 1 ]),
+                    //         ObjectIdentifier.fromParts([ 1, 3, 6, 1, 4, 1, 56490, 401, 1 ]),
                     //         undefined,
                     //         undefined,
                     //         _encodeNull(null, DER),

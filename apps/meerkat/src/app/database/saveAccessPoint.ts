@@ -2,27 +2,27 @@ import type { Context } from "@wildboar/meerkat-types";
 import {
     AccessPoint,
     _encode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     MasterOrShadowAccessPoint,
     _encode_MasterOrShadowAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     SupplierOrConsumer,
     _encode_SupplierOrConsumer,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierOrConsumer.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     SupplierInformation,
     _encode_SupplierInformation,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     SupplierAndConsumers,
     _encode_SupplierAndConsumers,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierAndConsumers.ta";
-import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
+import { naddrToURI } from "@wildboar/x500";
 import { Knowledge } from "@prisma/client";
 import rdnToJson from "../x500/rdnToJson";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import { URL } from "url";
 
 /**
@@ -104,10 +104,10 @@ async function saveAccessPoint (
         data: {
             knowledge_type,
             ae_title: ap.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
-            category: ("category" in ap)
+            category: ("category" in ap && typeof ap.category === "number")
                 ? ap.category
                 : undefined,
-            chainingRequired: ("chainingRequired" in ap)
+            chainingRequired: ("chainingRequired" in ap && typeof ap.chainingRequired === "boolean")
                 ? ap.chainingRequired
                 : undefined,
             supplier_is_master: ("supplier_is_master" in ap)

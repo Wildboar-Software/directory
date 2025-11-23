@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_tai_ce } from '../TAI/id-tai-ce.va';
 export { id_tai_ce } from '../TAI/id-tai-ce.va';
 
@@ -16,7 +16,7 @@ export { id_tai_ce } from '../TAI/id-tai-ce.va';
  *
  * @constant
  */
-export const id_tai_ce_bioCert: OBJECT_IDENTIFIER = new _OID([2], id_tai_ce);
+export const id_tai_ce_bioCert: OBJECT_IDENTIFIER = _OID.fromParts([2], id_tai_ce);
 /* END_OF_SYMBOL_DEFINITION id_tai_ce_bioCert */
 
 /* eslint-enable */

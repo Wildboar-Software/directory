@@ -11,10 +11,10 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER, _encodeGeneralizedTime, _decodeGeneralizedTime } from "asn1-ts/dist/node/functional";
+import { DER, _encodeGeneralizedTime, _decodeGeneralizedTime } from "@wildboar/asn1/functional";
 import {
     syncTimestamp,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { signcryption_mode } from '../OtherAttributes/signcryption-mode.va';
 export { signcryption_mode } from '../OtherAttributes/signcryption-mode.va';
 
@@ -16,7 +16,7 @@ export { signcryption_mode } from '../OtherAttributes/signcryption-mode.va';
  *
  * @constant
  */
-export const signcrypted_envelope: OBJECT_IDENTIFIER = new _OID(
+export const signcrypted_envelope: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* enveloped */ 4],
     signcryption_mode
 );

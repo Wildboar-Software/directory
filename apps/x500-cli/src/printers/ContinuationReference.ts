@@ -1,11 +1,11 @@
 import type {
     ContinuationReference, OperationProgress,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     OperationProgress_nameResolutionPhase_proceeding as proceeding,
     OperationProgress_nameResolutionPhase_notStarted as notStarted,
     OperationProgress_nameResolutionPhase_completed as completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import Context from "../types";
 import stringifyDN from "../utils/stringifyDN";
 import { EOL } from "node:os";
@@ -20,7 +20,7 @@ import {
     ReferenceType_immediateSuperior,
     ReferenceType_self,
     ReferenceType_ditBridge,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
+} from "@wildboar/x500/DistributedOperations";
 import { print as printAPI } from "./AccessPointInformation";
 
 function printOperationProgress (op: OperationProgress): string {

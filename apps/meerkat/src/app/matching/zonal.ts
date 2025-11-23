@@ -1,16 +1,16 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
-import { directoryStringToString } from "@wildboar/ldap/src/lib/syntaxEncoders";
+import { DER } from "@wildboar/asn1/functional";
+import { directoryStringToString } from "@wildboar/x500";
 import type {
     Filter,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FilterItem,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import {
     AttributeValueAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     countryCode3c,
     countryCode3n,
@@ -18,11 +18,11 @@ import {
     localityName,
     postalCode,
     stateOrProvinceName,
-} from "@wildboar/x500/src/lib/collections/attributes";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import {
     ZonalResult, ZonalResult_cannot_select_mapping,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ZonalResult.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 
 interface PostalZoneMatchProperties {
     c2c: string;

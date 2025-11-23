@@ -3,14 +3,14 @@ import {
     GeneralName,
     _decode_GeneralName,
     _encode_GeneralName,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta';
-import { ASN1Element as _Element, UTF8String } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/CertificateExtensions';
+import { ASN1Element as _Element, UTF8String } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 export {
     GeneralName,
     _decode_GeneralName,
     _encode_GeneralName,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta';
+} from '@wildboar/x500/CertificateExtensions';
 
 /* START_OF_SYMBOL_DEFINITION EncKeyWithID_identifier */
 /**

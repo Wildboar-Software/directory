@@ -1,37 +1,37 @@
-import type { MeerkatContext } from "../../ctx";
+import type { MeerkatContext } from "../../ctx.js";
 import * as errors from "@wildboar/meerkat-types";
 import { Vertex } from "@wildboar/meerkat-types";
 import DOPAssociation from "../DOPConnection";
-import { INTEGER, FALSE, unpackBits, ASN1TagClass, ASN1Construction, OBJECT_IDENTIFIER, TRUE } from "asn1-ts";
+import { INTEGER, FALSE, unpackBits, ASN1TagClass, ASN1Construction, OBJECT_IDENTIFIER, TRUE } from "@wildboar/asn1";
 import type {
     EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     AccessPoint,
     _decode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     EstablishOperationalBindingArgumentData, Validity,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import type {
     EstablishOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     EstablishOperationalBindingResultData,
     _encode_EstablishOperationalBindingResultData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResultData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     id_op_binding_non_specific_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     id_op_binding_shadow,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     OpBindingErrorParam,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     OpBindingErrorParam_problem_unsupportedBindingType,
     OpBindingErrorParam_problem_invalidAgreement,
@@ -42,127 +42,129 @@ import {
     OpBindingErrorParam_problem_parametersMissing,
     OpBindingErrorParam_problem_roleAssignment,
     OpBindingErrorParam_problem_invalidID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     SuperiorToSubordinate,
     _decode_SuperiorToSubordinate,
     _encode_SuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     SubordinateToSuperior,
     _decode_SubordinateToSuperior,
     _encode_SubordinateToSuperior,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     SubentryInfo,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubentryInfo.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     OperationalBindingID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
-import { ASN1Element, packBits } from "asn1-ts";
+} from "@wildboar/x500/OperationalBindingManagement";
+import { compareDistinguishedName } from "@wildboar/x500";
+import { ASN1Element, packBits } from "@wildboar/asn1";
 import becomeSubordinate from "../establish/becomeSubordinate";
 import { OperationalBindingInitiator, Knowledge } from "@prisma/client";
 import {
     _encode_CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import rdnToJson from "../../x500/rdnToJson";
-import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { DER, _encodeNull } from "asn1-ts/dist/node/functional";
+import { getDateFromTime } from "@wildboar/x500";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { DER, _encodeNull } from "@wildboar/asn1/functional";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     id_err_operationalBindingError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_op_establishOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-establishOperationalBinding.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import saveAccessPoint from "../../database/saveAccessPoint";
 import {
     _encode_AttributeCertificationPath as _encode_ACP,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     _encode_Token,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { getDateFromOBTime } from "../getDateFromOBTime";
 import { printInvokeId } from "../../utils/printInvokeId";
 import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry";
 import { randomInt, timingSafeEqual } from "crypto";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { generateSignature } from "../../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import {
     EstablishOperationalBindingArgumentData_initiator,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData-initiator.ta";
-// import { _decode_AgreementID } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AgreementID.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
+// import { _decode_AgreementID } from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     _decode_NonSpecificHierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 // import {
 //     _decode_ShadowingAgreementInfo,
-// } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+// } from "@wildboar/x500/DirectoryShadowAbstractService";
 import dnToVertex from "../../dit/dnToVertex";
 import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
 import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import rdnToID from "../../dit/rdnToID";
 import getVertexById from "../../database/getVertexById";
 import createEntry from "../../database/createEntry";
 import getAttributesFromSubentry from "../../dit/getAttributesFromSubentry";
 import { bindForOBM } from "../../net/bindToOtherDSA";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { becomeNonSpecificSubordinate } from "../establish/becomeNonSpecificSubordinate";
 import {
     _decode_NHOBSubordinateToSuperior,
     _encode_NHOBSubordinateToSuperior,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSubordinateToSuperior.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     _decode_NHOBSuperiorToSubordinate,
     _encode_NHOBSuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import becomeNonSpecificSuperior from "../establish/becomeNonSpecificSuperior";
 import becomeSuperior from "../establish/becomeSuperior";
 import { Prisma, ShadowedKnowledgeType } from "@prisma/client";
 import stringifyDN from "../../x500/stringifyDN";
-import type {
+import {
+    top,
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { person, top } from "@wildboar/x500/src/lib/collections/objectClasses";
+    SubtreeSpecification,
+} from "@wildboar/x500/InformationFramework";
+import { person } from "@wildboar/x500/SelectedObjectClasses";
 import terminateByTypeAndBindingID from "../terminateByTypeAndBindingID";
 import {
     ShadowingAgreementInfo,
     UnitOfReplication,
     _decode_ShadowingAgreementInfo,
     _encode_ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
 import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate";
-import { AttributeUsage_dSAOperation } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { AttributeUsage_dSAOperation } from "@wildboar/x500/InformationFramework";
 import { addYears, subSeconds } from "date-fns";
-import { ModificationParameter, _encode_ModificationParameter } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ModificationParameter.ta";
-import { AreaSpecification, SubtreeSpecification } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AreaSpecification.ta";
-import { id_op_modifyOperationalBinding } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-modifyOperationalBinding.va";
+import { ModificationParameter, _encode_ModificationParameter } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { AreaSpecification } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { id_op_modifyOperationalBinding } from "@wildboar/x500/CommonProtocolSpecification";
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
-import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SchedulingParameters.ta";
+import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { cacheNamingContexts } from "../../dit/cacheNamingContexts";
 
 // TODO: Use printCode()

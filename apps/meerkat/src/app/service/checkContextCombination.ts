@@ -1,6 +1,6 @@
 import { IndexableOID } from "@wildboar/meerkat-types";
-import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
-import { ContextCombination } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextCombination.ta";
+import { ContextAssertion } from "@wildboar/x500/InformationFramework";
+import { ContextCombination } from "@wildboar/x500/ServiceAdministration";
 
 /**
  * @summary Validate context combinations

@@ -1,7 +1,7 @@
-import type { EvaluateFilterSettings } from "@wildboar/x500/src/lib/utils/evaluateFilter";
-import ctx from "../ctx";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
-import type ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
+import type { EvaluateFilterSettings } from "@wildboar/x500";
+import ctx from "../ctx.js";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { type ContextMatcher } from "@wildboar/x500";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
 import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";

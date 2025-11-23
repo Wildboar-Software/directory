@@ -3,8 +3,8 @@ import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     BOOLEAN,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     EncryptedKey,
     _decode_EncryptedKey,

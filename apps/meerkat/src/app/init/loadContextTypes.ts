@@ -1,33 +1,25 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { BERElement, ObjectIdentifier } from "asn1-ts";
+import { BERElement, ObjectIdentifier } from "@wildboar/asn1";
 import contextTypeFromInformationObject from "./contextTypeFromInformationObject";
-import * as x500c from "@wildboar/x500/src/lib/collections/contexts";
+import { contexts as x500c } from "@wildboar/x500";
 import type {
     CONTEXT,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/CONTEXT.oca";
-import type ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
-import {
-    evaluateLanguageContext,
-} from "@wildboar/x500/src/lib/matching/context/languageContext";
-import {
-    evaluateLDAPAttributeOptionContext,
-} from "@wildboar/x500/src/lib/matching/context/ldapAttributeOptionContext";
-import {
-    evaluateLocaleContext,
-} from "@wildboar/x500/src/lib/matching/context/localeContext";
-import {
-    evaluateTemporalContext,
-} from "@wildboar/x500/src/lib/matching/context/temporalContext";
-import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
+} from "@wildboar/x500/InformationFramework";
+import { type ContextMatcher } from "@wildboar/x500";
+import { evaluateLanguageContext } from "@wildboar/x500/matching/context";
+import { evaluateLDAPAttributeOptionContext } from "@wildboar/x500/matching/context";
+import { evaluateLocaleContext } from "@wildboar/x500/matching/context";
+import { evaluateTemporalContext } from "@wildboar/x500/matching/context";
+import { compareElements } from "@wildboar/x500";
 import {
     dl_administrator_annotation,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-administrator-annotation.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     dl_nested_dl,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-nested-dl.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     dl_reset_originator,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-reset-originator.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import { evaluateDLAdministratorAnnotationContext } from "../matching/context/dl-administrator-annotation";
 
 import {
@@ -39,7 +31,6 @@ import {
 import {
     assignmentContext,
 } from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/assignmentContext.oa";
-
 import {
     basicServiceContext as basicServiceContextMatcher,
 } from "../matching/context/basicServiceContext";
@@ -49,10 +40,6 @@ import {
 import {
     getAssignmentContext as getAssignmentContextMatcher,
 } from "../matching/context/assignmentContext";
-
-// basicServiceContext
-// lineIdentityContext
-// assignmentContext
 
 const basicServiceContextSyntax = `BasicService ::= INTEGER {
     telephony(1), faxGroup2-3(2), faxGroup4(3), teletexBasicAndMixed(4),

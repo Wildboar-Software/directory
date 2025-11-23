@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { STRUCTURE_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/STRUCTURE-RULE.oca';
+import { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
 import { uddiv3SubscriptionNameForm } from '../UDDI-Schema/uddiv3SubscriptionNameForm.oa';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
 export {
     RuleIdentifier,
     _decode_RuleIdentifier,
     _encode_RuleIdentifier,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/RuleIdentifier.ta';
-export { STRUCTURE_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/STRUCTURE-RULE.oca';
+} from '@wildboar/x500/InformationFramework';
+export { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
 export { uddiv3SubscriptionNameForm } from '../UDDI-Schema/uddiv3SubscriptionNameForm.oa';
 
 /* START_OF_SYMBOL_DEFINITION uddiv3SubscriptionStructureRule */

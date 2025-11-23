@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_package } from '../IN-CS3-object-identifiers/id-package.va';
 export { id_package } from '../IN-CS3-object-identifiers/id-package.va';
 
@@ -16,7 +16,7 @@ export { id_package } from '../IN-CS3-object-identifiers/id-package.va';
  *
  * @constant
  */
-export const id_package_shadowConsumer: OBJECT_IDENTIFIER = new _OID(
+export const id_package_shadowConsumer: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* shadowConsumer */ 52],
     id_package
 );

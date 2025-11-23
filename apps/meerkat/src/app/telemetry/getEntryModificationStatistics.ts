@@ -1,6 +1,6 @@
 import type { EntryModificationStatistics, ContextStatistics } from "@wildboar/meerkat-types";
-import type { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
-import type { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import type { EntryModification } from "@wildboar/x500/DirectoryAbstractService";
+import type { Attribute } from "@wildboar/x500/InformationFramework";
 
 function fromAttribute (attr: Attribute): EntryModificationStatistics {
     return {

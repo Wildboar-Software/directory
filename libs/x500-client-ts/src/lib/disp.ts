@@ -9,42 +9,42 @@ import {
 } from "@wildboar/rose-transport";
 import {
     dSABind,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
+} from "@wildboar/x500/DistributedOperations";
 import {
     generateSIGNED,
     DirectoryVersioned,
     generateUnusedInvokeId,
     DirectoryOperationOptions,
-} from "./utils";
+} from "./utils.js";
 import {
     requestShadowUpdate,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/requestShadowUpdate.oa";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     updateShadow,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/updateShadow.oa";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     coordinateShadowUpdate,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/coordinateShadowUpdate.oa";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     RequestShadowUpdateArgumentData,
     _encode_RequestShadowUpdateArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/RequestShadowUpdateArgumentData.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     CoordinateShadowUpdateArgumentData,
     _encode_CoordinateShadowUpdateArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/CoordinateShadowUpdateArgumentData.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     UpdateShadowArgumentData,
     _encode_UpdateShadowArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateShadowArgumentData.ta";
-import { BER, DER } from "asn1-ts/dist/node/functional";
-import { TRUE_BIT } from "asn1-ts";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { BER, DER } from "@wildboar/asn1/functional";
+import { TRUE_BIT } from "@wildboar/asn1";
 import { strict as assert } from "node:assert";
 import { compareCode } from "@wildboar/x500";
 import {
     Versions_v1,
     Versions_v2,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 type BindArgument = typeof dSABind["&ArgumentType"];
 type BindResult = typeof dSABind["&ResultType"];

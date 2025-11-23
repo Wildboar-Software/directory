@@ -6,68 +6,68 @@ import {
     LDAPResult_resultCode_sizeLimitExceeded,
     LDAPResult_resultCode_timeLimitExceeded,
     LDAPResult_resultCode_unavailableCriticalExtension,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
+} from "@wildboar/ldap";
 import {
     LimitProblem,
     LimitProblem_administrativeLimitExceeded,
     LimitProblem_sizeLimitExceeded,
     LimitProblem_timeLimitExceeded,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import decodeLDAPDN from "../ldap/decodeLDAPDN";
 import type {
     AddEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     CompareResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     CompareResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResultData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListResultData_listInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListResultData_listInfo_subordinates_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ModifyDNResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ModifyEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     RemoveEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ReadResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResultData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchResultData_searchInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
-import type { SearchResultEntry } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
-import type { SearchResultDone } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultDone.ta";
-import type { SearchResultReference } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultReference.ta";
-import type { ModifyResponse } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyResponse.ta";
-import type { AddResponse } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AddResponse.ta";
-import type { DelResponse } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/DelResponse.ta";
-import type { ModifyDNResponse } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyDNResponse.ta";
-import type { CompareResponse } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/CompareResponse.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import type { SearchResultEntry } from "@wildboar/ldap";
+import type { SearchResultDone } from "@wildboar/ldap";
+import type { SearchResultReference } from "@wildboar/ldap";
+import type { ModifyResponse } from "@wildboar/ldap";
+import type { AddResponse } from "@wildboar/ldap";
+import type { DelResponse } from "@wildboar/ldap";
+import type { ModifyDNResponse } from "@wildboar/ldap";
+import type { CompareResponse } from "@wildboar/ldap";
 import ldapResultToDAPError from "./ldapResultToDAPError";
 import {
     PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getEntryInfoFromSearchResultEntry from "../ldap/getEntryInfoFromSearchResultEntry";
 import ldapReferenceToContinuationReference from "../ldap/ldapReferenceToContinuationReference";
-import getRDN from "@wildboar/x500/src/lib/utils/getRDN";
+import { getRDN } from "@wildboar/x500";
 
 function ldapResultCodeToLimitProblem (code: LDAPResult_resultCode): LimitProblem | undefined {
     return ({

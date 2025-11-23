@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
     PartialAttribute,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
+} from "@wildboar/ldap";
 import readAttributeTypes from "./readAttributeTypes";
 import readObjectClasses from "./readObjectClasses";
 

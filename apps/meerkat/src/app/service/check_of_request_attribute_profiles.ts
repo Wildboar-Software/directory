@@ -1,26 +1,26 @@
 import { Context, IndexableOID } from "@wildboar/meerkat-types";
 import {
     SearchRule
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
-import { SearchArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
-import { RequestAttribute } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
+} from "@wildboar/x500/ServiceAdministration";
+import { SearchArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { RequestAttribute } from "@wildboar/x500/ServiceAdministration";
 import { compareElements } from "@wildboar/x500";
 import {
     ASN1Element, ObjectIdentifier,
     OBJECT_IDENTIFIER
-} from "asn1-ts";
-import { id_pr_missingSearchContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-missingSearchContext.va";
-import { id_pr_searchContextViolation } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchContextViolation.va";
-import { id_pr_searchContextCombinationViolation } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchContextCombinationViolation.va";
-import { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import { ContextProfile } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextProfile.ta";
+} from "@wildboar/asn1";
+import { id_pr_missingSearchContext } from "@wildboar/x500/SelectedAttributeTypes";
+import { id_pr_searchContextViolation } from "@wildboar/x500/SelectedAttributeTypes";
+import { id_pr_searchContextCombinationViolation } from "@wildboar/x500/SelectedAttributeTypes";
+import { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import { ContextProfile } from "@wildboar/x500/ServiceAdministration";
 import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
 import { getRequiredContextsFromContextCombination } from "./getRequiredContextsFromContextCombination";
 import { checkContextCombination } from "./checkContextCombination";
-import type { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
-import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
-import { ContextCombination } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextCombination.ta";
-import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
+import { ContextAssertion } from "@wildboar/x500/InformationFramework";
+import { ContextCombination } from "@wildboar/x500/ServiceAdministration";
+import { AttributeType } from "@wildboar/x500/InformationFramework";
 
 /**
  * The return type of `check_of_request_attribute_profile_in_filter()`. The

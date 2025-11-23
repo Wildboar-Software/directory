@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_oc } from '../IN-CS3-object-identifiers/id-oc.va';
 export { id_oc } from '../IN-CS3-object-identifiers/id-oc.va';
 
@@ -16,7 +16,7 @@ export { id_oc } from '../IN-CS3-object-identifiers/id-oc.va';
  *
  * @constant
  */
-export const id_oc_securityUserInfo: OBJECT_IDENTIFIER = new _OID(
+export const id_oc_securityUserInfo: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* securityUserInfo */ 1],
     id_oc
 );

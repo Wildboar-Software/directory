@@ -193,16 +193,16 @@ Below is an example for implementing a custom attribute type:
 ```javascript
 import {
   AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { ObjectIdentifier, FALSE } from "asn1-ts";
-import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/InformationFramework";
+import { ObjectIdentifier, FALSE } from "@wildboar/asn1";
+import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 
 export async function init (ctx) {
   ctx.attributeTypes.set("2.5.4.3", {
-    id: new ObjectIdentifier([ 2, 5, 4, 3 ]),
+    id: ObjectIdentifier.fromParts([ 2, 5, 4, 3 ]),
     name: ["commonName"],
     description: "A general-purpose name",
-    equalityMatchingRule: new ObjectIdentifier([ 2, 5, 13, 2 ]),
+    equalityMatchingRule: ObjectIdentifier.fromParts([ 2, 5, 13, 2 ]),
     // orderingMatchingRule: new ObjectIdentifier(),
     // substringsMatchingRule: new ObjectIdentifier(),
     singleValued: FALSE, // FALSE === false. It's just an alias defined in the asn1-ts library.
@@ -210,7 +210,7 @@ export async function init (ctx) {
     dummy: FALSE, // FALSE === false. It's just an alias defined in the asn1-ts library.
     noUserModification: FALSE, // FALSE === false. It's just an alias defined in the asn1-ts library.
     usage: AttributeUsage_userApplications,
-    ldapSyntax: new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 15 ]), // Directory string syntax.
+    ldapSyntax: ObjectIdentifier.fromParts([ 1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 15 ]), // Directory string syntax.
     ldapNames: ["cn", "commonName"],
     ldapDescription: "A general purpose name.",
     compatibleMatchingRules: new Set(),
@@ -291,15 +291,15 @@ Below is an example for implementing a custom context type:
 import {
   ObjectIdentifier,
   FALSE,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
   DER,
   _encodePrintableString,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 
 export async function init (ctx) {
   ctx.contextTypes.set("2.5.31.0", {
-    id: new ObjectIdentifier([ 2, 5, 31, 0 ]),
+    id: ObjectIdentifier.fromParts([ 2, 5, 31, 0 ]),
     name: ["languageContext"],
     description: "ISO 639-2 language code",
     obsolete: FALSE, // FALSE === false. It's just an alias defined in the asn1-ts library.
@@ -330,11 +330,11 @@ Below is an example for implementing a custom ldap syntax:
 import {
   ObjectIdentifier,
   FALSE,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
   DER,
   _encodePrintableString,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 
 // countryString SYNTAX-NAME ::= {
 //   LDAP-DESC         "Country String"
@@ -343,7 +343,7 @@ import {
 
 export async function init (ctx) {
   ctx.ldapSyntaxes.set("1.3.6.1.4.1.1466.115.121.1.11", {
-    id: new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 11 ]),
+    id: ObjectIdentifier.fromParts([ 1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 11 ]),
     description: "Country String",
     decoder: (bytes) => {
       const str = Buffer.from(bytes).toString("utf-8");
@@ -391,7 +391,7 @@ Below is an example for implementing a custom matching rule:
 import {
   ObjectIdentifier,
   FALSE,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 
 // caseExactMatch MATCHING-RULE ::= {
 //   SYNTAX       UnboundedDirectoryString
@@ -401,12 +401,12 @@ import {
 
 export async function init (ctx) {
   ctx.equalityMatchingRules.set("2.5.13.5", {
-    id: new ObjectIdentifier([ 2, 5, 13, 5 ]),
+    id: ObjectIdentifier.fromParts([ 2, 5, 13, 5 ]),
     name: ["caseExactMatch"],
     description: "Matches two strings case-sensitively.",
     obsolete: FALSE,
     syntax: "UnboundedDirectoryString",
-    ldapAssertionSyntax: new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 15 ]), // Directory string syntax.
+    ldapAssertionSyntax: ObjectIdentifier.fromParts([ 1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 15 ]), // Directory string syntax.
     matcher: (assertion, value) => { // EqualityMatcher
       return (assertion.utf8String === value.utf8String);
     },

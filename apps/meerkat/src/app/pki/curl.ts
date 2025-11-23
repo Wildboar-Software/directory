@@ -1,5 +1,5 @@
-import { BERElement, ASN1TruncationError } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import { BERElement, ASN1TruncationError } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import { URL } from "url";
 import * as http from "http";
 import * as https from "https";
@@ -8,30 +8,32 @@ import { randomInt, randomUUID } from "crypto";
 import { connect, TlsOptions } from "tls";
 import {
     LDAPMessage, _decode_LDAPMessage, _encode_LDAPMessage,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
+} from "@wildboar/ldap";
 import {
     BindRequest,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindRequest.ta";
+} from "@wildboar/ldap";
 import {
     SearchRequest,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest.ta";
+} from "@wildboar/ldap";
 import {
     SearchRequest_scope_baseObject,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
+} from "@wildboar/ldap";
 import {
     SearchRequest_derefAliases_derefFindingBaseObj,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-derefAliases.ta";
+} from "@wildboar/ldap";
 import type {
     SearchResultEntry,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
+} from "@wildboar/ldap";
 import {
-    success,
-} from "@wildboar/ldap/src/lib/resultCodes";
+    resultCodes,
+} from "@wildboar/ldap";
 import * as ftp from "basic-ftp";
 import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
 import * as http2 from "node:http2";
+
+const { success } = resultCodes;
 
 // Yes, I realize I could have done this with .reduce(), but for loops are more performant.
 function getReceivedDataSize (chunks: Buffer[]) {

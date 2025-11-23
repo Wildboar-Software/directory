@@ -1,10 +1,10 @@
-import type { ASN1Element } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import type { ASN1Element } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_IPMIdentifier,
-} from "@wildboar/x400/src/lib/modules/IPMSInformationObjects/IPMIdentifier.ta";
-import { _encode_ORName } from "@wildboar/x400/src/lib/modules/MTSAbstractService/ORName.ta";
+} from "@wildboar/x400/IPMSInformationObjects";
+import { _encode_ORName } from "@wildboar/x400/MTSAbstractService";
 import { strict as assert } from "node:assert";
 import { Context } from "@wildboar/meerkat-types";
 import getORNameMatcher from "./oRNameMatch";

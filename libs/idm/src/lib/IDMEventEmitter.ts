@@ -1,16 +1,16 @@
-import type { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
-import type { IdmBindResult } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindResult.ta";
-import type { IdmBindError } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
-import type { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
-import type { IdmResult } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmResult.ta";
-import type { Error as IdmError } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Error.ta";
-import type { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject.ta";
-import type { Unbind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Unbind.ta";
-import type { Abort } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
-import type { StartTLS } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/StartTLS.ta";
-import type { TLSResponse } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
-import type { EventEmitter } from "events";
+import type { IdmBind } from "@wildboar/x500/IDMProtocolSpecification";
+import type { IdmBindResult } from "@wildboar/x500/IDMProtocolSpecification";
+import type { IdmBindError } from "@wildboar/x500/IDMProtocolSpecification";
+import type { Request } from "@wildboar/x500/IDMProtocolSpecification";
+import type { IdmResult } from "@wildboar/x500/IDMProtocolSpecification";
+import type { Error as IdmError } from "@wildboar/x500/IDMProtocolSpecification";
+import type { IdmReject } from "@wildboar/x500/IDMProtocolSpecification";
+import type { Unbind } from "@wildboar/x500/IDMProtocolSpecification";
+import type { Abort } from "@wildboar/x500/IDMProtocolSpecification";
+import type { StartTLS } from "@wildboar/x500/IDMProtocolSpecification";
+import type { TLSResponse } from "@wildboar/x500/IDMProtocolSpecification";
+import type { ResultOrError } from "@wildboar/x500";
+import type { EventEmitter } from "node:events";
 import type { TLSSocket } from "tls";
 
 export

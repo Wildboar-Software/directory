@@ -1,8 +1,8 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-import { IA5String, OBJECT_IDENTIFIER } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+import { IA5String, OBJECT_IDENTIFIER } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 
 /* START_OF_SYMBOL_DEFINITION METHOD */
 /**

@@ -1,6 +1,6 @@
-import type { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import type { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import type { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import type { NAME_FORM } from "@wildboar/x500/InformationFramework";
 import { atn_AF_address } from "./lib/modules/ATNDirectoryObjectIdentifiers/atn-AF-address.oa";
 import { atn_per_certificate } from "./lib/modules/ATNDirectoryObjectIdentifiers/atn-per-certificate.oa";
 import { atn_der_certificate } from "./lib/modules/ATNDirectoryObjectIdentifiers/atn-der-certificate.oa";

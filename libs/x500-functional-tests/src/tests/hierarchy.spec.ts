@@ -3,47 +3,47 @@ import {
     FALSE_BIT,
     TRUE_BIT,
     BIT_STRING,
-} from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     IDMConnection,
 } from "@wildboar/idm";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
+import { AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgument,
     _encode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData_subset_baseObject,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     connect,
     createTestNode,
@@ -62,10 +62,10 @@ import {
     HierarchySelections_siblingSubtree,
     HierarchySelections_subtree,
     HierarchySelections_top,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     hierarchyParent,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
+} from "@wildboar/x500/InformationFramework";
 
 vi.setConfig({ testTimeout: 30_000 });
 

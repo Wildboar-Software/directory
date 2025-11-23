@@ -1,8 +1,8 @@
 import * as errors from "@wildboar/meerkat-types";
-import type { INTEGER } from "asn1-ts";
+import type { INTEGER } from "@wildboar/asn1";
 import {
     LDAPResult,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+} from "@wildboar/ldap";
 import {
     LDAPResult_resultCode_success,
     LDAPResult_resultCode_compareFalse,
@@ -43,7 +43,7 @@ import {
     LDAPResult_resultCode_objectClassModsProhibited,
     LDAPResult_resultCode_affectsMultipleDSAs,
     // LDAPResult_resultCode_other,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+} from "@wildboar/ldap";
 // import {
 //     AttributeProblem_noSuchAttributeOrValue,
 //     AttributeProblem_invalidAttributeSyntax,
@@ -52,13 +52,13 @@ import {
 //     AttributeProblem_constraintViolation,
 //     AttributeProblem_attributeOrValueAlreadyExists,
 //     AttributeProblem_contextViolation,
-// } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+// } from "@wildboar/x500/DirectoryAbstractService";
 import {
     NameProblem_aliasDereferencingProblem,
     NameProblem_aliasProblem,
     // NameProblem_invalidAttributeSyntax,
     NameProblem_noSuchObject,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_inappropriateAuthentication,
     SecurityProblem_invalidCredentials,
@@ -71,7 +71,7 @@ import {
     SecurityProblem_unsupportedAuthenticationMethod,
     // SecurityProblem_passwordExpired,
     // SecurityProblem_inappropriateAlgorithms,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_busy,
     ServiceProblem_unavailable,
@@ -91,7 +91,7 @@ import {
     // ServiceProblem_ambiguousKeyAttributes,
     ServiceProblem_saslBindInProgress,
     // ServiceProblem_notSupportedByLDAP,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateProblem_namingViolation,
     UpdateProblem_objectClassViolation,
@@ -108,25 +108,25 @@ import {
     // UpdateProblem_insufficientPasswordQuality,
     // UpdateProblem_passwordInHistory,
     // UpdateProblem_noPasswordSlot,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReferralData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReferralData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     NameErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import ldapReferenceToContinuationReference from "../ldap/ldapReferenceToContinuationReference";
 
 function serviceErrorData (problem: INTEGER): ServiceErrorData {

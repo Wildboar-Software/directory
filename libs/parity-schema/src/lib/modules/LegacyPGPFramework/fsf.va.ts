@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_pen } from '../Wildboar/id-pen.va';
 
 /* START_OF_SYMBOL_DEFINITION fsf */
@@ -15,7 +15,7 @@ import { id_pen } from '../Wildboar/id-pen.va';
  *
  * @constant
  */
-export const fsf: OBJECT_IDENTIFIER = new _OID([11591], id_pen);
+export const fsf: OBJECT_IDENTIFIER = _OID.fromParts([11591], id_pen);
 /* END_OF_SYMBOL_DEFINITION fsf */
 
 /* eslint-enable */

@@ -1,11 +1,9 @@
-import {
-    AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+import type { AlgorithmIdentifier } from "@wildboar/x500/AuthenticationFramework";
 import {
     Scrypt_params,
     _decode_Scrypt_params,
-} from "@wildboar/scrypt-0/src/lib/modules/Scrypt-0/Scrypt-params.ta";
-import { id_scrypt } from "@wildboar/scrypt-0/src/lib/modules/Scrypt-0/id-scrypt.va";
+    id_scrypt,
+} from "@wildboar/scrypt-0";
 
 export
 function validateScryptAlgorithmParameters (params: Scrypt_params): boolean {

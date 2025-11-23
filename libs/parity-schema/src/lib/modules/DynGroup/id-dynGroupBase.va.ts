@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_openldap_exp11 } from './id-openldap-exp11.va';
 
 /* START_OF_SYMBOL_DEFINITION id_dynGroupBase */
@@ -15,7 +15,7 @@ import { id_openldap_exp11 } from './id-openldap-exp11.va';
  *
  * @constant
  */
-export const id_dynGroupBase: OBJECT_IDENTIFIER = new _OID(
+export const id_dynGroupBase: OBJECT_IDENTIFIER = _OID.fromParts(
     [8],
     id_openldap_exp11
 );

@@ -2,10 +2,10 @@ import type { Context, Vertex } from "@wildboar/meerkat-types";
 import readSubordinates from "../../dit/readSubordinates";
 import {
     id_oc_parent,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_oc_child,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+} from "@wildboar/x500/InformationFramework";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();

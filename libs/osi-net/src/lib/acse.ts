@@ -1,24 +1,25 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { AARQ_apdu } from '@wildboar/acse/src/lib/modules/ACSE-1/AARQ-apdu.ta';
-import { AARE_apdu } from '@wildboar/acse/src/lib/modules/ACSE-1/AARE-apdu.ta';
-import { RLRQ_apdu } from '@wildboar/acse/src/lib/modules/ACSE-1/RLRQ-apdu.ta';
-import { RLRE_apdu } from '@wildboar/acse/src/lib/modules/ACSE-1/RLRE-apdu.ta';
-import { ABRT_apdu } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-apdu.ta';
-import { Associate_result_rejected_permanent } from '@wildboar/acse/src/lib/modules/ACSE-1/Associate-result.ta';
-import { Associate_source_diagnostic_acse_service_provider_no_reason_given } from '@wildboar/acse/src/lib/modules/ACSE-1/Associate-source-diagnostic-acse-service-provider.ta';
-import type { AP_title } from '@wildboar/acse/src/lib/modules/ACSE-1/AP-title.ta';
-import type { AE_qualifier } from '@wildboar/acse/src/lib/modules/ACSE-1/AE-qualifier.ta';
-import type { AP_invocation_identifier } from '@wildboar/acse/src/lib/modules/ACSE-1/AP-invocation-identifier.ta';
-import type { AE_invocation_identifier } from '@wildboar/acse/src/lib/modules/ACSE-1/AE-invocation-identifier.ta';
-import { ABRT_source_acse_service_provider } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-source.ta';
-import { ABRT_diagnostic_protocol_error } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta';
+import { AARQ_apdu } from '@wildboar/acse';
+import { AARE_apdu } from '@wildboar/acse';
+import { RLRQ_apdu } from '@wildboar/acse';
+import { RLRE_apdu } from '@wildboar/acse';
+import { ABRT_apdu } from '@wildboar/acse';
+import { Associate_result_rejected_permanent } from '@wildboar/acse';
+import { Associate_source_diagnostic_acse_service_provider_no_reason_given } from '@wildboar/acse';
+import type { AP_title } from '@wildboar/acse';
+import type { AE_qualifier } from '@wildboar/acse';
+import type { AP_invocation_identifier } from '@wildboar/acse';
+import type { AE_invocation_identifier } from '@wildboar/acse';
+import { ABRT_source_acse_service_provider } from '@wildboar/acse';
+// import { ABRT_diagnostic_protocol_error } from '@wildboar/acse';
+import { _enum_for_ABRT_diagnostic } from '@wildboar/acse';
 import type {
     CP_type_normal_mode_parameters,
     User_data,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CP-type-normal-mode-parameters.ta';
-import type { CPA_PPDU_normal_mode_parameters } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPA-PPDU-normal-mode-parameters.ta';
-import type { CPR_PPDU_normal_mode_parameters } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPR-PPDU-normal-mode-parameters.ta';
-import { TRUE_BIT } from 'asn1-ts';
+} from '@wildboar/copp';
+import type { CPA_PPDU_normal_mode_parameters } from '@wildboar/copp';
+import type { CPR_PPDU_normal_mode_parameters } from '@wildboar/copp';
+import { TRUE_BIT } from '@wildboar/asn1';
 
 export interface P_CONNECT_Request
     extends Partial<CP_type_normal_mode_parameters> {}
@@ -151,7 +152,7 @@ export function canSupportAssociation(aarq: AARQ_apdu): boolean {
 export function handleInvalidSequence_A(state: ACPMState): void {
     const abrt: ABRT_apdu = new ABRT_apdu(
         ABRT_source_acse_service_provider,
-        ABRT_diagnostic_protocol_error,
+        _enum_for_ABRT_diagnostic.protocol_error,
         undefined,
         undefined,
         [],

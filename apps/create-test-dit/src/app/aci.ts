@@ -1,26 +1,25 @@
 import {
     ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     ACIItem_itemOrUserFirst_userFirst,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem-itemOrUserFirst-userFirst.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_simple,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
-    SubtreeSpecification,
     UserClasses,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/UserClasses.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     UserPermission,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/UserPermission.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     ProtectedItems,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ProtectedItems.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     GrantsAndDenials,
     GrantsAndDenials_denyAdd,
@@ -49,61 +48,62 @@ import {
     GrantsAndDenials_grantInvoke,
     GrantsAndDenials_grantRemove,
     GrantsAndDenials_grantRename,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/GrantsAndDenials.ta";
-import { OBJECT_IDENTIFIER, TRUE_BIT, ObjectIdentifier } from "asn1-ts";
-import { _encodeUTF8String, DER } from "asn1-ts/dist/node/functional";
-import * as oc from "@wildboar/x500/src/lib/collections/objectClasses";
-import * as at from "@wildboar/x500/src/lib/collections/attributes";
+} from "@wildboar/x500/BasicAccessControl";
+import { OBJECT_IDENTIFIER, TRUE_BIT, ObjectIdentifier } from "@wildboar/asn1";
+import { _encodeUTF8String, DER } from "@wildboar/asn1/functional";
+import { attributes as at } from "@wildboar/x500";
+import { objectClasses as oc } from "@wildboar/x500";
 import { // FIXME: This is not in oc!!!
     subentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     entryUUID,
-} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa.js";
 import {
     entryDN,
-} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa.js";
 import {
     superiorUUID,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa.js";
 import {
     dynamicSubtrees,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa.js";
 import {
     entryTtl,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
 import {
     vendorName,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa.js";
 import {
     vendorVersion,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa.js";
 import {
     syncTimestamp,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa.js";
 import {
     fullVendorVersion,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa.js";
 import {
     administratorsAddress,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/administratorsAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/administratorsAddress.oa.js";
 import {
     isMemberOf,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa.js";
 import {
     numSubordinates,
-} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
-import { countryName, localityName, searchRules, stateOrProvinceName } from "@wildboar/x500/src/lib/collections/attributes";
-import { organization, person, residentialPerson } from "@wildboar/x500/src/lib/collections/objectClasses";
+} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa.js";
+import { countryName, localityName, stateOrProvinceName } from "@wildboar/x500/SelectedAttributeTypes";
+import { organization, person, residentialPerson } from "@wildboar/x500/SelectedObjectClasses";
+import { searchRules, SubtreeSpecification } from "@wildboar/x500/InformationFramework";
 
 const DENY_ALL_BITS: number[] = [
     GrantsAndDenials_denyAdd,
@@ -479,11 +479,11 @@ const GLOBAL_DIRECTORY_ADMIN_BASELINE: ACIItem = new ACIItem(
                         null,
                         [
                             ...Object.values(at).map((t) => t["&id"]),
-                            new ObjectIdentifier([ 1, 3, 6, 1, 1, 16, 4 ])
+                            ObjectIdentifier.fromParts([ 1, 3, 6, 1, 1, 16, 4 ])
                         ],
                         [
                             ...Object.values(at).map((t) => t["&id"]),
-                            new ObjectIdentifier([ 1, 3, 6, 1, 1, 16, 4 ])
+                            ObjectIdentifier.fromParts([ 1, 3, 6, 1, 1, 16, 4 ])
                         ],
                         null,
                     ),

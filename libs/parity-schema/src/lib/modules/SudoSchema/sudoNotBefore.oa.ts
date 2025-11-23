@@ -1,15 +1,15 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { generalizedTime } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/generalizedTime.oa';
-import { generalizedTimeMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/generalizedTimeMatch.oa';
-import { generalizedTimeOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/generalizedTimeOrderingMatch.oa';
-import { GeneralizedTime, ObjectIdentifier as _OID } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/InformationFramework';
+import { generalizedTime } from '@wildboar/x500/SelectedAttributeTypes';
+import { generalizedTimeMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { generalizedTimeOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { GeneralizedTime, ObjectIdentifier as _OID } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import { id_aaron_spangler } from '../SudoSchema/id-aaron-spangler.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -23,11 +23,11 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { generalizedTime } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/generalizedTime.oa';
-export { generalizedTimeOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/generalizedTimeOrderingMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { generalizedTime } from '@wildboar/x500/SelectedAttributeTypes';
+export { generalizedTimeOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_aaron_spangler } from '../SudoSchema/id-aaron-spangler.va';
 
 /* START_OF_SYMBOL_DEFINITION sudoNotBefore */
@@ -67,7 +67,7 @@ export const sudoNotBefore: ATTRIBUTE<GeneralizedTime> = {
     '&ldapName': ['sudoNotBefore'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'Start of time interval for which the entry is valid' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [9, 1, 8],
         id_aaron_spangler
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

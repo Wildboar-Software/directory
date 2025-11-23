@@ -1,32 +1,32 @@
-import { MeerkatContext } from "../../ctx";
+import { MeerkatContext } from "../../ctx.js";
 import { ShadowError, UnknownError } from "@wildboar/meerkat-types";
 import {
     RequestShadowUpdateArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/RequestShadowUpdateArgument.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     RequestShadowUpdateResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/RequestShadowUpdateResult.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import DISPAssociation from "../DISPConnection";
-import { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
-import { Versions_v2 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
-import { BERElement, FALSE, TRUE_BIT } from "asn1-ts";
+import { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
+import { Versions_v2 } from "@wildboar/x500/DirectoryAbstractService";
+import { BERElement, FALSE, TRUE_BIT } from "@wildboar/asn1";
 import { verifySIGNED } from "../../pki/verifySIGNED";
 import {
     _encode_RequestShadowUpdateArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/RequestShadowUpdateArgumentData.ta";
-import { ShadowErrorData } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowErrorData.ta";
-import { ShadowProblem_invalidAgreementID, ShadowProblem_invalidSequencing, ShadowProblem_unsuitableTiming, ShadowProblem_unsupportedStrategy, ShadowProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { ShadowErrorData } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { ShadowProblem_invalidAgreementID, ShadowProblem_invalidSequencing, ShadowProblem_unsuitableTiming, ShadowProblem_unsupportedStrategy, ShadowProblem_unwillingToPerform } from "@wildboar/x500/DirectoryShadowAbstractService";
 import createSecurityParameters from "../../x500/createSecurityParameters";
-import { id_errcode_shadowError } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-shadowError.va";
-import { _decode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import { id_errcode_shadowError } from "@wildboar/x500/CommonProtocolSpecification";
+import { _decode_AccessPoint } from "@wildboar/x500/DistributedOperations";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import { compareDistinguishedName, getOptionallyProtectedValue } from "@wildboar/x500";
 import stringifyDN from "../../x500/stringifyDN";
-import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { updateShadowConsumer } from "../createShadowUpdate";
-import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { addSeconds } from "date-fns";
-import { UpdateWindow } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateWindow.ta";
+import { UpdateWindow } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { OperationalBindingInitiator } from "@prisma/client";
 
 /**

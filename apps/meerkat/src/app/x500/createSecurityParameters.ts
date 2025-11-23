@@ -1,26 +1,26 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     CertificatePair,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificatePair.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { unpackBits } from "asn1-ts";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { unpackBits } from "@wildboar/asn1";
 import { randomBytes } from "crypto";
 
 // TODO: Convert to native function?

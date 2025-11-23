@@ -1,19 +1,20 @@
 import { Context, ClientAssociation, MistypedArgumentError, UnknownOperationError, MistypedPDUError } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import * as errors from "@wildboar/meerkat-types";
-import { addSeconds, differenceInSeconds } from "date-fns";
-import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import { OPTIONALLY_PROTECTED, SIGNED } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+import { addSeconds } from "date-fns";
+import { ChainingArguments } from "@wildboar/x500/DistributedOperations";
+import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
+import { OPTIONALLY_PROTECTED } from "@wildboar/x500/EnhancedSecurity";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
     _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ASN1Element,
     BOOLEAN,
@@ -22,82 +23,82 @@ import {
     TRUE_BIT,
     FALSE,
     BERElement,
-} from "asn1-ts";
-import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
-import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/asn1";
+import { ServiceErrorData } from "@wildboar/x500/DirectoryAbstractService";
+import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_invalidSignature,
     SecurityProblem_noInformation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_loopDetected,
     ServiceProblem_busy,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
-import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
-import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
-import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
-import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
-import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
-import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
-import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
-import { loopDetected } from "@wildboar/x500/src/lib/distributed/loopDetected";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { addEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { compare } from "@wildboar/x500/DirectoryAbstractService";
+import { modifyDN } from "@wildboar/x500/DirectoryAbstractService";
+import { modifyEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { list } from "@wildboar/x500/DirectoryAbstractService";
+import { read } from "@wildboar/x500/DirectoryAbstractService";
+import { removeEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { search } from "@wildboar/x500/DirectoryAbstractService";
+import { chainedRead } from "@wildboar/x500/DistributedOperations";
+import { loopDetected } from "@wildboar/x500";
 import {
     AuthenticationLevel,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
-import { DomainInfo } from "@wildboar/x500/src/lib/modules/DistributedOperations/DomainInfo.ta";
-import { Exclusions } from "@wildboar/x500/src/lib/modules/DistributedOperations/Exclusions.ta";
-import { OperationProgress } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { DomainInfo } from "@wildboar/x500/DistributedOperations";
+import { Exclusions } from "@wildboar/x500/DistributedOperations";
+import { OperationProgress } from "@wildboar/x500/DistributedOperations";
 import {
     OperationProgress_nameResolutionPhase_completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
-import { ReferenceType, ReferenceType_self } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
-import { Time } from "@wildboar/x500/src/lib/modules/DistributedOperations/Time.ta";
-import { TraceInformation } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceInformation.ta";
-import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { UniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UniqueIdentifier.ta";
-import { MRMapping } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRMapping.ta";
-import { SearchRuleId } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRuleId.ta";
-import { TraceItem } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import type { Request } from "@wildboar/x500/src/lib/types/Request";
+} from "@wildboar/x500/DistributedOperations";
+import { ReferenceType, ReferenceType_self } from "@wildboar/x500/DistributedOperations";
+import { Time } from "@wildboar/x500/DistributedOperations";
+import { TraceInformation } from "@wildboar/x500/DistributedOperations";
+import { DistinguishedName } from "@wildboar/x500/InformationFramework";
+import { UniqueIdentifier } from "@wildboar/x500/SelectedAttributeTypes";
+import { MRMapping } from "@wildboar/x500/ServiceAdministration";
+import { SearchRuleId } from "@wildboar/x500/ServiceAdministration";
+import { TraceItem } from "@wildboar/x500/DistributedOperations";
+import { compareCode } from "@wildboar/x500";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import type { Request } from "@wildboar/x500";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { printInvokeId } from "../utils/printInvokeId";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { verifySIGNED } from "../pki/verifySIGNED";
 import { isArgumentSigned } from "../x500/isArgumentSigned";
 import DSPAssociation from "../dsp/DSPConnection";
 import {
     _decode_AlgorithmIdentifier,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+} from "@wildboar/pki-stub";
 import { compareDistinguishedName, getDateFromTime, isModificationOperation } from "@wildboar/x500";
 import {
     CommonArguments,
     _decode_CommonArguments,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import DAPAssociation from "../dap/DAPConnection";
 import LDAPAssociation from "../ldap/LDAPConnection";
 import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_strong,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import { isTrustedForIBRA } from "./isTrustedForIBRA";

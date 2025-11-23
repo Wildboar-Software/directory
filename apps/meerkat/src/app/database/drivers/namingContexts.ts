@@ -11,9 +11,9 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
-import { namingContexts } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/namingContexts.oa";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import { DER } from "@wildboar/asn1/functional";
+import { namingContexts } from "@wildboar/x500/LdapSystemSchema";
+import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 

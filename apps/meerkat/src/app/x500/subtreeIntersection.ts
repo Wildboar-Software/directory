@@ -1,12 +1,12 @@
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Refinement,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+} from "@wildboar/x500/InformationFramework";
 import isPrefix from "./isPrefix";
 import { Context } from "@wildboar/meerkat-types";
 

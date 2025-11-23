@@ -1,34 +1,34 @@
-import type { MeerkatContext } from "../ctx";
-import { BERElement, packBits, TRUE_BIT } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import type { MeerkatContext } from "../ctx.js";
+import { BERElement, packBits, TRUE_BIT } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     OCSPResponse,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponse.ta";
+} from "@wildboar/ocsp";
 import {
     _encode_ResponseData,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/ResponseData.ta";
+} from "@wildboar/ocsp";
 import {
     OCSPResponseStatus_successful,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponseStatus.ta";
+} from "@wildboar/ocsp";
 import {
     id_pkix_ocsp_basic,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/id-pkix-ocsp-basic.va";
+} from "@wildboar/ocsp";
 import {
     _decode_BasicOCSPResponse,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/BasicOCSPResponse.ta";
+} from "@wildboar/ocsp";
 import { VCP_RETURN_OK, verifySignature } from "../pki/verifyCertPath";
 import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
 import {
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     CertificatePair,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificatePair.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { strict as assert } from "node:assert";
 import { differenceInSeconds } from "date-fns";
 import {
     KeyUsage_digitalSignature,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import { id_kp_OCSPSigning } from "../constants";
 
 export const VOR_RETURN_OK: number = 0;

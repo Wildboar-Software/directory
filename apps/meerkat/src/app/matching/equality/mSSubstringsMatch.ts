@@ -1,12 +1,12 @@
 import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_SubstringAssertion,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/SubstringAssertion.ta";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     _decode_MSString,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/MSString.ta";
+} from "@wildboar/x400/MSMatchingRules";
 import { msStringToString } from "./orAddressUtilities";
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 
 export
 const mSSubstringsMatch: EqualityMatcher = (

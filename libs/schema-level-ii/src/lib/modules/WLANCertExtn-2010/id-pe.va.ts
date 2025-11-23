@@ -2,7 +2,7 @@
 import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { id_pkix } from "../WLANCertExtn-2010/id-pkix.va";
 
 
@@ -20,7 +20,7 @@ import { id_pkix } from "../WLANCertExtn-2010/id-pkix.va";
  * @constant
  */
 export
-const id_pe: OBJECT_IDENTIFIER = new _OID([
+const id_pe: OBJECT_IDENTIFIER = _OID.fromParts([
     1,
 ], id_pkix);
 /* END_OF_SYMBOL_DEFINITION id_pe */

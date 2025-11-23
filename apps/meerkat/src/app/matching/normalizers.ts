@@ -1,21 +1,21 @@
 import type { Context, ValueNormalizer } from "@wildboar/meerkat-types";
-import { ASN1Element, ASN1TagClass, ASN1UniversalType, BERElement } from "asn1-ts";
+import { ASN1Element, ASN1TagClass, ASN1UniversalType, BERElement } from "@wildboar/asn1";
 import { directoryStringToString, getDateFromTime } from "@wildboar/x500";
-import { prepString } from "@wildboar/x500/src/lib/utils/prepString";
+import { prepString } from "@wildboar/x500";
 import {
     _decode_UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_AttributeTypeAndValue,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
+} from "@wildboar/pki-stub";
 import {
     _decode_PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
-import { _decode_Time } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Time.ta";
+import { _decode_Time } from "@wildboar/x500/AuthenticationFramework";
 import {
     _decode_AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 
 export const caseIgnoreMatch: ValueNormalizer = (
     ctx: Context,

@@ -1,8 +1,8 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
-import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
-import destringifyRDNSequence from "@wildboar/ldap/src/lib/destringifiers/RDNSequence";
+import type { RDNSequence } from "@wildboar/x500/InformationFramework";
+import { AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
+import { normalizeAttributeDescription } from "@wildboar/ldap";
+import { destringifyRDNSequence } from "@wildboar/ldap";
 import { getLDAPSyntax } from "../x500/getLDAPSyntax";
 
 /**

@@ -1,6 +1,6 @@
 import { Vertex, ClientAssociation, OperationStatistics } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import * as net from "net";
 import * as tls from "tls";
 import {
@@ -11,56 +11,50 @@ import {
     ASN1Construction,
     ASN1UniversalType,
     FALSE,
-} from "asn1-ts";
-import { BER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { BER } from "@wildboar/asn1/functional";
 import {
     LDAPMessage,
     _decode_LDAPMessage,
     _encode_LDAPMessage,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
+} from "@wildboar/ldap";
 import {
     LDAPResult,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+} from "@wildboar/ldap";
 import {
     BindResponse,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindResponse.ta";
+} from "@wildboar/ldap";
 import {
     SearchResultEntry,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
+} from "@wildboar/ldap";
 import {
     ExtendedResponse,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedResponse.ta";
+} from "@wildboar/ldap";
 import {
     LDAPResult_resultCode_success,
     LDAPResult_resultCode_invalidCredentials,
     LDAPResult_resultCode_protocolError,
     LDAPResult_resultCode_operationsError,
     LDAPResult_resultCode_other,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
+} from "@wildboar/ldap";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels_level_none,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import bind from "./bind";
-import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
-import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
+import { decodeLDAPOID } from "@wildboar/ldap";
+import { encodeLDAPOID } from "@wildboar/ldap";
 import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
 import dapReplyToLDAPResult from "../distributed/dapReplyToLDAPResult";
 import OperationDispatcher from "../distributed/OperationDispatcher";
 import dapErrorToLDAPResult from "../distributed/dapErrorToLDAPResult";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { codeToString } from "@wildboar/x500";
 import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
-import {
-    modifyPassword,
-    whoAmI,
-    startTLS,
-    cancel,
-    dynamicRefresh,
-} from "@wildboar/ldap/src/lib/extensions";
+import { extensions } from "@wildboar/ldap";
 import encodeLDAPDN from "./encodeLDAPDN";
 import createNoticeOfDisconnection from "./createNoticeOfDisconnection";
 import { differenceInMilliseconds } from "date-fns";
@@ -70,10 +64,10 @@ import getRootSubschema from "./getRootSubschema";
 import anyPasswordsExist from "../authz/anyPasswordsExist";
 import {
     AuthenticationLevel_basicLevels_level_none as none,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
-import { EventEmitter } from "events";
+} from "@wildboar/x500/BasicAccessControl";
+import { EventEmitter } from "node:events";
 import { flatten } from "flat";
-import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import { naddrToURI } from "@wildboar/x500";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
@@ -83,33 +77,31 @@ import {
     SearchRequest_scope_baseObject,
     SearchRequest_scope_singleLevel,
     SearchRequest_scope_wholeSubtree,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
+} from "@wildboar/ldap";
 import decodeLDAPDN from "./decodeLDAPDN";
-import {
-    stringifyFilter,
-} from "@wildboar/ldap/src/lib/stringifiers/Filter";
-import {
-    SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import {
-    SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import { stringifyFilter } from "@wildboar/ldap";
 import { createSecurityParameters } from "../x500/createSecurityParameters";
 import { compareCode } from "@wildboar/x500";
 import {
+    SecurityErrorData,
     administerPassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
-import {
     changePassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
-import { list, modifyEntry, search } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
-import {
+    list,
+    modifyEntry,
+    search,
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import {
     PwdResponseValue_error_changeAfterReset,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/DirectoryAbstractService";
 import { createWriteStream } from "node:fs";
+
+const {
+    modifyPassword,
+    whoAmI,
+    startTLS,
+    cancel,
+    dynamicRefresh,
+} = extensions;
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 

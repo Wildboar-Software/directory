@@ -1,23 +1,23 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
     id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import { DERElement } from "asn1-ts";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
+import { DERElement } from "@wildboar/asn1";
 import {
     _decode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import removeSubordinate from "./terminate/removeSubordinate";
 import {
     id_op_binding_non_specific_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     _decode_NonSpecificHierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import dnToVertex from "../dit/dnToVertex";
 import {
     id_op_binding_shadow,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { removeConsumer } from "./terminate/removeConsumer";
 import { removeSupplier } from "./terminate/removeSupplier";
 

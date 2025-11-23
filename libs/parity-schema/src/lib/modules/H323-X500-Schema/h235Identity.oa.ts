@@ -1,20 +1,20 @@
 /* eslint-disable */
-import { authorityRevocationList } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/authorityRevocationList.oa';
-import { cACertificate } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/cACertificate.oa';
-import { certificateRevocationList } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/certificateRevocationList.oa';
-import { crossCertificatePair } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/crossCertificatePair.oa';
-import { userCertificate } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/userCertificate.oa';
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { authorityRevocationList } from '@wildboar/x500/AuthenticationFramework';
+import { cACertificate } from '@wildboar/x500/AuthenticationFramework';
+import { certificateRevocationList } from '@wildboar/x500/AuthenticationFramework';
+import { crossCertificatePair } from '@wildboar/x500/AuthenticationFramework';
+import { userCertificate } from '@wildboar/x500/AuthenticationFramework';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { h235_id_oc } from '../H323-X500-Schema/h235-id-oc.va';
 import { h235IdentityEndpointID } from '../H323-X500-Schema/h235IdentityEndpointID.oa';
 import { h235IdentityPassword } from '../H323-X500-Schema/h235IdentityPassword.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -26,8 +26,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { h235_id_oc } from '../H323-X500-Schema/h235-id-oc.va';
 export { h235IdentityEndpointID } from '../H323-X500-Schema/h235IdentityEndpointID.oa';
 export { h235IdentityPassword } from '../H323-X500-Schema/h235IdentityPassword.oa';
@@ -68,7 +68,7 @@ export const h235Identity: OBJECT_CLASS = {
         certificateRevocationList,
         crossCertificatePair,
     ] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [1],
         h235_id_oc
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

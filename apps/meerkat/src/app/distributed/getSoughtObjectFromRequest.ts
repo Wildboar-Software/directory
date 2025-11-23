@@ -1,27 +1,21 @@
-import type {
-    DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type {
-    Request,
-} from "@wildboar/x500/src/lib/types/Request";
-import type {
-    ChainingArguments,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { compareCode } from "@wildboar/x500/src/lib/utils/compareCode";
-import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
-import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
-import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
-import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
-import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
-import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
-import { ldapTransport } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ldapTransport.oa";
-import { linkedLDAP } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/linkedLDAP.oa";
-import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
-import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
-import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
-import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
+import type { Request } from "@wildboar/x500";
+import type { ChainingArguments } from "@wildboar/x500/DistributedOperations";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { compareCode } from "@wildboar/x500";
+import { abandon } from "@wildboar/x500/DirectoryAbstractService";
+import { administerPassword } from "@wildboar/x500/DirectoryAbstractService";
+import { addEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { changePassword } from "@wildboar/x500/DirectoryAbstractService";
+import { compare } from "@wildboar/x500/DirectoryAbstractService";
+import { modifyDN } from "@wildboar/x500/DirectoryAbstractService";
+import { modifyEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { ldapTransport } from "@wildboar/x500/DirectoryAbstractService";
+import { linkedLDAP } from "@wildboar/x500/DirectoryAbstractService";
+import { list } from "@wildboar/x500/DirectoryAbstractService";
+import { read } from "@wildboar/x500/DirectoryAbstractService";
+import { removeEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { search } from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary Determines the target object from operation arguments

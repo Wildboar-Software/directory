@@ -21,7 +21,7 @@ import {
     IdmReject_reason_unsupportedIdmVersion,
     IdmReject_reason_unsuitableIdmVersion,
     IdmReject_reason_invalidIdmVersion,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     Abort,
     Abort_mistypedPDU,
@@ -31,14 +31,14 @@ import {
     Abort_connectionFailed,
     Abort_invalidProtocol,
     Abort_reasonNotSpecified,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     _encode_Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { BER } from "asn1-ts/dist/node/functional";
-import { INTEGER } from "asn1-ts";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { BER } from "@wildboar/asn1/functional";
+import { INTEGER } from "@wildboar/asn1";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
-import { MeerkatContext } from "../ctx";
+import { MeerkatContext } from "../ctx.js";
 import { getLogInfoFromIDM } from "../log/getLogInfoFromIDM";
 
 const idm_reject_to_rose_reject: Map<IdmReject_reason, RejectReason> = new Map([

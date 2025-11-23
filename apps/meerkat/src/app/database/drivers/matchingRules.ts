@@ -11,12 +11,12 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
-import { matchingRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRules.oa";
-import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+import { DER } from "@wildboar/asn1/functional";
+import { matchingRules } from "@wildboar/x500/SchemaAdministration";
+import { subschema } from "@wildboar/x500/SchemaAdministration";
 import {
     MatchingRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 

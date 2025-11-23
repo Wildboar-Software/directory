@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { daniel_ellard } from '../FedFSSchema/daniel-ellard.va';
 import { fedfsFsl } from '../FedFSSchema/fedfsFsl.oa';
 import { fedfsNfsClassChange } from '../FedFSSchema/fedfsNfsClassChange.oa';
@@ -24,8 +24,8 @@ import { fedfsNfsValidFor } from '../FedFSSchema/fedfsNfsValidFor.oa';
 import { fedfsNfsVarSub } from '../FedFSSchema/fedfsNfsVarSub.oa';
 import { fedfsNfsWriteOrder } from '../FedFSSchema/fedfsNfsWriteOrder.oa';
 import { fedfsNfsWriteRank } from '../FedFSSchema/fedfsNfsWriteRank.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -37,7 +37,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { daniel_ellard } from '../FedFSSchema/daniel-ellard.va';
 export { fedfsFsl } from '../FedFSSchema/fedfsFsl.oa';
 export { fedfsNfsClassChange } from '../FedFSSchema/fedfsNfsClassChange.oa';
@@ -128,7 +128,7 @@ export const fedfsNfsFsl: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['fedfsNfsFsl'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'An NFS location of a fileset' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [1, 1004],
         daniel_ellard
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

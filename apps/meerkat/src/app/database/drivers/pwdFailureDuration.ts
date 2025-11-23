@@ -11,14 +11,14 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { ASN1Construction } from "asn1-ts";
-import { DER, _encodeInteger } from "asn1-ts/dist/node/functional";
+import { ASN1Construction } from "@wildboar/asn1";
+import { DER, _encodeInteger } from "@wildboar/asn1/functional";
 import {
     pwdFailureDuration,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureDuration.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdAdminSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import type { Prisma } from "@prisma/client";
 import { attributeValueFromDB } from "../attributeValueFromDB";
 

@@ -1,22 +1,22 @@
 import { Context, IndexableOID } from "@wildboar/meerkat-types";
 import {
     SearchRule,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
+} from "@wildboar/x500/ServiceAdministration";
 import {
     RequestAttribute,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/RequestAttribute.ta";
-import { SearchArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
-import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
-import { ContextProfile } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextProfile.ta";
+} from "@wildboar/x500/ServiceAdministration";
+import { SearchArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
+import { ContextProfile } from "@wildboar/x500/ServiceAdministration";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import { getAttributeTypeNegationFromFilter } from "./getAttributeTypeNegationFromFilter";
 import { getRequiredAttributesFromAttributeCombination } from "./getRequiredAttributesFromAttributeCombination";
 import { checkAttributeCombination } from "./checkAttributeCombination";
 import { check_for_disallowed_search_values } from "./check_for_disallowed_search_values";
 import { check_for_disallowed_contexts } from "./check_for_disallowed_contexts";
-import { AttributeCombination } from "@wildboar/x500/src/lib/modules/ServiceAdministration/AttributeCombination.ta";
-import { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
-import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import { AttributeCombination } from "@wildboar/x500/ServiceAdministration";
+import { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
+import type { AttributeType } from "@wildboar/x500/InformationFramework";
 
 /**
  * The internal state of `general_check_of_search_filter()`.

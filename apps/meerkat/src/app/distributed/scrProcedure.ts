@@ -1,42 +1,42 @@
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import type { ClientAssociation, IndexableDN } from "@wildboar/meerkat-types";
 import {
     ContinuationReference, ReferenceType_ditBridge,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
-import { SearchArgument, _encode_SearchArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/DistributedOperations";
+import { SearchArgument, _encode_SearchArgument } from "@wildboar/x500/DirectoryAbstractService";
 import { SearchState } from "./search_i";
 import { OperationDispatcherState } from "./OperationDispatcher";
-import { TRUE, TRUE_BIT } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import { TRUE, TRUE_BIT } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { compareAuthenticationLevel, ChainedRequest, getOptionallyProtectedValue, compareCode } from "@wildboar/x500";
 import { apinfoProcedure } from "./apinfoProcedure";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
-import { OperationProgress } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { OperationProgress } from "@wildboar/x500/DistributedOperations";
 import {
     DistinguishedName,
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     OperationProgress_nameResolutionPhase_completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import { Promise as bPromise } from "bluebird";
 import {
     ServiceControls_priority_high,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-priority.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import printCode from "../utils/printCode";
 import stringifyDN from "../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
-import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
-import { _decode_SearchResult } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedSearch.oa";
+import { id_opcode_search } from "@wildboar/x500/CommonProtocolSpecification";
+import { _decode_SearchResult } from "@wildboar/x500/DirectoryAbstractService";
+import { chainedSearch } from "@wildboar/x500/DistributedOperations";
 
 /**
  * @summary Search Continuation Reference Procedure, as defined in ITU Recommendation X.518.

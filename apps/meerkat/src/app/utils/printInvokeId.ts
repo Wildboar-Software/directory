@@ -1,6 +1,6 @@
 import type {
     InvokeId,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 
 /**
  * @summary Convert a `InvokeId` into a human-readable string.

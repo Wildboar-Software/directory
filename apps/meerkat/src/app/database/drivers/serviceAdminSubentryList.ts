@@ -11,19 +11,19 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     serviceAdminSubentryList,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentryList.oa";
+} from "@wildboar/x500/InformationFramework";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import {
     id_sc_serviceAdminSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-serviceAdminSubentry.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+} from "@wildboar/x500/InformationFramework";
+import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 const SUBENTRY_CLASS: string = id_sc_serviceAdminSubentry.toString();

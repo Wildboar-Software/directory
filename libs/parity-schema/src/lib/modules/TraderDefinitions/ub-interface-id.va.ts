@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { INTEGER } from 'asn1-ts';
+import { INTEGER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION ub_interface_id */
 /**

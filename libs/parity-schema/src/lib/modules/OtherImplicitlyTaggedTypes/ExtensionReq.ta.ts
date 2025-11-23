@@ -3,9 +3,9 @@ import {
     Extensions,
     _decode_Extensions,
     _encode_Extensions,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/Extensions.ta';
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/AuthenticationFramework';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 
 /* START_OF_SYMBOL_DEFINITION ExtensionReq */
 /**

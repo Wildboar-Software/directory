@@ -1,7 +1,7 @@
-import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+import { AlgorithmIdentifier } from "@wildboar/pki-stub";
 import { scrypt, Scrypt_params } from "@wildboar/scrypt-0";
 import * as crypto from "crypto";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 
 /**
  * @summary Create a new Scrypt `AlgorithmIdentifier`

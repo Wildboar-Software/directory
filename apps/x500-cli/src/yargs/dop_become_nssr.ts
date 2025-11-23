@@ -4,7 +4,7 @@ import bind from "../net/bind";
 import {
     do_become_nssr as command,
 } from "../commands/dop/become_nssr";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 
 export
 function create (ctx: Context): CommandModule {

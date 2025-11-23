@@ -1,187 +1,187 @@
-import type { ASN1Element, INTEGER } from "asn1-ts";
+import type { ASN1Element, INTEGER } from "@wildboar/asn1";
 import { teletexToString } from "@wildboar/x500";
 import {
     MSString,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/MSString.ta";
+} from "@wildboar/x400/MSMatchingRules";
 import {
     PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     ORAddress,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/ORAddress.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import type {
     BuiltInStandardAttributes,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/BuiltInStandardAttributes.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import type {
     PersonalName,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/PersonalName.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_TeletexPersonalName,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/TeletexPersonalName.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_UniversalPersonalName,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/UniversalPersonalName.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import type {
     UniversalOrBMPString,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/UniversalOrBMPString.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_TeletexOrganizationalUnitNames,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/TeletexOrganizationalUnitNames.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_UniversalOrganizationalUnitNames,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/UniversalOrganizationalUnitNames.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_TeletexDomainDefinedAttributes,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/TeletexDomainDefinedAttributes.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_UniversalDomainDefinedAttributes,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/UniversalDomainDefinedAttributes.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_PhysicalDeliveryCountryName,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/PhysicalDeliveryCountryName.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_PostalCode,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/PostalCode.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     PDSParameter,
     _decode_PDSParameter,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/PDSParameter.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     UniversalPDSParameter,
     _decode_UniversalPDSParameter,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/UniversalPDSParameter.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_UnformattedPostalAddress,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/UnformattedPostalAddress.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_UniversalUnformattedPostalAddress,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/UniversalUnformattedPostalAddress.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_ExtendedNetworkAddress,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/ExtendedNetworkAddress.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     _decode_TerminalType,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/TerminalType.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     common_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/common-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     teletex_common_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/teletex-common-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_common_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-common-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     teletex_organization_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/teletex-organization-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_organization_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-organization-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     teletex_personal_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/teletex-personal-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_personal_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-personal-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     teletex_organizational_unit_names,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/teletex-organizational-unit-names.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_organizational_unit_names,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-organizational-unit-names.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     teletex_domain_defined_attributes,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/teletex-domain-defined-attributes.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_domain_defined_attributes,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-domain-defined-attributes.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     pds_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/pds-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     physical_delivery_country_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/physical-delivery-country-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     postal_code,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/postal-code.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     physical_delivery_office_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/physical-delivery-office-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_physical_delivery_office_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-physical-delivery-office-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     physical_delivery_office_number,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/physical-delivery-office-number.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_physical_delivery_office_number,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-physical-delivery-office-number.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     extension_OR_address_components,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/extension-OR-address-components.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_extension_OR_address_components,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-extension-OR-address-components.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     physical_delivery_personal_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/physical-delivery-personal-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_physical_delivery_personal_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-physical-delivery-personal-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     physical_delivery_organization_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/physical-delivery-organization-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_physical_delivery_organization_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-physical-delivery-organization-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     extension_physical_delivery_address_components,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/extension-physical-delivery-address-components.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_extension_physical_delivery_address_components,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-extension-physical-delivery-address-components.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     unformatted_postal_address,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/unformatted-postal-address.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_unformatted_postal_address,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-unformatted-postal-address.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     street_address,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/street-address.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_street_address,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-street-address.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     post_office_box_address,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/post-office-box-address.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_post_office_box_address,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-post-office-box-address.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     poste_restante_address,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/poste-restante-address.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_poste_restante_address,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-poste-restante-address.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     unique_postal_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/unique-postal-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_unique_postal_name,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-unique-postal-name.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     local_postal_attributes,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/local-postal-attributes.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     universal_local_postal_attributes,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/universal-local-postal-attributes.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     extended_network_address,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/extended-network-address.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import {
     terminal_type,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/terminal-type.oa";
+} from "@wildboar/x400/MTSAbstractService";
 import _ from "lodash";
 
 

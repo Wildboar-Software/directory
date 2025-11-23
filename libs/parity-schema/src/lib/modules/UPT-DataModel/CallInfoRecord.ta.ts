@@ -5,8 +5,8 @@ import {
     INTEGER,
     OPTIONAL,
     UTCTime,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import { Cause, _decode_Cause, _encode_Cause } from '../UPT-DataModel/Cause.ta';
 import {
     CFServices,

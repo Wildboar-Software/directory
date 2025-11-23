@@ -12,16 +12,16 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import { Knowledge } from "@prisma/client";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     superiorKnowledge,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import rdnToJson from "../../x500/rdnToJson";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 import saveAccessPoint from "../saveAccessPoint";
-import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
+import { compareRDNSequence } from "@wildboar/x500";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

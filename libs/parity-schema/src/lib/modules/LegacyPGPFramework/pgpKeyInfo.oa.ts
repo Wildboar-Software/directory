@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { gpgFingerprint } from '../LegacyPGPFramework/gpgFingerprint.oa';
 import { gpgMailbox } from '../LegacyPGPFramework/gpgMailbox.oa';
 import { gpgSubCertID } from '../LegacyPGPFramework/gpgSubCertID.oa';
@@ -22,8 +22,8 @@ import { pgpRevoked } from '../LegacyPGPFramework/pgpRevoked.oa';
 import { pgpSignerID } from '../LegacyPGPFramework/pgpSignerID.oa';
 import { pgpSubKeyID } from '../LegacyPGPFramework/pgpSubKeyID.oa';
 import { pgpUserID } from '../LegacyPGPFramework/pgpUserID.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -35,8 +35,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { gpgFingerprint } from '../LegacyPGPFramework/gpgFingerprint.oa';
 export { gpgMailbox } from '../LegacyPGPFramework/gpgMailbox.oa';
 export { gpgSubCertID } from '../LegacyPGPFramework/gpgSubCertID.oa';
@@ -118,7 +118,7 @@ export const pgpKeyInfo: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['pgpKeyInfo'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'An OpenPGP public keyblock' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [8, 2, 24],
         mcafee
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

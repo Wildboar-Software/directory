@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { ID } from '../Wildboar/ID.ta';
 import { internet } from '../Wildboar/internet.va';
 
@@ -16,7 +16,7 @@ import { internet } from '../Wildboar/internet.va';
  *
  * @constant
  */
-export const id_pen: ID = new _OID(
+export const id_pen: ID = _OID.fromParts(
     [/* private */ 4, /* enterprise */ 1],
     internet
 );

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_as } from '../IN-CS3-object-identifiers/id-as.va';
 export { id_as } from '../IN-CS3-object-identifiers/id-as.va';
 
@@ -17,7 +17,7 @@ export { id_as } from '../IN-CS3-object-identifiers/id-as.va';
  * @constant
  */
 export const id_as_inExtendedDirectoryOperationsAS: OBJECT_IDENTIFIER =
-    new _OID([/* inExtendedDirectoryOperationsAS */ 3], id_as);
+    _OID.fromParts([/* inExtendedDirectoryOperationsAS */ 3], id_as);
 /* END_OF_SYMBOL_DEFINITION id_as_inExtendedDirectoryOperationsAS */
 
 /* eslint-enable */

@@ -3,13 +3,13 @@ import {
     EnvelopedData,
     _decode_EnvelopedData,
     _encode_EnvelopedData,
-} from '@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/EnvelopedData.ta';
+} from '@wildboar/cms';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     BIT_STRING,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     PKMACValue,
     _decode_PKMACValue,

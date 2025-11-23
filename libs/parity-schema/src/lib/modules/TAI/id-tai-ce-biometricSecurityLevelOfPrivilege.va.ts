@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_tai_ce } from '../TAI/id-tai-ce.va';
 export { id_tai_ce } from '../TAI/id-tai-ce.va';
 
@@ -17,7 +17,7 @@ export { id_tai_ce } from '../TAI/id-tai-ce.va';
  * @constant
  */
 export const id_tai_ce_biometricSecurityLevelOfPrivilege: OBJECT_IDENTIFIER =
-    new _OID([3], id_tai_ce);
+    _OID.fromParts([3], id_tai_ce);
 /* END_OF_SYMBOL_DEFINITION id_tai_ce_biometricSecurityLevelOfPrivilege */
 
 /* eslint-enable */

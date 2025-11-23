@@ -2,46 +2,46 @@ import {
     ASN1Element,
     FALSE_BIT,
     TRUE_BIT,
-} from "asn1-ts";
-import { DER, _encodePrintableString } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { DER, _encodePrintableString } from "@wildboar/asn1/functional";
 import {
     IDMConnection,
 } from "@wildboar/idm";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
+import { AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgument,
     _encode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     connect,
     createTestRootDN,
@@ -50,24 +50,24 @@ import {
     createEntry,
     oid,
 } from "../utils";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
-import { countryName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa";
-import { description, person, surname } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa";
-import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-import { country } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/country.oa";
-import { stateOrProvinceName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/stateOrProvinceName.oa";
-import { localityName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
-import { postalCode } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalCode.oa";
-import { residentialPerson } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/residentialPerson.oa";
-import { MRMapping, RelaxationPolicy } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RelaxationPolicy.ta";
-import { Mapping } from "@wildboar/x500/src/lib/modules/ServiceAdministration/Mapping.ta";
-import { id_mr_zonalMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-zonalMatch.va";
-import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRSubstitution.ta";
-import { wordMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/wordMatch.oa";
-import { id_mr_systemProposedMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-systemProposedMatch.va";
-import { caseExactMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseExactMatch.oa";
-import { SearchControlOptions, SearchControlOptions_includeAllAreas } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub";
+import { countryName } from "@wildboar/x500/SelectedAttributeTypes";
+import { description, person, surname } from "@wildboar/x500/SelectedObjectClasses";
+import { objectClass } from "@wildboar/x500/InformationFramework";
+import { country } from "@wildboar/x500/SelectedObjectClasses";
+import { stateOrProvinceName } from "@wildboar/x500/SelectedAttributeTypes";
+import { localityName } from "@wildboar/x500/SelectedAttributeTypes";
+import { postalCode } from "@wildboar/x500/SelectedAttributeTypes";
+import { residentialPerson } from "@wildboar/x500/SelectedObjectClasses";
+import { MRMapping, RelaxationPolicy } from "@wildboar/x500/ServiceAdministration";
+import { Mapping } from "@wildboar/x500/ServiceAdministration";
+import { id_mr_zonalMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { AttributeValueAssertion } from "@wildboar/x500/InformationFramework";
+import { MRSubstitution } from "@wildboar/x500/ServiceAdministration";
+import { wordMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { id_mr_systemProposedMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { caseExactMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { SearchControlOptions, SearchControlOptions_includeAllAreas } from "@wildboar/x500/DirectoryAbstractService";
 
 vi.setConfig({ testTimeout: 30_000 });
 

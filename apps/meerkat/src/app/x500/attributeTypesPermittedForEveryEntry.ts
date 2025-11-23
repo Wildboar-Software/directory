@@ -1,8 +1,8 @@
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
-import { id_at_objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { id_at_objectClass } from "@wildboar/x500/InformationFramework";
 import {
     id_aca_entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-entryACI.va";
+} from "@wildboar/x500/BasicAccessControl";
 
 /**
  * @summary Array of object identifiers for attribute types that are always permitted in an entry.

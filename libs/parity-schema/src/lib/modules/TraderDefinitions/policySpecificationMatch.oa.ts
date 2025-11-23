@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
+import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
 import { id_trader_mr_policySpecificationMatch } from '../TraderDefinitions/id-trader-mr-policySpecificationMatch.va';
 import {
     PolicySpecification,

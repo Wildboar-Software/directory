@@ -1,20 +1,20 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { caseIgnoreMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreMatch.oa';
-import { caseIgnoreOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreOrderingMatch.oa';
-import { caseIgnoreSubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreSubstringsMatch.oa';
-import { directoryString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/directoryString.oa';
+} from '@wildboar/x500/InformationFramework';
+import { caseIgnoreMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { caseIgnoreOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { caseIgnoreSubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { directoryString } from '@wildboar/x500/SelectedAttributeTypes';
 import {
     DirectoryString,
     _decode_DirectoryString,
     _encode_DirectoryString,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/DirectoryString.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { iana_assigned_oid } from '../VPIMSchema/iana-assigned-oid.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -28,9 +28,9 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { iana_assigned_oid } from '../VPIMSchema/iana-assigned-oid.va';
 
 /* START_OF_SYMBOL_DEFINITION vPIMTextName */
@@ -71,7 +71,7 @@ export const vPIMTextName: ATTRIBUTE<DirectoryString> = {
     '&single-valued': true /* OBJECT_FIELD_SETTING */,
     '&ldapSyntax': directoryString['&id'] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['vPIMTextName'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [2, 4],
         iana_assigned_oid
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

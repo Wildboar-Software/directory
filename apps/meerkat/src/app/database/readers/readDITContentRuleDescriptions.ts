@@ -1,8 +1,8 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     DITContentRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 
 /**
  * @summary Load an entry's DITContentRuleDescriptions from the database

@@ -2,131 +2,131 @@ import {
     ASN1Element,
     FALSE_BIT,
     TRUE_BIT,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
     BER,
     DER,
     _encodeObjectIdentifier,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import * as net from "net";
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     dap_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+} from "@wildboar/x500/DirectoryIDMProtocols";
 import { IDMConnection } from "@wildboar/idm";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgument,
     _encode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
+import { AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _encode_UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     applicationProcess,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     description,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+} from "@wildboar/x500/InformationFramework";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     read,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadArgument,
     _encode_ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_ReadResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { strict as assert } from "assert";
 import {
     RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     userPwdClass,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     userPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     userPassword,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+} from "@wildboar/x500/AuthenticationFramework";
 import type {
     Credentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Credentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     IdmBindError,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     IdmBindResult,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindResult.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     pwdFails,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdFailureTime,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdStartTime,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     directoryBindError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 function sleep (ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));

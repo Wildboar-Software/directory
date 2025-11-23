@@ -12,13 +12,13 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import { Knowledge } from "@prisma/client";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     supplierKnowledge,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/supplierKnowledge.oa";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import rdnToJson from "../../x500/rdnToJson";
 import saveAccessPoint from "../saveAccessPoint";
-import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
+import { compareRDNSequence } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 export

@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
+import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
 import { id_mr_allComponentsMatch } from '../RFC3687ComponentMatching/id-mr-allComponentsMatch.va';
 import { open } from '../RFC3687ComponentMatching/open.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { id_mr_allComponentsMatch } from '../RFC3687ComponentMatching/id-mr-allComponentsMatch.va';
 export { open } from '../RFC3687ComponentMatching/open.oa';
 

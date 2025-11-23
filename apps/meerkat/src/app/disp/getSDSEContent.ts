@@ -1,29 +1,29 @@
 import type { Context, IndexableOID, Vertex } from "@wildboar/meerkat-types";
 import {
     ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import { SDSEContent } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Subtree.ta";
-import { FALSE, FALSE_BIT, ObjectIdentifier, TRUE, TRUE_BIT } from "asn1-ts";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { SDSEContent } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { FALSE, FALSE_BIT, ObjectIdentifier, TRUE, TRUE_BIT } from "@wildboar/asn1";
 import readAttributes from "../database/entry/readAttributes";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ClassAttributeSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import valuesFromAttribute from "../x500/valuesFromAttribute";
 import attributesFromValues from "../x500/attributesFromValues";
-import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
-import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
-import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+import { attributes as x500at } from "@wildboar/x500";
+import { userPwdHistory } from "@wildboar/x500/PasswordPolicy";
+import { userPwdRecentlyExpired } from "@wildboar/x500/PasswordPolicy";
 import {
     entryUUID,
-} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa.js";
 import {
     superiorUUID,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
-import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import { Knowledge_knowledgeType, Knowledge_knowledgeType_both, Knowledge_knowledgeType_master, Knowledge_knowledgeType_shadow } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Knowledge-knowledgeType.ta";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa.js";
+import { AttributeType } from "@wildboar/x500/InformationFramework";
+import { Knowledge_knowledgeType, Knowledge_knowledgeType_both, Knowledge_knowledgeType_master, Knowledge_knowledgeType_shadow } from "@wildboar/x500/DirectoryShadowAbstractService";
 
 /**
  * Indexable attribute types that are required to be replicated in a shadowing

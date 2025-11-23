@@ -11,10 +11,10 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
     structuralObjectClass,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/structuralObjectClass.oa";
+} from "@wildboar/x500/SchemaAdministration";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

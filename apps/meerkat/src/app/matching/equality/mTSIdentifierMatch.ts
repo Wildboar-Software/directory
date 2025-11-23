@@ -1,8 +1,8 @@
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_MTSIdentifier,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/MTSIdentifier.ta";
+} from "@wildboar/x400/MTSAbstractService";
 
 // MTSIdentifier ::= [APPLICATION 4]  SEQUENCE {
 //     global-domain-identifier  GlobalDomainIdentifier,

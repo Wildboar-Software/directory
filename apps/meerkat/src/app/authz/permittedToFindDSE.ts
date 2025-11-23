@@ -1,29 +1,30 @@
 import type { ClientAssociation, Context, Vertex } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
-import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
-import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
+import { type ACDFTuple } from "@wildboar/x500";
+import { type ACDFTupleExtended } from "@wildboar/x500";
+import {
+    bacACDF,
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
-} from "@wildboar/x500/src/lib/bac/bacACDF";
+} from "@wildboar/x500";
 import accessControlSchemesThatUseACIItems from "./accessControlSchemesThatUseACIItems";
 import type {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import bacSettings from "./bacSettings";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import getACIItems from "./getACIItems";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
-import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
+import { getACDFTuplesFromACIItem } from "@wildboar/x500";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import type {
     AuthenticationLevel,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import preprocessTuples from "./preprocessTuples";
 import accessControlSchemesThatUseRBAC from "./accessControlSchemesThatUseRBAC";
 import dnToVertex from "../dit/dnToVertex";

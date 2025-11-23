@@ -1,5 +1,5 @@
 import { ClientAssociation } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import {
     MistypedArgumentError,
     SecurityError,
@@ -10,34 +10,34 @@ import {
     OPTIONAL,
     packBits,
     TRUE_BIT,
-} from "asn1-ts";
-import { ASN1Encoder, DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { ASN1Encoder, DER } from "@wildboar/asn1/functional";
 import type {
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import type {
     InvokeId,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     SecurityProblem_invalidSignature,
     SecurityProblem_invalidCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { printInvokeId } from "../utils/printInvokeId";
 import { verifyAnyCertPath } from "./verifyAnyCertPath";
 import { verifySignature, VCP_RETURN_OK } from "./verifyCertPath";
 import type {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters";
-import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import { RDNSequence } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RDNSequence.ta";
+import { securityError } from "@wildboar/x500/DirectoryAbstractService";
+import { RDNSequence } from "@wildboar/pki-stub";
 import { INTERNAL_ASSOCIATON_ID } from "../constants";
 import {
     KeyUsage_digitalSignature,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants";
 import { stringifyDN } from "../x500/stringifyDN";
 

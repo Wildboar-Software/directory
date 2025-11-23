@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { netscapeDS } from '../DSEE/netscapeDS.va';
 export { netscapeDS } from '../DSEE/netscapeDS.va';
 
@@ -16,7 +16,7 @@ export { netscapeDS } from '../DSEE/netscapeDS.va';
  *
  * @constant
  */
-export const nsdsoc: OBJECT_IDENTIFIER = new _OID([2], netscapeDS);
+export const nsdsoc: OBJECT_IDENTIFIER = _OID.fromParts([2], netscapeDS);
 /* END_OF_SYMBOL_DEFINITION nsdsoc */
 
 /* eslint-enable */

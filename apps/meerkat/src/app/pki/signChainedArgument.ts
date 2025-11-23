@@ -1,19 +1,19 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { unpackBits } from "asn1-ts";
+import { unpackBits } from "@wildboar/asn1";
 import {
     DER,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { generateSignature } from "./generateSignature";
 import {
     chainedRead,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DistributedOperations";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 
 /**
  * @summary Digitally sign a chained argument with this DSA's signing key

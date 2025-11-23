@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
-import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+import { NAME_FORM } from "@wildboar/x500/InformationFramework";
+import { commonName } from "@wildboar/x500/SelectedAttributeTypes";
 import { id_nf_atnAmhsDLNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnAmhsDLNameForm.va";
 import { atn_amhs_distribution_list } from "./atn-amhs-distribution-list.oa";
 

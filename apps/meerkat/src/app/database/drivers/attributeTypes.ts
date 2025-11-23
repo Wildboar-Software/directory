@@ -12,23 +12,23 @@ import type {
     SpecialAttributeValueDetector,
     AttributeInfo,
 } from "@wildboar/meerkat-types";
-import { FALSE, ObjectIdentifier } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
-import { attributeTypes } from "@wildboar/x500/src/lib/modules/SchemaAdministration/attributeTypes.oa";
-import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+import { FALSE, ObjectIdentifier } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
+import { attributeTypes } from "@wildboar/x500/SchemaAdministration";
+import { subschema } from "@wildboar/x500/SchemaAdministration";
 import {
     AttributeTypeDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     AttributeTypeInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeInformation.ta";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+} from "@wildboar/x500/SchemaAdministration";
+import { directoryStringToString } from "@wildboar/x500";
 import {
     AttributeUsage_dSAOperation,
     AttributeUsage_directoryOperation,
     AttributeUsage_distributedOperation,
     AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 import { Prisma, AttributeUsage as PrismaAttributeUsage } from "@prisma/client";
 import asn1SyntaxInfo from "../../x500/asn1SyntaxToInfo";
 

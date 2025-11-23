@@ -1,6 +1,6 @@
 import type {
     CommonResults,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonResults.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 type CommonResultsLike = { [K in keyof CommonResults]: CommonResults[K] };
 

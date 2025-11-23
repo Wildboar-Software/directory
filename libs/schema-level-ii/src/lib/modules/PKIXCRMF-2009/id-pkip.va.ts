@@ -2,7 +2,7 @@
 import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
-} from "asn1-ts";
+} from "@wildboar/asn1";
 
 
 /* START_OF_SYMBOL_DEFINITION id_pkip */
@@ -19,7 +19,7 @@ import {
  * @constant
  */
 export
-const id_pkip: OBJECT_IDENTIFIER = new _OID([ 1, 3, 6, 1, 5, 5, 7, 5 ]);
+const id_pkip: OBJECT_IDENTIFIER = _OID.fromParts([ 1, 3, 6, 1, 5, 5, 7, 5 ]);
 /* END_OF_SYMBOL_DEFINITION id_pkip */
 
 /* eslint-enable */

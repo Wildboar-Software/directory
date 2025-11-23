@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_pen } from '../Wildboar/id-pen.va';
 import { ID } from '../Wildboar/ID.ta';
 import { pen_wildboar } from '../Wildboar/pen-wildboar.va';
@@ -19,7 +19,7 @@ import { pen_wildboar } from '../Wildboar/pen-wildboar.va';
  *
  * @constant
  */
-export const id_wildboar: ID = new _OID([Number(pen_wildboar)], id_pen);
+export const id_wildboar: ID = _OID.fromParts([Number(pen_wildboar)], id_pen);
 /* END_OF_SYMBOL_DEFINITION id_wildboar */
 
 /* eslint-enable */

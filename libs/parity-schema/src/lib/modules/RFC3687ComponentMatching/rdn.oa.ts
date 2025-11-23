@@ -3,10 +3,10 @@ import {
     RelativeDistinguishedName,
     _decode_RelativeDistinguishedName,
     _encode_RelativeDistinguishedName,
-} from '@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta';
-import { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+} from '@wildboar/pki-stub';
+import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 import { id_lsx_rdn } from '../RFC3687ComponentMatching/id-lsx-rdn.va';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { id_lsx_rdn } from '../RFC3687ComponentMatching/id-lsx-rdn.va';
 
 /* START_OF_SYMBOL_DEFINITION rdn */

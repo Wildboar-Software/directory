@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_ppolicy_at } from '../LDAPPasswordPolicy/id-ppolicy-at.va';
 export { id_ppolicy_at } from '../LDAPPasswordPolicy/id-ppolicy-at.va';
 
@@ -16,7 +16,7 @@ export { id_ppolicy_at } from '../LDAPPasswordPolicy/id-ppolicy-at.va';
  *
  * @constant
  */
-export const id_at_pwdHistory: OBJECT_IDENTIFIER = new _OID(
+export const id_at_pwdHistory: OBJECT_IDENTIFIER = _OID.fromParts(
     [20],
     id_ppolicy_at
 );

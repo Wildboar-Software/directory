@@ -1,45 +1,45 @@
 import type { Connection, Context } from "../../../../types";
-import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
-import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
+import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
     modifyEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgument,
     _encode_ModifyEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     EntryModification,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/InformationFramework";
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
 import {
     serviceAdminSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import type {
     BecomeServiceSubentryArgs,
 } from "../../../../yargs/dap_mod_become_svcsub";
 import {
     SearchRuleDescription,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     RequestAttribute,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/RequestAttribute.ta";
+} from "@wildboar/x500/ServiceAdministration";
 import {
     ResultAttribute,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/ResultAttribute.ta";
+} from "@wildboar/x500/ServiceAdministration";
 import { lexRefinement } from "../../../../parsers/parseRefinement";
 import {
     FamilyGrouping,
@@ -47,34 +47,34 @@ import {
     FamilyGrouping_strands,
     FamilyGrouping_multiStrand,
     FamilyGrouping_compoundEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     searchRules,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/searchRules.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     EntryLimit,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/EntryLimit.ta";
+} from "@wildboar/x500/ServiceAdministration";
 import {
     ImposedSubset,
     ImposedSubset_baseObject,
     ImposedSubset_oneLevel,
     ImposedSubset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/ImposedSubset.ta";
+} from "@wildboar/x500/ServiceAdministration";
 import type {
     Refinement,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     AttributeCombination,
-} from "@wildboar/x500/src/lib/modules/ServiceAdministration/AttributeCombination.ta";
+} from "@wildboar/x500/ServiceAdministration";
 import {
     FamilyReturn_memberSelect,
     FamilyReturn_memberSelect_contributingEntriesOnly,
     FamilyReturn_memberSelect_participatingEntriesOnly,
     FamilyReturn_memberSelect_compoundEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyReturn,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 function familyGroupingFromString (str: string): FamilyGrouping {
     switch (str.trim().toLowerCase()) {

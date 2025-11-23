@@ -1,7 +1,7 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import {
     id_oc_child,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+} from "@wildboar/x500/InformationFramework";
 
 const CHILD: string = id_oc_child.toString();
 

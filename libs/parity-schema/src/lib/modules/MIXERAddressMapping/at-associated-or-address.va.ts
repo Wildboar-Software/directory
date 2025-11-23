@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { at } from '../MIXERAddressMapping/at.va';
 export { at } from '../MIXERAddressMapping/at.va';
 
@@ -16,7 +16,7 @@ export { at } from '../MIXERAddressMapping/at.va';
  *
  * @constant
  */
-export const at_associated_or_address: OBJECT_IDENTIFIER = new _OID([6], at);
+export const at_associated_or_address: OBJECT_IDENTIFIER = _OID.fromParts([6], at);
 /* END_OF_SYMBOL_DEFINITION at_associated_or_address */
 
 /* eslint-enable */

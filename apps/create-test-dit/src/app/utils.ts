@@ -1,21 +1,21 @@
 import type { Connection, Context } from "./types";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgument,
     _encode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import print from "./printCode";
-import { DER } from "asn1-ts/dist/node/functional";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+import { DER } from "@wildboar/asn1/functional";
+import { compareCode } from "@wildboar/x500";
 import {
     updateError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateProblem_entryAlreadyExists,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 
 export
 async function idempotentAddEntry (

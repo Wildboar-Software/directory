@@ -1,17 +1,17 @@
 /* eslint-disable */
-import { userCertificate } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/userCertificate.oa';
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { userCertificate } from '@wildboar/x500/AuthenticationFramework';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { businessCategory } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/businessCategory.oa';
-import { givenName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/givenName.oa';
-import { initials } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/initials.oa';
-import { organizationName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa';
-import { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
-import { uniqueIdentifier } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa';
-import { organizationalPerson } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalPerson.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { businessCategory } from '@wildboar/x500/SelectedAttributeTypes';
+import { givenName } from '@wildboar/x500/SelectedAttributeTypes';
+import { initials } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
+import { uid } from '@wildboar/x500/SelectedAttributeTypes';
+import { uniqueIdentifier } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationalPerson } from '@wildboar/x500/SelectedObjectClasses';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { audio } from '../Cosine/audio.oa';
 import { homePostalAddress } from '../Cosine/homePostalAddress.oa';
 import { homeTelephoneNumber } from '../Cosine/homeTelephoneNumber.oa';
@@ -29,8 +29,8 @@ import { employeeType } from '../InetOrgPerson/employeeType.oa';
 import { netscapeDirectory } from '../InetOrgPerson/netscapeDirectory.va';
 import { labeledURI } from '../OpenLDAPCoreSchema/labeledURI.oa';
 import { preferredLanguage } from './preferredLanguage.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -42,11 +42,11 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { businessCategory } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/businessCategory.oa';
-export { givenName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/givenName.oa';
-export { initials } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/initials.oa';
-export { organizationalPerson } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalPerson.oa';
+} from '@wildboar/x500/InformationFramework';
+export { businessCategory } from '@wildboar/x500/SelectedAttributeTypes';
+export { givenName } from '@wildboar/x500/SelectedAttributeTypes';
+export { initials } from '@wildboar/x500/SelectedAttributeTypes';
+export { organizationalPerson } from '@wildboar/x500/SelectedObjectClasses';
 export { audio } from '../Cosine/audio.oa';
 export { homePostalAddress } from '../Cosine/homePostalAddress.oa';
 export { homeTelephoneNumber } from '../Cosine/homeTelephoneNumber.oa';
@@ -141,7 +141,7 @@ export const inetOrgPerson: OBJECT_CLASS = {
     '&ldapName': ['inetOrgPerson'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'RFC2798: Internet Organizational Person' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [2, 2],
         netscapeDirectory
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

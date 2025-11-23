@@ -4,8 +4,8 @@ import type {
     PendingUpdates,
 } from "@wildboar/meerkat-types";
 import type { Prisma } from "@prisma/client";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
+import type { AttributeType } from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson";
 
 /**

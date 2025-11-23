@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_tai_at } from '../TAI/id-tai-at.va';
 export { id_tai_at } from '../TAI/id-tai-at.va';
 
@@ -16,7 +16,7 @@ export { id_tai_at } from '../TAI/id-tai-at.va';
  *
  * @constant
  */
-export const id_tai_at_bioSecLevelReference: OBJECT_IDENTIFIER = new _OID(
+export const id_tai_at_bioSecLevelReference: OBJECT_IDENTIFIER = _OID.fromParts(
     [1],
     id_tai_at
 );

@@ -1,51 +1,51 @@
 import type { Connection, Context } from "../../types";
-import { ObjectIdentifier, TRUE_BIT } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import { ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     list,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListArgument,
     _encode_ListArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListResult,
     _decode_ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import destringifyDN from "../../utils/destringifyDN";
 import printError from "../../printers/Error_";
 import {
     PagedResultsRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     PagedResultsRequest_newRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
-import * as sco from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import * as sco from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_priority_low,
     ServiceControls_priority_medium,
     ServiceControls_priority_high,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-priority.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_scopeOfReferral_country,
     ServiceControls_scopeOfReferral_dmd,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-scopeOfReferral.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { print as printListResult } from "../../printers/ListResult";
 
 function priorityFromString (str: string): ServiceControls["priority"] {

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { itu_t, ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { itu_t, ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION tc_NotationExtensions */
 /**
@@ -14,7 +14,7 @@ import { itu_t, ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const tc_NotationExtensions: OBJECT_IDENTIFIER = new _OID(
+export const tc_NotationExtensions: OBJECT_IDENTIFIER = _OID.fromParts(
     [
         0, 0, 17, 775, /* modules */ 2, /* notation-extension */ 4,
         /* version1 */ 1,

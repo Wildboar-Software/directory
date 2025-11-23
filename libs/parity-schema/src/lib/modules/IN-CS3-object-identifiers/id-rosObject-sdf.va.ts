@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_rosObject } from '../IN-CS3-object-identifiers/id-rosObject.va';
 export { id_rosObject } from '../IN-CS3-object-identifiers/id-rosObject.va';
 
@@ -16,7 +16,7 @@ export { id_rosObject } from '../IN-CS3-object-identifiers/id-rosObject.va';
  *
  * @constant
  */
-export const id_rosObject_sdf: OBJECT_IDENTIFIER = new _OID(
+export const id_rosObject_sdf: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* sdf */ 4],
     id_rosObject
 );

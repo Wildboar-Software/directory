@@ -1,13 +1,13 @@
-import { TRUE } from "asn1-ts";
+import { TRUE } from "@wildboar/asn1";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyReturn,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyReturn_memberSelect_compoundEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 export
 const selectAll = new EntryInformationSelection(

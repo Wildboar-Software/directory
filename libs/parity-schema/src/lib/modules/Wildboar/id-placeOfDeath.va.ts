@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { ds } from '../Wildboar/ds.va';
 import { ID } from '../Wildboar/ID.ta';
 export { ds } from '../Wildboar/ds.va';
@@ -18,7 +18,7 @@ export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
  *
  * @constant
  */
-export const id_placeOfDeath: ID = new _OID([52], ds);
+export const id_placeOfDeath: ID = _OID.fromParts([52], ds);
 /* END_OF_SYMBOL_DEFINITION id_placeOfDeath */
 
 /* eslint-enable */

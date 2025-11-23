@@ -10,12 +10,12 @@ import {
 } from "@wildboar/x500-client-ts";
 import {
     id_ac_directoryAccessAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
-import { FALSE, TRUE, TRUE_BIT } from "asn1-ts";
-import { BER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { FALSE, TRUE, TRUE_BIT } from "@wildboar/asn1";
+import { BER } from "@wildboar/asn1/functional";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     ServiceProblem_administrativeLimitExceeded,
@@ -36,7 +36,7 @@ import {
     ServiceProblem_notSupportedByLDAP,
     ServiceProblem_requestedServiceNotAvailable,
     ServiceProblem_saslBindInProgress,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_blockedCredentials,
     SecurityProblem_inappropriateAlgorithms,
@@ -49,30 +49,30 @@ import {
     SecurityProblem_protectionRequired,
     SecurityProblem_unsupportedAuthenticationMethod,
     SecurityProblem_spkmError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { Code } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     AbortReason,
     OperationOutcome,
     RejectReason,
 } from "@wildboar/rose-transport";
-import { DirectoryBindArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
-import { SearchResult } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData.ta";
-import { EntryInformation } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+import { DirectoryBindArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { SearchResult } from "@wildboar/x500/DirectoryAbstractService";
+import { EntryInformation } from "@wildboar/x500/DirectoryAbstractService";
 import { strict as assert } from "node:assert";
 import {
     AttributeValueAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+} from "@wildboar/x500/InformationFramework";
+import { userPwd } from "@wildboar/x500/PasswordPolicy";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { differenceInMilliseconds } from "date-fns";
 import { Socket, createConnection } from "node:net";
 import { TLSSocket, connect as tlsConnect, TLSSocketOptions } from "node:tls";
 import {
     TLSResponse_success,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 
 const DIRECTORY_URL_SCHEMES: string[] = [
     "idm",

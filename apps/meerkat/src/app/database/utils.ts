@@ -1,5 +1,6 @@
 import { Context, Vertex } from "@wildboar/meerkat-types";
-import { clearance, uniqueIdentifier } from "@wildboar/x500/src/lib/collections/attributes";
+import { clearance } from "@wildboar/x500/EnhancedSecurity";
+import { uniqueIdentifier } from "@wildboar/x500/SelectedAttributeTypes";
 import { attributeValueFromDB } from "./attributeValueFromDB";
 
 export

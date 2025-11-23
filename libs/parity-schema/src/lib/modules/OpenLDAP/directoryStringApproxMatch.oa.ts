@@ -1,18 +1,18 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-import { directoryString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/directoryString.oa';
+import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import { directoryString } from '@wildboar/x500/SelectedAttributeTypes';
 import {
     _decode_UnboundedDirectoryString,
     _encode_UnboundedDirectoryString,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { directoryString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/directoryString.oa';
+} from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { directoryString } from '@wildboar/x500/SelectedAttributeTypes';
 export {
     UnboundedDirectoryString,
     _decode_UnboundedDirectoryString,
     _encode_UnboundedDirectoryString,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 
 /* START_OF_SYMBOL_DEFINITION directoryStringApproxMatch */
 /**
@@ -45,7 +45,7 @@ export const directoryStringApproxMatch: MATCHING_RULE = {
     '&AssertionType': 0 as never,
     '&ldapSyntax': directoryString['&id'],
     '&ldapName': ['directoryStringApproxMatch'],
-    '&id': new _OID([1, 3, 6, 1, 4, 1, 4203, 666, 4, 4]),
+    '&id': _OID.fromParts([1, 3, 6, 1, 4, 1, 4203, 666, 4, 4]),
 };
 /* END_OF_SYMBOL_DEFINITION directoryStringApproxMatch */
 

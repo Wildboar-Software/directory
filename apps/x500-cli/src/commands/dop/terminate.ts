@@ -1,43 +1,43 @@
 import type { Connection, Context } from "../../types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import destringifyDN from "../../utils/destringifyDN";
 import {
     OperationalBindingID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData.ta";
-import { AccessPoint, _encode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { PresentationAddress } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
+import { AccessPoint, _encode_AccessPoint } from "@wildboar/x500/DistributedOperations";
+import { PresentationAddress } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { addSeconds } from "date-fns";
-import { ASN1Construction, ASN1TagClass, DERElement, ObjectIdentifier, unpackBits } from "asn1-ts";
+import { ASN1Construction, ASN1TagClass, DERElement, ObjectIdentifier, unpackBits } from "@wildboar/asn1";
 import { randomBytes, sign, createSign } from "crypto";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     establishOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { getAlgorithmInfoFromKey } from "../../crypto/getAlgorithmInfoFromKey";
 import printError from "../../printers/Error_";
 import { uriToNSAP } from "@wildboar/x500";
 import {
     TerminateOperationalBindingArgumentData,
     _encode_TerminateOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgumentData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     TerminateOperationalBindingArgument,
     _encode_TerminateOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     terminateOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/terminateOperationalBinding.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 
 export
 async function do_terminate (

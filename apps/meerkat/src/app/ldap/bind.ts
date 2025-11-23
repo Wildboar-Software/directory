@@ -1,12 +1,12 @@
 import type { Context, BindReturn } from "@wildboar/meerkat-types";
 import type {
     BindRequest,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindRequest.ta";
+} from "@wildboar/ldap";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
 import {
     BindResponse,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/BindResponse.ta";
+} from "@wildboar/ldap";
 import dnToVertex from "../dit/dnToVertex";
 import decodeLDAPDN from "./decodeLDAPDN";
 import encodeLDAPDN from "./encodeLDAPDN";
@@ -16,22 +16,22 @@ import {
     LDAPResult_resultCode_protocolError,
     LDAPResult_resultCode_invalidCredentials,
     LDAPResult_resultCode_authMethodNotSupported,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
+} from "@wildboar/ldap";
 import attemptPassword from "../authn/attemptPassword";
 import readEntryPassword from "../database/readEntryPassword";
-import type { AuthenticationLevel } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
-import { AuthenticationLevel_basicLevels } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import type { AuthenticationLevel } from "@wildboar/x500/BasicAccessControl";
+import { AuthenticationLevel_basicLevels } from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_simple,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     PwdResponseValue_error_passwordExpired,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
-import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { SimpleCredentials } from "@wildboar/x500/DirectoryAbstractService";
 import { read_unique_id, read_clearance } from "../database/utils";
 
 export

@@ -1,84 +1,84 @@
 import type DOPAssociation from "../DOPConnection";
 import * as errors from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import type {
     TerminateOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import type {
     OperationalBindingID,
     TerminateOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgumentData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import type {
     TerminateOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResult.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     TerminateOperationalBindingResultData,
     _encode_TerminateOperationalBindingResultData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResultData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     OpBindingErrorParam,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     OpBindingErrorParam_problem_unsupportedBindingType,
     OpBindingErrorParam_problem_invalidID,
     OpBindingErrorParam_problem_currentlyNotDecidable,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
-import { ASN1Construction, ASN1TagClass, FALSE, OBJECT_IDENTIFIER, packBits, unpackBits } from "asn1-ts";
+} from "@wildboar/x500/OperationalBindingManagement";
+import { ASN1Construction, ASN1TagClass, FALSE, OBJECT_IDENTIFIER, packBits, unpackBits } from "@wildboar/asn1";
 import { differenceInMilliseconds } from "date-fns";
 import terminate from "../terminateByID";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     id_err_operationalBindingError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-err-operationalBindingError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import { setTimeout as safeSetTimeout } from "safe-timers";
 import { getDateFromOBTime } from "../getDateFromOBTime";
 import { printInvokeId } from "../../utils/printInvokeId";
 import {
     InvokeId,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { generateSignature } from "../../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import {
     id_op_terminateOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-terminateOperationalBinding.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import { rdnFromJson } from "../../x500/rdnFromJson";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     compareDistinguishedName,
 } from "@wildboar/x500";
 import {
     SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import { MeerkatContext } from "../../ctx";
-import { AccessPoint, _decode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import { MeerkatContext } from "../../ctx.js";
+import { AccessPoint, _decode_AccessPoint } from "@wildboar/x500/DistributedOperations";
 import { terminateByTypeAndBindingID } from "../terminateByTypeAndBindingID";
 import { timingSafeEqual } from "crypto";
 import {
     id_op_binding_non_specific_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import stringifyDN from "../../x500/stringifyDN";
 import {
     id_op_binding_shadow,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { cacheNamingContexts } from "../../dit/cacheNamingContexts";
 
 

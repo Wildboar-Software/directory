@@ -3,11 +3,11 @@ import {
     PwdVocabulary_noDictionaryWords,
     PwdVocabulary_noGeographicalNames,
     PwdVocabulary_noPersonNames,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/PwdVocabulary.ta";
-import { BERElement, BIT_STRING, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+} from "@wildboar/x500/PasswordPolicy";
+import { BERElement, BIT_STRING, ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
 import {
     _decode_UserPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import encryptPassword from "../authn/encryptPassword";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
 import { strict as assert } from "node:assert";
@@ -21,10 +21,10 @@ import {
     pwdMinLength,
     pwdMinTimeInHistory,
     pwdVocabulary,
-} from "@wildboar/x500/src/lib/collections/attributes";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdMaxLength,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa.js";
 import { groupByOID } from "../utils/groupByOID";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
 

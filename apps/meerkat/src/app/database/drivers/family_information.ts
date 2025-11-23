@@ -13,7 +13,7 @@ import type {
 import NOOP from "./NOOP";
 import {
     parent,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
+} from "@wildboar/x500/InformationFramework";
 
 const PARENT: string = parent["&id"].toString();
 

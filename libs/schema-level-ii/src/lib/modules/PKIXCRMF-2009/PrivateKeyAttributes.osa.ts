@@ -1,5 +1,5 @@
 /* eslint-disable */
-import type { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 
 /* START_OF_SYMBOL_DEFINITION PrivateKeyAttributes */
 /**

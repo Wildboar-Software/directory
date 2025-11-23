@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { krb5AccountDisabled } from '../KerberosV5KeyDistributionCenter/krb5AccountDisabled.oa';
 import { krb5AccountExpirationTime } from '../KerberosV5KeyDistributionCenter/krb5AccountExpirationTime.oa';
 import { krb5AccountLockedOut } from '../KerberosV5KeyDistributionCenter/krb5AccountLockedOut.oa';
@@ -17,8 +17,8 @@ import { krb5PasswordEnd } from '../KerberosV5KeyDistributionCenter/krb5Password
 import { krb5Principal } from '../KerberosV5KeyDistributionCenter/krb5Principal.oa';
 import { krb5ValidEnd } from '../KerberosV5KeyDistributionCenter/krb5ValidEnd.oa';
 import { krb5ValidStart } from '../KerberosV5KeyDistributionCenter/krb5ValidStart.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -30,7 +30,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { krb5AccountDisabled } from '../KerberosV5KeyDistributionCenter/krb5AccountDisabled.oa';
 export { krb5AccountExpirationTime } from '../KerberosV5KeyDistributionCenter/krb5AccountExpirationTime.oa';
 export { krb5AccountLockedOut } from '../KerberosV5KeyDistributionCenter/krb5AccountLockedOut.oa';
@@ -100,7 +100,7 @@ export const krb5KDCEntry: OBJECT_CLASS = {
         krb5AccountExpirationTime,
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['krb5KDCEntry'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 5322, 10, 2, 2,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

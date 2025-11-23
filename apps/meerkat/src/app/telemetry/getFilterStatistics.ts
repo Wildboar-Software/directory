@@ -5,11 +5,11 @@ import type {
     MatchingRuleAssertionStatistics,
     AttributeTypeAssertionStatistics,
 } from "@wildboar/meerkat-types";
-import type { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import type { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
-import type { FilterItem_substrings } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem-substrings.ta";
-import type { MatchingRuleAssertion } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/MatchingRuleAssertion.ta";
-import type { AttributeTypeAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAssertion.ta";
+import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
+import type { FilterItem_substrings } from "@wildboar/x500/DirectoryAbstractService";
+import type { MatchingRuleAssertion } from "@wildboar/x500/DirectoryAbstractService";
+import type { AttributeTypeAssertion } from "@wildboar/x500/InformationFramework";
 import getStatisticsFromAttributeValueAssertion from "./getStatisticsFromAttributeValueAssertion";
 
 function getMatchingRuleAssertionStatistics (mra: MatchingRuleAssertion): MatchingRuleAssertionStatistics {

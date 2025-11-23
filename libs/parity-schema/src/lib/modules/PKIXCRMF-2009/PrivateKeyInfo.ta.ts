@@ -3,15 +3,15 @@ import {
     AlgorithmIdentifier,
     _decode_AlgorithmIdentifier,
     _encode_AlgorithmIdentifier,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     INTEGER,
     OCTET_STRING,
     OPTIONAL,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     Attributes,
     _decode_Attributes,
@@ -21,7 +21,7 @@ export {
     AlgorithmIdentifier,
     _decode_AlgorithmIdentifier,
     _encode_AlgorithmIdentifier,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 export {
     Attributes,
     _decode_Attributes,

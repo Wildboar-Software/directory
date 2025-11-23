@@ -11,28 +11,22 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
     supportedControl,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedControl.oa";
+} from "@wildboar/x500/LdapSystemSchema";
 import {
-    simpledPagedResults,
-    sortRequest,
-    sortResponse,
-    postread,
-    subentries,
-    managedDSAIT,
-    dontUseCopy,
-} from "@wildboar/ldap/src/lib/controls";
+    controls as ldapControls,
+} from "@wildboar/ldap";
 
 const controls = [
-    simpledPagedResults,
-    sortRequest,
-    sortResponse,
-    postread,
-    subentries,
-    managedDSAIT,
-    dontUseCopy,
+    ldapControls.simpledPagedResults,
+    ldapControls.sortRequest,
+    ldapControls.sortResponse,
+    ldapControls.postread,
+    ldapControls.subentries,
+    ldapControls.managedDSAIT,
+    ldapControls.dontUseCopy,
 ];
 
 export

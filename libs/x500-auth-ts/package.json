@@ -1,6 +1,5 @@
 {
     "name": "@wildboar/x500-auth",
     "version": "0.2.1",
-    "type": "commonjs",
     "license": "MIT"
 }

@@ -4,13 +4,13 @@ import type {
 } from "@wildboar/meerkat-types";
 import type {
     JoinArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/JoinArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     JoinAttPair,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/JoinAttPair.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getFilterStatistics from "./getFilterStatistics";
 import getEntryInformationSelectionStatistics from "./getEntryInformationSelectionStatistics";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+import { directoryStringToString } from "@wildboar/x500";
 
 function getJoinAttPairStatistics (jap: JoinAttPair): JoinAttPairStatistics {
     return {

@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { ads_dsBasedServer } from '../ApacheDirectoryConfig/ads-dsBasedServer.oa';
 import { ads_krbAllowableClockSkew } from '../ApacheDirectoryConfig/ads-krbAllowableClockSkew.oa';
 import { ads_krbBodyChecksumVerified } from '../ApacheDirectoryConfig/ads-krbBodyChecksumVerified.oa';
@@ -17,8 +17,8 @@ import { ads_krbPostdatedAllowed } from '../ApacheDirectoryConfig/ads-krbPostdat
 import { ads_krbPrimaryRealm } from '../ApacheDirectoryConfig/ads-krbPrimaryRealm.oa';
 import { ads_krbProxiableAllowed } from '../ApacheDirectoryConfig/ads-krbProxiableAllowed.oa';
 import { ads_krbRenewableAllowed } from '../ApacheDirectoryConfig/ads-krbRenewableAllowed.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -30,7 +30,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { ads_dsBasedServer } from '../ApacheDirectoryConfig/ads-dsBasedServer.oa';
 export { ads_krbAllowableClockSkew } from '../ApacheDirectoryConfig/ads-krbAllowableClockSkew.oa';
 export { ads_krbBodyChecksumVerified } from '../ApacheDirectoryConfig/ads-krbBodyChecksumVerified.oa';
@@ -100,7 +100,7 @@ export const ads_kdcServer: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['ads-kdcServer'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'The KerberosServer ObjectClass' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 18060, 0, 4, 1, 3, 400,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
     '&kind': structural /* OBJECT_FIELD_SETTING DEFAULT_OBJECT_FIELD_SETTING */,

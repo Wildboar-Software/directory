@@ -2,7 +2,7 @@
 import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { id_regCtrl } from "../PKIXCRMF-2009/id-regCtrl.va";
 
 
@@ -20,7 +20,7 @@ import { id_regCtrl } from "../PKIXCRMF-2009/id-regCtrl.va";
  * @constant
  */
 export
-const id_regCtrl_pkiArchiveOptions: OBJECT_IDENTIFIER = new _OID([
+const id_regCtrl_pkiArchiveOptions: OBJECT_IDENTIFIER = _OID.fromParts([
     4,
 ], id_regCtrl);
 /* END_OF_SYMBOL_DEFINITION id_regCtrl_pkiArchiveOptions */

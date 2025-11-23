@@ -1,11 +1,11 @@
 import * as pem from "pem-ts";
 import {
     _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import type {
     PkiPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/PkiPath.ta";
-import { BERElement } from "asn1-ts";
+} from "@wildboar/x500/AuthenticationFramework";
+import { BERElement } from "@wildboar/asn1";
 
 /**
  * @summary Produce a `PkiPath` from a PEM-encoded X.509 certificate chain.

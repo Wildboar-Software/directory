@@ -11,14 +11,14 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
-import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
-import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+import { DER } from "@wildboar/asn1/functional";
+import { dITStructureRules } from "@wildboar/x500/SchemaAdministration";
+import { subschema } from "@wildboar/x500/SchemaAdministration";
+import { directoryStringToString } from "@wildboar/x500";
 import {
     id_ar_subschemaAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
-import checkNameForm from "@wildboar/x500/src/lib/utils/checkNameForm";
+} from "@wildboar/x500/InformationFramework";
+import { checkNameForm } from "@wildboar/x500";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 const ID_AR_SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();

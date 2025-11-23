@@ -12,10 +12,10 @@ import type {
     PendingUpdates,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
+import { DER, _encodeGeneralizedTime } from "@wildboar/asn1/functional";
 import {
     createTimestamp,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
+} from "@wildboar/x500/InformationFramework";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

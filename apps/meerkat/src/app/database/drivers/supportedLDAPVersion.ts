@@ -11,10 +11,10 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     supportedLDAPVersion,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedLDAPVersion.oa";
+} from "@wildboar/x500/LdapSystemSchema";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

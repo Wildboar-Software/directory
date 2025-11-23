@@ -3,9 +3,9 @@ import {
     TBSAttributeCertificate,
     _decode_TBSAttributeCertificate,
     _encode_TBSAttributeCertificate,
-} from '@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/TBSAttributeCertificate.ta';
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/AttributeCertificateDefinitions';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 
 /* START_OF_SYMBOL_DEFINITION BiometricPolicyCertificateInfo */
 /**

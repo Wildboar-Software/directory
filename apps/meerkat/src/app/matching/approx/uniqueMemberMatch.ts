@@ -1,11 +1,11 @@
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
-import type { ASN1Element } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import type { ASN1Element } from "@wildboar/asn1";
 import {
     NameAndOptionalUID,
     _decode_NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { compareDistinguishedName } from "@wildboar/x500";
 
 export
 const uniqueMemberMatch: EqualityMatcher = (

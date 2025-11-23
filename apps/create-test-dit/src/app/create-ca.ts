@@ -8,61 +8,61 @@ import {
     ObjectIdentifier,
     ASN1Element,
     INTEGER,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { KeyObject, createHash, createPrivateKey, createSign, randomBytes } from "crypto";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgument,
     _encode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue, _encode_AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import * as selat from "@wildboar/x500/src/lib/collections/attributes";
-import * as seloc from "@wildboar/x500/src/lib/collections/objectClasses";
+} from "@wildboar/x500/InformationFramework";
+import { attributes as selat } from "@wildboar/x500";
+import { objectClasses as seloc } from "@wildboar/x500";
 import {
     subentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     collectiveAttributeSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     accessControlSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     pwdAdminSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     subschema,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     SubtreeSpecification,
     _encode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControlOptions,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { SecurityParameters } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ProtectionRequest_none,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_none,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import print from "./printCode";
 import {
     DER,
@@ -73,86 +73,87 @@ import {
     _encodePrintableString,
     _encodeUTF8String,
     // _encodeNumericString,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     dITStructureRules,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITStructureRuleDescription,
     _encode_DITStructureRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     dITContentRules,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContentRuleDescription,
     _encode_DITContentRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     dITContextUse,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContextUseDescription,
     _encode_DITContextUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContextUseInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
-import * as nf from "@wildboar/x500/src/lib/collections/nameForms";
-import * as oc from "@wildboar/x500/src/lib/collections/objectClasses";
-import * as at from "@wildboar/x500/src/lib/collections/attributes";
-import * as ct from "@wildboar/x500/src/lib/collections/contexts";
+} from "@wildboar/x500/SchemaAdministration";
+import { nameForms as nf } from "@wildboar/x500";
+import { objectClasses as oc } from "@wildboar/x500";
+import { attributes as at } from "@wildboar/x500";
+import { contexts as ct } from "@wildboar/x500";
 import {
     id_oa_allAttributeTypes,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     prescriptiveACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     ANONYMOUS_BASELINE,
     AUTHENTICATED_USER_BASELINE,
     AUTHENTICATED_USER_SELF_BASELINE,
     GLOBAL_DIRECTORY_ADMIN_BASELINE,
 } from "./aci";
-import { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+import { RDNSequence } from "@wildboar/x500/InformationFramework";
+import { compareCode } from "@wildboar/x500";
 import {
     updateError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateProblem_entryAlreadyExists, UpdateProblem_namingViolation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { Name } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { Name } from "@wildboar/x500/InformationFramework";
+import { SIGNED, HASH } from "@wildboar/x500/AuthenticationFramework";
 import {
     id_ar_accessControlSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
+} from "@wildboar/x500/InformationFramework";
 import { idempotentAddEntry } from "./utils";
 import {
     Attribute_valuesWithContext_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Context as X500Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import { commonAuxiliaryObjectClasses } from "./objectClassSets";
 import {
     inetOrgPersonNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa.js";
 import {
     rule_based_access_control,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/rule-based-access-control.va";
-import { HASH, SecurityLabel, SignedSecurityLabelContent, _encode_SignedSecurityLabelContent } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabelContent.ta";
-import { SIGNED, SignedSecurityLabel } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
+} from "@wildboar/x500/BasicAccessControl";
+import { SecurityLabel, SignedSecurityLabelContent, _encode_SignedSecurityLabelContent } from "@wildboar/x500/EnhancedSecurity";
+import { SignedSecurityLabel } from "@wildboar/x500/EnhancedSecurity";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { sha256WithRSAEncryption } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha256WithRSAEncryption.va";
-import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
-import { SecurityClassification_confidential, SecurityClassification_restricted, SecurityClassification_secret, SecurityClassification_top_secret, SecurityClassification_unmarked } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SecurityClassification.ta";
-import { id_sha256 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
-import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import { sha256WithRSAEncryption } from "@wildboar/x500/AlgorithmObjectIdentifiers";
+import { AlgorithmIdentifier } from "@wildboar/pki-stub";
+import { SecurityClassification_confidential, SecurityClassification_restricted, SecurityClassification_secret, SecurityClassification_top_secret, SecurityClassification_unmarked } from "@wildboar/x500/EnhancedSecurity";
+import { id_sha256 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
+import { AttributeType } from "@wildboar/x500/InformationFramework";
 import { addHours } from "date-fns";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
@@ -849,7 +850,7 @@ function secLabel (
     classification: INTEGER,
 ): X500Context | null {
     const atav = new AttributeTypeAndValue(type, value);
-    const atav_bytes = _encode_AttributeTypeAndValue(atav, DER).toBytes();
+    const atav_bytes = _encode_AttributeTypeAndValue(atav).toBytes();
     const slc = new SignedSecurityLabelContent(
         new HASH(
             new AlgorithmIdentifier(id_sha256),
@@ -858,7 +859,7 @@ function secLabel (
         issuerName,
         undefined,
         new SecurityLabel(
-            new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 56490, 403, 1 ]),
+            ObjectIdentifier.fromParts([ 1, 3, 6, 1, 4, 1, 56490, 403, 1 ]),
             classification,
             (classification === SecurityClassification_secret) ? "SECRET" : undefined,
             undefined,

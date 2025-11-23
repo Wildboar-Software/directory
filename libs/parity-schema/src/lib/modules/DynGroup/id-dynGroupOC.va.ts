@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_dynGroupBase } from '../DynGroup/id-dynGroupBase.va';
 export { id_dynGroupBase } from '../DynGroup/id-dynGroupBase.va';
 
@@ -16,7 +16,7 @@ export { id_dynGroupBase } from '../DynGroup/id-dynGroupBase.va';
  *
  * @constant
  */
-export const id_dynGroupOC: OBJECT_IDENTIFIER = new _OID([2], id_dynGroupBase);
+export const id_dynGroupOC: OBJECT_IDENTIFIER = _OID.fromParts([2], id_dynGroupBase);
 /* END_OF_SYMBOL_DEFINITION id_dynGroupOC */
 
 /* eslint-enable */

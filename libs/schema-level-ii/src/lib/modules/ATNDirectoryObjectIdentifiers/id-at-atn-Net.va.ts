@@ -2,7 +2,7 @@
 import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { id_at } from "../ATNDirectoryObjectIdentifiers/id-at.va";
 
 
@@ -20,7 +20,7 @@ import { id_at } from "../ATNDirectoryObjectIdentifiers/id-at.va";
  * @constant
  */
 export
-const id_at_atn_Net: OBJECT_IDENTIFIER = new _OID([
+const id_at_atn_Net: OBJECT_IDENTIFIER = _OID.fromParts([
     11,
 ], id_at);
 /* END_OF_SYMBOL_DEFINITION id_at_atn_Net */

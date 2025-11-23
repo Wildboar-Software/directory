@@ -1,24 +1,21 @@
-import { OBJECT_IDENTIFIER, ASN1Element, packBits, EXTERNAL } from "asn1-ts";
-import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
-import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import splitGrantsAndDenials from "@wildboar/x500/src/lib/bac/splitGrantsAndDenials";
-import userWithinACIUserClass from "@wildboar/x500/src/lib/bac/userWithinACIUserClass";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type {
-    AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import type {
-    DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { OBJECT_IDENTIFIER, ASN1Element, packBits, EXTERNAL } from "@wildboar/asn1";
+import type { AttributeType, DistinguishedName } from "@wildboar/x500/InformationFramework";
 import type {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import type {
     AuthenticationLevel,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
-import compareAuthenticationLevel from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
-import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
+import {
+    type ACDFTuple,
+    type ACDFTupleExtended,
+    type EqualityMatcher,
+    compareElements,
+    splitGrantsAndDenials,
+    userWithinACIUserClass,
+    compareAuthenticationLevel,
+} from "@wildboar/x500";
 
 /**
  * @summary Compares two EXTERNALs

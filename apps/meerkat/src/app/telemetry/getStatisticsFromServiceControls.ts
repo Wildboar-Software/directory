@@ -1,7 +1,7 @@
 import type { ServiceControlStatistics } from "@wildboar/meerkat-types";
 import type {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControlOptions_preferChaining,
     ServiceControlOptions_chainingProhibited,
@@ -18,8 +18,8 @@ import {
     ServiceControlOptions_dontSelectFriends,
     ServiceControlOptions_dontMatchFriends,
     ServiceControlOptions_allowWriteableCopy,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { TRUE_BIT } from "asn1-ts";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { TRUE_BIT } from "@wildboar/asn1";
 
 export
 function getStatisticsFromServiceControls (sc: ServiceControls): ServiceControlStatistics {

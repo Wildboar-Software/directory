@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_james_kempf } from '../RFC2926ServiceLocationProtocolSchema/id-james-kempf.va';
 import { service_advert_attribute_authenticator } from '../RFC2926ServiceLocationProtocolSchema/service-advert-attribute-authenticator.oa';
 import { service_advert_scopes } from '../RFC2926ServiceLocationProtocolSchema/service-advert-scopes.oa';
@@ -14,8 +14,8 @@ import { service_advert_url_authenticator } from '../RFC2926ServiceLocationProto
 import { template_major_version_number } from '../RFC2926ServiceLocationProtocolSchema/template-major-version-number.oa';
 import { template_minor_version_number } from '../RFC2926ServiceLocationProtocolSchema/template-minor-version-number.oa';
 import { template_url_syntax } from '../RFC2926ServiceLocationProtocolSchema/template-url-syntax.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -27,8 +27,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
+} from '@wildboar/x500/InformationFramework';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_james_kempf } from '../RFC2926ServiceLocationProtocolSchema/id-james-kempf.va';
 export { service_advert_attribute_authenticator } from '../RFC2926ServiceLocationProtocolSchema/service-advert-attribute-authenticator.oa';
 export { service_advert_scopes } from '../RFC2926ServiceLocationProtocolSchema/service-advert-scopes.oa';
@@ -92,7 +92,7 @@ export const slpService: OBJECT_CLASS = {
     '&ldapName': ['slpService'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'authentication password mix in class' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [2, 27, 6, 2, 1],
         id_james_kempf
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

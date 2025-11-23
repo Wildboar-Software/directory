@@ -1,72 +1,70 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
-import { ASN1Element } from "asn1-ts";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+import { type LDAPSyntaxEncoder } from "@wildboar/ldap";
+import { ASN1Element } from "@wildboar/asn1";
+import { directoryStringToString } from "@wildboar/x500";
 import encodeLDAPDN from "./encodeLDAPDN";
 import type {
     UnboundedDirectoryString as UBS,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_ObjectClassDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_AttributeTypeDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/AttributeTypeDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_MatchingRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_MatchingRuleUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_DITContentRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_DITStructureRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_LdapSyntaxDescription,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
+} from "@wildboar/x500/LdapSystemSchema";
 import {
     ObjectClassKind,
     ObjectClassKind_abstract,
     ObjectClassKind_auxiliary,
     ObjectClassKind_structural,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeUsage,
     AttributeUsage_dSAOperation,
     AttributeUsage_directoryOperation,
     AttributeUsage_distributedOperation,
     AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     _decode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Refinement,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+} from "@wildboar/x500/InformationFramework";
 import { phone } from "phone";
 import {
     _decode_BootParameterSyntax,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta.js";
 import {
     _decode_NISNetgroupTripleSyntax,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/NISNetgroupTripleSyntax.ta";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/NISNetgroupTripleSyntax.ta.js";
 import {
     _decode_ComponentFilter,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/ComponentFilter.ta";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/ComponentFilter.ta.js";
 import {
     _decode_RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
-import stringifyRDNSequence from "@wildboar/ldap/src/lib/stringifiers/RDNSequence";
-import { _decode_UiiFormat } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UiiFormat.ta";
-import { uii } from "@wildboar/x500/src/lib/collections/attributes";
-import { UiiFilter } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UiiFilter.ta";
-import { _decode_EpcFormat } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/EpcFormat.ta";
+} from "@wildboar/x500/InformationFramework";
+import { _decode_UiiFormat } from "@wildboar/x500/SelectedAttributeTypes";
+import { UiiFilter } from "@wildboar/x500/SelectedAttributeTypes";
+import { _decode_EpcFormat } from "@wildboar/x500/SelectedAttributeTypes";
 
 function escapeUBS (str: UBS): string {
     return directoryStringToString(str)

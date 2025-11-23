@@ -1,4 +1,4 @@
-import { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import { Attribute } from "@wildboar/x500/InformationFramework";
 import { randomInt, randomBytes } from "node:crypto";
 import {
     DERElement,
@@ -6,120 +6,120 @@ import {
     ASN1TagClass,
     ASN1Construction,
     ASN1UniversalType,
-} from "asn1-ts";
-import { DER, _encodeInteger, _encodeUTF8String } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { DER, _encodeInteger, _encodeUTF8String } from "@wildboar/asn1/functional";
 import type {
     RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     surname,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     localityName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     stateOrProvinceName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/stateOrProvinceName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     streetAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/streetAddress.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     physicalDeliveryOfficeName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/physicalDeliveryOfficeName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     postalAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalAddress.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     postalCode,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalCode.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     postOfficeBox,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postOfficeBox.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     facsimileTelephoneNumber,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/facsimileTelephoneNumber.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     internationalISDNNumber,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/internationalISDNNumber.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     telephoneNumber,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumber.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     description,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     userPassword,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     FacsimileTelephoneNumber,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/FacsimileTelephoneNumber.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     person,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     residentialPerson,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/residentialPerson.oa";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+} from "@wildboar/x500/SelectedObjectClasses";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     TBSCertificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/TBSCertificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     Version_v3,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Version.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     Validity,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Validity.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     SubjectPublicKeyInfo,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     Extension,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extension.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     sha256WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha256WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     rsaEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/rsaEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     subjectAltName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     cRLNumber,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/cRLNumber.oa";
+} from "@wildboar/x500/CertificateExtensions";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     CertificateList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     CertificateListContent,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateListContent.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     CertificateListContent_revokedCertificates_Item as RevokedCert,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateListContent-revokedCertificates-Item.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { addDays } from "date-fns";
-import { organization } from "@wildboar/x500/src/lib/collections/objectClasses";
-import { businessCategory, organizationName } from "@wildboar/x500/src/lib/collections/attributes";
+import { organization } from "@wildboar/x500/SelectedObjectClasses";
+import { businessCategory, organizationName } from "@wildboar/x500/SelectedAttributeTypes";
 
 const firstNames: string[] = [
     "Liam",

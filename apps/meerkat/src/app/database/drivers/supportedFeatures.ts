@@ -11,22 +11,17 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
     supportedFeatures,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedFeatures.oa";
-import {
-    modifyIncrement,
-    trueFalseFilters,
-    allOpAttrs,
-    ocadLists,
-} from "@wildboar/ldap/src/lib/feature";
+} from "@wildboar/x500/LdapSystemSchema";
+import { features as ldapFeatures } from "@wildboar/ldap";
 
 const features = [
-    modifyIncrement,
-    trueFalseFilters,
-    allOpAttrs,
-    ocadLists,
+    ldapFeatures.modifyIncrement,
+    ldapFeatures.trueFalseFilters,
+    ldapFeatures.allOpAttrs,
+    ldapFeatures.ocadLists,
 ];
 
 export

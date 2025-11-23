@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
+import { NAME_FORM } from "@wildboar/x500/InformationFramework";
 import { atn_facility_name } from "../ATNDirectoryObjectIdentifiers/atn-facility-name.oa";
 import { atn_facility } from "../ATNDirectoryObjectIdentifiers/atn-facility.oa";
 import { id_nf_atnFacilityNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnFacilityNameForm.va";

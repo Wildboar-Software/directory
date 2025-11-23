@@ -1,7 +1,7 @@
 import type { Vertex } from "@wildboar/meerkat-types";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Given a vertex, recurses up the internal DIT to produce its distinguished name

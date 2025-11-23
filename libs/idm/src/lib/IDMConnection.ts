@@ -2,46 +2,46 @@ import * as net from "net";
 import * as tls from "tls";
 import IDMVersion from "./IDMVersion";
 import IDMSegment from "./IDMSegment";
-import { BERElement, ASN1Element, INTEGER, OBJECT_IDENTIFIER } from "asn1-ts";
+import { BERElement, ASN1Element, INTEGER, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     IDM_PDU,
     _decode_IDM_PDU,
     _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
-import { Error as IDMError } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Error.ta";
-import { IdmReject } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject.ta";
-import { IdmResult } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmResult.ta";
-import { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
-import { Unbind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Unbind.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
+import { Error as IDMError } from "@wildboar/x500/IDMProtocolSpecification";
+import { IdmReject } from "@wildboar/x500/IDMProtocolSpecification";
+import { IdmResult } from "@wildboar/x500/IDMProtocolSpecification";
+import { Request } from "@wildboar/x500/IDMProtocolSpecification";
+import { Unbind } from "@wildboar/x500/IDMProtocolSpecification";
 import {
     Abort,
     Abort_invalidPDU,
     Abort_unboundRequest,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
-import type { IdmReject_reason } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
-import type { GeneralName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
-import { EventEmitter } from "events";
+} from "@wildboar/x500/IDMProtocolSpecification";
+import type { IdmReject_reason } from "@wildboar/x500/IDMProtocolSpecification";
+import type { GeneralName } from "@wildboar/x500/CertificateExtensions";
+import { EventEmitter } from "node:events";
 import type IDMEventEmitter from "./IDMEventEmitter";
-import { BER } from "asn1-ts/dist/node/functional";
+import { BER } from "@wildboar/asn1/functional";
 import {
     IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     IdmBindResult,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindResult.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     IdmBindError,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     TLSResponse,
     TLSResponse_success,
     TLSResponse_operationsError,
     TLSResponse_protocolError,
     TLSResponse_unavailable,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     IDM_WARN_PADDING_AFTER_PDU,
     IDM_WARN_DOUBLE_START_TLS,

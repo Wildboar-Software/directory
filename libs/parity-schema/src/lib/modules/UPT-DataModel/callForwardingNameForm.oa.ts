@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { callForwarding } from '../UPT-DataModel/callForwarding.oa';
 import { id_nf_callForwardingNameForm } from '../UPT-DataModel/id-nf-callForwardingNameForm.va';
 import { supplServId } from '../UPT-DataModel/supplServId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export { callForwarding } from '../UPT-DataModel/callForwarding.oa';
 export { id_nf_callForwardingNameForm } from '../UPT-DataModel/id-nf-callForwardingNameForm.va';
 export { supplServId } from '../UPT-DataModel/supplServId.oa';

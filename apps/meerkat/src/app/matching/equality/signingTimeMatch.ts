@@ -1,8 +1,6 @@
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element } from "asn1-ts";
-import {
-    _decode_SigningTime,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/SigningTime.ta";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
+import { _decode_SigningTime } from "@wildboar/pkcs/PKCS-9";
 import { getDateFromTime } from "@wildboar/x500";
 
 export

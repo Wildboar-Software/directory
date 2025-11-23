@@ -1,10 +1,10 @@
 import type { Vertex } from "@wildboar/meerkat-types";
 import {
     id_oc_parent,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-parent.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_oc_child,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Determine whether an entry is compound

@@ -1,10 +1,10 @@
 import type {
     RelativeDistinguishedName as RDN,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import { ASN1Element, BERElement, ObjectIdentifier } from "asn1-ts";
+} from "@wildboar/x500/InformationFramework";
+import { ASN1Element, BERElement, ObjectIdentifier } from "@wildboar/asn1";
 
 /**
  * @summary Converts a JSON-encoded relative distinguished name to a normal relative distinguished name

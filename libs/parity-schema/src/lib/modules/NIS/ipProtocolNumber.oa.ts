@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { integer } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa';
-import { integerMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerMatch.oa';
-import { integerOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerOrderingMatch.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { integer } from '@wildboar/x500/SelectedAttributeTypes';
+import { integerMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { integerOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_nis_at } from '../NIS/id-nis-at.va';
 import { Uint8, _decode_Uint8, _encode_Uint8 } from '../NIS/Uint8.ta';
 
@@ -46,7 +46,7 @@ export const ipProtocolNumber: ATTRIBUTE<Uint8> = {
     '&single-valued': true /* OBJECT_FIELD_SETTING */,
     '&ldapSyntax': integer['&id'] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['ipProtocolNumber'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [17],
         id_nis_at
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

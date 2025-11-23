@@ -2,35 +2,35 @@ import { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_AbandonArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AbandonResult,
     _encode_AbandonResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ChainingResults,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DistributedOperations";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     id_opcode_abandon,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-abandon.va";
-import { AbandonFailedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonFailedData.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { AbandonFailedData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     AbandonProblem_tooLate,
     AbandonProblem_cannotAbandon,
     AbandonProblem_noSuchOperation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     id_errcode_abandonFailed,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-abandonFailed.va";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { DER } from "@wildboar/asn1/functional";
 
 /**
  * @summary The abandon operation, as specified in ITU Recommendation X.511.
@@ -150,9 +150,9 @@ async function abandon (
      * waits for the timeout.
      */
     op.abandonTime = new Date();
-    const acknowledgement = await Promise.race<number | undefined>([
+    const acknowledgement = await Promise.race<number | void>([
         new Promise<number>((resolve) => op.events.once("abandon", () => resolve(Number(invokeID)))),
-        new Promise<undefined>((resolve) => setTimeout(resolve, 3000)), // Wait three seconds before timing out.
+        new Promise<void>((resolve) => setTimeout(resolve, 3000)), // Wait three seconds before timing out.
     ]);
     if (acknowledgement !== invokeID) {
         throw new errors.AbandonFailedError(

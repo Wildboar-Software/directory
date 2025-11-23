@@ -3,7 +3,7 @@ import {
     joint_iso_itu_t,
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER,
-} from 'asn1-ts';
+} from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION ros_InformationObjects */
 /**
@@ -18,7 +18,7 @@ import {
  *
  * @constant
  */
-export const ros_InformationObjects: OBJECT_IDENTIFIER = new _OID(
+export const ros_InformationObjects: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* remote-operations */ 4, /* informationObjects */ 5, /* version1 */ 0],
     joint_iso_itu_t
 );

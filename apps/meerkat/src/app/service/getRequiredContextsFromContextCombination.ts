@@ -1,5 +1,5 @@
 import { IndexableOID } from "@wildboar/meerkat-types";
-import { ContextCombination } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextCombination.ta";
+import { ContextCombination } from "@wildboar/x500/ServiceAdministration";
 
 /**
  * @summary Extract the required context types from a context combination

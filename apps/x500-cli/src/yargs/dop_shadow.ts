@@ -4,7 +4,7 @@ import bind from "../net/bind";
 import {
     do_shadow as command,
 } from "../commands/dop/shadow";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import * as _ from "lodash";
 
 

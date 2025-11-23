@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { printer_name } from '../RFC7612Printer/printer-name.oa';
 import { printer_uuid } from '../RFC7612Printer/printer-uuid.oa';
 import { printerService } from '../RFC7612Printer/printerService.oa';
 import { id_nf } from '../Wildboar/id-nf.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export { printer_name } from '../RFC7612Printer/printer-name.oa';
 export { printer_uuid } from '../RFC7612Printer/printer-uuid.oa';
 export { printerService } from '../RFC7612Printer/printerService.oa';
@@ -44,7 +44,7 @@ export const printerServiceNameForm: NAME_FORM = {
     '&OptionalAttributes': [printer_uuid] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['printerServiceNameForm'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'Name form for a printer service.' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [4],
         id_nf
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

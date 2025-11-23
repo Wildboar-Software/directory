@@ -5,39 +5,39 @@ import {
     BindReturn,
     MistypedArgumentError,
 } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import dnToVertex from "../dit/dnToVertex";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels_level_strong,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     SecurityProblem_invalidCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import versions from "../versions";
 import {
     id_oc_pkiCertPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/id-oc-pkiCertPath.va";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     pkiPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/pkiPath.oa";
+} from "@wildboar/x500/AuthenticationFramework";
 import readValuesOfType from "../utils/readValuesOfType";
 import {
     CertificatePair,
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
-import compareAlgorithmIdentifier from "@wildboar/x500/src/lib/comparators/compareAlgorithmIdentifier";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+} from "@wildboar/x500/AuthenticationFramework";
+import { compareAlgorithmIdentifier } from "@wildboar/x500";
+import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import { getDateFromTime } from "@wildboar/x500";
 import {
     verifyToken,
     VT_RETURN_CODE_OK,
@@ -47,14 +47,16 @@ import {
 } from "../pki/verifyToken";
 import { strict as assert } from "assert";
 import {
-    AttributeCertificationPath,
     StrongCredentials,
     Token,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import {
+    AttributeCertificationPath,
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import type { Socket } from "node:net";
 import type { TLSSocket } from "node:tls";
 import { read_unique_id, read_clearance } from "../database/utils";
-import { clearance } from "@wildboar/x500/src/lib/collections/attributes";
+import { clearance } from "@wildboar/x500/EnhancedSecurity";
 import {
     verifyAttrCert,
     VAC_OK,
@@ -85,17 +87,17 @@ import {
     VAC_OCSP_OTHER,
     VAC_OCSP_REVOKED,
 } from "../pki/verifyAttrCertPath";
-import { Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
-import { subjectDirectoryAttributes } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectDirectoryAttributes.oa";
-import { DERElement, unpackBits } from "asn1-ts";
-import { TokenContent, _encode_TokenContent } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TokenContent.ta";
+import { Clearance } from "@wildboar/x500/EnhancedSecurity";
+import { subjectDirectoryAttributes } from "@wildboar/x500/CertificateExtensions";
+import { DERElement, unpackBits } from "@wildboar/asn1";
+import { TokenContent, _encode_TokenContent } from "@wildboar/x500/DirectoryAbstractService";
 import { getAlgorithmInfoFromKey } from "../pki/getAlgorithmInfoFromKey";
 import { addSeconds } from "date-fns";
 import { randomBytes } from "crypto";
-import { DER } from "asn1-ts/dist/node/functional";
-import { SIGNED } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/SIGNED.ta";
+import { DER } from "@wildboar/asn1/functional";
+import { SIGNED } from "@wildboar/pki-stub";
 import { sign, createSign } from "node:crypto";
-import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { DistinguishedName } from "@wildboar/x500/InformationFramework";
 
 const ID_OC_PKI_CERT_PATH: string = id_oc_pkiCertPath.toString();
 

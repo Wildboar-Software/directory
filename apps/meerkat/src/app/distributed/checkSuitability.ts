@@ -5,97 +5,97 @@ import {
     ServiceError,
     IndexableOID,
 } from "@wildboar/meerkat-types";
-import type { ASN1Element, BIT_STRING } from "asn1-ts";
-import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { id_opcode_compare } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-compare.va";
-import { id_opcode_list } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
-import { id_opcode_read } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-read.va";
-import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-import getMatchingRulesFromFilter from "@wildboar/x500/src/lib/utils/getMatchingRulesFromFilter";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import type { ASN1Element, BIT_STRING } from "@wildboar/asn1";
+import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
+import { id_opcode_compare } from "@wildboar/x500/CommonProtocolSpecification";
+import { id_opcode_list } from "@wildboar/x500/CommonProtocolSpecification";
+import { id_opcode_read } from "@wildboar/x500/CommonProtocolSpecification";
+import { id_opcode_search } from "@wildboar/x500/CommonProtocolSpecification";
+import { compareCode } from "@wildboar/x500";
+import { getMatchingRulesFromFilter } from "@wildboar/x500";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgument,
     _decode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     CompareArgumentData,
     _decode_CompareArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
-import isModificationOperation from "@wildboar/x500/src/lib/utils/isModificationOperation";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { isModificationOperation } from "@wildboar/x500";
 import unmetCriticalExtension from "../x500/unmetCriticalExtension";
 import {
     ServiceProblem_unavailableCriticalExtension,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import filterCanBeUsedInShadowedArea from "../x500/filterCanBeUsedInShadowedArea";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly,
     EntryInformationSelection_infoTypes_attributeTypesAndValues as typesAndValues,
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
-import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { EntryInformationSelection } from "@wildboar/x500/DirectoryAbstractService";
 import {
     id_op_binding_shadow,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     ShadowingAgreementInfo,
     _decode_ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import { BERElement, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { BERElement, ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { dnWithinSubtreeSpecification } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import {
     UnitOfReplication,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UnitOfReplication.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     ClassAttributeSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     ContextSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import { OperationDispatcherState } from "./OperationDispatcher";
 import getContextAssertionDefaults from "../dit/getContextAssertionDefaults";
-import { contextAssertionDefaults } from "@wildboar/x500/src/lib/collections/attributes";
+import { contextAssertionDefaults } from "@wildboar/x500/InformationFramework";
 import { isMatchAllFilter } from "../x500/isMatchAllFilter";
 import {
     SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import isPrefix from "../x500/isPrefix";
 import { ALL_USER_ATTRIBUTES_KEY } from "../constants";
 import {
     FamilyReturn_memberSelect_contributingEntriesOnly,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
-import { FamilyGrouping_entryOnly } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { FamilyGrouping_entryOnly } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControlOptions_dontMatchFriends,
     ServiceControlOptions_noSubtypeMatch,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { addFriends } from "../database/entry/readValues";
-import { subschema } from "@wildboar/x500/src/lib/collections/objectClasses";
+import { subschema } from "@wildboar/x500/SchemaAdministration";
 
 const DEFAULT_CAD: ContextSelection = {
     allContexts: null,

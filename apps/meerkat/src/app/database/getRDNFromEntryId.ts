@@ -1,11 +1,11 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { ASN1Construction, BERElement, ObjectIdentifier } from "asn1-ts";
+import { ASN1Construction, BERElement, ObjectIdentifier } from "@wildboar/asn1";
 import type {
     RelativeDistinguishedName as RDN,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Get the relative distinguished name (RDN) of a DSE

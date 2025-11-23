@@ -1,14 +1,14 @@
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     LDAPMessage,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
+} from "@wildboar/ldap";
 import {
     ExtendedResponse,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedResponse.ta";
+} from "@wildboar/ldap";
 import type {
     LDAPResult_resultCode,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
-import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
+} from "@wildboar/ldap";
+import { encodeLDAPOID } from "@wildboar/ldap";
 
 /**
  * @summary Creates an LDAP unsolicited notification
@@ -40,7 +40,7 @@ function createNoticeOfDisconnection (
                 new Uint8Array(),
                 Buffer.from(message, "utf-8"),
                 undefined,
-                encodeLDAPOID(new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 1466, 20036 ])),
+                encodeLDAPOID(ObjectIdentifier.fromParts([ 1, 3, 6, 1, 4, 1, 1466, 20036 ])),
                 undefined,
             ),
         },

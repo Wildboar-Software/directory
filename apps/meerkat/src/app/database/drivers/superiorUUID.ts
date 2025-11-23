@@ -11,11 +11,11 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
-import { _decode_UUID, _encode_UUID } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UUID.ta";
+import { DER } from "@wildboar/asn1/functional";
+import { _decode_UUID, _encode_UUID } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     superiorUUID,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

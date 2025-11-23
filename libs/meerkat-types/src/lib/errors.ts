@@ -1,79 +1,79 @@
 import type {
     AbandonedData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     AbandonFailedData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonFailedData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     AttributeErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     NameErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ReferralData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReferralData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     OpBindingErrorParam,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     ShadowErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowErrorData.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_errcode_abandoned,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-abandoned.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_errcode_abandonFailed,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-abandonFailed.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_errcode_attributeError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-attributeError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_errcode_nameError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-nameError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_errcode_referral,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-referral.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_errcode_securityError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-securityError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_errcode_serviceError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-serviceError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_errcode_updateError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-updateError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     operationalBindingError,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     id_errcode_shadowError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-shadowError.va";
-import { ASN1Element, INTEGER } from "asn1-ts";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { ASN1Element, INTEGER } from "@wildboar/asn1";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     Abort,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import type {
     IdmReject_reason,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import type {
     InvokeId,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 
 /**
  * @summary A superclass of all errors received from bind operations

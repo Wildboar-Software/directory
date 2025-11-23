@@ -1,17 +1,17 @@
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { attributes as x500at } from "@wildboar/x500";
 import {
     entryUUID,
-} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa.js";
 import {
     entryDN,
-} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa.js";
 import {
     superiorUUID,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
-import { TRUE } from "asn1-ts";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa.js";
+import { TRUE } from "@wildboar/asn1";
 
 /**
  * @summary Selects attributes of a subentry that are to be shared in a hierarchical operational binding

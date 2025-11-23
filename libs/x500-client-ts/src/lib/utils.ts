@@ -9,75 +9,75 @@ import {
     TRUE_BIT,
     BERElement,
     INTEGER,
-} from "asn1-ts";
-import destringifyLDAPDN from "@wildboar/ldap/src/lib/destringifiers/RDNSequence";
+} from "@wildboar/asn1";
+import { destringifyRDNSequence } from "@wildboar/ldap";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+} from "@wildboar/x500/InformationFramework";
+import { normalizeAttributeDescription } from "@wildboar/ldap";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
-import { DER, ASN1Encoder, _encodeNull } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/AuthenticationFramework";
+import { DER, ASN1Encoder, _encodeNull } from "@wildboar/asn1/functional";
 import type {
     OPTIONALLY_PROTECTED,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+} from "@wildboar/x500/EnhancedSecurity";
 import { KeyObject, createSign, sign, KeyType, randomInt } from "crypto";
 import {
     AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
-import { sa_Ed25519 } from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/sa-Ed25519.oa";
+} from "@wildboar/x500/AuthenticationFramework";
+import { sa_Ed25519 } from "@wildboar/safecurves-pkix-18";
 import {
     rSASSA_PSS_Type,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/rSASSA-PSS-Type.ta";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha1,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha1.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha384,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha384.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_224,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-224.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_384,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-384.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_sha3_512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha3-512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_shake128,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-shake128.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_shake256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-shake256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     sha512WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha512WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     rSASSA_PSS,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/rSASSA-PSS.oa";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_dsa_with_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ReferenceType_superior,
     ReferenceType_subordinate,
@@ -88,33 +88,33 @@ import {
     ReferenceType_immediateSuperior,
     ReferenceType_self,
     ReferenceType_ditBridge,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     CommonArgumentsSeq,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArgumentsSeq.ta";
-import { PkiPath } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { PkiPath } from "@wildboar/pki-stub";
 import {
     ContextSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyGrouping,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+} from "@wildboar/x500/InformationFramework";
 import { ROSETransport } from "@wildboar/rose-transport";
 import { createConnection } from "node:net";
 import { TLSSocket, TLSSocketOptions, connect as tlsConnect } from "node:tls";
 import { IDMConnection } from "@wildboar/idm";
-import { rose_transport_from_idm_socket } from "./idm";
-import { rose_transport_from_itot_stack } from "./itot";
+import { rose_transport_from_idm_socket } from "./idm.js";
+import { rose_transport_from_itot_stack } from "./itot.js";
 import { create_itot_stack, PresentationAddress } from "@wildboar/osi-net";
 import { naddrToURI } from "@wildboar/x500";
 import { readFileSync } from "node:fs";
 import { PEMObject } from "pem-ts";
 import { differenceInSeconds } from "date-fns";
 import { randomBytes } from "node:crypto";
-import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+import { ServiceControls } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControlOptions_preferChaining,
     ServiceControlOptions_chainingProhibited,
@@ -131,68 +131,50 @@ import {
     ServiceControlOptions_dontSelectFriends,
     ServiceControlOptions_dontMatchFriends,
     ServiceControlOptions_allowWriteableCopy,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_manageDSAITPlaneRef,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-manageDSAITPlaneRef.ta";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
-import { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { OperationalBindingID } from "@wildboar/x500/OperationalBindingManagement";
+import { SecurityParameters } from "@wildboar/x500/DirectoryAbstractService";
+import { Code } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
 
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
     CertificatePair,
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     Certificate,
     _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { Socket } from "node:net";
 import { IndexableOID } from "@wildboar/meerkat-types";
 import {
     dap_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
-import {
     dsp_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
-import {
     dop_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
-import {
     disp_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
+} from "@wildboar/x500/DirectoryIDMProtocols";
 import {
     id_ac_directoryAccessAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
-import {
     id_ac_directorySystemAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directorySystemAC.va";
-import {
     id_ac_directoryOperationalBindingManagementAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
-import {
     id_ac_shadowConsumerInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAC.va";
-import {
     id_ac_shadowSupplierInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAC.va";
-import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
-import {
     id_ac_shadowConsumerInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAsynchronousAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 
 export
 interface SelectionOptions extends EntryInformationSelection {
@@ -253,7 +235,7 @@ function destringifyDN (
     nameToOID: (name: string) => OBJECT_IDENTIFIER | undefined | null,
     valueParser: (str: string) => ASN1Element,
 ): DistinguishedName {
-    return Array.from(destringifyLDAPDN(
+    return Array.from(destringifyRDNSequence(
         dn,
         (syntax: string) => {
             const desc = normalizeAttributeDescription(Buffer.from(syntax));

@@ -1,14 +1,14 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { caseIgnoreMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreMatch.oa";
-import { caseIgnoreOrderingMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreOrderingMatch.oa";
-import { caseIgnoreSubstringsMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreSubstringsMatch.oa";
-import { printableString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/printableString.oa";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { caseIgnoreMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { caseIgnoreOrderingMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { caseIgnoreSubstringsMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { printableString } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     PrintableString
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { id_at_atn_AF_address } from "../ATNDirectoryObjectIdentifiers/id-at-atn-AF-address.va";
 
 

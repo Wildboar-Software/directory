@@ -12,17 +12,17 @@ import type {
     SpecialAttributeValueDetector,
     NameFormInfo,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
-import { nameForms } from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
-import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+import { DER } from "@wildboar/asn1/functional";
+import { nameForms } from "@wildboar/x500/SchemaAdministration";
+import { subschema } from "@wildboar/x500/SchemaAdministration";
+import { directoryStringToString } from "@wildboar/x500";
 import {
     NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
-import { ObjectIdentifier } from "asn1-ts";
+} from "@wildboar/x500/SchemaAdministration";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import type { Prisma } from "@prisma/client";
 
 const SUBSCHEMA: string = subschema["&id"].toString();

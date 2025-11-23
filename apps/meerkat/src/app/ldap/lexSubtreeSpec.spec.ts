@@ -7,32 +7,32 @@ import {
     ASN1UniversalType,
     ASN1Construction,
     OBJECT_IDENTIFIER,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { getSubtreeSpecLexer } from "./lexSubtreeSpec";
 import * as decoders from "@wildboar/ldap/src/lib/syntaxDecoders";
 import * as encoders from "@wildboar/ldap/src/lib/syntaxEncoders";
 import type {
     SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+} from "@wildboar/x500/InformationFramework";
+import { compareDistinguishedName } from "@wildboar/x500";
 
 const ctx: Context = {
     attributeTypes: {
         get: (key: string) => {
             return {
-                id: new ObjectIdentifier([ 2, 4, 3, 6 ]),
-                ldapSyntax: new ObjectIdentifier([ 2, 4, 3, 6 ]),
-                equalityMatchingRule: new ObjectIdentifier([ 1, 1, 1, 1 ]),
+                id: ObjectIdentifier.fromParts([ 2, 4, 3, 6 ]),
+                ldapSyntax: ObjectIdentifier.fromParts([ 2, 4, 3, 6 ]),
+                equalityMatchingRule: ObjectIdentifier.fromParts([ 1, 1, 1, 1 ]),
             };
         },
     },
     ldapSyntaxes: {
         get: (key: string) => {
             return {
-                id: new ObjectIdentifier([ 2, 4, 3, 6 ]),
+                id: ObjectIdentifier.fromParts([ 2, 4, 3, 6 ]),
                 decoder: decoders.directoryString,
                 encoder: encoders.directoryString,
             };
@@ -41,7 +41,7 @@ const ctx: Context = {
     equalityMatchingRules: {
         get: (key: string) => {
             return {
-                id: new ObjectIdentifier([ 1, 1, 1, 1 ]),
+                id: ObjectIdentifier.fromParts([ 1, 1, 1, 1 ]),
                 matcher: (assertion: ASN1Element, value: ASN1Element): boolean => {
                     return (assertion.utf8String === value.utf8String);
                 },
@@ -109,7 +109,7 @@ const testCases: TestCase[] = [
     ],
     [
         ss02,
-        [ [ new AttributeTypeAndValue(new ObjectIdentifier([ 2, 4, 3, 6 ]), utf8('"Bob"')) ] ],
+        [ [ new AttributeTypeAndValue(ObjectIdentifier.fromParts([ 2, 4, 3, 6 ]), utf8('"Bob"')) ] ],
         null,
         null,
         null,
@@ -153,19 +153,19 @@ const testCases: TestCase[] = [
         [
             {
                 chopBefore: [[ new AttributeTypeAndValue(
-                    new ObjectIdentifier([ 2, 4, 3, 6 ]),
+                    ObjectIdentifier.fromParts([ 2, 4, 3, 6 ]),
                     utf8("US"),
                 ) ]],
             },
             {
                 chopAfter: [[ new AttributeTypeAndValue(
-                    new ObjectIdentifier([ 2, 4, 3, 6 ]),
+                    ObjectIdentifier.fromParts([ 2, 4, 3, 6 ]),
                     utf8("DE"),
                 ) ]],
             },
             {
                 chopAfter: [[ new AttributeTypeAndValue(
-                    new ObjectIdentifier([ 2, 4, 3, 6 ]),
+                    ObjectIdentifier.fromParts([ 2, 4, 3, 6 ]),
                     utf8("FR"),
                 ) ]],
             },
@@ -186,19 +186,19 @@ const testCases: TestCase[] = [
     ],
     [
         ss15,
-        null, null, null, null, { item: new ObjectIdentifier([ 1, 2, 3, 4 ]) }
+        null, null, null, null, { item: ObjectIdentifier.fromParts([ 1, 2, 3, 4 ]) }
     ],
     [
         ss16,
-        null, null, null, null, { and: [ { item: new ObjectIdentifier([ 1, 2, 3, 4 ]) } ]}
+        null, null, null, null, { and: [ { item: ObjectIdentifier.fromParts([ 1, 2, 3, 4 ]) } ]}
     ],
     [
         ss17,
-        null, null, null, null, { or: [ { item: new ObjectIdentifier([ 1, 2, 3, 4 ]) } ]}
+        null, null, null, null, { or: [ { item: ObjectIdentifier.fromParts([ 1, 2, 3, 4 ]) } ]}
     ],
     [
         ss18,
-        null, null, null, null, { not: { item: new ObjectIdentifier([ 1, 2, 3, 4 ]) } }
+        null, null, null, null, { not: { item: ObjectIdentifier.fromParts([ 1, 2, 3, 4 ]) } }
     ],
     [
         ss19,
@@ -238,7 +238,7 @@ const testCases: TestCase[] = [
         [
             {
                 chopAfter: [[ new AttributeTypeAndValue(
-                    new ObjectIdentifier([ 2, 4, 3, 6 ]),
+                    ObjectIdentifier.fromParts([ 2, 4, 3, 6 ]),
                     utf8('chopBefore:"C=US"'),
                 ) ]],
             },

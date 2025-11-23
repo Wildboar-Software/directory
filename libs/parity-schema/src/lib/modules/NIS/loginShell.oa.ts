@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { caseExactIA5Match } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseExactIA5Match.oa';
-import { ia5String } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ia5String.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { caseExactIA5Match } from '@wildboar/x500/SelectedAttributeTypes';
+import { ia5String } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import {
     AbsoluteFilePath,
     _decode_AbsoluteFilePath,
@@ -49,7 +49,7 @@ export const loginShell: ATTRIBUTE<AbsoluteFilePath> = {
     '&ldapSyntax': ia5String['&id'] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['loginShell'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'The path to the login shell' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [4],
         id_nis_at
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

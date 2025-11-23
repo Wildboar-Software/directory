@@ -3,15 +3,15 @@ import {
     Certificate,
     _decode_Certificate,
     _encode_Certificate,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta';
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/AuthenticationFramework';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import { URI, _decode_URI, _encode_URI } from '../TAI/URI.ta';
 export {
     Certificate,
     _decode_Certificate,
     _encode_Certificate,
-} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta';
+} from '@wildboar/x500/AuthenticationFramework';
 
 /* START_OF_SYMBOL_DEFINITION BdcPKCInformation */
 /**

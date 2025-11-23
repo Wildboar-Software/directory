@@ -3,15 +3,15 @@ import {
     DirectoryString,
     _decode_DirectoryString,
     _encode_DirectoryString,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/DirectoryString.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     BOOLEAN,
     OBJECT_IDENTIFIER,
     OPTIONAL,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 
 /* START_OF_SYMBOL_DEFINITION MethodUseDescription */
 /**

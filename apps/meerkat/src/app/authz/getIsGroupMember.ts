@@ -1,23 +1,23 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-import { member } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/member.oa";
-import { uniqueMember } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueMember.oa";
-import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
-import { groupOfNames } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/groupOfNames.oa";
-import { groupOfUniqueNames } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/groupOfUniqueNames.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { member } from "@wildboar/x500/SelectedAttributeTypes";
+import { uniqueMember } from "@wildboar/x500/SelectedAttributeTypes";
+import { uniqueIdentifier } from "@wildboar/x500/SelectedAttributeTypes";
+import { groupOfNames } from "@wildboar/x500/SelectedObjectClasses";
+import { groupOfUniqueNames } from "@wildboar/x500/SelectedObjectClasses";
 import {
     _decode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
+} from "@wildboar/x500/InformationFramework";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import dnToVertex from "../dit/dnToVertex";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
+import { compareDistinguishedName } from "@wildboar/x500";
 import readValues from "../database/entry/readValues";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 const GROUP_OF_NAMES: string = groupOfNames["&id"].toString();
 const GROUP_OF_UNIQUE_NAMES: string = groupOfUniqueNames["&id"].toString();

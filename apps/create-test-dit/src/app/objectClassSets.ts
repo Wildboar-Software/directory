@@ -1,59 +1,59 @@
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
-import * as oc from "@wildboar/x500/src/lib/collections/objectClasses";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { objectClasses as oc } from "@wildboar/x500";
 import {
     dynamicObject,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa.js";
 import {
     eduPerson,
-} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPerson.oa";
+} from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPerson.oa.js";
 import {
     pgpKeyInfo,
-} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyInfo.oa";
+} from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyInfo.oa.js";
 import {
     posixAccount,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/posixAccount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/posixAccount.oa.js";
 import {
     shadowAccount,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowAccount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/shadowAccount.oa.js";
 import {
     uidObject,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAPCoreSchema/uidObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAPCoreSchema/uidObject.oa.js";
 import {
     simpleSecurityObject,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAPCoreSchema/simpleSecurityObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAPCoreSchema/simpleSecurityObject.oa.js";
 import {
     labeledURIObject,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAPCoreSchema/labeledURIObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAPCoreSchema/labeledURIObject.oa.js";
 import {
     openLDAPdisplayableObject,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/openLDAPdisplayableObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/openLDAPdisplayableObject.oa.js";
 import {
     qmailUser,
-} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailUser.oa";
+} from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailUser.oa.js";
 import {
     sambaAccount,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/sambaAccount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/sambaAccount.oa.js";
 import {
     sambaSamAccount,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSamAccount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSamAccount.oa.js";
 import {
     mhs_user,
-} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-user.oa";
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import {
     edi_user,
-} from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-user.oa";
+} from "@wildboar/x400/EDIMUseOfDirectory";
 import {
     bootableDevice,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/bootableDevice.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/bootableDevice.oa.js";
 import {
     ieee802Device,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ieee802Device.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ieee802Device.oa.js";
 import {
     ipHost,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa.js";
 import {
     naturalPerson,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/naturalPerson.oa";
+} from "@wildboar/pkcs/PKCS-9";
 
 export
 const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [

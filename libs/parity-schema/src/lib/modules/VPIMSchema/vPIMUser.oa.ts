@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { iana_assigned_oid } from '../VPIMSchema/iana-assigned-oid.va';
 import { vPIMExtendedAbsenceStatus } from '../VPIMSchema/vPIMExtendedAbsenceStatus.oa';
 import { vPIMMaxMessageSize } from '../VPIMSchema/vPIMMaxMessageSize.oa';
@@ -16,8 +16,8 @@ import { vPIMSupportedMessageContext } from '../VPIMSchema/vPIMSupportedMessageC
 import { vPIMSupportedUABehaviors } from '../VPIMSchema/vPIMSupportedUABehaviors.oa';
 import { vPIMTelephoneNumber } from '../VPIMSchema/vPIMTelephoneNumber.oa';
 import { vPIMTextName } from '../VPIMSchema/vPIMTextName.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -29,8 +29,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { iana_assigned_oid } from '../VPIMSchema/iana-assigned-oid.va';
 export { vPIMExtendedAbsenceStatus } from '../VPIMSchema/vPIMExtendedAbsenceStatus.oa';
 export { vPIMMaxMessageSize } from '../VPIMSchema/vPIMMaxMessageSize.oa';
@@ -95,7 +95,7 @@ export const vPIMUser: OBJECT_CLASS = {
         vPIMSubMailboxes,
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['vPIMUser'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [1, 1],
         iana_assigned_oid
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

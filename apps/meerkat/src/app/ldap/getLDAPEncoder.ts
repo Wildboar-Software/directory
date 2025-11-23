@@ -1,9 +1,9 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
-import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { type LDAPSyntaxEncoder } from "@wildboar/ldap";
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+} from "@wildboar/x500/InformationFramework";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 
 /**

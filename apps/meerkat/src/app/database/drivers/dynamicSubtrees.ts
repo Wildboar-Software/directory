@@ -12,10 +12,10 @@ import type {
 } from "@wildboar/meerkat-types";
 import {
     DERElement,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
     dynamicSubtrees,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa.js";
 import NOOP from "./NOOP";
 
 export

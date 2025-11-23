@@ -1,4 +1,4 @@
-import { ASN1Element, BERElement } from "asn1-ts";
+import { ASN1Element, BERElement } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
 import { oRNameSingleElementMatch } from "./oRNameSingleElementMatch";
 

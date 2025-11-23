@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { userPassword } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa';
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { userPassword } from '@wildboar/x500/AuthenticationFramework';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { uid } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { mail } from '../Cosine/mail.oa';
 import { homeDirectory } from '../NIS/homeDirectory.oa';
 import { accountStatus } from '../QMailSchema/accountStatus.oa';
@@ -24,8 +24,8 @@ import { qmailAccountPurge } from '../QMailSchema/qmailAccountPurge.oa';
 import { qmailDotMode } from '../QMailSchema/qmailDotMode.oa';
 import { qmailGID } from '../QMailSchema/qmailGID.oa';
 import { qmailUID } from '../QMailSchema/qmailUID.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -37,7 +37,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { accountStatus } from '../QMailSchema/accountStatus.oa';
 export { deliveryMode } from '../QMailSchema/deliveryMode.oa';
 export { deliveryProgramPath } from '../QMailSchema/deliveryProgramPath.oa';
@@ -125,7 +125,7 @@ export const qmailUser: OBJECT_CLASS = {
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['qmailUser'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'QMail-LDAP User' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 7914, 1, 2, 2, 1,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

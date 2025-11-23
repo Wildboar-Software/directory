@@ -2,37 +2,37 @@ import type { Connection } from "./types";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     Request as IdmRequest,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     DSABindArgument,
     _encode_DSABindArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     Credentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Credentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type { Request } from "@wildboar/x500/src/lib/types/Request";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+} from "@wildboar/x500/InformationFramework";
+import type { Request } from "@wildboar/x500";
+import type { ResultOrError } from "@wildboar/x500";
 import * as net from "net";
 import * as tls from "tls";
-import { EventEmitter } from "stream";
+import { EventEmitter } from "node:events";
 import { IDMConnection } from "@wildboar/idm";
 import { URL } from "url";
 import * as crypto from "crypto";
-import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import { strict as assert } from "assert";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import printCode from "./printCode";
 
 export

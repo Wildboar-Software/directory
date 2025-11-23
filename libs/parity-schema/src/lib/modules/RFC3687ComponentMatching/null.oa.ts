@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-import { NULL } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import { NULL } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import { id_lsx_null } from '../RFC3687ComponentMatching/id-lsx-null.va';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export { id_lsx_null } from '../RFC3687ComponentMatching/id-lsx-null.va';
 
 /* START_OF_SYMBOL_DEFINITION null_ */

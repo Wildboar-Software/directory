@@ -1,11 +1,11 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import {
     IncrementalStepRefresh,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/IncrementalStepRefresh.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     SubordinateChanges, _encode_IncrementalStepRefresh,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
-import { BER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { BER } from "@wildboar/asn1/functional";
 import { ShadowIncrementType } from "@prisma/client";
 
 /**

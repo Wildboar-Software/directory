@@ -1,34 +1,34 @@
 import type { Connection, Context } from "../../types";
-import { BIT_STRING, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import { BIT_STRING, ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgument,
     _encode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData_subset,
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchResult,
     _decode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import destringifyDN from "../../utils/destringifyDN";
 import printError from "../../printers/Error_";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchControlOptions_searchAliases,
     SearchControlOptions_matchedValuesOnly,
@@ -42,41 +42,41 @@ import {
     SearchControlOptions_useSubset,
     SearchControlOptions_separateFamilyMembers,
     SearchControlOptions_searchFamily,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     PagedResultsRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     PagedResultsRequest_newRequest, SortKey,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
-import * as hs from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import * as hs from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import * as sco from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import * as sco from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_priority_low,
     ServiceControls_priority_medium,
     ServiceControls_priority_high,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-priority.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_scopeOfReferral_country,
     ServiceControls_scopeOfReferral_dmd,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-scopeOfReferral.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FamilyGrouping,
     FamilyGrouping_entryOnly,
     FamilyGrouping_strands,
     FamilyGrouping_multiStrand,
     FamilyGrouping_compoundEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { print as printSearchResult } from "../../printers/SearchResult";
 
 function subsetFromString (str: string): SearchArgumentData_subset {

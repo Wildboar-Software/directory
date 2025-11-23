@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type {
     GeneralName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import { stringifyDN } from "./stringifyDN";
 import { directoryStringToString } from "@wildboar/x500";
 

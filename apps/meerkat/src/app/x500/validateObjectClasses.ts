@@ -1,11 +1,11 @@
 import type { Context, IndexableOID } from "@wildboar/meerkat-types";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     ObjectClassKind_structural,
     ObjectClassKind_abstract,
     ObjectClassKind_auxiliary,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
+} from "@wildboar/x500/InformationFramework";
+import { top } from "@wildboar/x500/InformationFramework";
 import getAncestorObjectClasses from "./getAncestorObjectClasses";
 
 /**

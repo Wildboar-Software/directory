@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import {
     BootParameterSyntax,
     _decode_BootParameterSyntax,
     _encode_BootParameterSyntax,
 } from '../NIS/BootParameterSyntax.ta';
 import { id_nis_lsx } from '../NIS/id-nis-lsx.va';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export {
     BootParameterSyntax,
     _decode_BootParameterSyntax,
@@ -42,7 +42,7 @@ export const bootParameterSyntax: SYNTAX_NAME<BootParameterSyntax> = {
         '&Type': _encode_BootParameterSyntax,
     },
     '&ldapDesc': 'Boot parameter' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [1],
         id_nis_lsx
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

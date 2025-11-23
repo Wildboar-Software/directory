@@ -1,7 +1,7 @@
 import { Context, Vertex } from "@wildboar/meerkat-types";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import { Prisma } from "@prisma/client";
-import { ASN1Construction, INTEGER } from "asn1-ts";
+import { ASN1Construction, INTEGER } from "@wildboar/asn1";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 
 // TODO: Use this in modifyDN

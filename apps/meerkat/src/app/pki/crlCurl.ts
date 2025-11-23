@@ -1,61 +1,61 @@
 import type { RemoteCRLOptions } from "@wildboar/meerkat-types";
 import { curlHTTP, curlHTTP2, curlFTP, curlLDAP } from "./curl";
-import { BERElement, OBJECT_IDENTIFIER } from "asn1-ts";
+import { BERElement, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     DistributionPoint,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/DistributionPoint.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import type {
     DistributionPointName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/DistributionPointName.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     CertificateList,
     _decode_CertificateList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import type {
     Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     GeneralNames,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralNames.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import { strict as assert } from "assert";
 import { URL } from "url";
 import type {
     ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ReadResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     certificateRevocationList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/certificateRevocationList.oa";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     deltaRevocationList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/deltaRevocationList.oa";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     authorityRevocationList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/authorityRevocationList.oa";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     eepkCertificateRevocationList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/eepkCertificateRevocationList.oa";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { NOW_CONTEXT_ASSERTION, DEFAULT_REMOTE_CRL_SIZE_LIMIT } from "../constants";
 import { differenceInSeconds } from "date-fns";
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { getAttributeSize } from "@wildboar/x500";
 
 const CRL_CACHE_TTL_SECONDS: number = 3600;

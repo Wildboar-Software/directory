@@ -1,5 +1,5 @@
 import { EqualityMatcher } from "@wildboar/x500";
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element } from "@wildboar/asn1";
 
 export
 const basicServiceContext: EqualityMatcher = (

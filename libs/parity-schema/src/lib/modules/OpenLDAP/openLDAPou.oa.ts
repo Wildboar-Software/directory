@@ -1,17 +1,17 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { organizationName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa';
-import { organizationalUnit } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalUnit.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
+import { organizationalUnit } from '@wildboar/x500/SelectedObjectClasses';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { buildingName } from '../Cosine/buildingName.oa';
 import { displayName } from '../InetOrgPerson/displayName.oa';
 import { id_openldap_oc } from '../OpenLDAP/id-openldap-oc.va';
 import { labeledURI } from '../OpenLDAPCoreSchema/labeledURI.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -23,7 +23,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { id_openldap_oc } from '../OpenLDAP/id-openldap-oc.va';
 
 /* START_OF_SYMBOL_DEFINITION openLDAPou */
@@ -63,7 +63,7 @@ export const openLDAPou: OBJECT_CLASS = {
     '&ldapName': ['OpenLDAPou'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'OpenLDAP Organizational Unit Object' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [4],
         id_openldap_oc
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

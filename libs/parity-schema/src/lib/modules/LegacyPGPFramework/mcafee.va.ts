@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_pen } from '../Wildboar/id-pen.va';
 
 /* START_OF_SYMBOL_DEFINITION mcafee */
@@ -15,7 +15,7 @@ import { id_pen } from '../Wildboar/id-pen.va';
  *
  * @constant
  */
-export const mcafee: OBJECT_IDENTIFIER = new _OID([3401], id_pen);
+export const mcafee: OBJECT_IDENTIFIER = _OID.fromParts([3401], id_pen);
 /* END_OF_SYMBOL_DEFINITION mcafee */
 
 /* eslint-enable */

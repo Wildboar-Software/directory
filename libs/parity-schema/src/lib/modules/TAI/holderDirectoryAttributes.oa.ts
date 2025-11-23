@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { EXTENSION } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/EXTENSION.oca';
+import { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 import {
     AttributesSyntax,
     _decode_AttributesSyntax,
     _encode_AttributesSyntax,
 } from '../TAI/AttributesSyntax.ta';
 import { id_tai_ce_holderDirectoryAttributes } from '../TAI/id-tai-ce-holderDirectoryAttributes.va';
-export { EXTENSION } from '@wildboar/x500/src/lib/modules/AuthenticationFramework/EXTENSION.oca';
+export { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 export {
     AttributesSyntax,
     _decode_AttributesSyntax,

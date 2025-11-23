@@ -1,8 +1,8 @@
 import type { Context } from "../types";
-import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+import { normalizeAttributeDescription } from "@wildboar/ldap";
 import { getLDAPSyntax } from "./getLDAPSyntax";
-import { LDAPString } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPString.ta";
-import { ASN1Element, OBJECT_IDENTIFIER, ObjectIdentifier, BERElement } from "asn1-ts";
+import { LDAPString } from "@wildboar/ldap";
+import { ASN1Element, OBJECT_IDENTIFIER, ObjectIdentifier, BERElement } from "@wildboar/asn1";
 
 export
 function destringifyAttributeValue (ctx: Context, type: LDAPString | OBJECT_IDENTIFIER, value: string): ASN1Element | undefined {

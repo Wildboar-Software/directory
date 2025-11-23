@@ -1,50 +1,50 @@
 import type { Context, PendingUpdates, Vertex } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import type {
     SuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     SubordinateToSuperior,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     MasterOrShadowAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     MasterOrShadowAccessPoint_category_master,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
+} from "@wildboar/x500/DistributedOperations";
 import dnToVertex from "../../dit/dnToVertex";
 import { Knowledge } from "@prisma/client";
-import { DER, _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { DER, _decodeObjectIdentifier } from "@wildboar/asn1/functional";
 import createEntry from "../../database/createEntry";
 import {
     superiorKnowledge,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     addValue,
 } from "../../database/drivers/superiorKnowledge";
 import {
     AccessPoint,
     _encode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import saveAccessPoint from "../../database/saveAccessPoint";
 import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 import type {
     OBJECT_CLASS,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { INTEGER, OBJECT_IDENTIFIER } from "asn1-ts";
-import { SubentryInfo, Vertex as X500Vertex } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
+} from "@wildboar/x500/InformationFramework";
+import { INTEGER, OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { SubentryInfo, Vertex as X500Vertex } from "@wildboar/x500/HierarchicalOperationalBindings";
 import readSubordinates from "../../dit/readSubordinates";
 import readAttributes from "../../database/entry/readAttributes";
 import subentryEIS from "../subentryEIS";
-import { MeerkatContext } from "../../ctx";
+import { MeerkatContext } from "../../ctx.js";
 import getSubschemaSubentry from "../../dit/getSubschemaSubentry";
-import { objectClass } from "@wildboar/x500/src/lib/collections/attributes";
+import { objectClass } from "@wildboar/x500/InformationFramework";
 import getStructuralObjectClass from "../../x500/getStructuralObjectClass";
 import { checkNameForm } from "@wildboar/x500";
-import { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
+import { Attribute } from "@wildboar/x500/InformationFramework";
+import { governingStructureRule } from "@wildboar/x500/SchemaAdministration";
 
 export
 async function createContextPrefixEntry (

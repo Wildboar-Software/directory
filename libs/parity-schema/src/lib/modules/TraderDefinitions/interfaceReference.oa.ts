@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { caseExactMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseExactMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+import { caseExactMatch } from '@wildboar/x500/SelectedAttributeTypes';
 import { id_trader_at_interfaceReference } from '../TraderDefinitions/id-trader-at-interfaceReference.va';
 import {
     InterfaceId,

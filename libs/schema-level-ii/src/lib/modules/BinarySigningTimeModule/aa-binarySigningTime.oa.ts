@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { integer } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa";
-import { integerMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerMatch.oa";
-import { integerOrderingMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerOrderingMatch.oa";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { integer } from "@wildboar/x500/SelectedAttributeTypes";
+import { integerMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { integerOrderingMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { BinarySigningTime, _decode_BinarySigningTime, _encode_BinarySigningTime } from "./BinarySigningTime.ta";
 import { id_aa_binarySigningTime } from "./id-aa-binarySigningTime.va";
 

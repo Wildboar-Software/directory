@@ -2,7 +2,7 @@
 import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
-} from "asn1-ts";
+} from "@wildboar/asn1";
 
 /* START_OF_SYMBOL_DEFINITION id_clearanceSponsor */
 /**
@@ -20,7 +20,7 @@ import {
  * @constant
  */
 export
-const id_clearanceSponsor: OBJECT_IDENTIFIER = new _OID([
+const id_clearanceSponsor: OBJECT_IDENTIFIER = _OID.fromParts([
     /* joint-iso-ccitt */ 2,
     /* country */ 16,
     /* us */ 840,

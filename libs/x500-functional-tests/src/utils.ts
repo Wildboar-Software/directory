@@ -6,189 +6,189 @@ import {
     INTEGER,
     ObjectIdentifier,
     FALSE,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
     BER,
     DER,
     _encodeObjectIdentifier,
     _encodeInteger,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import * as net from "net";
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
+} from "@wildboar/x500/IDMProtocolSpecification";
 import {
     dap_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+} from "@wildboar/x500/DirectoryIDMProtocols";
 import {
     IDMConnection,
 } from "@wildboar/idm";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgument,
     _encode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
+import { AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _encode_UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     applicationProcess,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     description,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_subschemaAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
+} from "@wildboar/x500/InformationFramework";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     organization,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/organization.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     organizationalUnit,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/organizationalUnit.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     person,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     device,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/device.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     organizationName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     organizationalUnitName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     surname,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa";
-import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { child } from "@wildboar/x500/InformationFramework";
 import {
     userPwdClass,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import type {
     Credentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Credentials.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     dITStructureRules,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITStructureRuleDescription,
     _encode_DITStructureRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     nameForms,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/nameForms.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     NameFormDescription,
     _encode_NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     NameFormInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormInformation.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     SubtreeSpecification,
     _encode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     subtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
-import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
+} from "@wildboar/x500/InformationFramework";
+import { subentry } from "@wildboar/x500/InformationFramework";
 import {
     subschema,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     dITContentRules,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContentRuleDescription,
     _encode_DITContentRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
-import { friends } from "@wildboar/x500/src/lib/modules/SchemaAdministration/friends.oa";
+} from "@wildboar/x500/SchemaAdministration";
+import { friends } from "@wildboar/x500/SchemaAdministration";
 import {
     FriendsDescription,
     _encode_FriendsDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/FriendsDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     isoTagInfo,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/isoTagInfo.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     tagOid,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/tagOid.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     uiiInUrn,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uiiInUrn.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     alias,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     oidC,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     oidCobj,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/oidCobj.oa";
+} from "@wildboar/x500/SelectedObjectClasses";
 import {
     localeContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
-import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { dITContextUse } from "@wildboar/x500/SchemaAdministration";
 import {
     DITContextUseDescription,
     _encode_DITContextUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContextUseInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
-import { country, countryName } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/country.oa";
-import { residentialPerson } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/residentialPerson.oa";
+} from "@wildboar/x500/SchemaAdministration";
+import { country, countryName } from "@wildboar/x500/SelectedObjectClasses";
+import { residentialPerson } from "@wildboar/x500/SelectedObjectClasses";
 import {
     id_ar_serviceSpecificArea
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
-import { languageContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
+} from "@wildboar/x500/InformationFramework";
+import { languageContext } from "@wildboar/x500/SelectedAttributeTypes";
 
 export
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
@@ -389,17 +389,17 @@ async function createEntry(
 }
 
 // NOTE: These are made up OIDs.
-export const personNameForm1ID      = new ObjectIdentifier([ 2, 5, 100, 1 ]);
-export const personNameForm2ID      = new ObjectIdentifier([ 2, 5, 100, 2 ]);
-export const processNameFormID      = new ObjectIdentifier([ 2, 5, 100, 3 ]);
-export const deviceNameFormID       = new ObjectIdentifier([ 2, 5, 100, 4 ]);
-export const orgNameFormID          = new ObjectIdentifier([ 2, 5, 100, 5 ]);
-export const orgUnitNameFormID      = new ObjectIdentifier([ 2, 5, 100, 6 ]);
-export const aliasNameFormID        = new ObjectIdentifier([ 2, 5, 100, 7 ]);
-export const oidNameFormID          = new ObjectIdentifier([ 2, 5, 100, 8 ]);
-export const aliasNameForm2ID       = new ObjectIdentifier([ 2, 5, 100, 9 ]);
-export const countryNameFormId      = new ObjectIdentifier([ 2, 5, 100, 10 ]);
-export const resPersonNameFormId    = new ObjectIdentifier([ 2, 5, 100, 11 ]);
+export const personNameForm1ID      = ObjectIdentifier.fromParts([ 2, 5, 100, 1 ]);
+export const personNameForm2ID      = ObjectIdentifier.fromParts([ 2, 5, 100, 2 ]);
+export const processNameFormID      = ObjectIdentifier.fromParts([ 2, 5, 100, 3 ]);
+export const deviceNameFormID       = ObjectIdentifier.fromParts([ 2, 5, 100, 4 ]);
+export const orgNameFormID          = ObjectIdentifier.fromParts([ 2, 5, 100, 5 ]);
+export const orgUnitNameFormID      = ObjectIdentifier.fromParts([ 2, 5, 100, 6 ]);
+export const aliasNameFormID        = ObjectIdentifier.fromParts([ 2, 5, 100, 7 ]);
+export const oidNameFormID          = ObjectIdentifier.fromParts([ 2, 5, 100, 8 ]);
+export const aliasNameForm2ID       = ObjectIdentifier.fromParts([ 2, 5, 100, 9 ]);
+export const countryNameFormId      = ObjectIdentifier.fromParts([ 2, 5, 100, 10 ]);
+export const resPersonNameFormId    = ObjectIdentifier.fromParts([ 2, 5, 100, 11 ]);
 
 export
 async function createTestRootNode(
@@ -447,7 +447,7 @@ async function createTestRootNode(
             ),
             new Attribute(
                 tagOid["&id"],
-                [oid(new ObjectIdentifier([ 2, 5, 5, 5, 5 ]))],
+                [oid(ObjectIdentifier.fromParts([ 2, 5, 5, 5, 5 ]))],
                 undefined,
             ),
             ...extraAttributes,

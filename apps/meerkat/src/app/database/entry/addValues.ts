@@ -6,29 +6,29 @@ import {
     AttributeError,
     AttributeTypeDatabaseDriver,
 } from "@wildboar/meerkat-types";
-import { ASN1Construction } from "asn1-ts";
+import { ASN1Construction } from "@wildboar/asn1";
 import type { Prisma } from "@prisma/client";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson";
 import {
     AttributeProblem_attributeOrValueAlreadyExists,
     AttributeProblem_contextViolation,
     AttributeProblem_invalidAttributeSyntax,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeErrorData_problems_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     attributeError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     AttributeUsage_userApplications as userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import hasValueWithoutDriver from "./hasValueWithoutDriver";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer";

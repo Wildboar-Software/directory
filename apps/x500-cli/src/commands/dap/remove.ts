@@ -1,24 +1,24 @@
 import type { Connection, Context } from "../../types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     removeEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     RemoveEntryArgument,
     _encode_RemoveEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     RemoveEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_RemoveEntryResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import destringifyDN from "../../utils/destringifyDN";
 import printError from "../../printers/Error_";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 
 export
 async function do_removeEntry (

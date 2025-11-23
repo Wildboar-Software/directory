@@ -1,19 +1,19 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     dSAOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { octetString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetString.oa';
-import { octetStringMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringMatch.oa';
-import { octetStringOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringOrderingMatch.oa';
-import { octetStringSubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringSubstringsMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+import { octetString } from '@wildboar/x500/SelectedAttributeTypes';
+import { octetStringMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { octetStringOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { octetStringSubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
 import {
     UUID,
     _decode_UUID,
     _encode_UUID,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UUID.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+} from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -27,17 +27,17 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { octetStringMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringMatch.oa';
-export { octetStringOrderingMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringOrderingMatch.oa';
-export { octetStringSubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringSubstringsMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { octetStringMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { octetStringOrderingMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { octetStringSubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
 export {
     UUID,
     _decode_UUID,
     _encode_UUID,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UUID.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 
 /* START_OF_SYMBOL_DEFINITION syncreplCookie */
 /**
@@ -83,7 +83,7 @@ export const syncreplCookie: ATTRIBUTE<UUID> = {
     '&ldapSyntax': octetString['&id'] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['syncreplCookie'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'syncrepl Cookie for shadow copy' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 4203, 666, 1, 23,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
     '&Type': 0 as never /* OBJECT_FIELD_SETTING OBJECT_TYPE_FIELD_SETTING */,

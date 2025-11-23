@@ -3,13 +3,13 @@ import {
     DigestedData,
     _decode_DigestedData,
     _encode_DigestedData,
-} from '@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/DigestedData.ta';
+} from '@wildboar/cms';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     OPTIONAL,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     Pointers,
     _decode_Pointers,

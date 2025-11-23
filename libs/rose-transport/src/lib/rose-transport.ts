@@ -1,16 +1,16 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import type { Socket } from "node:net";
 import { TLSSocket } from "node:tls";
-import type { ASN1Element, OBJECT_IDENTIFIER, INTEGER } from "asn1-ts";
+import type { ASN1Element, OBJECT_IDENTIFIER, INTEGER } from "@wildboar/asn1";
 import type {
     GeneralName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import type {
     InvokeId,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 
 export
 enum AbortReason {

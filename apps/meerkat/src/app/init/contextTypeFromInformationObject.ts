@@ -1,9 +1,9 @@
 import type { ContextTypeInfo } from "@wildboar/meerkat-types";
-import { ASN1Element, TRUE } from "asn1-ts";
-import type ContextMatcher from "@wildboar/x500/src/lib/types/ContextMatcher";
+import { ASN1Element, TRUE } from "@wildboar/asn1";
+import { type ContextMatcher } from "@wildboar/x500";
 import type {
     CONTEXT,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/CONTEXT.oca";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Convert a `CONTEXT` information object into `ContextTypeInfo`.

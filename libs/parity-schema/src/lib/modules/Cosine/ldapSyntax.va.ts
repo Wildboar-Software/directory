@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION ldapSyntax */
 /**
@@ -25,7 +25,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const ldapSyntax: OBJECT_IDENTIFIER = new _OID([
+export const ldapSyntax: OBJECT_IDENTIFIER = _OID.fromParts([
     /* iso */ 1, /* identified-organization */ 3, /* dod */ 6, /* internet */ 1,
     /* private */ 4, /* enterprise */ 1, 1466, 115, 121, /* ldap-syntax */ 1,
 ]);

@@ -3,7 +3,7 @@ import {
     ASN1TagClass,
     ASN1Construction,
     ASN1UniversalType,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 
 
 export

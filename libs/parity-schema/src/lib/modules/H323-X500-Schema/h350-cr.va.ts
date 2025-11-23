@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION h350_cr */
 /**
@@ -14,7 +14,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const h350_cr: OBJECT_IDENTIFIER = new _OID([0, 0, 8, 350, 1, 1]);
+export const h350_cr: OBJECT_IDENTIFIER = _OID.fromParts([0, 0, 8, 350, 1, 1]);
 /* END_OF_SYMBOL_DEFINITION h350_cr */
 
 /* eslint-enable */

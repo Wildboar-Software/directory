@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_at } from '../UPT-DataModel/id-at.va';
 export { id_at } from '../UPT-DataModel/id-at.va';
 
@@ -16,7 +16,7 @@ export { id_at } from '../UPT-DataModel/id-at.va';
  *
  * @constant
  */
-export const id_at_callInfoRecords: OBJECT_IDENTIFIER = new _OID([9], id_at);
+export const id_at_callInfoRecords: OBJECT_IDENTIFIER = _OID.fromParts([9], id_at);
 /* END_OF_SYMBOL_DEFINITION id_at_callInfoRecords */
 
 /* eslint-enable */

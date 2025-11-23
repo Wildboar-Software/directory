@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-import { dc } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dc.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import { dc } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { domain } from '../Cosine/domain.oa';
 import { id_nf } from '../Wildboar/id-nf.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
-export { dc } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dc.oa';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+export { dc } from '@wildboar/x500/SelectedAttributeTypes';
 export { domain } from '../Cosine/domain.oa';
 export { id_nf } from '../Wildboar/id-nf.va';
 
@@ -38,7 +38,7 @@ export const domainNameForm: NAME_FORM = {
     '&namedObjectClass': domain /* OBJECT_FIELD_SETTING */,
     '&MandatoryAttributes': [dc] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['domainNameForm'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [57],
         id_nf
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

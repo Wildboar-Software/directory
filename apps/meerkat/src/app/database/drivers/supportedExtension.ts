@@ -11,20 +11,16 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
     supportedExtension,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/supportedExtension.oa";
-import {
-    modifyPassword,
-    startTLS,
-    dynamicRefresh,
-} from "@wildboar/ldap/src/lib/extensions";
+} from "@wildboar/x500/LdapSystemSchema";
+import { extensions as ldapExtensions } from "@wildboar/ldap";
 
 const extensions = [
-    modifyPassword,
-    startTLS,
-    dynamicRefresh,
+    ldapExtensions.modifyPassword,
+    ldapExtensions.startTLS,
+    ldapExtensions.dynamicRefresh,
 ];
 
 export

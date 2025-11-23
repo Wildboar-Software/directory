@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { h320_Id } from '../H323-X500-Schema/h320-Id.va';
 export { h320_Id } from '../H323-X500-Schema/h320-Id.va';
 
@@ -16,7 +16,7 @@ export { h320_Id } from '../H323-X500-Schema/h320-Id.va';
  *
  * @constant
  */
-export const h320_id_at: OBJECT_IDENTIFIER = new _OID([/* at */ 1], h320_Id);
+export const h320_id_at: OBJECT_IDENTIFIER = _OID.fromParts([/* at */ 1], h320_Id);
 /* END_OF_SYMBOL_DEFINITION h320_id_at */
 
 /* eslint-enable */

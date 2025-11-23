@@ -1,19 +1,19 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { caseIgnoreListMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreListMatch.oa';
-import { caseIgnoreListSubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreListSubstringsMatch.oa';
-import { postalAddr } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalAddr.oa';
+} from '@wildboar/x500/InformationFramework';
+import { caseIgnoreListMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { caseIgnoreListSubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
+import { postalAddr } from '@wildboar/x500/SelectedAttributeTypes';
 import {
     PostalAddress,
     _decode_PostalAddress,
     _encode_PostalAddress,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PostalAddress.ta';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { pilotAttributeType } from '../Cosine/pilotAttributeType.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -27,17 +27,17 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { caseIgnoreListMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreListMatch.oa';
-export { caseIgnoreListSubstringsMatch } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreListSubstringsMatch.oa';
-export { postalAddr } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalAddr.oa';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { caseIgnoreListMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { caseIgnoreListSubstringsMatch } from '@wildboar/x500/SelectedAttributeTypes';
+export { postalAddr } from '@wildboar/x500/SelectedAttributeTypes';
 export {
     PostalAddress,
     _decode_PostalAddress,
     _encode_PostalAddress,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PostalAddress.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 export { pilotAttributeType } from '../Cosine/pilotAttributeType.va';
 
 /* START_OF_SYMBOL_DEFINITION homePostalAddress */
@@ -77,7 +77,7 @@ export const homePostalAddress: ATTRIBUTE<PostalAddress> = {
     '&ldapSyntax': postalAddr['&id'] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['homePostalAddress'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc': 'RFC1274: home postal address' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [39],
         pilotAttributeType
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

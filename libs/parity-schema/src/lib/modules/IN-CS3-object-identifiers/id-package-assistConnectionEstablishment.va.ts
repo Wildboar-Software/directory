@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_package } from '../IN-CS3-object-identifiers/id-package.va';
 export { id_package } from '../IN-CS3-object-identifiers/id-package.va';
 
@@ -17,7 +17,7 @@ export { id_package } from '../IN-CS3-object-identifiers/id-package.va';
  * @constant
  */
 export const id_package_assistConnectionEstablishment: OBJECT_IDENTIFIER =
-    new _OID([/* assistConnectionEstablishment */ 16], id_package);
+    _OID.fromParts([/* assistConnectionEstablishment */ 16], id_package);
 /* END_OF_SYMBOL_DEFINITION id_package_assistConnectionEstablishment */
 
 /* eslint-enable */

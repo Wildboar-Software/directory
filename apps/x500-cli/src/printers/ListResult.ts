@@ -1,16 +1,16 @@
 import type { Context } from "../types";
 import type {
     ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ListResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ListResultData_listInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ListResultData_listInfo_subordinates_Item as Subordinate,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { EOL } from "node:os";
 import stringifyDN from "../utils/stringifyDN";
 import chalk from "chalk";

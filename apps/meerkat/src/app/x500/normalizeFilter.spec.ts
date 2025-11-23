@@ -1,4 +1,4 @@
-// import type { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
+// import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
 // import normalizeFilter from "./normalizeFilter";
 
 describe("normalizeFilter()", () => {

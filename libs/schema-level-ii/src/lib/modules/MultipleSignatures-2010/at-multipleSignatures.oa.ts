@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { MultipleSignatures, _decode_MultipleSignatures, _encode_MultipleSignatures } from "../MultipleSignatures-2010/MultipleSignatures.ta";
 import { id_aa_multipleSignatures } from "../MultipleSignatures-2010/id-aa-multipleSignatures.va";
 

@@ -1,43 +1,43 @@
 import type { Context, IndexableOID, Value, Vertex } from "@wildboar/meerkat-types";
 import {
     id_op_binding_shadow,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     ShadowingAgreementInfo,
     _decode_ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { compareDistinguishedName, dnWithinSubtreeSpecification, evaluateContextAssertion, groupByOID, objectClassesWithinRefinement } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { UnitOfReplication } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UnitOfReplication.ta";
+import { UnitOfReplication } from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     IncrementalStepRefresh, SubordinateChanges,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/IncrementalStepRefresh.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     ClassAttributeSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     getAttributeTypeFromEntryModification,
 } from "../x500/getAttributeTypeFromEntryModification";
-import { AttributeUsage_userApplications } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { AttributeUsage_userApplications } from "@wildboar/x500/InformationFramework";
 import {
     ContextSelection, TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import valuesFromAttribute from "../x500/valuesFromAttribute";
 import attributesFromValues from "../x500/attributesFromValues";
-import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
+import { Attribute } from "@wildboar/pki-stub";
 import { ALL_ATTRIBUTE_TYPES, MAX_TRAVERSAL } from "../constants";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
-import { ContentChange, ContentChange_rename } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ContentChange.ta";
-import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
+import { ContentChange, ContentChange_rename } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { EntryModification } from "@wildboar/x500/DirectoryAbstractService";
 import getSDSEContent, { mandatoryReplicatedAttributeTypesSet } from "../disp/getSDSEContent";
-import { DistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/DistinguishedName.ta";
+import { DistinguishedName } from "@wildboar/pki-stub";
 import readSubordinates from "../dit/readSubordinates";
-import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/LocalName.ta";
+import { LocalName } from "@wildboar/x500/InformationFramework";
 import isPrefix from "../x500/isPrefix";
-import { nonSpecificKnowledge, specificKnowledge } from "@wildboar/x500/src/lib/collections/attributes";
-import { child } from "@wildboar/x500/src/lib/collections/objectClasses";
+import { nonSpecificKnowledge, specificKnowledge } from "@wildboar/x500/DSAOperationalAttributeTypes";
+import { child } from "@wildboar/x500/InformationFramework";
 
 
 /**
@@ -59,7 +59,7 @@ import { child } from "@wildboar/x500/src/lib/collections/objectClasses";
 function filterByTypeAndContextAssertion (
     ctx: Context,
     attr: Attribute,
-    selectedContexts: Record<IndexableOID, TypeAndContextAssertion[]> | null,
+    selectedContexts: Map<IndexableOID, TypeAndContextAssertion[]> | null,
     filteredTypes: Set<IndexableOID>,
 ): Attribute {
     if (!selectedContexts) {
@@ -72,7 +72,7 @@ function filterByTypeAndContextAssertion (
         ALL_ATTRIBUTE_TYPES,
         ...Array.from(getAttributeParentTypes(ctx, attr.type_)).map((oid) => oid.toString()),
     ]
-        .flatMap((oid) => selectedContexts[oid] ?? []);
+        .flatMap((oid) => selectedContexts.get(oid) ?? []);
     // If there are no assertions for this type, just return it.
     if (typeAndContextAssertions.length === 0) {
         return attr;

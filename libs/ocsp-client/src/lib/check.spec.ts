@@ -1,23 +1,23 @@
 import { getOCSPResponse as check } from "./check";
 import { URL } from "url";
 import { PEMObject } from "pem-ts";
-import { BERElement } from "asn1-ts";
+import { BERElement } from "@wildboar/asn1";
 import {
     _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     OCSPResponseStatus_successful,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponseStatus.ta";
+} from "@wildboar/ocsp";
 import {
     id_pkix_ocsp_basic,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/id-pkix-ocsp-basic.va";
+} from "@wildboar/ocsp";
 import {
     _decode_BasicOCSPResponse,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/BasicOCSPResponse.ta";
+} from "@wildboar/ocsp";
 import { strict as assert } from "assert";
-import { id_sha256 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
+import { id_sha256 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import { getDateFromTime } from "@wildboar/x500/src/lib/utils/getDateFromTime";
-import { OCSPRequest } from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPRequest.ta";
+import { OCSPRequest } from "@wildboar/ocsp";
 
 const PUBLIC_OCSP_RESPONDER_URL: string = "http://ocsp.sca1b.amazontrust.com";
 

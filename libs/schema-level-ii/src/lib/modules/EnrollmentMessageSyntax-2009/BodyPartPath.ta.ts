@@ -1,8 +1,8 @@
 /* eslint-disable */
 import {
     ASN1Element as _Element
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { BodyPartID, _decode_BodyPartID, _encode_BodyPartID } from "../EnrollmentMessageSyntax-2009/BodyPartID.ta";
 
 

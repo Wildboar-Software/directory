@@ -1,9 +1,9 @@
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
 import {
     PKCS9String,
     _decode_PKCS9String,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/PKCS9String.ta";
+} from "@wildboar/pkcs/PKCS-9";
 import { directoryStringToString } from "@wildboar/x500";
 
 function pkcs9StringToString (str: PKCS9String): string {

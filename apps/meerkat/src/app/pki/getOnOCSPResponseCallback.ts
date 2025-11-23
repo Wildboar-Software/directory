@@ -1,8 +1,8 @@
-import type { MeerkatContext } from "../ctx";
-import { BERElement } from "asn1-ts";
+import type { MeerkatContext } from "../ctx.js";
+import { BERElement } from "@wildboar/asn1";
 import {
     _decode_OCSPResponse,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponse.ta";
+} from "@wildboar/ocsp";
 import { verifyOCSPResponse, VOR_RETURN_OK } from "./verifyOCSPResponse";
 
 export type NodeOCSPResponseCallback = (response: Buffer) => unknown;

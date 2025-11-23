@@ -11,12 +11,12 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER } from "asn1-ts/dist/node/functional";
-import { ldapSyntaxes } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/ldapSyntaxes.oa";
-import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+import { DER } from "@wildboar/asn1/functional";
+import { ldapSyntaxes } from "@wildboar/x500/LdapSystemSchema";
+import { subschema } from "@wildboar/x500/SchemaAdministration";
 import {
     LdapSyntaxDescription,
-} from "@wildboar/x500/src/lib/modules/LdapSystemSchema/LdapSyntaxDescription.ta";
+} from "@wildboar/x500/LdapSystemSchema";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 

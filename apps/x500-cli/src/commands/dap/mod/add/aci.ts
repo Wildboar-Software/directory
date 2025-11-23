@@ -1,64 +1,64 @@
 import type { Connection, Context } from "../../../../types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     modifyEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgument,
     _encode_ModifyEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     EntryModification,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import printCode from "../../../../printers/Code";
 import destringifyDN from "../../../../utils/destringifyDN";
-import { FALSE_BIT, ObjectIdentifier, TRUE_BIT, OBJECT_IDENTIFIER } from "asn1-ts";
+import { FALSE_BIT, ObjectIdentifier, TRUE_BIT, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     ModAddACIItemArgs,
 } from "../../../../yargs/dap_mod_add_aci";
 import {
     ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     ACIItem_itemOrUserFirst_userFirst,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem-itemOrUserFirst-userFirst.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels_level,
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_simple,
     AuthenticationLevel_basicLevels_level_strong,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     UserClasses,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/UserClasses.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     UserPermission,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/UserPermission.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     ProtectedItems,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ProtectedItems.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import { lexSubtreeSpec } from "../../../../parsers/lexSubtreeSpec";
 import {
     MaxValueCount,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/MaxValueCount.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     RestrictedValue,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/RestrictedValue.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import { lexRefinement } from "../../../../parsers/parseRefinement";
 import {
     GrantsAndDenials,
@@ -88,56 +88,56 @@ import {
     GrantsAndDenials_grantInvoke,
     GrantsAndDenials_grantRemove,
     GrantsAndDenials_grantRename,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/GrantsAndDenials.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     subentryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     prescriptiveACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
+} from "@wildboar/x500/BasicAccessControl";
 import type {
     ATTRIBUTE,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
+} from "@wildboar/x500/InformationFramework";
+import { attributes as x500at } from "@wildboar/x500";
 import {
     entryUUID,
-} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa.js";
 import {
     entryDN,
-} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa.js";
 import {
     superiorUUID,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa.js";
 import {
     dynamicSubtrees,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa.js";
 import {
     entryTtl,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
 import {
     vendorName,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa.js";
 import {
     vendorVersion,
-} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa.js";
 import {
     syncTimestamp,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa.js";
 import {
     fullVendorVersion,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa.js";
 import {
     administratorsAddress,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/administratorsAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/administratorsAddress.oa.js";
 import {
     isMemberOf,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa.js";
 import {
     numSubordinates,
-} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa.js";
 
 const ALL_OPERATIONAL_ATTRIBUTE_TYPES: OBJECT_IDENTIFIER[] = [
     x500at.accessControlScheme["&id"],

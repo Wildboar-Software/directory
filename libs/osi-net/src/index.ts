@@ -1,7 +1,7 @@
-import type { OCTET_STRING, SET_OF } from "asn1-ts";
+import type { OCTET_STRING, SET_OF } from "@wildboar/asn1";
 import {
     AARQ_apdu,
-} from "@wildboar/acse/src/lib/modules/ACSE-1/AARQ-apdu.ta";
+} from "@wildboar/acse";
 
 export * from "./lib/itot";
 export { get_acse_ber_context } from "./lib/presentation";

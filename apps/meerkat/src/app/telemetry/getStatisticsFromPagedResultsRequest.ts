@@ -3,10 +3,10 @@ import type {
 } from "@wildboar/meerkat-types";
 import type {
     PagedResultsRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     PagedResultsRequest_newRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 export
 function getStatisticsFromPagedResultsRequest (prr: PagedResultsRequest): PagedResultsRequestStatistics {

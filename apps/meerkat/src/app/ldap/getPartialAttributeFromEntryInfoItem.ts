@@ -1,13 +1,13 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type {
     EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     PartialAttribute,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
+} from "@wildboar/ldap";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import getPartialAttributeFromAttribute from "./getPartialAttributeFromAttribute";
 
 /**

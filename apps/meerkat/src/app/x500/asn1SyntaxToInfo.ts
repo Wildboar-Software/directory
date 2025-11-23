@@ -1,4 +1,4 @@
-import { ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ObjectIdentifier, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     _decodeBoolean,
     _decodeInteger,
@@ -10,64 +10,64 @@ import {
     _decodeOctetString,
     _decodeObjectIdentifier,
     _decodeNumericString,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     _decode_UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_CountryName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/CountryName.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_EnhancedGuide,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/EnhancedGuide.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_FacsimileTelephoneNumber,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/FacsimileTelephoneNumber.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_TelephoneNumber,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TelephoneNumber.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_Guide,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/Guide.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_PostalAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PostalAddress.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_TelexNumber,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TelexNumber.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_PreferredDeliveryMethod,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PreferredDeliveryMethod.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_UUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     _decode_DITContentRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_DITStructureRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_MatchingRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_MatchingRuleUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_NameFormDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/NameFormDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_ObjectClassDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/ObjectClassDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _decode_SubstringAssertion,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/SubstringAssertion.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 
 
 export

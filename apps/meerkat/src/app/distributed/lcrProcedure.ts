@@ -1,42 +1,34 @@
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import type { ClientAssociation } from "@wildboar/meerkat-types";
-import { TRUE, TRUE_BIT } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import { TRUE, TRUE_BIT } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     ListArgument,
     _encode_ListArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
-import { chainedList } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedList.oa";
-import {
+    PartialOutcomeQualifier,
+    _decode_ListResult,
+    ServiceControls_priority_high,
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/DirectoryAbstractService";
+import { chainedList } from "@wildboar/x500/DistributedOperations";
 import { compareAuthenticationLevel, ChainedRequest, getOptionallyProtectedValue, compareCode } from "@wildboar/x500";
 import { apinfoProcedure } from "./apinfoProcedure";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import {
-    ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
-import { id_opcode_list } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
-import { OperationProgress } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { id_opcode_list } from "@wildboar/x500/CommonProtocolSpecification";
+import { OperationProgress } from "@wildboar/x500/DistributedOperations";
+import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import {
     OperationProgress_nameResolutionPhase_completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
+} from "@wildboar/x500/DistributedOperations";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import type { ListState } from "./list_i";
 import {
     ContinuationReference,
-    PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
-import {
-    _decode_ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";
+} from "@wildboar/x500/DistributedOperations";
 import { Promise as bPromise } from "bluebird";
-import {
-    ServiceControls_priority_high,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-priority.ta";
 import printCode from "../utils/printCode";
 import stringifyDN from "../x500/stringifyDN";
 

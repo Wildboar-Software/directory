@@ -1,16 +1,16 @@
 import type { ClientAssociation, OPCR } from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
-import { BOOLEAN, TRUE } from "asn1-ts";
+import type { MeerkatContext } from "../ctx.js";
+import { BOOLEAN, TRUE } from "@wildboar/asn1";
 import * as errors from "@wildboar/meerkat-types";
 import {
     OperationProgress,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     OperationProgress_nameResolutionPhase_completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
-import { ReferralData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReferralData.ta";
+} from "@wildboar/x500/DistributedOperations";
+import { ReferralData } from "@wildboar/x500/DirectoryAbstractService";
 import { strict as assert } from "assert";
-import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import { ServiceErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { apinfoProcedure } from "./apinfoProcedure";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
@@ -21,42 +21,42 @@ import {
     ServiceProblem_unwillingToPerform,
     ServiceProblem_invalidReference,
     ServiceProblem_ditError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     NameProblem_noSuchObject,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
-import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { getDateFromTime } from "@wildboar/x500";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     nameError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     referral,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/referral.oa";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { compareCode } from "@wildboar/x500";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { NameErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { OperationDispatcher, OperationDispatcherState } from "./OperationDispatcher";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
-import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
+import { chainedRead } from "@wildboar/x500/DistributedOperations";
 import {
     AbandonedData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import type {
     OPTIONALLY_PROTECTED,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
+} from "@wildboar/x500/EnhancedSecurity";
 import type {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     ReferenceType_nonSpecificSubordinate,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
+} from "@wildboar/x500/DistributedOperations";
 import { printInvokeId } from "../utils/printInvokeId";
 import { compareAuthenticationLevel } from "@wildboar/x500";
 import { OperationOutcome, RejectReason, AbortReason } from "@wildboar/rose-transport";

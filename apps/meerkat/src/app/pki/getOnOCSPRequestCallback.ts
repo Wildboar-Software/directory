@@ -3,25 +3,25 @@ import { getOCSPResponse, SignFunction } from "@wildboar/ocsp-client";
 import {
     Certificate,
     _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
-import { BERElement } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/AuthenticationFramework";
+import { BERElement } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     authorityInfoAccess,
-} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/authorityInfoAccess.oa";
+} from "@wildboar/x500/PkiPmiExternalDataTypes";
 import {
     id_ad_ocsp,
-} from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/id-ad-ocsp.va";
+} from "@wildboar/x500/PkiPmiExternalDataTypes";
 import type {
     GeneralName,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralName.ta";
+} from "@wildboar/x500/CertificateExtensions";
 import { generateSignature } from "./generateSignature";
 import {
     _encode_OCSPResponse,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponse.ta";
+} from "@wildboar/ocsp";
 import {
     OCSPResponseStatus_successful,
-} from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponseStatus.ta";
+} from "@wildboar/ocsp";
 
 /**
  * @summary The type of NodeJS's callback executed from a `TLSSocket`'s `OCSPRequest` event.

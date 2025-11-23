@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { id_trader_nf_serviceOffer } from '../TraderDefinitions/id-trader-nf-serviceOffer.va';
 import { serviceOfferEntry } from '../TraderDefinitions/serviceOfferEntry.oa';
 import { sOfferId } from '../TraderDefinitions/sOfferId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export { id_trader_nf_serviceOffer } from '../TraderDefinitions/id-trader-nf-serviceOffer.va';
 export { serviceOfferEntry } from '../TraderDefinitions/serviceOfferEntry.oa';
 export { sOfferId } from '../TraderDefinitions/sOfferId.oa';

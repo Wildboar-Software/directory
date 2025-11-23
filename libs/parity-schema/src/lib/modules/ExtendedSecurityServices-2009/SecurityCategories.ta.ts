@@ -3,14 +3,14 @@ import {
     SecurityCategory,
     _decode_SecurityCategory,
     _encode_SecurityCategory,
-} from '@wildboar/x500/src/lib/modules/EnhancedSecurity/SecurityCategory.ta';
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/EnhancedSecurity';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 export {
     SecurityCategory,
     _decode_SecurityCategory,
     _encode_SecurityCategory,
-} from '@wildboar/x500/src/lib/modules/EnhancedSecurity/SecurityCategory.ta';
+} from '@wildboar/x500/EnhancedSecurity';
 
 /* START_OF_SYMBOL_DEFINITION SecurityCategories */
 /**

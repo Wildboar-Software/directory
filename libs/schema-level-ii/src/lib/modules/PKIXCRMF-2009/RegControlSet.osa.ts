@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { regCtrl_authenticator } from "../PKIXCRMF-2009/regCtrl-authenticator.oa";
 import { regCtrl_oldCertID } from "../PKIXCRMF-2009/regCtrl-oldCertID.oa";
 import { regCtrl_pkiArchiveOptions } from "../PKIXCRMF-2009/regCtrl-pkiArchiveOptions.oa";

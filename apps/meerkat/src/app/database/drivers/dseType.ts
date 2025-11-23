@@ -14,12 +14,12 @@ import NOOP from "./NOOP";
 import {
     TRUE_BIT,
     FALSE_BIT,
-} from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     dseType,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/dseType.oa";
-import compareBitStrings from "@wildboar/x500/src/lib/comparators/compareBitStrings";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
+import { compareBitStrings } from "@wildboar/x500";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

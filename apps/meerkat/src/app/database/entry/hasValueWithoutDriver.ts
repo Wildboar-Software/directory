@@ -2,7 +2,7 @@ import {
     Context,
     Value,
 } from "@wildboar/meerkat-types";
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import { type EqualityMatcher } from "@wildboar/x500";
 import { attributeValueFromDB } from "../attributeValueFromDB";
 
 /**

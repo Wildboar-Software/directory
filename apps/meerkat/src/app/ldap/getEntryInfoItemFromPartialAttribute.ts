@@ -1,12 +1,12 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type {
     EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     PartialAttribute,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
+} from "@wildboar/ldap";
 import getAttributeFromPartialAttribute from "./getAttributeFromPartialAttribute";
-import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+import { normalizeAttributeDescription } from "@wildboar/ldap";
 
 /**
  * @summary Converts an LDAP `PartialAttribute` into an X.500 entry information item

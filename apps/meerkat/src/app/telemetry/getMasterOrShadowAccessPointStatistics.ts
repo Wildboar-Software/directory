@@ -1,8 +1,8 @@
 import type { MasterOrShadowAccessPointStatistics } from "@wildboar/meerkat-types";
 import type {
     MasterOrShadowAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
-import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+} from "@wildboar/x500/DistributedOperations";
+import { naddrToURI } from "@wildboar/x500";
 
 
 export

@@ -2,8 +2,8 @@ import { Context } from "@wildboar/meerkat-types";
 import { Knowledge } from "@prisma/client";
 import {
     _decode_ConsumerInformation,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
-import { BERElement } from "asn1-ts";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
+import { BERElement } from "@wildboar/asn1";
 
 /**
  * @summary Remove consumer knowledge for a given shadow operational binding

@@ -5,76 +5,83 @@ import {
     _encodePrintableString,
     _encodeObjectIdentifier,
     _encodeUTF8String,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import destringifyDN from "../../utils/destringifyDN";
 import {
     EstablishOperationalBindingArgumentData,
     _encode_EstablishOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _encode_EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     Validity,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/Validity.ta";
-import { AccessPoint, _encode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { PresentationAddress } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
+import { AccessPoint, _encode_AccessPoint } from "@wildboar/x500/DistributedOperations";
+import { PresentationAddress } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { addSeconds } from "date-fns";
-import { ASN1Construction, ASN1Element, ASN1TagClass, DERElement, OBJECT_IDENTIFIER, ObjectIdentifier, TRUE, unpackBits } from "asn1-ts";
+import { ASN1Construction, ASN1Element, ASN1TagClass, DERElement, OBJECT_IDENTIFIER, ObjectIdentifier, TRUE, unpackBits } from "@wildboar/asn1";
 import { randomBytes, sign, createSign } from "crypto";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     establishOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { getAlgorithmInfoFromKey } from "../../crypto/getAlgorithmInfoFromKey";
 import {
     EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _decode_EstablishOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import printError from "../../printers/Error_";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { uriToNSAP } from "@wildboar/x500";
-import { shadowOperationalBinding } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/shadowOperationalBinding.oa";
+import { shadowOperationalBinding } from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     AttributeSelection,
-    ContextSelection,
     UnitOfReplication,
     UnitOfReplication_supplyContexts,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UnitOfReplication.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     UpdateMode,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateMode.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     ShadowingAgreementInfo,
     _encode_ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import { AreaSpecification, SubtreeSpecification } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AreaSpecification.ta";
-import { Knowledge, Knowledge_knowledgeType } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Knowledge.ta";
-import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SchedulingParameters.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { AreaSpecification } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { Knowledge, Knowledge_knowledgeType } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     ChopSpecification_specificExclusions_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ChopSpecification-specificExclusions-Item.ta";
+} from "@wildboar/x500/InformationFramework";
 import { lexRefinement } from "../../parsers/parseRefinement";
-import { ClassAttributeSelection } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
-import { languageContext, localeContext } from "@wildboar/x500/src/lib/collections/contexts";
-import { TypeAndContextAssertion } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
-import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+import { ClassAttributeSelection } from "@wildboar/x500/DirectoryShadowAbstractService";
+import { contexts } from "@wildboar/x500";
+import {
+    TypeAndContextAssertion,
+    ContextSelection,
+} from "@wildboar/x500/DirectoryAbstractService";
+import {
+    ContextAssertion,
+    SubtreeSpecification
+} from "@wildboar/x500/InformationFramework";
+
+const { languageContext, localeContext } = contexts;
 
 export
 async function do_shadow (

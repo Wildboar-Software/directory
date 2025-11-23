@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION id_at */
 /**
@@ -15,7 +15,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const id_at: OBJECT_IDENTIFIER = new _OID([
+export const id_at: OBJECT_IDENTIFIER = _OID.fromParts([
     /* itu-t */ 0, /* recommendation */ 0, /* q */ 17, 1551, /* module */ 0,
     /* uptUsefulDefinitions */ 0, /* attributeTypes */ 2, /* version1 */ 0,
 ]);

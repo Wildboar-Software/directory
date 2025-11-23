@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { at } from '../TableFramework/at.va';
 export { at } from '../TableFramework/at.va';
 
@@ -16,7 +16,7 @@ export { at } from '../TableFramework/at.va';
  *
  * @constant
  */
-export const at_distinguished_name_table_key: OBJECT_IDENTIFIER = new _OID(
+export const at_distinguished_name_table_key: OBJECT_IDENTIFIER = _OID.fromParts(
     [3],
     at
 );

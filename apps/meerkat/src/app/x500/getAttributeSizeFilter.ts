@@ -1,6 +1,6 @@
 import type {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import { getAttributeSize } from "@wildboar/x500";
 
 /**

@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { countryName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { countryName } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { friendlyCountryName } from '../Cosine/friendlyCountryName.oa';
 import { inetOrgPerson } from '../InetOrgPerson/inetOrgPerson.oa';
 import { custom1 } from '../MozillaSchema/custom1.oa';
@@ -24,8 +24,8 @@ import { nsAIMid } from '../MozillaSchema/nsAIMid.oa';
 import { workurl } from '../MozillaSchema/workurl.oa';
 import { xmozillanickname } from '../MozillaSchema/xmozillanickname.oa';
 import { xmozillausehtmlmail } from '../MozillaSchema/xmozillausehtmlmail.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -37,8 +37,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { countryName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa';
+} from '@wildboar/x500/InformationFramework';
+export { countryName } from '@wildboar/x500/SelectedAttributeTypes';
 export { friendlyCountryName } from '../Cosine/friendlyCountryName.oa';
 export { custom1 } from '../MozillaSchema/custom1.oa';
 export { custom2 } from '../MozillaSchema/custom2.oa';
@@ -127,7 +127,7 @@ export const mozillaAbPersonObsolete: OBJECT_CLASS = {
         friendlyCountryName,
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['mozillaAbPersonObsolete'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 6, 1, 4, 1, 13769, 2, 2, 1,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

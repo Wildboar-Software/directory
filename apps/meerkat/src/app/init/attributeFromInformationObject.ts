@@ -1,11 +1,11 @@
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 import type { AttributeInfo } from "@wildboar/meerkat-types";
 import type {
     ATTRIBUTE,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeUsage_userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Convert an `ATTRIBUTE` information object into `AttributeInfo`.

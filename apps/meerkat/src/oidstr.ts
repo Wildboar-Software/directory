@@ -1,44 +1,38 @@
 import {
     id_oc_dynamicObject,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa.js";
 import {
     entryTtl,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
 import {
-    accessControlScheme,
-    administrativeRole,
-    aliasedEntryName,
-    objectClass,
-} from "@wildboar/x500/src/lib/collections/attributes";
+    subschema,
+} from "@wildboar/x500/SchemaAdministration";
 import {
     alias,
     parent,
     child,
     subentry,
-    subschema,
     pwdAdminSubentry,
     accessControlSubentry,
     collectiveAttributeSubentry,
     contextAssertionSubentry,
     serviceAdminSubentry,
     top,
-} from "@wildboar/x500/src/lib/collections/objectClasses";
-import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+    id_ar_autonomousArea,
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_accessControlSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
-import {
     id_ar_accessControlInnerArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
-import {
     id_ar_pwdAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
-import {
     id_ar_subschemaAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
-import {
     id_ar_serviceSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+    administrativeRole,
+    aliasedEntryName,
+    objectClass,
+} from "@wildboar/x500/InformationFramework";
+import {
+    accessControlScheme,
+} from "@wildboar/x500/BasicAccessControl";
 
 // These exist to save on the computing expense of recalculating their string
 // values every time they are used.

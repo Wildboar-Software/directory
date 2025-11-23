@@ -3,17 +3,17 @@ import { bacACDF } from "@wildboar/x500";
 import {
     SignedSecurityLabel,
     _decode_SignedSecurityLabel,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
-import { EvaluateFilterSettings } from "@wildboar/x500/src/lib/utils/evaluateFilter";
+} from "@wildboar/x500/EnhancedSecurity";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import { EvaluateFilterSettings } from "@wildboar/x500";
 import { ProtectedItem, ACDFTupleExtended } from "@wildboar/x500";
 import type {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import accessControlSchemesThatUseACIItems from "./accessControlSchemesThatUseACIItems";
 import accessControlSchemesThatUseRBAC from "./accessControlSchemesThatUseRBAC";
 import { rbacACDF } from "./rbacACDF";
-import { attributeValueSecurityLabelContext } from "@wildboar/x500/src/lib/collections/contexts";
+import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
 
 const avslc = attributeValueSecurityLabelContext["&id"];
 

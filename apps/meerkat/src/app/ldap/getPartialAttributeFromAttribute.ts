@@ -1,11 +1,11 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
     PartialAttribute,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
+} from "@wildboar/ldap";
 import type {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
+} from "@wildboar/x500/InformationFramework";
+import { encodeLDAPOID } from "@wildboar/ldap";
 import { getLDAPSyntax } from "../x500/getLDAPSyntax";
 
 /**

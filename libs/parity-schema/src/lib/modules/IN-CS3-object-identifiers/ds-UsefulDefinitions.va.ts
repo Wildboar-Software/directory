@@ -3,7 +3,7 @@ import {
     joint_iso_itu_t,
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER,
-} from 'asn1-ts';
+} from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION ds_UsefulDefinitions */
 /**
@@ -18,7 +18,7 @@ import {
  *
  * @constant
  */
-export const ds_UsefulDefinitions: OBJECT_IDENTIFIER = new _OID(
+export const ds_UsefulDefinitions: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* ds */ 5, /* module */ 1, /* usefulDefinitions */ 0, 3],
     joint_iso_itu_t
 );

@@ -1,25 +1,25 @@
 import type { Context, Vertex, IndexableOID } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import { Prisma } from "@prisma/client";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import {
     DistinguishedName, _decode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     RelativeDistinguishedName as RDN,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
-import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+} from "@wildboar/x500/InformationFramework";
+import { top } from "@wildboar/x500/InformationFramework";
 import addAttributes from "./entry/addAttributes";
 import { strict as assert } from "assert";
 import { randomUUID } from "crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
 import {
     entryTtl,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
-import { ASN1Construction, OBJECT_IDENTIFIER } from "asn1-ts";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
+import { ASN1Construction, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import { groupByOID } from "@wildboar/x500";
 import {
     ID_OC,

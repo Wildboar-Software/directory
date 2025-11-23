@@ -2,7 +2,7 @@
 import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { id_pkip } from "../PKIXCRMF-2009/id-pkip.va";
 
 
@@ -20,7 +20,7 @@ import { id_pkip } from "../PKIXCRMF-2009/id-pkip.va";
  * @constant
  */
 export
-const id_regInfo: OBJECT_IDENTIFIER = new _OID([
+const id_regInfo: OBJECT_IDENTIFIER = _OID.fromParts([
     2,
 ], id_pkip);
 /* END_OF_SYMBOL_DEFINITION id_regInfo */

@@ -2,29 +2,29 @@ import { create_itot_stack } from "@wildboar/osi-net";
 import { rose_transport_from_itot_stack } from "./rose/itot";
 import {
     id_ac_directoryAccessAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { createConnection } from "node:net";
-import { BER } from "asn1-ts/dist/node/functional";
+import { BER } from "@wildboar/asn1/functional";
 import {
     id_opcode_list,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     ListArgument,
     _encode_ListArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { strict as assert } from "node:assert";
-import type { MeerkatContext } from "./ctx";
+import type { MeerkatContext } from "./ctx.js";
 
 const RUNNING_MEERKAT_DSA_HOST: string = "localhost";
 const RUNNING_MEERKAT_DSA_ITOT_PORT: number = 1102;

@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { sip_id_oc } from '../H323-X500-Schema/sip-id-oc.va';
 import { sIPIdentityAddress } from '../H323-X500-Schema/sIPIdentityAddress.oa';
 import { sIPIdentityPassword } from '../H323-X500-Schema/sIPIdentityPassword.oa';
@@ -14,8 +14,8 @@ import { sIPIdentityServiceLevel } from '../H323-X500-Schema/sIPIdentityServiceL
 import { sIPIdentitySIPURI } from '../H323-X500-Schema/sIPIdentitySIPURI.oa';
 import { sIPIdentityUserName } from '../H323-X500-Schema/sIPIdentityUserName.oa';
 import { userSMIMECertificate } from '../H323-X500-Schema/userSMIMECertificate.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -27,8 +27,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { sip_id_oc } from '../H323-X500-Schema/sip-id-oc.va';
 export { sIPIdentityAddress } from '../H323-X500-Schema/sIPIdentityAddress.oa';
 export { sIPIdentityPassword } from '../H323-X500-Schema/sIPIdentityPassword.oa';
@@ -75,7 +75,7 @@ export const sIPIdentity: OBJECT_CLASS = {
         sIPIdentityServiceLevel,
         userSMIMECertificate,
     ] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [1],
         sip_id_oc
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

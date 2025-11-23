@@ -1,6 +1,6 @@
-import { SearchRule } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
-import { SearchArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
-import { TRUE_BIT, BIT_STRING } from "asn1-ts";
+import { SearchRule } from "@wildboar/x500/ServiceAdministration";
+import { SearchArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { TRUE_BIT, BIT_STRING } from "@wildboar/asn1";
 import {
     HierarchySelections_all,
     HierarchySelections_children,
@@ -11,18 +11,18 @@ import {
     HierarchySelections_siblings,
     HierarchySelections_subtree,
     HierarchySelections_top
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
-import { ControlOptions } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { ControlOptions } from "@wildboar/x500/ServiceAdministration";
 import { get_bit_string_from_int32, get_int32_from_bit_string } from "../utils/bits2int";
 import type {
     HierarchySelections,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     SearchControlOptions,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     ServiceControlOptions,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary Return type of `check_of_controls_and_hierarchy_selections()`

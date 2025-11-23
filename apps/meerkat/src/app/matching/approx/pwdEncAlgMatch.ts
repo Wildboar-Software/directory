@@ -1,13 +1,13 @@
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element } from "@wildboar/asn1";
 import {
     PwdEncAlg,
     _decode_PwdEncAlg,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/PwdEncAlg.ta";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     UserPwd,
     _decode_UserPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+} from "@wildboar/x500/PasswordPolicy";
 
 export
 const pwdEncAlgMatch: EqualityMatcher = (

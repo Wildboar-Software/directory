@@ -1,6 +1,6 @@
-import type { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-import { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-import { ObjectIdentifier } from 'asn1-ts';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier } from '@wildboar/asn1';
 import { id_nf } from '../Wildboar/id-nf.va';
 import { groupOfEntries } from './groupOfEntries.oa';
 
@@ -31,7 +31,7 @@ export const groupOfEntriesNameForm: NAME_FORM = {
     '&namedObjectClass': groupOfEntries /* OBJECT_FIELD_SETTING */,
     '&MandatoryAttributes': [commonName] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['groupOfEntriesNameForm'] /* OBJECT_FIELD_SETTING */,
-    '&id': new ObjectIdentifier(
+    '&id': ObjectIdentifier.fromParts(
         [50],
         id_nf
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

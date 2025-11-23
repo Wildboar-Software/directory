@@ -4,8 +4,8 @@ import {
     ASN1TagClass as _TagClass,
     IA5String,
     OPTIONAL
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { _decode_DocumentStoreSyntax_method, _encode_DocumentStoreSyntax_method, DocumentStoreSyntax_method } from "../Thorn/DocumentStoreSyntax-method.ta";
 
 

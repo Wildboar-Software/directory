@@ -1,20 +1,20 @@
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     id_ce_acceptableCertPolicies,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/id-ce-acceptableCertPolicies.va";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     AcceptableCertPoliciesSyntax,
     _decode_AcceptableCertPoliciesSyntax,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AcceptableCertPoliciesSyntax.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     AttributeCertificate,
     _decode_AttributeCertificate,
-} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificate.ta";
+} from "@wildboar/x500/AttributeCertificateDefinitions";
 import type {
     Extension,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extension.ta";
-import { DERElement } from "asn1-ts";
+} from "@wildboar/x500/AuthenticationFramework";
+import { DERElement } from "@wildboar/asn1";
 import most from "../../utils/most";
 
 export

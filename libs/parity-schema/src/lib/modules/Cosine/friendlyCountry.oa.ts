@@ -1,14 +1,14 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { country } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/country.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { country } from '@wildboar/x500/SelectedObjectClasses';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { friendlyCountryName } from '../Cosine/friendlyCountryName.oa';
 import { pilotObjectClass } from '../Cosine/pilotObjectClass.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -20,8 +20,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { country } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/country.oa';
+} from '@wildboar/x500/InformationFramework';
+export { country } from '@wildboar/x500/SelectedObjectClasses';
 export { friendlyCountryName } from '../Cosine/friendlyCountryName.oa';
 export { pilotObjectClass } from '../Cosine/pilotObjectClass.va';
 
@@ -56,7 +56,7 @@ export const friendlyCountry: OBJECT_CLASS = {
     '&kind': structural /* OBJECT_FIELD_SETTING */,
     '&MandatoryAttributes': [friendlyCountryName] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['friendlyCountry'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [18],
         pilotObjectClass
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

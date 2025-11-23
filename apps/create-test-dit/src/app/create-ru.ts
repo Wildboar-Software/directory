@@ -5,61 +5,61 @@ import {
     FALSE_BIT,
     unpackBits,
     OBJECT_IDENTIFIER,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { randomBytes, randomInt } from "crypto";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgument,
     _encode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import * as selat from "@wildboar/x500/src/lib/collections/attributes";
-import * as seloc from "@wildboar/x500/src/lib/collections/objectClasses";
+} from "@wildboar/x500/InformationFramework";
+import { attributes as selat } from "@wildboar/x500";
+import { objectClasses as seloc } from "@wildboar/x500";
 import {
     subentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     collectiveAttributeSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     accessControlSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     pwdAdminSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     subschema,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     SubtreeSpecification,
     _encode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControlOptions,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { SecurityParameters } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ProtectionRequest_none,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_none,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import print from "./printCode";
 import {
     DER,
@@ -69,129 +69,129 @@ import {
     _encodePrintableString,
     _encodeUTF8String,
     // _encodeNumericString,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     dITStructureRules,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITStructureRuleDescription,
     _encode_DITStructureRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     dITContentRules,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContentRuleDescription,
     _encode_DITContentRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     dITContextUse,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContextUseDescription,
     _encode_DITContextUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 import {
     DITContextUseInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
-import * as nf from "@wildboar/x500/src/lib/collections/nameForms";
-import * as oc from "@wildboar/x500/src/lib/collections/objectClasses";
-import * as at from "@wildboar/x500/src/lib/collections/attributes";
-import * as ct from "@wildboar/x500/src/lib/collections/contexts";
+} from "@wildboar/x500/SchemaAdministration";
+import { nameForms as nf } from "@wildboar/x500";
+import { objectClasses as oc } from "@wildboar/x500";
+import { attributes as at } from "@wildboar/x500";
+import { contexts as ct } from "@wildboar/x500";
 import {
     id_oa_allAttributeTypes,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     prescriptiveACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     ANONYMOUS_BASELINE,
     AUTHENTICATED_USER_BASELINE,
     AUTHENTICATED_USER_SELF_BASELINE,
     GLOBAL_DIRECTORY_ADMIN_BASELINE,
 } from "./aci";
-import { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+import { RDNSequence } from "@wildboar/x500/InformationFramework";
+import { compareCode } from "@wildboar/x500";
 import {
     updateError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     UpdateProblem_entryAlreadyExists, UpdateProblem_namingViolation,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { AccessPoint } from "@wildboar/x500/DistributedOperations";
 import {
     id_ar_collectiveAttributeSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_accessControlSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_pwdAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_ar_subschemaAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
-import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
+} from "@wildboar/x500/InformationFramework";
+import { uriToNSAP } from "@wildboar/x500";
 import {
     PresentationAddress,
     _encode_PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import { idempotentAddEntry } from "./utils";
-import { Guide, _encode_Guide } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/Guide.ta";
+import { Guide, _encode_Guide } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     directoryAccessAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/directoryAccessAC.oa";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     directorySystemAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/directorySystemAC.oa";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     directoryOperationalBindingManagementAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/directoryOperationalBindingManagementAC.oa";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     shadowSupplierInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/shadowSupplierInitiatedAC.oa";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     shadowConsumerInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/shadowConsumerInitiatedAC.oa";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     shadowSupplierInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/shadowSupplierInitiatedAsynchronousAC.oa";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     shadowConsumerInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/shadowConsumerInitiatedAsynchronousAC.oa";
+} from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     Attribute_valuesWithContext_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Context as X500Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     languageContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     localeContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     temporalContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/temporalContext.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     TimeSpecification,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     TimeSpecification_time_absolute,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification-time-absolute.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import { addDays, addHours } from "date-fns";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import { commonAuxiliaryObjectClasses } from "./objectClassSets";
 import {
     inetOrgPersonNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa.js";
 
 // const MOSCOW_ACCESS_POINT = new AccessPoint(
 //     {
@@ -1148,7 +1148,7 @@ async function seedRU (
             ),
             new Attribute(
                 selat.presentationAddress["&id"],
-                [_encode_PresentationAddress(pa, DER)],
+                [_encode_PresentationAddress(pa)],
             ),
             new Attribute(
                 selat.supportedApplicationContext["&id"],

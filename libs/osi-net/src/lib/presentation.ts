@@ -1,46 +1,46 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { Context_list_Item } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Context-list-Item.ta';
+import { Context_list_Item } from '@wildboar/copp';
 import {
     CP_type,
     _encode_CP_type,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CP-type.ta';
+} from '@wildboar/copp';
 import {
     CPR_PPDU,
     CPR_PPDU_normal_mode_parameters,
     _encode_CPR_PPDU,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPR-PPDU.ta';
+} from '@wildboar/copp';
 import {
     CPA_PPDU,
     _encode_CPA_PPDU,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPA-PPDU.ta';
+} from '@wildboar/copp';
 import {
     ARU_PPDU,
     _encode_ARU_PPDU,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARU-PPDU.ta';
+} from '@wildboar/copp';
 import {
     ARP_PPDU,
     _encode_ARP_PPDU,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARP-PPDU.ta';
+} from '@wildboar/copp';
 import {
     Result,
     Result_acceptance,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result.ta';
+} from '@wildboar/copp';
 import {
     Abort_reason,
     Abort_reason_invalid_ppdu_parameter_value,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Abort-reason.ta';
-import type { Result_list } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result-list.ta';
+} from '@wildboar/copp';
+import type { Result_list } from '@wildboar/copp';
 import {
     User_data,
     _encode_User_data,
-} from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/User-data.ta';
-import type { Default_context_name } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Default-context-name.ta';
-import { OBJECT_IDENTIFIER, TRUE_BIT, ObjectIdentifier } from 'asn1-ts';
-import { BER } from 'asn1-ts/dist/node/functional';
+} from '@wildboar/copp';
+import type { Default_context_name } from '@wildboar/copp';
+import { OBJECT_IDENTIFIER, TRUE_BIT, ObjectIdentifier } from '@wildboar/asn1';
+import { BER } from '@wildboar/asn1/functional';
 import { strict as assert } from 'node:assert';
 import { randomBytes, randomInt } from 'node:crypto';
-import { Mode_selector_mode_value_normal_mode } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Mode-selector-mode-value.ta';
-import { Provider_reason_reason_not_specified } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta';
+import { Mode_selector_mode_value_normal_mode } from '@wildboar/copp';
+import { Provider_reason_reason_not_specified } from '@wildboar/copp';
 
 /**
  * @summary Presentation layer state
@@ -2266,8 +2266,8 @@ export function dispatch_TD(c: PresentationConnection, ppdu: User_data): void {
 //     }
 // }
 
-const id_ber = new ObjectIdentifier([2, 1, 1]);
-const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
+const id_ber = ObjectIdentifier.fromParts([2, 1, 1]);
+const id_acse = ObjectIdentifier.fromParts([2, 2, 1, 0, 1]);
 
 export function get_acse_ber_context(c: PresentationConnection): Context_list_Item {
     const acse_ber_context: Context_list_Item =

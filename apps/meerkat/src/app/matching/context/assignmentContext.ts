@@ -1,10 +1,10 @@
 import { Context } from "@wildboar/meerkat-types";
 import { compareDistinguishedName, EqualityMatcher } from "@wildboar/x500";
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element } from "@wildboar/asn1";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import {
     _decode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 
 export
 function getAssignmentContext (ctx: Context): EqualityMatcher {

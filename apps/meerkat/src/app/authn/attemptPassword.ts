@@ -1,15 +1,15 @@
 import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
 import {
     UserPwd, _encode_UserPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+} from "@wildboar/x500/PasswordPolicy";
 import * as crypto from "crypto";
 import encryptPassword from "./encryptPassword";
 import type {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
-import compareAlgorithmIdentifier from "@wildboar/x500/src/lib/comparators/compareAlgorithmIdentifier";
-import { UserPwd_encrypted } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd-encrypted.ta";
-import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { compareAlgorithmIdentifier } from "@wildboar/x500";
+import { UserPwd_encrypted } from "@wildboar/x500/PasswordPolicy";
+import { AlgorithmIdentifier } from "@wildboar/pki-stub";
 import {
     DERElement,
     ObjectIdentifier,
@@ -18,15 +18,15 @@ import {
     packBits,
     GeneralizedTime,
     ASN1Element,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
     pwdFails,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
+} from "@wildboar/x500/PasswordPolicy";
 import {
     pwdFailureTime,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
-import { DER, _encodeInteger, _encodeGeneralizedTime, _decodeGeneralizedTime, _decodeInteger, _encodeBitString, _encodeOctetString } from "asn1-ts/dist/node/functional";
-import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+} from "@wildboar/x500/PasswordPolicy";
+import { DER, _encodeInteger, _encodeGeneralizedTime, _decodeGeneralizedTime, _decodeInteger, _encodeBitString, _encodeOctetString } from "@wildboar/asn1/functional";
+import { userPwdRecentlyExpired } from "@wildboar/x500/PasswordPolicy";
 import { strict as assert } from "node:assert";
 import { getAdministrativePoints } from "../dit/getAdministrativePoints";
 import { getRelevantSubentries } from "../dit/getRelevantSubentries";
@@ -39,33 +39,33 @@ import {
     pwdMaxFailures,
     pwdRecentlyExpiredDuration,
     pwdStartTime,
-} from "@wildboar/x500/src/lib/collections/attributes";
-import { PwdResponseValue } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
+} from "@wildboar/x500/PasswordPolicy";
+import { PwdResponseValue } from "@wildboar/x500/DirectoryAbstractService";
 import {
     PwdResponseValue_error_changeAfterReset,
     PwdResponseValue_error_passwordExpired,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { removeAttribute } from "../database/entry/removeAttribute";
 import { addValues } from "../database/entry/addValues";
-import { pwdGraceUseTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa";
-import { pwdLastSuccess } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa";
+import { pwdGraceUseTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa.js";
+import { pwdLastSuccess } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa.js";
 import { subSeconds, differenceInSeconds, addSeconds } from "date-fns";
-import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
-import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
-import { id_oa_pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/id-oa-pwdGraces.va";
-import { pwdExpireWarning } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdExpireWarning.oa";
+import { userPwd } from "@wildboar/x500/PasswordPolicy";
+import { userPassword } from "@wildboar/x500/AuthenticationFramework";
+import { id_oa_pwdGraces } from "@wildboar/x500/PasswordPolicy";
+import { pwdExpireWarning } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdExpireWarning.oa.js";
 import { Prisma } from "@prisma/client";
-import { pwdLockout } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa";
-import { pwdAccountLockedTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa";
-import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
+import { pwdLockout } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa.js";
+import { pwdAccountLockedTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa.js";
+import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa.js";
 import { groupByOID } from "../utils/groupByOID";
 import {
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     SimpleCredentials_validity_time1,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-validity-time1.ta";
-import { SimpleCredentials_validity_time2 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-validity-time2.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { SimpleCredentials_validity_time2 } from "@wildboar/x500/DirectoryAbstractService";
 import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
 import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
 

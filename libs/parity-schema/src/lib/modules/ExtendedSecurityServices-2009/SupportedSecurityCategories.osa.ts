@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { SECURITY_CATEGORY } from '@wildboar/x500/src/lib/modules/EnhancedSecurity/SECURITY-CATEGORY.oca';
-export { SECURITY_CATEGORY } from '@wildboar/x500/src/lib/modules/EnhancedSecurity/SECURITY-CATEGORY.oca';
+import { SECURITY_CATEGORY } from '@wildboar/x500/EnhancedSecurity';
+export { SECURITY_CATEGORY } from '@wildboar/x500/EnhancedSecurity';
 
 /* START_OF_SYMBOL_DEFINITION SupportedSecurityCategories */
 /**

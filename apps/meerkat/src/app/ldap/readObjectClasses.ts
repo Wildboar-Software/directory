@@ -4,7 +4,7 @@ import {
     ObjectClassKind_abstract,
     ObjectClassKind_auxiliary,
     ObjectClassKind_structural,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+} from "@wildboar/x500/InformationFramework";
 
 function escape (str: string): string {
     return str

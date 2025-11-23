@@ -2,7 +2,7 @@
 import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { id_mace } from "../EduCourseSchema/id-mace.va";
 
 
@@ -20,7 +20,7 @@ import { id_mace } from "../EduCourseSchema/id-mace.va";
  * @constant
  */
 export
-const id_eduCourse: OBJECT_IDENTIFIER = new _OID([
+const id_eduCourse: OBJECT_IDENTIFIER = _OID.fromParts([
     /* eduOrg */ 6,
 ], id_mace);
 /* END_OF_SYMBOL_DEFINITION id_eduCourse */

@@ -1,15 +1,15 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { printer_ipp_features_supported } from '../RFC7612Printer/printer-ipp-features-supported.oa';
 import { printer_ipp_versions_supported } from '../RFC7612Printer/printer-ipp-versions-supported.oa';
 import { printer_multiple_document_jobs_supported } from '../RFC7612Printer/printer-multiple-document-jobs-supported.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -21,8 +21,8 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
 export { printer_ipp_features_supported } from '../RFC7612Printer/printer-ipp-features-supported.oa';
 export { printer_ipp_versions_supported } from '../RFC7612Printer/printer-ipp-versions-supported.oa';
 export { printer_multiple_document_jobs_supported } from '../RFC7612Printer/printer-multiple-document-jobs-supported.oa';
@@ -67,7 +67,7 @@ export const printerIPP: OBJECT_CLASS = {
     '&ldapName': ['printerIPP'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'Internet Printing Protocol (IPP) information.' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         1, 3, 18, 0, 2, 6, 256,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

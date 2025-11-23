@@ -1,12 +1,12 @@
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import { administrativeRole } from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
-import { accessControlScheme } from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
-import { entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
-import { subentryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
-import { aliasedEntryName } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
-import { clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/clearance.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { administrativeRole } from "@wildboar/x500/InformationFramework";
+import { accessControlScheme } from "@wildboar/x500/BasicAccessControl";
+import { entryACI } from "@wildboar/x500/BasicAccessControl";
+import { subentryACI } from "@wildboar/x500/BasicAccessControl";
+import { aliasedEntryName } from "@wildboar/x500/InformationFramework";
+import { clearance } from "@wildboar/x500/EnhancedSecurity";
 
 /**
  * @summary Selects attributes of an administrative point that are to be shared in a hierarchical operational binding

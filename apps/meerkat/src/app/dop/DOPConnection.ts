@@ -9,103 +9,101 @@ import {
     MistypedArgumentError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
-import type { MeerkatContext } from "../ctx";
-import { ASN1Element, ASN1TagClass, TRUE_BIT } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import type { MeerkatContext } from "../ctx.js";
+import { ASN1Element, ASN1TagClass, TRUE_BIT } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     DSABindArgument,
     _decode_DSABindArgument,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     _encode_DSABindResult,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindResult.ta";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+} from "@wildboar/x500/DistributedOperations";
+import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import {
     _encode_Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     SecurityErrorData,
     _encode_SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     operationalBindingError,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _encode_OpBindingErrorParam,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _decode_SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     _decode_AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import establishOperationalBinding from "./operations/establishOperationalBinding";
 import modifyOperationalBinding from "./operations/modifyOperationalBinding";
 import terminateOperationalBinding from "./operations/terminateOperationalBinding";
 import {
     _decode_EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _encode_EstablishOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _decode_ModifyOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _encode_ModifyOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingResult.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _decode_TerminateOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _encode_TerminateOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResult.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import versions from "../versions";
 import { bind as doBind } from "../authn/dsaBind";
 import {
     directoryBindError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_inappropriateAuthentication,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AuthenticationLevel_basicLevels_level_none,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
-import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
+import { codeToString } from "@wildboar/x500";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 import { flatten } from "flat";
-import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import { naddrToURI } from "@wildboar/x500";
 import { printInvokeId } from "../utils/printInvokeId";
 import {
     getStatisticsFromSecurityParameters,
 } from "../telemetry/getStatisticsFromSecurityParameters";
 import { signDirectoryError } from "../pki/signDirectoryError";
-import {
-    compareAuthenticationLevel,
-} from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
+import { compareAuthenticationLevel } from "@wildboar/x500";
 import {
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import stringifyDN from "../x500/stringifyDN";
-import { AuthenticationLevel_basicLevels } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import { AuthenticationLevel_basicLevels } from "@wildboar/x500/BasicAccessControl";
 import { isArgumentSigned } from "../x500/isArgumentSigned";
 import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     Versions_v2,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import printCode from "../utils/printCode";
 import {
     ROSETransport,

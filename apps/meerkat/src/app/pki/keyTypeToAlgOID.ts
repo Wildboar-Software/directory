@@ -1,18 +1,18 @@
 import type { KeyType } from "crypto";
-import { sa_Ed25519 } from "@wildboar/safecurves-pkix-18/src/lib/modules/Safecurves-pkix-18/sa-Ed25519.oa";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+import { sa_Ed25519 } from "@wildboar/safecurves-pkix-18";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     sha512WithRSAEncryption,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha512WithRSAEncryption.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     ecdsa_with_SHA512,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/ecdsa-with-SHA512.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     rSASSA_PSS,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/rSASSA-PSS.oa";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     id_dsa_with_sha256,
-} from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha256.va";
+} from "@wildboar/x500/AlgorithmObjectIdentifiers";
 
 /**
  * @summary A mapping from a NodeJS private key and an algorithm object identifier to use for digital signature

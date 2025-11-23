@@ -1,21 +1,21 @@
-import type { MeerkatContext } from "../../ctx";
+import type { MeerkatContext } from "../../ctx.js";
 import type { Vertex } from "@wildboar/meerkat-types";
 import {
     AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import saveAccessPoint from "../../database/saveAccessPoint";
 import { Knowledge } from "@prisma/client";
 import {
     SupplierOrConsumer,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierOrConsumer.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     ConsumerInformation,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     OperationalBindingID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
-import { ShadowingAgreementInfo } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import { ShadowingAgreementInfo } from "@wildboar/x500/DirectoryShadowAbstractService";
 
 /**
  * @summary Become a shadow supplier by updating local consumer knowledge and scheduling updates

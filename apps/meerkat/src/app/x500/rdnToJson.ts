@@ -1,6 +1,6 @@
 import type {
     RelativeDistinguishedName as RDN,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Converts a relative distinguished name and converts it to a JSON-format

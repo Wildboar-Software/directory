@@ -11,10 +11,10 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { DER, _encodeBoolean } from "asn1-ts/dist/node/functional";
+import { DER, _encodeBoolean } from "@wildboar/asn1/functional";
 import {
     hasSubordinates,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/hasSubordinates.oa";
+} from "@wildboar/x500/InformationFramework";
 import { getEntryExistsFilter } from "../../database/entryExistsFilter";
 
 export

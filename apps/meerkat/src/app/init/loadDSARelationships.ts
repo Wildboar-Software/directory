@@ -1,18 +1,18 @@
 import type { Context } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
 import { stringifyDN } from "../x500/stringifyDN";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import {
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
 import { Prisma, OperationalBindingInitiator } from "@prisma/client";
 import {
     id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     id_op_binding_non_specific_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 
 const HOB: string = id_op_binding_hierarchical.toString();
 const NHOB: string = id_op_binding_non_specific_hierarchical.toString();

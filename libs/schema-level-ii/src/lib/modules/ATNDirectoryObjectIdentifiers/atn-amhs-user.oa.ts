@@ -1,13 +1,15 @@
 /* eslint-disable */
-import { mhs_acceptable_eits } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-acceptable-eits.oa";
-import { mhs_deliverable_content_types } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-deliverable-content-types.oa";
-import { mhs_exclusively_acceptable_eits } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-exclusively-acceptable-eits.oa";
-import { mhs_maximum_content_length } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-maximum-content-length.oa";
-import { mhs_message_store_dn } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-message-store-dn.oa";
-import { mhs_or_addresses } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-or-addresses.oa";
-import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
+import {
+    mhs_acceptable_eits,
+    mhs_deliverable_content_types,
+    mhs_exclusively_acceptable_eits,
+    mhs_maximum_content_length,
+    mhs_message_store_dn,
+    mhs_or_addresses,
+} from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
+import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import { auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { top } from "@wildboar/x500/InformationFramework";
 import { atn_AF_address } from "../ATNDirectoryObjectIdentifiers/atn-AF-address.oa";
 import { atn_amhs_direct_access } from "../ATNDirectoryObjectIdentifiers/atn-amhs-direct-access.oa";
 import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa";
@@ -20,15 +22,6 @@ import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-ce
 import { atn_use_of_amhs_security } from "../ATNDirectoryObjectIdentifiers/atn-use-of-amhs-security.oa";
 import { atn_use_of_directory } from "../ATNDirectoryObjectIdentifiers/atn-use-of-directory.oa";
 import { id_oc_atn_AmhsUser } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsUser.va";
-
-
-
-
-
-
-
-
-
 
 /* START_OF_SYMBOL_DEFINITION atn_amhs_user */
 /**

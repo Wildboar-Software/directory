@@ -1,16 +1,16 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
     SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/InformationFramework";
 import type {
     ChopSpecification_specificExclusions_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ChopSpecification-specificExclusions-Item.ta";
+} from "@wildboar/x500/InformationFramework";
 import decodeLDAPDN from "./decodeLDAPDN";
 import type {
     Refinement,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
+} from "@wildboar/x500/InformationFramework";
 import isDigit from "../utils/isDigit";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 
 const BASE_STRING: string = "base";
 const SPEX_STRING: string = "specificExclusions";

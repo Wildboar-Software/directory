@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import { regCtrl_authenticator } from '../PKIXCRMF-2009/regCtrl-authenticator.oa';
 import { regCtrl_oldCertID } from '../PKIXCRMF-2009/regCtrl-oldCertID.oa';
 import { regCtrl_pkiArchiveOptions } from '../PKIXCRMF-2009/regCtrl-pkiArchiveOptions.oa';
 import { regCtrl_pkiPublicationInfo } from '../PKIXCRMF-2009/regCtrl-pkiPublicationInfo.oa';
 import { regCtrl_protocolEncrKey } from '../PKIXCRMF-2009/regCtrl-protocolEncrKey.oa';
 import { regCtrl_regToken } from '../PKIXCRMF-2009/regCtrl-regToken.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export { regCtrl_authenticator } from '../PKIXCRMF-2009/regCtrl-authenticator.oa';
 export { regCtrl_oldCertID } from '../PKIXCRMF-2009/regCtrl-oldCertID.oa';
 export { regCtrl_pkiArchiveOptions } from '../PKIXCRMF-2009/regCtrl-pkiArchiveOptions.oa';

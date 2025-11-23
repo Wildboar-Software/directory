@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { objectIdentifierMatch } from '@wildboar/x500/src/lib/modules/InformationFramework/objectIdentifierMatch.oa';
+} from '@wildboar/x500/InformationFramework';
+import { objectIdentifierMatch } from '@wildboar/x500/InformationFramework';
 import { id_trader_at_interfaceType } from '../TraderDefinitions/id-trader-at-interfaceType.va';
 import {
     InterfaceTypeName,

@@ -1,8 +1,8 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     MatchingRuleUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/MatchingRuleUseDescription.ta";
+} from "@wildboar/x500/SchemaAdministration";
 
 /**
  * @summary Load an entry's MatchingRuleUseDescription from the database

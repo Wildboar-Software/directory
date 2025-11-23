@@ -12,105 +12,106 @@ import {
     RequestParameters,
     AbortReason,
 } from "@wildboar/rose-transport";
-import type { MeerkatContext } from "../ctx";
+import type { MeerkatContext } from "../ctx.js";
 import * as errors from "@wildboar/meerkat-types";
 import versions from "../versions";
 import {
     DirectoryBindResult,
     _encode_DirectoryBindResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindResult.ta";
-import { dap_ip, list, modifyEntry, search } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+    list,
+    modifyEntry,
+    search,
+} from "@wildboar/x500/DirectoryAbstractService";
+import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import {
     _encode_Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { BER, DER } from "asn1-ts/dist/node/functional";
-import { _encode_AbandonedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonedData.ta";
-import { _encode_AbandonFailedData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonFailedData.ta";
-import { _encode_AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
-import { _encode_NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
-import { _encode_ReferralData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReferralData.ta";
-import { _encode_SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import { ServiceErrorData, ServiceProblem_unavailable, _encode_ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
-import { _encode_UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
+import { BER, DER } from "@wildboar/asn1/functional";
+import { _encode_AbandonedData } from "@wildboar/x500/DirectoryAbstractService";
+import { _encode_AbandonFailedData } from "@wildboar/x500/DirectoryAbstractService";
+import { _encode_AttributeErrorData } from "@wildboar/x500/DirectoryAbstractService";
+import { _encode_NameErrorData } from "@wildboar/x500/DirectoryAbstractService";
+import { _encode_ReferralData } from "@wildboar/x500/DirectoryAbstractService";
+import { _encode_SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
+import { ServiceErrorData, ServiceProblem_unavailable, _encode_ServiceErrorData } from "@wildboar/x500/DirectoryAbstractService";
+import { _encode_UpdateErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import OperationDispatcher from "../distributed/OperationDispatcher";
 import { bind as doBind } from "./bind";
 import {
     directoryBindError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AuthenticationLevel_basicLevels_level_none,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
-import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
+import { codeToString } from "@wildboar/x500";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { EventEmitter } from "events";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { EventEmitter } from "node:events";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+import { compareCode } from "@wildboar/x500";
 import {
     administerPassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     changePassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import isDebugging from "is-debugging";
 import printCode from "../utils/printCode";
-import { ASN1Element, FALSE } from "asn1-ts";
+import { ASN1Element, FALSE } from "@wildboar/asn1";
 import {
     _decode_DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { AssertionError, strict as assert } from "assert";
 import { flatten } from "flat";
-import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import { naddrToURI } from "@wildboar/x500";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 import { printInvokeId } from "../utils/printInvokeId";
 import { getStatisticsFromSecurityParameters } from "../telemetry/getStatisticsFromSecurityParameters";
 import { signDirectoryError } from "../pki/signDirectoryError";
 import {
     abandoned,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandonFailed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandonFailed.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     attributeError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     nameError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     referral,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/referral.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     securityError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     updateError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
-import {
-    compareAuthenticationLevel,
-} from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { compareAuthenticationLevel } from "@wildboar/x500";
 import {
     Versions_v2,
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import stringifyDN from "../x500/stringifyDN";
 import {
     SecurityErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { createSecurityParameters } from "../x500/createSecurityParameters";
 import {
     PwdResponseValue_error_changeAfterReset,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary The handles a request, but not errors

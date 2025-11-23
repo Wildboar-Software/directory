@@ -1,4 +1,4 @@
-import { BIT_STRING, FALSE_BIT, TRUE_BIT } from "asn1-ts";
+import { BIT_STRING, FALSE_BIT, TRUE_BIT } from "@wildboar/asn1";
 import unsupportedAndCriticalExtensions from "./unsupportedAndCriticalExtensions";
 
 const naughtyList: Set<number> = new Set(

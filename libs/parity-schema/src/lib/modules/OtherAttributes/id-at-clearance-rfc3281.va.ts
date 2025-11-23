@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION id_at_clearance_rfc3281 */
 /**
@@ -16,7 +16,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const id_at_clearance_rfc3281: OBJECT_IDENTIFIER = new _OID([
+export const id_at_clearance_rfc3281: OBJECT_IDENTIFIER = _OID.fromParts([
     /* joint-iso-itu-t */ 2, /* ds */ 5, /* module */ 1,
     /* selected-attribute-types */ 5, /* clearance */ 55,
 ]);

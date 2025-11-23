@@ -1,7 +1,7 @@
 /* eslint-disable */
 import {
     ObjectIdentifier as _OID
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { ID } from "../VOPerson/ID.ta";
 import { pen_geant } from "./pen-geant.va";
 
@@ -20,7 +20,7 @@ import { pen_geant } from "./pen-geant.va";
  * @constant
  */
 export
-const id_geant: ID = new _OID([ 1,3,6,1,4,1, pen_geant ]);
+const id_geant: ID = _OID.fromParts([ 1,3,6,1,4,1, pen_geant ]);
 /* END_OF_SYMBOL_DEFINITION id_geant */
 
 /* eslint-enable */

@@ -11,12 +11,12 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { DER } from "asn1-ts/dist/node/functional";
-import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+import { DER } from "@wildboar/asn1/functional";
+import { alias } from "@wildboar/x500/InformationFramework";
 import {
     _decode_DistinguishedName,
     _encode_DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson";
 import dnToID from "../../dit/dnToID";
 

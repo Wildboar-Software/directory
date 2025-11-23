@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_tai_at } from '../TAI/id-tai-at.va';
 export { id_tai_at } from '../TAI/id-tai-at.va';
 
@@ -17,7 +17,7 @@ export { id_tai_at } from '../TAI/id-tai-at.va';
  * @constant
  */
 export const id_tai_at_bDCReportContentInformation: OBJECT_IDENTIFIER =
-    new _OID([2], id_tai_at);
+    _OID.fromParts([2], id_tai_at);
 /* END_OF_SYMBOL_DEFINITION id_tai_at_bDCReportContentInformation */
 
 /* eslint-enable */

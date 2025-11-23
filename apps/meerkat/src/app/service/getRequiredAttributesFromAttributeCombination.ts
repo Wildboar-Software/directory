@@ -1,5 +1,5 @@
 import { IndexableOID } from "@wildboar/meerkat-types";
-import { AttributeCombination } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
+import { AttributeCombination } from "@wildboar/x500/ServiceAdministration";
 
 /**
  * @summary Extract the required attribute types from a attribute combination

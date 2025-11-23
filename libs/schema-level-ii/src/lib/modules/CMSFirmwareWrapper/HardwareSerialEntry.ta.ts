@@ -3,8 +3,8 @@ import {
     NULL,
     OCTET_STRING,
     ASN1Element as _Element
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { HardwareSerialEntry_block, _decode_HardwareSerialEntry_block, _encode_HardwareSerialEntry_block } from "../CMSFirmwareWrapper/HardwareSerialEntry-block.ta";
 
 

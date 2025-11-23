@@ -1,6 +1,6 @@
 import type { Context } from "@wildboar/meerkat-types";
 import { validateObjectClasses } from "./validateObjectClasses";
-import * as seloc from "@wildboar/x500/src/lib/collections/objectClasses";
+import { objectClasses as seloc } from "@wildboar/x500";
 import { objectClassFromInformationObject } from "../init/objectClassFromInformationObject";
 
 const ctx: Context = {

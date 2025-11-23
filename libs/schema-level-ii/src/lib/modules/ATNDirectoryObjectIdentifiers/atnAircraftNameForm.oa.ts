@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
+import { NAME_FORM } from "@wildboar/x500/InformationFramework";
 import { atn_aircraft } from "../ATNDirectoryObjectIdentifiers/atn-aircraft.oa";
 import { atn_aircraftIDName } from "../ATNDirectoryObjectIdentifiers/atn-aircraftIDName.oa";
 import { id_nf_atnAircraftNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnAircraftNameForm.va";

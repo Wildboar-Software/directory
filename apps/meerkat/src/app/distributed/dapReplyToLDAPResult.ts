@@ -5,68 +5,61 @@ import {
     ASN1TagClass,
     ASN1Construction,
     ASN1UniversalType,
-} from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
-import type { Result } from "@wildboar/x500/src/lib/types/Result";
-import { LDAPMessage } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
-import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
-import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
-import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
-// import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
-import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
-import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
-import { read } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
-import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
-import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
+import type { Result } from "@wildboar/x500";
+import { LDAPMessage } from "@wildboar/ldap";
+import { compareCode } from "@wildboar/x500";
+import {
+    abandon,
+    administerPassword,
+    addEntry,
+    changePassword,
+    compare,
+    modifyDN,
+    modifyEntry,
+    read,
+    removeEntry,
+    search,
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     LDAPResult,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult.ta";
-import {
     LDAPResult_resultCode_success,
     LDAPResult_resultCode_compareTrue,
     LDAPResult_resultCode_compareFalse,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPResult-resultCode.ta";
-import {
     SearchResultEntry,
     _encode_SearchResultEntry,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+    PartialAttribute,
+    LDAPDN,
+    ExtendedResponse,
+    encodeLDAPOID,
+    Control,
+    controls,
+    extensions,
+} from "@wildboar/ldap";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
-import {
-    PartialAttribute,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
 import type {
     SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import type {
-    LDAPDN,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPDN.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getPartialAttributesFromEntryInformation from "../ldap/getPartialAttributesFromEntryInformation";
-import {
-    ExtendedResponse,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ExtendedResponse.ta";
-import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
-import {
-    Control,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
-import {
-    postread as postreadOID,
-    sortRequest as sortRequestOID,
-    simpledPagedResults as sprOID,
-    sortResponse as sortResponseOID,
-} from "@wildboar/ldap/src/lib/controls";
-import {
+import { decodeLDAPOID } from "@wildboar/ldap";
+import { strict as assert } from "assert";
+import LDAPAssociation from "../ldap/LDAPConnection";
+
+const {
+    postread: postreadOID,
+    sortRequest: sortRequestOID,
+    simpledPagedResults: sprOID,
+    sortResponse: sortResponseOID,
+} = controls;
+
+const {
     cancel,
     dynamicRefresh,
     modifyPassword
-} from "@wildboar/ldap/src/lib/extensions";
-import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
-import { strict as assert } from "assert";
-import LDAPAssociation from "../ldap/LDAPConnection";
+} = extensions;
 
 /**
  * @summary Break apart an X.500 SearchResult into LDAP search results
@@ -254,7 +247,7 @@ function dapReplyToLDAPResult (
                     new Control(
                         encodeLDAPOID(postreadOID),
                         false,
-                        _encode_SearchResultEntry(sre, DER).toBytes(),
+                        _encode_SearchResultEntry(sre).toBytes(),
                     ),
                 ]
                 : undefined,

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { tables } from '../TableFramework/tables.va';
 export { tables } from '../TableFramework/tables.va';
 
@@ -16,7 +16,7 @@ export { tables } from '../TableFramework/tables.va';
  *
  * @constant
  */
-export const oc: OBJECT_IDENTIFIER = new _OID([1], tables);
+export const oc: OBJECT_IDENTIFIER = _OID.fromParts([1], tables);
 /* END_OF_SYMBOL_DEFINITION oc */
 
 /* eslint-enable */

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 import {
     ComponentFilter,
     _decode_ComponentFilter,

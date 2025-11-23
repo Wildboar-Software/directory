@@ -1,18 +1,18 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     directoryOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
+} from '@wildboar/x500/InformationFramework';
 import {
     UUID,
     _decode_UUID,
     _encode_UUID,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UUID.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 import { id_at_entryUUID } from '../UUID/id-at-entryUUID.va';
 import { uuid } from '../UUID/uuid.oa';
 import { uuidMatch } from '../UUID/uuidMatch.oa';
 import { uuidOrderingMatch } from '../UUID/uuidOrderingMatch.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -26,14 +26,14 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
+} from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export {
     UUID,
     _decode_UUID,
     _encode_UUID,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UUID.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 export { id_at_entryUUID } from '../UUID/id-at-entryUUID.va';
 export { uuid } from '../UUID/uuid.oa';
 export { uuidMatch } from '../UUID/uuidMatch.oa';

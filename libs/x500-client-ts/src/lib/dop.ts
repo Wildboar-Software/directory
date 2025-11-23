@@ -9,85 +9,69 @@ import {
 } from "@wildboar/rose-transport";
 import {
     dSABind, DSABindArgument, DSABindResult,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
+} from "@wildboar/x500/DistributedOperations";
 import {
     generateSIGNED,
     DirectoryVersioned,
     generateUnusedInvokeId,
     DirectoryOperationOptions,
-} from "./utils";
+} from "./utils.js";
 import {
     establishOperationalBinding, EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     modifyOperationalBinding, ModifyOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/modifyOperationalBinding.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     terminateOperationalBinding, TerminateOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/terminateOperationalBinding.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     EstablishOperationalBindingArgumentData,
     OperationalBindingID,
     _encode_EstablishOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     ModifyOperationalBindingArgumentData,
     _encode_ModifyOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgumentData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     TerminateOperationalBindingArgumentData,
     _encode_TerminateOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgumentData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     EstablishOperationalBindingArgumentData_initiator,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData-initiator.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     ModifyOperationalBindingArgumentData_initiator,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgumentData-initiator.ta";
-import { ASN1Element, TRUE_BIT } from "asn1-ts";
+} from "@wildboar/x500/OperationalBindingManagement";
+import { ASN1Element, TRUE_BIT } from "@wildboar/asn1";
 import {
     SuperiorToSubordinate, _encode_SuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
-import {
     SubordinateToSuperior, _encode_SubordinateToSuperior,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
-import {
     SuperiorToSubordinateModification,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinateModification.ta";
-import {
     NHOBSuperiorToSubordinate, _encode_NHOBSuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
-import {
     NHOBSubordinateToSuperior, _encode_NHOBSubordinateToSuperior,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSubordinateToSuperior.ta";
-import {
     HierarchicalAgreement, _encode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
-import {
     NonSpecificHierarchicalAgreement, _encode_NonSpecificHierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     ShadowingAgreementInfo, _encode_ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     ModificationParameter, _encode_ModificationParameter,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ModificationParameter.ta";
-import { BER, DER, _encodeNull } from "asn1-ts/dist/node/functional";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
+import { BER, DER, _encodeNull } from "@wildboar/asn1/functional";
 import { strict as assert } from "node:assert";
 import { compareCode } from "@wildboar/x500";
 import {
     id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import {
     id_op_binding_non_specific_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
-import {
     id_op_binding_shadow,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     Versions_v1,
     Versions_v2,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 type BindArgument = DSABindArgument;
 type BindResult = DSABindResult;

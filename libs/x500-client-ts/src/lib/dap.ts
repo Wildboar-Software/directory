@@ -9,120 +9,120 @@ import {
 } from "@wildboar/rose-transport";
 import {
     directoryBind,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBind.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     read,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     compare,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandon,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     list,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     removeEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     modifyEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     modifyDN,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     changePassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     administerPassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadArgumentData, _encode_ReadArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     CompareArgumentData, _encode_CompareArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AbandonArgumentData, _encode_AbandonArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListArgumentData, _encode_ListArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData, _encode_SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgumentData, _encode_AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     RemoveEntryArgumentData, _encode_RemoveEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgumentData, _encode_ModifyEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyDNArgumentData, _encode_ModifyDNArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ChangePasswordArgumentData, _encode_ChangePasswordArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AdministerPasswordArgumentData, _encode_AdministerPasswordArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgumentData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     CompareArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AbandonArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ListArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     RemoveEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyDNArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ChangePasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AdministerPasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FALSE_BIT,
     TRUE_BIT,
-} from "asn1-ts";
-import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { PagedResultsRequest } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
-import { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import { RelaxationPolicy } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RelaxationPolicy.ta";
-import { JoinArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/JoinArgument.ta";
-import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
-import { AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
-import { BER, DER } from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import { AttributeValueAssertion } from "@wildboar/x500/InformationFramework";
+import { PagedResultsRequest } from "@wildboar/x500/DirectoryAbstractService";
+import { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import { RelaxationPolicy } from "@wildboar/x500/ServiceAdministration";
+import { JoinArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { Attribute } from "@wildboar/pki-stub";
+import { AccessPoint } from "@wildboar/x500/DistributedOperations";
+import { EntryModification } from "@wildboar/x500/DirectoryAbstractService";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub";
+import { BER, DER } from "@wildboar/asn1/functional";
 import {
     generateSIGNED,
     ref_type_from,
@@ -138,15 +138,15 @@ import {
     DirectoryVersioned,
     generateUnusedInvokeId,
     DirectoryOperationOptions,
-} from "./utils";
-import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+} from "./utils.js";
+import { UserPwd } from "@wildboar/x500/PasswordPolicy";
 import { strict as assert } from "node:assert";
 import { compareCode } from "@wildboar/x500";
 import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchControlOptions_searchAliases,
     SearchControlOptions_matchedValuesOnly,
@@ -160,7 +160,7 @@ import {
     SearchControlOptions_useSubset,
     SearchControlOptions_separateFamilyMembers,
     SearchControlOptions_searchFamily,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     HierarchySelections_self,
     HierarchySelections_children,
@@ -172,16 +172,16 @@ import {
     HierarchySelections_siblingChildren,
     HierarchySelections_siblingSubtree,
     HierarchySelections_all,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData_joinType_innerJoin,
     SearchArgumentData_joinType_leftOuterJoin,
     SearchArgumentData_joinType_fullOuterJoin,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-joinType.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     Versions_v1,
     Versions_v2,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 export type BindArgument = typeof directoryBind["&ArgumentType"];
 export type BindResult = typeof directoryBind["&ResultType"];

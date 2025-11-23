@@ -1,8 +1,8 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 import { id_oc_securityUserInfo } from '../IN-CS3-object-identifiers/id-oc-securityUserInfo.va';
 import { bindLevelIfOK } from '../IN-CS3-SCF-SDF-datatypes/bindLevelIfOK.oa';
 import { currentList } from '../IN-CS3-SCF-SDF-datatypes/currentList.oa';
@@ -12,8 +12,8 @@ import { lockSession } from '../IN-CS3-SCF-SDF-datatypes/lockSession.oa';
 import { maxAttempts } from '../IN-CS3-SCF-SDF-datatypes/maxAttempts.oa';
 import { secretKey } from '../IN-CS3-SCF-SDF-datatypes/secretKey.oa';
 import { securityFacilityId } from '../IN-CS3-SCF-SDF-datatypes/securityFacilityId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -25,7 +25,7 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
+} from '@wildboar/x500/InformationFramework';
 export { bindLevelIfOK } from '../IN-CS3-SCF-SDF-datatypes/bindLevelIfOK.oa';
 export { currentList } from '../IN-CS3-SCF-SDF-datatypes/currentList.oa';
 export { failureCounter } from '../IN-CS3-SCF-SDF-datatypes/failureCounter.oa';

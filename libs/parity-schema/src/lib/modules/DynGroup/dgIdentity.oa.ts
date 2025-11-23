@@ -1,14 +1,14 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-import { distinguishedNameMatch } from '@wildboar/x500/src/lib/modules/InformationFramework/distinguishedNameMatch.oa';
-import { distinguishedName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/distinguishedName.oa';
-import { dn } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { distinguishedNameMatch } from '@wildboar/x500/InformationFramework';
+import { distinguishedName } from '@wildboar/x500/SelectedAttributeTypes';
+import { dn } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_dynGroupAttr } from '../DynGroup/id-dynGroupAttr.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 export {
     AttributeUsage,
     AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
@@ -22,11 +22,11 @@ export {
     _decode_AttributeUsage,
     _encode_AttributeUsage,
     _enum_for_AttributeUsage,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta';
-export { distinguishedNameMatch } from '@wildboar/x500/src/lib/modules/InformationFramework/distinguishedNameMatch.oa';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { dn } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa';
+} from '@wildboar/x500/InformationFramework';
+export { distinguishedNameMatch } from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { dn } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_dynGroupAttr } from '../DynGroup/id-dynGroupAttr.va';
 
 /* START_OF_SYMBOL_DEFINITION dgIdentity */
@@ -67,7 +67,7 @@ export const dgIdentity: ATTRIBUTE = {
     '&ldapName': ['dgIdentity'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'Identity to use when processing the memberURL' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [1],
         id_dynGroupAttr
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

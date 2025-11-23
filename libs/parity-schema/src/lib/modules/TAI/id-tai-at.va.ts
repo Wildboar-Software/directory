@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_tai } from '../TAI/id-tai.va';
 export { id_tai } from '../TAI/id-tai.va';
 
@@ -16,7 +16,7 @@ export { id_tai } from '../TAI/id-tai.va';
  *
  * @constant
  */
-export const id_tai_at: OBJECT_IDENTIFIER = new _OID(
+export const id_tai_at: OBJECT_IDENTIFIER = _OID.fromParts(
     [/* attributes */ 1],
     id_tai
 );

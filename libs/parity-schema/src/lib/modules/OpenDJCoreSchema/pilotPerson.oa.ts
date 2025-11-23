@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { businessCategory } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/businessCategory.oa';
-import { preferredDeliveryMethod } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/preferredDeliveryMethod.oa';
-import { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
-import { person } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { businessCategory } from '@wildboar/x500/SelectedAttributeTypes';
+import { preferredDeliveryMethod } from '@wildboar/x500/SelectedAttributeTypes';
+import { uid } from '@wildboar/x500/SelectedAttributeTypes';
+import { person } from '@wildboar/x500/SelectedObjectClasses';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { favouriteDrink } from '../Cosine/favouriteDrink.oa';
 import { homePostalAddress } from '../Cosine/homePostalAddress.oa';
 import { homeTelephoneNumber } from '../Cosine/homeTelephoneNumber.oa';
@@ -18,8 +18,8 @@ import { roomNumber } from '../Cosine/roomNumber.oa';
 import { secretary } from '../Cosine/secretary.oa';
 import { textEncodedORAddress } from '../Cosine/textEncodedORAddress.oa';
 import { userClass } from '../Cosine/userClass.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -31,11 +31,11 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { businessCategory } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/businessCategory.oa';
-export { preferredDeliveryMethod } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/preferredDeliveryMethod.oa';
-export { uid } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa';
-export { person } from '@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa';
+} from '@wildboar/x500/InformationFramework';
+export { businessCategory } from '@wildboar/x500/SelectedAttributeTypes';
+export { preferredDeliveryMethod } from '@wildboar/x500/SelectedAttributeTypes';
+export { uid } from '@wildboar/x500/SelectedAttributeTypes';
+export { person } from '@wildboar/x500/SelectedObjectClasses';
 export { favouriteDrink } from '../Cosine/favouriteDrink.oa';
 export { homePostalAddress } from '../Cosine/homePostalAddress.oa';
 export { janetMailbox } from '../Cosine/janetMailbox.oa';
@@ -109,7 +109,7 @@ export const pilotPerson: OBJECT_CLASS = {
         janetMailbox,
     ] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['pilotPerson'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         0, 9, 2342, 19200300, 100, 4, 4,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

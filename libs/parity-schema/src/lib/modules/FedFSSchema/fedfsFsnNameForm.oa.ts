@@ -1,12 +1,12 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { fedfsFsn } from '../FedFSSchema/fedfsFsn.oa';
 import { fedfsFsnUuid } from '../FedFSSchema/fedfsFsnUuid.oa';
 import { id_nf } from '../Wildboar/id-nf.va';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { NAME_FORM } from '@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { NAME_FORM } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export { fedfsFsn } from '../FedFSSchema/fedfsFsn.oa';
 export { fedfsFsnUuid } from '../FedFSSchema/fedfsFsnUuid.oa';
 export { id_nf } from '../Wildboar/id-nf.va';
@@ -38,7 +38,7 @@ export const fedfsFsnNameForm: NAME_FORM = {
     '&namedObjectClass': fedfsFsn /* OBJECT_FIELD_SETTING */,
     '&MandatoryAttributes': [fedfsFsnUuid] /* OBJECT_FIELD_SETTING */,
     '&ldapName': ['fedfsFsnNameForm'] /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [8],
         id_nf
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

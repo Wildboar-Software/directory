@@ -1,51 +1,53 @@
-import { MeerkatContext } from "../ctx";
+import { MeerkatContext } from "../ctx.js";
 import { Context, BindReturn, MistypedArgumentError, Vertex, DirectoryBindError, DSABindError } from "@wildboar/meerkat-types";
-import { CertificationData, REQ_TOKEN } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/SPKM-REQ.ta";
+import { CertificationData, REQ_TOKEN } from "@wildboar/x500/SpkmGssTokens";
 import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
 import { VCP_RETURN_OK, VerifyCertPathResult } from "../pki/verifyCertPath";
-import { SPKM_REP_TI, SpkmCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SpkmCredentials.ta";
+import { SpkmCredentials } from "@wildboar/x500/DirectoryAbstractService";
+import { SPKM_REP_TI } from "@wildboar/x500/SpkmGssTokens";
 import { differenceInSeconds } from "date-fns";
 import { compareName, getDateFromTime } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { BIT_STRING, DERElement, TRUE_BIT, packBits, unpackBits } from "asn1-ts";
+import { BIT_STRING, DERElement, TRUE_BIT, packBits, unpackBits } from "@wildboar/asn1";
 import {
     Options_delegation_state,
     Options_sequence_state,
-} from "@wildboar/x500/src/lib/modules/SpkmGssTokens/Options.ta";
+} from "@wildboar/x500/SpkmGssTokens";
 import {
     CertificatePair,
     CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+    pkiPath,
+    Validity,
+} from "@wildboar/x500/AuthenticationFramework";
 import { verifySignature } from "../pki/verifyCertPath";
 import {
     Context_Data,
-    Validity,
     _encode_Req_contents,
-} from "@wildboar/x500/src/lib/modules/SpkmGssTokens/Req-contents.ta";
-import { DER } from "asn1-ts/dist/node/functional";
-import { Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+} from "@wildboar/x500/SpkmGssTokens";
+import { DER } from "@wildboar/asn1/functional";
+import { Name } from "@wildboar/x500/InformationFramework";
 import dnToVertex from "../dit/dnToVertex";
 import { read_clearance, read_unique_id } from "../database/utils";
 import {
     AuthenticationLevel_basicLevels,
     AuthenticationLevel_basicLevels_level_strong,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import readValuesOfType from "../utils/readValuesOfType";
-import { NameAndOptionalUID } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-import { clearance, pkiPath } from "@wildboar/x500/src/lib/collections/attributes";
-import { subjectDirectoryAttributes } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectDirectoryAttributes.oa";
+import { NameAndOptionalUID } from "@wildboar/x500/SelectedAttributeTypes";
+import { clearance,  } from "@wildboar/x500/EnhancedSecurity";
+import { subjectDirectoryAttributes } from "@wildboar/x500/CertificateExtensions";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { general_name_matches_cert } from "../pki/general_name_matches_cert";
 import versions from "../versions";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_invalidCredentials,
     SecurityProblem_unsupportedAuthenticationMethod,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import { ServiceProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
-import { REP_TI_TOKEN, Rep_ti_contents, _encode_Rep_ti_contents } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/REP-TI-TOKEN.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
+import { ServiceProblem_unwillingToPerform } from "@wildboar/x500/DirectoryAbstractService";
+import { REP_TI_TOKEN, Rep_ti_contents, _encode_Rep_ti_contents } from "@wildboar/x500/SpkmGssTokens";
 import { randomBytes } from "node:crypto";
 import { generateSignature } from "../pki/generateSignature";
 

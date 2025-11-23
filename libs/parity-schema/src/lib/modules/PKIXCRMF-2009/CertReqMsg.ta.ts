@@ -3,13 +3,13 @@ import {
     AttributeTypeAndValue,
     _decode_AttributeTypeAndValue,
     _encode_AttributeTypeAndValue,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta';
+} from '@wildboar/x500/InformationFramework';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     OPTIONAL,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     CertRequest,
     _decode_CertRequest,
@@ -24,7 +24,7 @@ export {
     AttributeTypeAndValue,
     _decode_AttributeTypeAndValue,
     _encode_AttributeTypeAndValue,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta';
+} from '@wildboar/x500/InformationFramework';
 export {
     CertRequest,
     _decode_CertRequest,

@@ -3,14 +3,14 @@ import {
     DirectoryString,
     _decode_DirectoryString,
     _encode_DirectoryString,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/DirectoryString.ta';
-import { ASN1Element as _Element } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/x500/SelectedAttributeTypes';
+import { ASN1Element as _Element } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 export {
     DirectoryString,
     _decode_DirectoryString,
     _encode_DirectoryString,
-} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/DirectoryString.ta';
+} from '@wildboar/x500/SelectedAttributeTypes';
 export { ub_interface_id } from '../TraderDefinitions/ub-interface-id.va';
 
 /* START_OF_SYMBOL_DEFINITION InterfaceId */

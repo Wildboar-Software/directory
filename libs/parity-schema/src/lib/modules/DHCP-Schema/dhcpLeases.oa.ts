@@ -1,11 +1,11 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-import { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+} from '@wildboar/x500/InformationFramework';
+import { top } from '@wildboar/x500/InformationFramework';
+import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { dhcpAddressState } from '../DHCP-Schema/dhcpAddressState.oa';
 import { dhcpAssignedHostName } from '../DHCP-Schema/dhcpAssignedHostName.oa';
 import { dhcpAssignedToClient } from '../DHCP-Schema/dhcpAssignedToClient.oa';
@@ -19,8 +19,8 @@ import { dhcpRelayAgentInfo } from '../DHCP-Schema/dhcpRelayAgentInfo.oa';
 import { dhcpRequestedHostName } from '../DHCP-Schema/dhcpRequestedHostName.oa';
 import { dhcpReservedForClient } from '../DHCP-Schema/dhcpReservedForClient.oa';
 import { dhcpStartTimeOfState } from '../DHCP-Schema/dhcpStartTimeOfState.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -32,9 +32,9 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { top } from '@wildboar/x500/src/lib/modules/InformationFramework/top.oa';
-export { commonName } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa';
+} from '@wildboar/x500/InformationFramework';
+export { top } from '@wildboar/x500/InformationFramework';
+export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
 export { dhcpAddressState } from '../DHCP-Schema/dhcpAddressState.oa';
 export { dhcpAssignedHostName } from '../DHCP-Schema/dhcpAssignedHostName.oa';
 export { dhcpAssignedToClient } from '../DHCP-Schema/dhcpAssignedToClient.oa';
@@ -99,7 +99,7 @@ export const dhcpLeases: OBJECT_CLASS = {
     '&ldapName': ['dhcpLeases'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'This class represents an IP Address, which may or may not have been leased.' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID([
+    '&id': _OID.fromParts([
         2, 16, 840, 1, 113719, 1, 203, 6, 10,
     ]) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,
 };

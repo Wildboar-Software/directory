@@ -1,24 +1,24 @@
 import type {
     AuthenticationLevel,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels_level_none,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     ContextAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     temporalContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/temporalContext.oa";
-import { DER } from "asn1-ts/dist/node/functional";
-import { ObjectIdentifier } from "asn1-ts";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { DER } from "@wildboar/asn1/functional";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     id_ce_extKeyUsage,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/id-ce-extKeyUsage.va";
-import { id_oa_allAttributeTypes } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+} from "@wildboar/x500/CertificateExtensions";
+import { id_oa_allAttributeTypes } from "@wildboar/x500/InformationFramework";
 
 export const updatesDomain: string = "updates.meerkat.wildboar.software";
 export const telemetryDomain: string = "telemetry.meerkat.wildboar.software";
@@ -70,27 +70,27 @@ export const NOW_CONTEXT_ASSERTION = new ContextAssertion(
  * Defined in ITU X.509 (2019), but not in the ASN.1 modules--only in the text
  * of section 9.2.2.4.
  */
-export const id_anyExtendedKeyUsage = new ObjectIdentifier([ 0 ], id_ce_extKeyUsage);
+export const id_anyExtendedKeyUsage = ObjectIdentifier.fromParts([ 0 ], id_ce_extKeyUsage);
 
 /**
  * Defined in IETF RFC 5280.
  */
-export const id_pkix = new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7 ]);
+export const id_pkix = ObjectIdentifier.fromParts([ 1, 3, 6, 1, 5, 5, 7 ]);
 
 /**
  * Defined in IETF RFC 5280.
  */
-export const id_kp = new ObjectIdentifier([ 3 ], id_pkix);
+export const id_kp = ObjectIdentifier.fromParts([ 3 ], id_pkix);
 
 /**
  * Defined in IETF RFC 5280.
  */
-export const id_kp_serverAuth      = new ObjectIdentifier([ 1 ], id_kp);
-export const id_kp_clientAuth      = new ObjectIdentifier([ 2 ], id_kp);
-export const id_kp_codeSigning     = new ObjectIdentifier([ 3 ], id_kp);
-export const id_kp_emailProtection = new ObjectIdentifier([ 4 ], id_kp);
-export const id_kp_timeStamping    = new ObjectIdentifier([ 8 ], id_kp);
-export const id_kp_OCSPSigning     = new ObjectIdentifier([ 9 ], id_kp);
+export const id_kp_serverAuth      = ObjectIdentifier.fromParts([ 1 ], id_kp);
+export const id_kp_clientAuth      = ObjectIdentifier.fromParts([ 2 ], id_kp);
+export const id_kp_codeSigning     = ObjectIdentifier.fromParts([ 3 ], id_kp);
+export const id_kp_emailProtection = ObjectIdentifier.fromParts([ 4 ], id_kp);
+export const id_kp_timeStamping    = ObjectIdentifier.fromParts([ 8 ], id_kp);
+export const id_kp_OCSPSigning     = ObjectIdentifier.fromParts([ 9 ], id_kp);
 
 export const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 

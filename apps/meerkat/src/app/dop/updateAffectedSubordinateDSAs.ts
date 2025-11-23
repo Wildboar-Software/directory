@@ -1,26 +1,26 @@
-import type { MeerkatContext } from "../ctx";
-import { BERElement } from "asn1-ts";
+import type { MeerkatContext } from "../ctx.js";
+import { BERElement } from "@wildboar/asn1";
 import dnToVertex from "../dit/dnToVertex";
 import getRelevantOperationalBindings from "./getRelevantOperationalBindings";
 import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     AccessPoint,
     _decode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import isPrefix from "../x500/isPrefix";
 import updateNHOBSubordinateDSA from "./updateNHOBSubordinateDSA";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+import { OperationalBindingID } from "@wildboar/x500/OperationalBindingManagement";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_op_binding_non_specific_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { OperationalBindingInitiator } from "@prisma/client";
-import { _decode_NonSpecificHierarchicalAgreement } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+import { _decode_NonSpecificHierarchicalAgreement } from "@wildboar/x500/HierarchicalOperationalBindings";
 import updateHOBSubordinateDSA from "./updateHOBSubordinateDSA";
 
 /**

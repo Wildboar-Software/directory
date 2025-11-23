@@ -1,23 +1,23 @@
-import { MeerkatContext } from "../../ctx";
+import { MeerkatContext } from "../../ctx.js";
 import type { Vertex } from "@wildboar/meerkat-types";
 import {
     ShadowingAgreementInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import dnToVertex from "../../dit/dnToVertex";
 import {
     AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import saveAccessPoint from "../../database/saveAccessPoint";
 import { Knowledge } from "@prisma/client";
 import {
     SupplierInformation,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     OperationalBindingID,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
 import type { Prisma } from "@prisma/client";
-import { ASN1Construction } from "asn1-ts";
+import { ASN1Construction } from "@wildboar/asn1";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
 
 /**

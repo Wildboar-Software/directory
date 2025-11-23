@@ -13,14 +13,14 @@ import type {
 } from "@wildboar/meerkat-types";
 import {
     BERElement,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
     ditBridgeKnowledge,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ditBridgeKnowledge.oa";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     _decode_DitBridgeKnowledge,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
-import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
+} from "@wildboar/x500/DistributedOperations";
+import { directoryStringToString } from "@wildboar/x500";
 
 
 export

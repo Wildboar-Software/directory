@@ -1,4 +1,4 @@
-import { ASN1Element, ASN1TagClass, ASN1UniversalType } from "asn1-ts";
+import { ASN1Element, ASN1TagClass, ASN1UniversalType } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
 
 // This matching rule has a defined assertion syntax, but it does not use it, it seems...

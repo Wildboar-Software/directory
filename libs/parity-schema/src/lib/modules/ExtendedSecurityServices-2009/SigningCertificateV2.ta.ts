@@ -3,13 +3,13 @@ import {
     PolicyInformation,
     _decode_PolicyInformation,
     _encode_PolicyInformation,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyInformation.ta';
+} from '@wildboar/x500/CertificateExtensions';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     OPTIONAL,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 import {
     ESSCertIDv2,
     _decode_ESSCertIDv2,
@@ -19,7 +19,7 @@ export {
     PolicyInformation,
     _decode_PolicyInformation,
     _encode_PolicyInformation,
-} from '@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyInformation.ta';
+} from '@wildboar/x500/CertificateExtensions';
 export {
     ESSCertIDv2,
     _decode_ESSCertIDv2,

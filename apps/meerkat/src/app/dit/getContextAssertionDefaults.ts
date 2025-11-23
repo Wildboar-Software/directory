@@ -5,10 +5,10 @@ import type {
 import {
     contextAssertionDefaults,
     contextAssertionSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     TypeAndContextAssertion, _decode_TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
 
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();

@@ -1,31 +1,31 @@
 import type { Context, PendingUpdates } from "@wildboar/meerkat-types";
 import {
     MasterOrShadowAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     MasterOrShadowAccessPoint_category_master,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
+} from "@wildboar/x500/DistributedOperations";
 import dnToVertex from "../../dit/dnToVertex";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import addValues from "../../database/entry/addValues";
 import {
     superiorKnowledge,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     addValue,
 } from "../../database/drivers/superiorKnowledge";
 import {
     AccessPoint,
     _encode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 import {
     NHOBSubordinateToSuperior,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSubordinateToSuperior.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     NHOBSuperiorToSubordinate,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import { createContextPrefixEntry } from "./becomeSubordinate";
 import saveAccessPoint from "../../database/saveAccessPoint";
 import { Knowledge } from "@prisma/client";

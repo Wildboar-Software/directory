@@ -1,13 +1,13 @@
 /* eslint-disable */
-import { id_sha256 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
-import { IssuerSerial, _decode_IssuerSerial, _encode_IssuerSerial } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/IssuerSerial.ta";
-import { AlgorithmIdentifier } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+import { id_sha256 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
+import { IssuerSerial, _decode_IssuerSerial, _encode_IssuerSerial } from "@wildboar/x500/AttributeCertificateDefinitions";
+import { AlgorithmIdentifier } from "@wildboar/x500/AuthenticationFramework";
 import {
     OPTIONAL,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
 import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
 import { Hash, _decode_Hash, _encode_Hash } from "../MultipleSignatures-2010/Hash.ta";
 

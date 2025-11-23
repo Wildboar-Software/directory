@@ -1,17 +1,17 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-import { octetString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetString.oa';
-import { ObjectIdentifier as _OID } from 'asn1-ts';
+import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import { octetString } from '@wildboar/x500/SelectedAttributeTypes';
+import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_at_openldap_schema } from '../AuthPasswordSchema/id-at-openldap-schema.va';
 import {
     PlaintextPasswordSyntax,
     _decode_PlaintextPasswordSyntax,
     _encode_PlaintextPasswordSyntax,
 } from '../AuthPasswordSchema/PlaintextPasswordSyntax.ta';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { MATCHING_RULE } from '@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca';
-export { SYNTAX_NAME } from '@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca';
-export { octetString } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetString.oa';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+export { octetString } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_at_openldap_schema } from '../AuthPasswordSchema/id-at-openldap-schema.va';
 export {
     PlaintextPasswordSyntax,
@@ -52,7 +52,7 @@ export const authPasswordMatch: MATCHING_RULE<PlaintextPasswordSyntax> = {
     '&ldapName': ['authPasswordMatch'] /* OBJECT_FIELD_SETTING */,
     '&ldapDesc':
         'authentication password matching rule' /* OBJECT_FIELD_SETTING */,
-    '&id': new _OID(
+    '&id': _OID.fromParts(
         [2, 3],
         id_at_openldap_schema
     ) /* OBJECT_FIELD_SETTING */ /* UNIQUE_OBJECT_FIELD_SETTING */,

@@ -4,8 +4,8 @@ import {
     OBJECT_IDENTIFIER,
     OCTET_STRING,
     UTF8String,
-} from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+} from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 
 /* START_OF_SYMBOL_DEFINITION IetfAttrSyntax_values_Item */
 /**

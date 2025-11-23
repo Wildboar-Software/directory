@@ -1,27 +1,27 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type { ASN1Element } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import type { ASN1Element } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
 import {
     PartialAttribute,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/PartialAttribute.ta";
-import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
+} from "@wildboar/ldap";
+import { encodeLDAPOID } from "@wildboar/ldap";
 import {
     EntryInformation_information_Item,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation-information-Item.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ldapAttributeOptionContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapAttributeOptionContext.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     temporalContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/temporalContext.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     Attribute_valuesWithContext_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     TimeAssertion,
     _encode_TimeAssertion,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeAssertion.ta";
-import evaluateTemporalContext from "@wildboar/x500/src/lib/matching/context/temporalContext";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { evaluateTemporalContext } from "@wildboar/x500/matching/context";
 
 const now: TimeAssertion = {
     now: null,

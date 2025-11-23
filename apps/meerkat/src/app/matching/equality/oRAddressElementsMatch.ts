@@ -1,11 +1,11 @@
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element } from "@wildboar/asn1";
 import { EqualityMatcher } from "@wildboar/x500";
 import {
     ORAddress,
     _decode_ORAddress,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/ORAddress.ta";
+} from "@wildboar/x400/MTSAbstractService";
 import { ORAddressInfo, orAddressToInfo, recursivelyNormalize } from "./orAddressUtilities";
-import { PresentationAddress } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+import { PresentationAddress } from "@wildboar/x500/SelectedAttributeTypes";
 import _ from "lodash";
 
 export

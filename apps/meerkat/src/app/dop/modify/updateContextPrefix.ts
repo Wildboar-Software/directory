@@ -1,45 +1,45 @@
 import { Context, Vertex, OperationalBindingError } from "@wildboar/meerkat-types";
 import type {
     SuperiorToSubordinateModification,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinateModification.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     MasterAndShadowAccessPoints,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
+} from "@wildboar/x500/DistributedOperations";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import dnToVertex from "../../dit/dnToVertex";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import createEntry from "../../database/createEntry";
 import addAttributes from "../../database/entry/addAttributes";
 import removeAttribute from "../../database/entry/removeAttribute";
 import {
     OpBindingErrorParam,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     OpBindingErrorParam_problem_invalidBindingType,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+} from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     operationalBindingError,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     AccessPoint,
     _encode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import saveAccessPoint from "../../database/saveAccessPoint";
 import dseFromDatabaseEntry from "../../database/dseFromDatabaseEntry";
 import { strict as assert } from "assert";
-import { NHOBSuperiorToSubordinate } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
+import { NHOBSuperiorToSubordinate } from "@wildboar/x500/HierarchicalOperationalBindings";
 import deleteEntry from "../../database/deleteEntry";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
-import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub";
+import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate";
-import { MeerkatContext } from "../../ctx";
+import { MeerkatContext } from "../../ctx.js";
 
 async function partiallyResolveDN (ctx: Context, dn: DistinguishedName): Promise<Vertex> {
     let current: Vertex = ctx.dit.root;

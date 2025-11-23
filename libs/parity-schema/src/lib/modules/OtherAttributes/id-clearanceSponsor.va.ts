@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION id_clearanceSponsor */
 /**
@@ -16,7 +16,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const id_clearanceSponsor: OBJECT_IDENTIFIER = new _OID([
+export const id_clearanceSponsor: OBJECT_IDENTIFIER = _OID.fromParts([
     /* joint-iso-ccitt */ 2, /* country */ 16, /* us */ 840,
     /* organization */ 1, /* gov */ 101, /* dod */ 2, /* infosec */ 1,
     /* attributes */ 5, 68,

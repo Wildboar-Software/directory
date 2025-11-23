@@ -4,18 +4,18 @@ import type {
     PendingUpdates,
 } from "@wildboar/meerkat-types";
 import type { Prisma } from "@prisma/client";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import { validateValues } from "./addValues";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import rdnToJson from "../../x500/rdnToJson";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
 import {
     AttributeUsage_userApplications as userApplications,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { ASN1Construction } from "asn1-ts";
+} from "@wildboar/x500/InformationFramework";
+import { ASN1Construction } from "@wildboar/asn1";
 
 /**
  * @summary Add attributes to an entry.

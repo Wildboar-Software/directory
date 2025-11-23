@@ -1,8 +1,8 @@
 import type { Context } from "@wildboar/meerkat-types";
-import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
+import { type EqualityMatcher } from "@wildboar/x500";
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+} from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Higher-order function that returns an approximate matcher function if it can be determined

@@ -1,15 +1,15 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-import { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-import { name } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa';
+} from '@wildboar/x500/InformationFramework';
+import { description } from '@wildboar/x500/SelectedAttributeTypes';
+import { name } from '@wildboar/x500/SelectedAttributeTypes';
 import { id_ao_supplementaryService } from '../UPT-DataModel/id-ao-supplementaryService.va';
 import { supplServiceStatus } from '../UPT-DataModel/supplServiceStatus.oa';
 import { supplServId } from '../UPT-DataModel/supplServId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca';
-export { OBJECT_CLASS } from '@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca';
+export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 export {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
@@ -21,9 +21,9 @@ export {
     _decode_ObjectClassKind,
     _encode_ObjectClassKind,
     _enum_for_ObjectClassKind,
-} from '@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta';
-export { description } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa';
-export { name } from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa';
+} from '@wildboar/x500/InformationFramework';
+export { description } from '@wildboar/x500/SelectedAttributeTypes';
+export { name } from '@wildboar/x500/SelectedAttributeTypes';
 export { id_ao_supplementaryService } from '../UPT-DataModel/id-ao-supplementaryService.va';
 export { supplServiceStatus } from '../UPT-DataModel/supplServiceStatus.oa';
 export { supplServId } from '../UPT-DataModel/supplServId.oa';

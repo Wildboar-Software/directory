@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { iso, ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { iso, ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION id_tai_at_BiometricInformationTemplate */
 /**
@@ -16,7 +16,7 @@ import { iso, ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  * @constant
  */
 export const id_tai_at_BiometricInformationTemplate: OBJECT_IDENTIFIER =
-    new _OID(
+    _OID.fromParts(
         [
             1, 1, /* cbeff */ 19785, /* biometric-organization */ 0,
             /* jtc1-sc37 */ 257, /* patronformat */ 1, /* tlv-encoded */ 5,

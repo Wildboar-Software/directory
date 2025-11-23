@@ -1,7 +1,7 @@
 import * as fsync from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
-import type { MeerkatContext } from "../../../../ctx";
+import type { MeerkatContext } from "../../../../ctx.js";
 import {
     ASN1Construction,
     ASN1TagClass,
@@ -10,14 +10,14 @@ import {
     FALSE_BIT,
     ObjectIdentifier,
     TRUE_BIT,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import {
     Certificate,
     _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     caseIgnoreMatch,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseIgnoreMatch.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     verifyCertPath,
     VerifyCertPathArgs,
@@ -38,13 +38,13 @@ import {
 } from "../../../verifyCertPath";
 import type {
     TrustAnchorList,
-} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+} from "@wildboar/tal";
 import {
     anyPolicy,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/anyPolicy.va";
+} from "@wildboar/x500/CertificateExtensions";
 import {
     PolicyInformation, PolicyQualifierInfo,
-} from "@wildboar/x500/src/lib/modules/CertificateExtensions/PolicyInformation.ta";
+} from "@wildboar/x500/CertificateExtensions";
 const PKITS_CERTS_PATH = path.join(__dirname, "data");
 const VALIDITY_TIME: Date = new Date();
 // From section 3.1 of https://csrc.nist.gov/CSRC/media/Projects/PKI-Testing/documents/PKITS.pdf
@@ -116,7 +116,7 @@ function createUserNoticeQualifier (notice: string) {
     qualValues.name = "qualifier";
     qualValues.value = new Uint8Array(qualValues.value);
     return new PolicyQualifierInfo(
-        new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
+        ObjectIdentifier.fromParts([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
         qualValues,
     );
 }
@@ -140,7 +140,7 @@ const ctx: MeerkatContext = {
     equalityMatchingRules: {
         get: (key: string) => {
             return {
-                id: new ObjectIdentifier([ 2, 5, 17, 3 ]),
+                id: ObjectIdentifier.fromParts([ 2, 5, 17, 3 ]),
                 matcher: (a, b) => {
                     return a.utf8String.toUpperCase() === b.utf8String.toUpperCase();
                 },
@@ -2366,7 +2366,7 @@ describe("NIST PKITS 4.8.20 Cert Path", () => {
             .map((char) => char.charCodeAt(0)));
     const pq1 = [
         new PolicyQualifierInfo(
-            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 1 ]),
+            ObjectIdentifier.fromParts([ 1, 3, 6, 1, 5, 5, 7, 2, 1 ]),
             qualValue1,
         ),
     ];

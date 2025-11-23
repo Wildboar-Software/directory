@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { oc } from '../MIXERAddressMapping/oc.va';
 export { oc } from '../MIXERAddressMapping/oc.va';
 
@@ -16,7 +16,7 @@ export { oc } from '../MIXERAddressMapping/oc.va';
  *
  * @constant
  */
-export const oc_rfc822_to_x400_mapping: OBJECT_IDENTIFIER = new _OID([1], oc);
+export const oc_rfc822_to_x400_mapping: OBJECT_IDENTIFIER = _OID.fromParts([1], oc);
 /* END_OF_SYMBOL_DEFINITION oc_rfc822_to_x400_mapping */
 
 /* eslint-enable */

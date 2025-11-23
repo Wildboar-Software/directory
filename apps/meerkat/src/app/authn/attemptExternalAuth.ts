@@ -4,14 +4,14 @@ import type {
     DirectoryBindError,
     DSABindError,
 } from "@wildboar/meerkat-types";
-import { EXTERNAL } from "asn1-ts";
+import { EXTERNAL } from "@wildboar/asn1";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import versions from "../versions";
 import {
     SecurityProblem_unsupportedAuthenticationMethod,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type { Socket } from "node:net";
 import type { TLSSocket } from "node:tls";
 

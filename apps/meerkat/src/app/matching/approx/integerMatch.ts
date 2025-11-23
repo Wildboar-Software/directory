@@ -1,5 +1,5 @@
-import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import type { ASN1Element, INTEGER } from "asn1-ts";
+import { type EqualityMatcher } from "@wildboar/x500";
+import type { ASN1Element, INTEGER } from "@wildboar/asn1";
 
 export
 function getIntegerMatch (percentToleration: number): EqualityMatcher {

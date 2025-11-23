@@ -1,52 +1,34 @@
-import { DERElement } from "asn1-ts";
-import { DER, _encodeObjectIdentifier, _encodeOctetString, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
+import { DERElement } from "@wildboar/asn1";
+import { DER, _encodeObjectIdentifier, _encodeOctetString, _encodeGeneralizedTime } from "@wildboar/asn1/functional";
 import { createHash, createSign, KeyObject } from "node:crypto";
 import {
-    ContentInfo,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/ContentInfo.ta";
-import {
-    id_signedData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-signedData.va";
-import {
-    SignedData,
-    _encode_SignedData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/SignedData.ta";
-import {
-    EncapsulatedContentInfo,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/EncapsulatedContentInfo.ta";
-import {
-    SignerInfo,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/SignerInfo.ta";
-import {
-    IssuerAndSerialNumber,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/IssuerAndSerialNumber.ta";
-import {
     AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import {
     Attribute,
     _encode_Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     id_messageDigest,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-messageDigest.va";
-import {
     id_contentType,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-contentType.va";
-import {
     id_signingTime,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-signingTime.va";
-import {
     CMSVersion_v1,
     CMSVersion_v3,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/CMSVersion.ta";
+    ContentInfo,
+    id_signedData,
+    SignedData,
+    _encode_SignedData,
+    EncapsulatedContentInfo,
+    SignerInfo,
+    IssuerAndSerialNumber,
+} from "@wildboar/cms";
 import { sigAlgToHashAlg } from "../pki/sigAlgToHashAlg";
 import { keyTypeToAlgOID } from "../pki/keyTypeToAlgOID";
 import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
-import type { PkiPath } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
+import type { PkiPath } from "@wildboar/pki-stub";
 import type {
     CertificateList,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 
 /**
  * @summary Create a Cryptographic Message Syntax `SignedData` object
@@ -125,7 +107,7 @@ function createCMSSignedData (
         along with the length and content octets of the SignedAttributes value.
      */
     const signedAttrBytes = DERElement
-        .fromSet(signedAttrs.map((attr) => _encode_Attribute(attr, DER)))
+        .fromSet(signedAttrs.map((attr) => _encode_Attribute(attr)))
         .toBytes();
     signer.update(signedAttrBytes);
 

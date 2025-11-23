@@ -1,59 +1,59 @@
 import type { Connection, Context } from "../../types";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "@wildboar/asn1/functional";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/InformationFramework";
 import destringifyDN from "../../utils/destringifyDN";
 import {
     NonSpecificHierarchicalAgreement,
     _encode_NonSpecificHierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     NHOBSubordinateToSuperior,
     _encode_NHOBSubordinateToSuperior,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSubordinateToSuperior.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     EstablishOperationalBindingArgumentData,
     _encode_EstablishOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _encode_EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     Validity,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/Validity.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     nonSpecificHierarchicalOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/nonSpecificHierarchicalOperationalBinding.oa";
-import { AccessPoint, _encode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { PresentationAddress } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+} from "@wildboar/x500/HierarchicalOperationalBindings";
+import { AccessPoint, _encode_AccessPoint } from "@wildboar/x500/DistributedOperations";
+import { PresentationAddress } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { addSeconds } from "date-fns";
-import { ASN1Construction, ASN1TagClass, DERElement, unpackBits } from "asn1-ts";
+import { ASN1Construction, ASN1TagClass, DERElement, unpackBits } from "@wildboar/asn1";
 import { randomBytes, sign, createSign } from "crypto";
 import {
     ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     establishOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+} from "@wildboar/x500/AuthenticationFramework";
 import { getAlgorithmInfoFromKey } from "../../crypto/getAlgorithmInfoFromKey";
 import {
     EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import {
     _decode_EstablishOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
+} from "@wildboar/x500/OperationalBindingManagement";
 import printError from "../../printers/Error_";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { uriToNSAP } from "@wildboar/x500";
 
 export

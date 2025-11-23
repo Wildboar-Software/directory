@@ -1,6 +1,6 @@
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/CommonProtocolSpecification";
 
 /**
  * @summary Convert a `Code` into a human-readable string.

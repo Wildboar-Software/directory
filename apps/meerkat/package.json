@@ -1,5 +1,6 @@
 {
     "name": "@wildboar/meerkat-dsa",
+    "type": "module",
     "description": "X.500 Directory Server (DSA) and LDAP Server by Wildboar Software.",
     "bugs": {
         "email": "jonathan@wilbur.space",

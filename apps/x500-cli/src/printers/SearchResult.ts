@@ -1,13 +1,13 @@
 import type { Context } from "../types";
 import type {
     SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     SearchResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     SearchResultData_searchInfo,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import { EOL } from "node:os";
 import stringifyDN from "../utils/stringifyDN";
 import { printEntryInformation } from "./EntryInformation";

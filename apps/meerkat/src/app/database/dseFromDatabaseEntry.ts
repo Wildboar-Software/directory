@@ -1,32 +1,32 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
-import { ObjectIdentifier, BERElement, ASN1Construction } from "asn1-ts";
+import { ObjectIdentifier, BERElement, ASN1Construction } from "@wildboar/asn1";
 import type { Context, DSE } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
 import {
     _decode_AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
     _decode_SupplierInformation,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     _decode_ConsumerInformation,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     _decode_SupplierAndConsumers,
-} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierAndConsumers.ta";
+} from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     _decode_MasterOrShadowAccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import attributesFromValues from "../x500/attributesFromValues";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
 import { Knowledge } from "@prisma/client";
 import {
     _decode_DitBridgeKnowledge,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
+} from "@wildboar/x500/DistributedOperations";
 import getRDNFromEntryId from "./getRDNFromEntryId";
-import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
-import { parent } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
-import { child } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
+import { alias } from "@wildboar/x500/InformationFramework";
+import { parent } from "@wildboar/x500/InformationFramework";
+import { child } from "@wildboar/x500/InformationFramework";
 import readDITContentRuleDescriptions from "./readers/readDITContentRuleDescriptions";
 import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptions";
 import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
@@ -34,18 +34,19 @@ import readFriendsDescriptions from "./readers/readFriendsDescriptions";
 import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     collectiveAttributeSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     pwdAdminSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+} from "@wildboar/x500/InformationFramework";
 import {
     subschema,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
+} from "@wildboar/x500/SchemaAdministration";
 import _ from "lodash";
-import { accessControlScheme, administrativeRole, pwdAttribute } from "@wildboar/x500/src/lib/collections/attributes";
+import { administrativeRole, pwdAttribute } from "@wildboar/x500/InformationFramework";
+import { accessControlScheme } from "@wildboar/x500/BasicAccessControl";
 import { attributeValueFromDB } from "./attributeValueFromDB";
 
 

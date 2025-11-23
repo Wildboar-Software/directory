@@ -6,78 +6,44 @@ import {
     FALSE_BIT,
     unpackBits,
     OBJECT_IDENTIFIER,
-} from "asn1-ts";
+} from "@wildboar/asn1";
 import { randomBytes } from "crypto";
+import { attributes as selat } from "@wildboar/x500";
+import { objectClasses as seloc } from "@wildboar/x500";
 import {
-    addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import {
-    AddEntryArgument,
-    _encode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
-import {
-    AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
-import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import * as selat from "@wildboar/x500/src/lib/collections/attributes";
-import * as seloc from "@wildboar/x500/src/lib/collections/objectClasses";
-import {
     id_ar_collectiveAttributeSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
-import {
     id_ar_accessControlSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
-import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
-import {
     id_ar_pwdAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
-import {
     id_ar_subschemaAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
-import {
-    commonName,
     subentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
-import {
     collectiveAttributeSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
-import {
     accessControlSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
-import {
     pwdAdminSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
-import {
-    subschema,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
-import {
     SubtreeSpecification,
     _encode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+    id_oa_allAttributeTypes,
+} from "@wildboar/x500/InformationFramework";
+import {
+    subschema,
+} from "@wildboar/x500/SchemaAdministration";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
-import {
+    SecurityParameters,
     ProtectionRequest_none,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
-import {
     ErrorProtectionRequest_none,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+    addEntry,
+    AddEntryArgument,
+    _encode_AddEntryArgument,
+    AddEntryArgumentData,
+    updateError,
+    UpdateProblem_entryAlreadyExists,
+} from "@wildboar/x500/DirectoryAbstractService";
 import print from "./printCode";
 import {
     DER,
@@ -87,78 +53,58 @@ import {
     _encodePrintableString,
     _encodeUTF8String,
     // _encodeNumericString,
-} from "asn1-ts/dist/node/functional";
+} from "@wildboar/asn1/functional";
 import {
     dITStructureRules,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
-import {
     DITStructureRuleDescription,
     _encode_DITStructureRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITStructureRuleDescription.ta";
-import {
     dITContentRules,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContentRules.oa";
-import {
     DITContentRuleDescription,
     _encode_DITContentRuleDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContentRuleDescription.ta";
-import {
     dITContextUse,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
-import {
     DITContextUseDescription,
     _encode_DITContextUseDescription,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseDescription.ta";
-import {
     DITContextUseInformation,
-} from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
-import * as nf from "@wildboar/x500/src/lib/collections/nameForms";
-import * as oc from "@wildboar/x500/src/lib/collections/objectClasses";
-import * as at from "@wildboar/x500/src/lib/collections/attributes";
-import * as ct from "@wildboar/x500/src/lib/collections/contexts";
-import {
-    id_oa_allAttributeTypes,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+} from "@wildboar/x500/SchemaAdministration";
+import { nameForms as nf } from "@wildboar/x500";
+import { objectClasses as oc } from "@wildboar/x500";
+import { attributes as at } from "@wildboar/x500";
+import { contexts as ct } from "@wildboar/x500";
 import {
     prescriptiveACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
+} from "@wildboar/x500/BasicAccessControl";
 import {
     ANONYMOUS_BASELINE,
     AUTHENTICATED_USER_BASELINE,
     AUTHENTICATED_USER_SELF_BASELINE,
     GLOBAL_DIRECTORY_ADMIN_BASELINE,
 } from "./aci";
-import { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
-import {
-    updateError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
-import {
-    UpdateProblem_entryAlreadyExists,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
+import { RDNSequence } from "@wildboar/x500/InformationFramework";
+import { compareCode } from "@wildboar/x500";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { uriToNSAP } from "@wildboar/x500";
 import {
     AccessPoint,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+} from "@wildboar/x500/DistributedOperations";
 import {
+    commonName,
     PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     inetOrgPersonNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa.js";
 import {
     bootableDevice,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/bootableDevice.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/bootableDevice.oa.js";
 import {
     ieee802Device,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ieee802Device.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ieee802Device.oa.js";
 import {
     ipHost,
-} from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa.js";
 import { commonAuxiliaryObjectClasses } from "./objectClassSets";
-import { unstructuredName } from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredName.oa";
-import { unstructuredAddress } from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredAddress.oa";
+import { unstructuredName } from "@wildboar/pkcs/PKCS-9";
+import { unstructuredAddress } from "@wildboar/pkcs/PKCS-9";
 import { addHours } from "date-fns";
 
 const deviceAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [

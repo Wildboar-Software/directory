@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
+import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 
 /* START_OF_SYMBOL_DEFINITION id_kerberos */
 /**
@@ -22,7 +22,7 @@ import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from 'asn1-ts';
  *
  * @constant
  */
-export const id_kerberos: OBJECT_IDENTIFIER = new _OID([
+export const id_kerberos: OBJECT_IDENTIFIER = _OID.fromParts([
     /* joint-iso-ccitt */ 2, /* country */ 16, /* us */ 840,
     /* organization */ 1, /* novell */ 113719, /* applications */ 1,
     /* kerberos */ 301,

@@ -10,182 +10,188 @@ import {
     OCTET_STRING,
     INTEGER,
     OBJECT_IDENTIFIER,
-} from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
-import type { Request } from "@wildboar/x500/src/lib/types/Request";
+} from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
+import type { Request } from "@wildboar/x500";
 import type {
     LDAPMessage,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/LDAPMessage.ta";
-import { AbandonArgument, _encode_AbandonArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgument.ta";
-import { AddEntryArgument, _encode_AddEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
-import { AdministerPasswordArgument, _encode_AdministerPasswordArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
-import { ChangePasswordArgument, _encode_ChangePasswordArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgument.ta";
-import { CompareArgument, _encode_CompareArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
-import { ModifyDNArgument, _encode_ModifyDNArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
-import { ModifyEntryArgument, _encode_ModifyEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
-import { RemoveEntryArgument, _encode_RemoveEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
-import { SearchArgument, _encode_SearchArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
-import { AbandonArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AbandonArgumentData.ta";
-import { AddEntryArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
-import { AdministerPasswordArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgumentData.ta";
-import { ChangePasswordArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgumentData.ta";
-import { CompareArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
-import { ModifyDNArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
-import { ModifyEntryArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
-import { RemoveEntryArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
-import { SearchArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
-import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
-import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
-import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
-import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
-import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
-import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
-import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
-import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
-import { search } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/ldap";
+import { AbandonArgument, _encode_AbandonArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { AddEntryArgument, _encode_AddEntryArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { AdministerPasswordArgument, _encode_AdministerPasswordArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { ChangePasswordArgument, _encode_ChangePasswordArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { CompareArgument, _encode_CompareArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { ModifyDNArgument, _encode_ModifyDNArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { ModifyEntryArgument, _encode_ModifyEntryArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { RemoveEntryArgument, _encode_RemoveEntryArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { SearchArgument, _encode_SearchArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { AbandonArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { AddEntryArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { AdministerPasswordArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { ChangePasswordArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { CompareArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { ModifyDNArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { ModifyEntryArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { RemoveEntryArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { SearchArgumentData } from "@wildboar/x500/DirectoryAbstractService";
+import { abandon } from "@wildboar/x500/DirectoryAbstractService";
+import { addEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { administerPassword } from "@wildboar/x500/DirectoryAbstractService";
+import { changePassword } from "@wildboar/x500/DirectoryAbstractService";
+import { compare } from "@wildboar/x500/DirectoryAbstractService";
+import { modifyDN } from "@wildboar/x500/DirectoryAbstractService";
+import { modifyEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { removeEntry } from "@wildboar/x500/DirectoryAbstractService";
+import { search } from "@wildboar/x500/DirectoryAbstractService";
 import decodeLDAPDN from "../ldap/decodeLDAPDN";
-import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
+import { type LDAPSyntaxDecoder } from "@wildboar/ldap";
 import type {
     AttributeType,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     AttributeErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     id_errcode_attributeError,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-attributeError.va";
+} from "@wildboar/x500/CommonProtocolSpecification";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
+} from "@wildboar/x500/InformationFramework";
+import { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     AttributeValueAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
+} from "@wildboar/x500/InformationFramework";
+import { normalizeAttributeDescription } from "@wildboar/ldap";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     EntryInformationSelection_infoTypes_attributeTypesAndValues,
     EntryInformationSelection_infoTypes_attributeTypesOnly,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeValueAssertion as LDAPAttributeValueAssertion,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AttributeValueAssertion.ta";
+} from "@wildboar/ldap";
 import type {
     Filter as DAPFilter,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     Filter as LDAPFilter,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Filter.ta";
+} from "@wildboar/ldap";
 import {
     MatchingRuleAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/MatchingRuleAssertion.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     FilterItem_substrings,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem-substrings.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     EntryModification,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ModifyRequest_changes_change as LDAPEntryModification
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyRequest-changes-change.ta";
+} from "@wildboar/ldap";
 import {
     ModifyRequest_changes_change_operation_add,
     ModifyRequest_changes_change_operation_delete_,
     ModifyRequest_changes_change_operation_replace,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/ModifyRequest-changes-change-operation.ta";
+} from "@wildboar/ldap";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Attribute_valuesWithContext_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     Context as X500Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+} from "@wildboar/x500/InformationFramework";
 import {
     ldapAttributeOptionContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapAttributeOptionContext.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
     languageContext
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
+} from "@wildboar/x500/SelectedAttributeTypes";
 import {
-    modifyPassword,
-    cancel,
-    dynamicRefresh,
-} from "@wildboar/ldap/src/lib/extensions";
-import {
-    subentries as subentriesOID,
-    managedDSAIT as manageDSAITOID,
-    dontUseCopy as dontUseCopyOID,
-    postread as postreadOID,
-    sortRequest as sortRequestOID,
-    simpledPagedResults as sprOID,
-} from "@wildboar/ldap/src/lib/controls";
+    extensions,
+    controls,
+    decodeLDAPOID,
+} from "@wildboar/ldap";
 import type {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
+} from "@wildboar/x500/InformationFramework";
 import {
     ServiceControlOptions,
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_manageDSAIT,
     ServiceControlOptions_subentries,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     EXT_BIT_MANAGE_DSA_IT,
     EXT_BIT_SUBENTRIES,
-} from "@wildboar/x500/src/lib/dap/extensions";
+} from "@wildboar/x500";
 import type {
     Control,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/Control.ta";
+} from "@wildboar/ldap";
 import {
     AttributeSelection,
     _decode_AttributeSelection,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/AttributeSelection.ta";
+} from "@wildboar/ldap";
 import {
     SortKey,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SortKey.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     PagedResultsRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     PagedResultsRequest_newRequest,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
-import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+import { ContextAssertion } from "@wildboar/x500/InformationFramework";
 import {
     TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     TimeAssertion,
     _encode_TimeAssertion,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeAssertion.ta";
-import { temporalContext } from "@wildboar/x500/src/lib/collections/contexts";
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { temporalContext } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     SearchControlOptions,
     SearchControlOptions_separateFamilyMembers,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_unavailableCriticalExtension,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     serviceError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
+} from "@wildboar/x500/DirectoryAbstractService";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import getLDAPDecoder from "../ldap/getLDAPDecoder";
 import {
     entryTtl,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
 import { getLDAPSyntax } from "../x500/getLDAPSyntax";
+
+const {
+    modifyPassword,
+    cancel,
+    dynamicRefresh,
+} = extensions;
+
+const {
+    subentries: subentriesOID,
+    managedDSAIT: manageDSAITOID,
+    dontUseCopy: dontUseCopyOID,
+    postread: postreadOID,
+    sortRequest: sortRequestOID,
+    simpledPagedResults: sprOID,
+} = controls;
 
 const now: TimeAssertion = {
     now: null,

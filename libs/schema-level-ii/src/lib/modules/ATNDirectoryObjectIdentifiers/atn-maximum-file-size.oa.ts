@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { ContentLength, _decode_ContentLength, _encode_ContentLength } from "@wildboar/x400/src/lib/modules/MTSAbstractService/ContentLength.ta";
-import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { integer } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa";
-import { integerMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerMatch.oa";
-import { integerOrderingMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerOrderingMatch.oa";
+import { ContentLength, _decode_ContentLength, _encode_ContentLength } from "@wildboar/x400/MTSAbstractService";
+import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { integer } from "@wildboar/x500/SelectedAttributeTypes";
+import { integerMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import { integerOrderingMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { id_at_atn_maximum_file_size } from "../ATNDirectoryObjectIdentifiers/id-at-atn-maximum-file-size.va";
 
 

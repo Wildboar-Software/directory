@@ -1,8 +1,8 @@
 import { randomBytes } from "crypto";
-import { unpackBits } from "asn1-ts";
+import { unpackBits } from "@wildboar/asn1";
 import {
     SimpleCredentials_validity,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-validity.ta";
+} from "@wildboar/x500/DirectoryAbstractService";
 
 export
 function generateSimpleCredsValidity (): SimpleCredentials_validity {

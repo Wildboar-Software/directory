@@ -1,6 +1,6 @@
 /* eslint-disable */
-import { ASN1Element as _Element, PrintableString, UTF8String } from 'asn1-ts';
-import * as $ from 'asn1-ts/dist/node/functional';
+import { ASN1Element as _Element, PrintableString, UTF8String } from '@wildboar/asn1';
+import * as $ from '@wildboar/asn1/functional';
 
 /* START_OF_SYMBOL_DEFINITION ESSPrivacyMark */
 /**
