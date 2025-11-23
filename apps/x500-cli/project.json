@@ -15,7 +15,7 @@
                 "outputFileName": "main.js",
                 "tsConfig": "apps/x500-cli/tsconfig.app.json",
                 "platform": "node",
-                "format": ["cjs"],
+                "format": ["esm"],
                 "assets": [
                     {
                         "glob": "**/*",

@@ -1,7 +1,7 @@
 import type { Context } from "./types";
 import * as fs from "fs/promises";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
-import * as yml from "js-yaml";
+import { parse as yamlParse } from "@std/yaml";
 import validator from "./configValidator";
 import { findConfigurationFile } from "./config/findConfigurationFile";
 
@@ -32,7 +32,7 @@ async function getConfig (ctx: Context): Promise<X500ClientConfig | null> {
     let config: any | undefined;
     try {
         config = (matchedFileName.endsWith(".yaml") || matchedFileName.endsWith(".yml"))
-            ? yml.load(fileContents)
+            ? yamlParse(fileContents)
             : JSON.parse(fileContents);
     } catch (e) {
         ctx.log.error(`Error parsing configuration file: ${matchedFileName}.`);

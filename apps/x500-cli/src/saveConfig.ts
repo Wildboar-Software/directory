@@ -1,7 +1,7 @@
 import { CONFIG_FILE_LOCATIONS, PREFERRED_CONFIG_FILE_LOCATION } from "./configFileLocations";
 import * as fs from "fs/promises";
 import { strict as assert } from "assert";
-import * as yml from "js-yaml";
+import { stringify as yamlStringify } from "@std/yaml";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
 
 export
@@ -19,5 +19,5 @@ async function saveConfig (config: X500ClientConfig) {
         configFile = PREFERRED_CONFIG_FILE_LOCATION;
     }
     assert(configFile);
-    return fs.writeFile(configFile, yml.dump(config));
+    return fs.writeFile(configFile, yamlStringify(config));
 }
