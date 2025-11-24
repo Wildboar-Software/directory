@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -17,33 +17,7 @@ import { ads_krbPostdatedAllowed } from '../ApacheDirectoryConfig/ads-krbPostdat
 import { ads_krbPrimaryRealm } from '../ApacheDirectoryConfig/ads-krbPrimaryRealm.oa';
 import { ads_krbProxiableAllowed } from '../ApacheDirectoryConfig/ads-krbProxiableAllowed.oa';
 import { ads_krbRenewableAllowed } from '../ApacheDirectoryConfig/ads-krbRenewableAllowed.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_dsBasedServer } from '../ApacheDirectoryConfig/ads-dsBasedServer.oa';
-export { ads_krbAllowableClockSkew } from '../ApacheDirectoryConfig/ads-krbAllowableClockSkew.oa';
-export { ads_krbBodyChecksumVerified } from '../ApacheDirectoryConfig/ads-krbBodyChecksumVerified.oa';
-export { ads_krbEmptyAddressesAllowed } from '../ApacheDirectoryConfig/ads-krbEmptyAddressesAllowed.oa';
-export { ads_krbEncryptionTypes } from '../ApacheDirectoryConfig/ads-krbEncryptionTypes.oa';
-export { ads_krbForwardableAllowed } from '../ApacheDirectoryConfig/ads-krbForwardableAllowed.oa';
-export { ads_krbMaximumRenewableLifetime } from '../ApacheDirectoryConfig/ads-krbMaximumRenewableLifetime.oa';
-export { ads_krbMaximumTicketLifetime } from '../ApacheDirectoryConfig/ads-krbMaximumTicketLifetime.oa';
-export { ads_krbPaEncTimestampRequired } from '../ApacheDirectoryConfig/ads-krbPaEncTimestampRequired.oa';
-export { ads_krbPostdatedAllowed } from '../ApacheDirectoryConfig/ads-krbPostdatedAllowed.oa';
-export { ads_krbPrimaryRealm } from '../ApacheDirectoryConfig/ads-krbPrimaryRealm.oa';
-export { ads_krbProxiableAllowed } from '../ApacheDirectoryConfig/ads-krbProxiableAllowed.oa';
-export { ads_krbRenewableAllowed } from '../ApacheDirectoryConfig/ads-krbRenewableAllowed.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_kdcServer */
 /**

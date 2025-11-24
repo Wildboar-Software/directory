@@ -1,7 +1,7 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import type { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 import {
-    ComponentFilter,
+    type ComponentFilter,
     _decode_ComponentFilter,
     _encode_ComponentFilter,
 } from '../RFC3687ComponentMatching/ComponentFilter.ta';

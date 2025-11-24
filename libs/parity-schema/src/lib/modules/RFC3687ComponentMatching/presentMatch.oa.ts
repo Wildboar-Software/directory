@@ -1,14 +1,9 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import type { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
 import { NULL } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import { id_mr_presentMatch } from '../RFC3687ComponentMatching/id-mr-presentMatch.va';
 import { null_ } from '../RFC3687ComponentMatching/null.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
-export { id_mr_presentMatch } from '../RFC3687ComponentMatching/id-mr-presentMatch.va';
-export { null_ } from '../RFC3687ComponentMatching/null.oa';
 
 /* START_OF_SYMBOL_DEFINITION presentMatch */
 /**

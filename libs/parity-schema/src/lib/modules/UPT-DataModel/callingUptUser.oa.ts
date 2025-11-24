@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -7,24 +7,7 @@ import { description } from '@wildboar/x500/SelectedAttributeTypes';
 import { name } from '@wildboar/x500/SelectedAttributeTypes';
 import { allowedDestinations } from '../UPT-DataModel/allowedDestinations.oa';
 import { id_oc_callingUptUser } from '../UPT-DataModel/id-oc-callingUptUser.va';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { name } from '@wildboar/x500/SelectedAttributeTypes';
-export { allowedDestinations } from '../UPT-DataModel/allowedDestinations.oa';
-export { id_oc_callingUptUser } from '../UPT-DataModel/id-oc-callingUptUser.va';
+
 
 /* START_OF_SYMBOL_DEFINITION callingUptUser */
 /**

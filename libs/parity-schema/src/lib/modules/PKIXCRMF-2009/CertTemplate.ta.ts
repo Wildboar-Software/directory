@@ -1,31 +1,31 @@
 /* eslint-disable */
 import {
-    AlgorithmIdentifier,
+    type AlgorithmIdentifier,
     _decode_AlgorithmIdentifier,
     _encode_AlgorithmIdentifier,
 } from '@wildboar/x500/AuthenticationFramework';
 import {
-    Extensions,
+    type Extensions,
     _decode_Extensions,
     _encode_Extensions,
 } from '@wildboar/x500/AuthenticationFramework';
 import {
-    SubjectPublicKeyInfo,
+    type SubjectPublicKeyInfo,
     _decode_SubjectPublicKeyInfo,
     _encode_SubjectPublicKeyInfo,
 } from '@wildboar/x500/AuthenticationFramework';
 import {
-    Version,
+    type Version,
     _decode_Version,
     _encode_Version,
 } from '@wildboar/x500/AuthenticationFramework';
 import {
-    Name,
+    type Name,
     _decode_Name,
     _encode_Name,
 } from '@wildboar/x500/InformationFramework';
 import {
-    UniqueIdentifier,
+    type UniqueIdentifier,
     _decode_UniqueIdentifier,
     _encode_UniqueIdentifier,
 } from '@wildboar/x500/SelectedAttributeTypes';
@@ -33,52 +33,11 @@ import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     INTEGER,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    OptionalValidity,
-    _decode_OptionalValidity,
-    _encode_OptionalValidity,
-} from '../PKIXCRMF-2009/OptionalValidity.ta';
-export {
-    AlgorithmIdentifier,
-    _decode_AlgorithmIdentifier,
-    _encode_AlgorithmIdentifier,
-} from '@wildboar/x500/AuthenticationFramework';
-export {
-    Extensions,
-    _decode_Extensions,
-    _encode_Extensions,
-} from '@wildboar/x500/AuthenticationFramework';
-export {
-    SubjectPublicKeyInfo,
-    _decode_SubjectPublicKeyInfo,
-    _encode_SubjectPublicKeyInfo,
-} from '@wildboar/x500/AuthenticationFramework';
-export {
-    v1 /* IMPORTED_SHORT_NAMED_INTEGER */,
-    v2 /* IMPORTED_SHORT_NAMED_INTEGER */,
-    v3 /* IMPORTED_SHORT_NAMED_INTEGER */,
-    Version,
-    Version_v1 /* IMPORTED_LONG_NAMED_INTEGER */,
-    Version_v2 /* IMPORTED_LONG_NAMED_INTEGER */,
-    Version_v3 /* IMPORTED_LONG_NAMED_INTEGER */,
-    _decode_Version,
-    _encode_Version,
-} from '@wildboar/x500/AuthenticationFramework';
-export {
-    Name,
-    _decode_Name,
-    _encode_Name,
-} from '@wildboar/x500/InformationFramework';
-export {
-    UniqueIdentifier,
-    _decode_UniqueIdentifier,
-    _encode_UniqueIdentifier,
-} from '@wildboar/x500/SelectedAttributeTypes';
-export {
-    OptionalValidity,
+    type OptionalValidity,
     _decode_OptionalValidity,
     _encode_OptionalValidity,
 } from '../PKIXCRMF-2009/OptionalValidity.ta';
@@ -92,15 +51,15 @@ export {
  *
  * ```asn1
  * CertTemplate ::= SEQUENCE {
- *     version      [0] Version               OPTIONAL,
- *     serialNumber [1] INTEGER               OPTIONAL,
+ *     version      [0] Version               type OPTIONAL,
+ *     serialNumber [1] INTEGER               type OPTIONAL,
  *     signingAlg   [2] AlgorithmIdentifier{{SupportedAlgorithms}}   OPTIONAL,
- *     issuer       [3] Name                  OPTIONAL,
- *     validity     [4] OptionalValidity      OPTIONAL,
- *     subject      [5] Name                  OPTIONAL,
+ *     issuer       [3] Name                  type OPTIONAL,
+ *     validity     [4] OptionalValidity      type OPTIONAL,
+ *     subject      [5] Name                  type OPTIONAL,
  *     publicKey    [6] SubjectPublicKeyInfo  OPTIONAL,
- *     issuerUID    [7] UniqueIdentifier      OPTIONAL,
- *     subjectUID   [8] UniqueIdentifier      OPTIONAL,
+ *     issuerUID    [7] UniqueIdentifier      type OPTIONAL,
+ *     subjectUID   [8] UniqueIdentifier      type OPTIONAL,
  *     extensions   [9] Extensions  OPTIONAL }
  * ```
  *

@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_tokenization_manifest } from '../OtherAttributes/id-tokenization-manifest.va';
-export { id_tokenization_manifest } from '../OtherAttributes/id-tokenization-manifest.va';
 
 /* START_OF_SYMBOL_DEFINITION id_tokenizedParts */
 /**

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    DirectoryString,
+    type DirectoryString,
     _decode_DirectoryString,
     _encode_DirectoryString,
 } from '@wildboar/x500/SelectedAttributeTypes';
@@ -9,7 +9,7 @@ import {
     ASN1TagClass as _TagClass,
     BOOLEAN,
     OBJECT_IDENTIFIER,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 

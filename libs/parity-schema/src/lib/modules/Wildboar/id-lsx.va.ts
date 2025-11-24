@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { ID } from '../Wildboar/ID.ta';
 import { ldap_syntax } from '../Wildboar/ldap-syntax.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
-export { ldap_syntax } from '../Wildboar/ldap-syntax.va';
 
 /* START_OF_SYMBOL_DEFINITION id_lsx */
 /**

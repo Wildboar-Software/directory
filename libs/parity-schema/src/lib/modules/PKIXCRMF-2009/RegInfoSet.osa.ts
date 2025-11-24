@@ -1,10 +1,7 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+import type { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import { regInfo_certReq } from '../PKIXCRMF-2009/regInfo-certReq.oa';
 import { regInfo_utf8Pairs } from '../PKIXCRMF-2009/regInfo-utf8Pairs.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { regInfo_certReq } from '../PKIXCRMF-2009/regInfo-certReq.oa';
-export { regInfo_utf8Pairs } from '../PKIXCRMF-2009/regInfo-utf8Pairs.oa';
 
 /* START_OF_SYMBOL_DEFINITION RegInfoSet */
 /**

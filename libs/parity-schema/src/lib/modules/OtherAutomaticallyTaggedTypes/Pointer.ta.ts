@@ -2,52 +2,27 @@
 import { ASN1Element as _Element } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    Address,
+    type Address,
     _decode_Address,
     _encode_Address,
 } from '../OtherAutomaticallyTaggedTypes/Address.ta';
 import {
-    DBRecord,
+    type DBRecord,
     _decode_DBRecord,
     _encode_DBRecord,
 } from '../OtherAutomaticallyTaggedTypes/DBRecord.ta';
 import {
-    GPS,
+    type GPS,
     _decode_GPS,
     _encode_GPS,
 } from '../OtherAutomaticallyTaggedTypes/GPS.ta';
 import {
-    RFID,
+    type RFID,
     _decode_RFID,
     _encode_RFID,
 } from '../OtherAutomaticallyTaggedTypes/RFID.ta';
 import {
-    URI,
-    _decode_URI,
-    _encode_URI,
-} from '../OtherAutomaticallyTaggedTypes/URI.ta';
-export {
-    Address,
-    _decode_Address,
-    _encode_Address,
-} from '../OtherAutomaticallyTaggedTypes/Address.ta';
-export {
-    DBRecord,
-    _decode_DBRecord,
-    _encode_DBRecord,
-} from '../OtherAutomaticallyTaggedTypes/DBRecord.ta';
-export {
-    GPS,
-    _decode_GPS,
-    _encode_GPS,
-} from '../OtherAutomaticallyTaggedTypes/GPS.ta';
-export {
-    RFID,
-    _decode_RFID,
-    _encode_RFID,
-} from '../OtherAutomaticallyTaggedTypes/RFID.ta';
-export {
-    URI,
+    type URI,
     _decode_URI,
     _encode_URI,
 } from '../OtherAutomaticallyTaggedTypes/URI.ta';

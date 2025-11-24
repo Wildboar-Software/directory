@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { call_Id } from '../H323-X500-Schema/call-Id.va';
-export { call_Id } from '../H323-X500-Schema/call-Id.va';
 
 /* START_OF_SYMBOL_DEFINITION call_id_oc */
 /**

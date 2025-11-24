@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    Extensions,
+    type Extensions,
     _decode_Extensions,
     _encode_Extensions,
 } from '@wildboar/x500/AuthenticationFramework';

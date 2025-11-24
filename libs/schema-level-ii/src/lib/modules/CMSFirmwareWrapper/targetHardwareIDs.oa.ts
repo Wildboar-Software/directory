@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { TargetHardwareIdentifiers, _decode_TargetHardwareIdentifiers, _encode_TargetHardwareIdentifiers } from "../CMSFirmwareWrapper/TargetHardwareIdentifiers.ta";
 import { id_aa_targetHardwareIDs } from "../CMSFirmwareWrapper/id-aa-targetHardwareIDs.va";

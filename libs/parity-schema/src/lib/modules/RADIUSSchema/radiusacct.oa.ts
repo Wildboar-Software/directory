@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -24,40 +24,7 @@ import { radiusNASPort } from '../RADIUSSchema/radiusNASPort.oa';
 import { radiusNASPortId } from '../RADIUSSchema/radiusNASPortId.oa';
 import { radiusNASPortType } from '../RADIUSSchema/radiusNASPortType.oa';
 import { radiusUserName } from '../RADIUSSchema/radiusUserName.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { id_at_freeRadius } from '../RADIUSSchema/id-at-freeRadius.va';
-export { radiusAcctAuthentic } from '../RADIUSSchema/radiusAcctAuthentic.oa';
-export { radiusAcctInputOctets } from '../RADIUSSchema/radiusAcctInputOctets.oa';
-export { radiusAcctInterval } from '../RADIUSSchema/radiusAcctInterval.oa';
-export { radiusAcctOutputOctets } from '../RADIUSSchema/radiusAcctOutputOctets.oa';
-export { radiusAcctSessionId } from '../RADIUSSchema/radiusAcctSessionId.oa';
-export { radiusAcctSessionTime } from '../RADIUSSchema/radiusAcctSessionTime.oa';
-export { radiusAcctStartTime } from '../RADIUSSchema/radiusAcctStartTime.oa';
-export { radiusAcctStopTime } from '../RADIUSSchema/radiusAcctStopTime.oa';
-export { radiusAcctTerminateCause } from '../RADIUSSchema/radiusAcctTerminateCause.oa';
-export { radiusAcctUniqueId } from '../RADIUSSchema/radiusAcctUniqueId.oa';
-export { radiusAcctUpdateTime } from '../RADIUSSchema/radiusAcctUpdateTime.oa';
-export { radiusConnectInfoStart } from '../RADIUSSchema/radiusConnectInfoStart.oa';
-export { radiusConnectInfoStop } from '../RADIUSSchema/radiusConnectInfoStop.oa';
-export { radiusNASIdentifier } from '../RADIUSSchema/radiusNASIdentifier.oa';
-export { radiusNASPort } from '../RADIUSSchema/radiusNASPort.oa';
-export { radiusNASPortId } from '../RADIUSSchema/radiusNASPortId.oa';
-export { radiusNASPortType } from '../RADIUSSchema/radiusNASPortType.oa';
-export { radiusUserName } from '../RADIUSSchema/radiusUserName.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION radiusacct */
 /**

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { userPassword } from '@wildboar/x500/AuthenticationFramework';
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -29,40 +29,7 @@ import { x121Address } from '@wildboar/x500/SelectedAttributeTypes';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { associatedName } from '../Cosine/associatedName.oa';
 import { pilotObjectClass } from '../Cosine/pilotObjectClass.va';
-export { userPassword } from '@wildboar/x500/AuthenticationFramework';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { businessCategory } from '@wildboar/x500/SelectedAttributeTypes';
-export { dc } from '@wildboar/x500/SelectedAttributeTypes';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { facsimileTelephoneNumber } from '@wildboar/x500/SelectedAttributeTypes';
-export { internationalISDNNumber } from '@wildboar/x500/SelectedAttributeTypes';
-export { localityName } from '@wildboar/x500/SelectedAttributeTypes';
-export { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
-export { physicalDeliveryOfficeName } from '@wildboar/x500/SelectedAttributeTypes';
-export { postalAddress } from '@wildboar/x500/SelectedAttributeTypes';
-export { postalCode } from '@wildboar/x500/SelectedAttributeTypes';
-export { postOfficeBox } from '@wildboar/x500/SelectedAttributeTypes';
-export { searchGuide } from '@wildboar/x500/SelectedAttributeTypes';
-export { seeAlso } from '@wildboar/x500/SelectedAttributeTypes';
-export { stateOrProvinceName } from '@wildboar/x500/SelectedAttributeTypes';
-export { streetAddress } from '@wildboar/x500/SelectedAttributeTypes';
-export { telephoneNumber } from '@wildboar/x500/SelectedAttributeTypes';
-export { associatedName } from '../Cosine/associatedName.oa';
-export { pilotObjectClass } from '../Cosine/pilotObjectClass.va';
+
 
 /* START_OF_SYMBOL_DEFINITION domain */
 /**

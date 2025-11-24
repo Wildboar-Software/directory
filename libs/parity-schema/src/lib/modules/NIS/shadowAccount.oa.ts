@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { userPassword } from '@wildboar/x500/AuthenticationFramework';
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -16,32 +16,7 @@ import { shadowLastChange } from '../NIS/shadowLastChange.oa';
 import { shadowMax } from '../NIS/shadowMax.oa';
 import { shadowMin } from '../NIS/shadowMin.oa';
 import { shadowWarning } from '../NIS/shadowWarning.oa';
-export { userPassword } from '@wildboar/x500/AuthenticationFramework';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { uid } from '@wildboar/x500/SelectedAttributeTypes';
-export { id_nis_oc } from '../NIS/id-nis-oc.va';
-export { shadowExpire } from '../NIS/shadowExpire.oa';
-export { shadowFlag } from '../NIS/shadowFlag.oa';
-export { shadowInactive } from '../NIS/shadowInactive.oa';
-export { shadowLastChange } from '../NIS/shadowLastChange.oa';
-export { shadowMax } from '../NIS/shadowMax.oa';
-export { shadowMin } from '../NIS/shadowMin.oa';
-export { shadowWarning } from '../NIS/shadowWarning.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION shadowAccount */
 /**

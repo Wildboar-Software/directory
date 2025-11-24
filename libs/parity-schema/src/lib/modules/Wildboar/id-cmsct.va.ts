@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { cmsContentType } from '../Wildboar/cmsContentType.va';
 import { ID } from '../Wildboar/ID.ta';
-export { cmsContentType } from '../Wildboar/cmsContentType.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
 
 /* START_OF_SYMBOL_DEFINITION id_cmsct */
 /**

@@ -1,21 +1,17 @@
 /* eslint-disable */
 import {
-    GeneralName,
+    type GeneralName,
     _decode_GeneralName,
     _encode_GeneralName,
 } from '@wildboar/x500/CertificateExtensions';
 import { ASN1Element as _Element, ASN1TagClass as _TagClass } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    PKMACValue,
+    type PKMACValue,
     _decode_PKMACValue,
     _encode_PKMACValue,
 } from '../PKIXCRMF-2009/PKMACValue.ta';
-export {
-    GeneralName,
-    _decode_GeneralName,
-    _encode_GeneralName,
-} from '@wildboar/x500/CertificateExtensions';
+
 export {
     PKMACValue,
     _decode_PKMACValue,

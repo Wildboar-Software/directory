@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_samba } from '../SambaSchema/id-samba.va';
-export { id_samba } from '../SambaSchema/id-samba.va';
 
 /* START_OF_SYMBOL_DEFINITION id_samba_oc */
 /**

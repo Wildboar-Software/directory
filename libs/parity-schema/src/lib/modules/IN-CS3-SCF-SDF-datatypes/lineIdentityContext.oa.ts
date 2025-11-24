@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { CONTEXT } from '@wildboar/x500/InformationFramework';
+import type { CONTEXT } from '@wildboar/x500/InformationFramework';
 import { id_avc_lineIdentity } from '../IN-CS3-object-identifiers/id-avc-lineIdentity.va';
 import {
     IsdnAddress,

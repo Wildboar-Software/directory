@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -11,27 +11,7 @@ import { ads_delegateSsl } from '../ApacheDirectoryConfig/ads-delegateSsl.oa';
 import { ads_delegateSslTrustManager } from '../ApacheDirectoryConfig/ads-delegateSslTrustManager.oa';
 import { ads_delegateTls } from '../ApacheDirectoryConfig/ads-delegateTls.oa';
 import { ads_delegateTlsTrustManager } from '../ApacheDirectoryConfig/ads-delegateTlsTrustManager.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_authenticator } from '../ApacheDirectoryConfig/ads-authenticator.oa';
-export { ads_delegateHost } from '../ApacheDirectoryConfig/ads-delegateHost.oa';
-export { ads_delegatePort } from '../ApacheDirectoryConfig/ads-delegatePort.oa';
-export { ads_delegateSsl } from '../ApacheDirectoryConfig/ads-delegateSsl.oa';
-export { ads_delegateSslTrustManager } from '../ApacheDirectoryConfig/ads-delegateSslTrustManager.oa';
-export { ads_delegateTls } from '../ApacheDirectoryConfig/ads-delegateTls.oa';
-export { ads_delegateTlsTrustManager } from '../ApacheDirectoryConfig/ads-delegateTlsTrustManager.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_delegatingAuthenticator */
 /**

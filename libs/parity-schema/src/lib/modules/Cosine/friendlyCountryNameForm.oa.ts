@@ -1,15 +1,9 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { countryName } from '@wildboar/x500/SelectedAttributeTypes';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { friendlyCountry } from '../Cosine/friendlyCountry.oa';
 import { id_nf } from '../Wildboar/id-nf.va';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export { countryName } from '@wildboar/x500/SelectedAttributeTypes';
-export { friendlyCountry } from '../Cosine/friendlyCountry.oa';
-export { id_nf } from '../Wildboar/id-nf.va';
 
 /* START_OF_SYMBOL_DEFINITION friendlyCountryNameForm */
 /**

@@ -1,6 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+import type { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 
 /* START_OF_SYMBOL_DEFINITION PrivateKeyAttributes */
 /**

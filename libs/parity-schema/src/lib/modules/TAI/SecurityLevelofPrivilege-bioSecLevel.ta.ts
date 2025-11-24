@@ -2,12 +2,7 @@
 import { ASN1Element as _Element, INTEGER } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    UniqueIdentifierOfBioParaInfo,
-    _decode_UniqueIdentifierOfBioParaInfo,
-    _encode_UniqueIdentifierOfBioParaInfo,
-} from '../TAI/UniqueIdentifierOfBioParaInfo.ta';
-export {
-    UniqueIdentifierOfBioParaInfo,
+    type UniqueIdentifierOfBioParaInfo,
     _decode_UniqueIdentifierOfBioParaInfo,
     _encode_UniqueIdentifierOfBioParaInfo,
 } from '../TAI/UniqueIdentifierOfBioParaInfo.ta';

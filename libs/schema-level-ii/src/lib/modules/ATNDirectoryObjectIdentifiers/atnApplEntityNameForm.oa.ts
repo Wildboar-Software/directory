@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { NAME_FORM } from "@wildboar/x500/InformationFramework";
+import type { NAME_FORM } from "@wildboar/x500/InformationFramework";
 import { commonName } from "@wildboar/x500/SelectedAttributeTypes";
 import { atn_application_entity } from "../ATNDirectoryObjectIdentifiers/atn-application-entity.oa";
 import { id_nf_atnApplEntityNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnApplEntityNameForm.va";

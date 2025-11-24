@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -17,33 +17,7 @@ import { stateOrProvinceName } from '@wildboar/x500/SelectedAttributeTypes';
 import { streetAddress } from '@wildboar/x500/SelectedAttributeTypes';
 import { uid } from '@wildboar/x500/SelectedAttributeTypes';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { countryName } from '@wildboar/x500/SelectedAttributeTypes';
-export { dc } from '@wildboar/x500/SelectedAttributeTypes';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { localityName } from '@wildboar/x500/SelectedAttributeTypes';
-export { organizationalUnitName } from '@wildboar/x500/SelectedAttributeTypes';
-export { organizationName } from '@wildboar/x500/SelectedAttributeTypes';
-export { owner } from '@wildboar/x500/SelectedAttributeTypes';
-export { seeAlso } from '@wildboar/x500/SelectedAttributeTypes';
-export { stateOrProvinceName } from '@wildboar/x500/SelectedAttributeTypes';
-export { streetAddress } from '@wildboar/x500/SelectedAttributeTypes';
-export { uid } from '@wildboar/x500/SelectedAttributeTypes';
+
 
 /* START_OF_SYMBOL_DEFINITION untypedObject */
 /**

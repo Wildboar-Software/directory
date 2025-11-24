@@ -1,17 +1,10 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { printer_name } from '../RFC7612Printer/printer-name.oa';
 import { printer_uuid } from '../RFC7612Printer/printer-uuid.oa';
 import { printerService } from '../RFC7612Printer/printerService.oa';
 import { id_nf } from '../Wildboar/id-nf.va';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export { printer_name } from '../RFC7612Printer/printer-name.oa';
-export { printer_uuid } from '../RFC7612Printer/printer-uuid.oa';
-export { printerService } from '../RFC7612Printer/printerService.oa';
-export { id_nf } from '../Wildboar/id-nf.va';
 
 /* START_OF_SYMBOL_DEFINITION printerServiceNameForm */
 /**

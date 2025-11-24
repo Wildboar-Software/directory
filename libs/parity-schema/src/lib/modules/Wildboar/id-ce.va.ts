@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { certificateExtension } from '../Wildboar/certificateExtension.va';
 import { ID } from '../Wildboar/ID.ta';
-export { certificateExtension } from '../Wildboar/certificateExtension.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
 
 /* START_OF_SYMBOL_DEFINITION id_ce */
 /**

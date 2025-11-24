@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { FirmwarePackageIdentifier, _decode_FirmwarePackageIdentifier, _encode_FirmwarePackageIdentifier } from "../CMSFirmwareWrapper/FirmwarePackageIdentifier.ta";
 import { id_aa_firmwarePackageID } from "../CMSFirmwareWrapper/id-aa-firmwarePackageID.va";

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -18,34 +18,7 @@ import { eduPersonPrincipalNamePrior } from '../EduPersonSchema/eduPersonPrincip
 import { eduPersonScopedAffiliation } from '../EduPersonSchema/eduPersonScopedAffiliation.oa';
 import { eduPersonTargetedID } from '../EduPersonSchema/eduPersonTargetedID.oa';
 import { eduPersonUniqueId } from '../EduPersonSchema/eduPersonUniqueId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { eduPersonAffiliation } from '../EduPersonSchema/eduPersonAffiliation.oa';
-export { eduPersonAssurance } from '../EduPersonSchema/eduPersonAssurance.oa';
-export { eduPersonEntitlement } from '../EduPersonSchema/eduPersonEntitlement.oa';
-export { eduPersonNickName } from '../EduPersonSchema/eduPersonNickName.oa';
-export { eduPersonOrcid } from '../EduPersonSchema/eduPersonOrcid.oa';
-export { eduPersonOrgDN } from '../EduPersonSchema/eduPersonOrgDN.oa';
-export { eduPersonOrgUnitDN } from '../EduPersonSchema/eduPersonOrgUnitDN.oa';
-export { eduPersonPrimaryAffiliation } from '../EduPersonSchema/eduPersonPrimaryAffiliation.oa';
-export { eduPersonPrimaryOrgUnitDN } from '../EduPersonSchema/eduPersonPrimaryOrgUnitDN.oa';
-export { eduPersonPrincipalName } from '../EduPersonSchema/eduPersonPrincipalName.oa';
-export { eduPersonPrincipalNamePrior } from '../EduPersonSchema/eduPersonPrincipalNamePrior.oa';
-export { eduPersonScopedAffiliation } from '../EduPersonSchema/eduPersonScopedAffiliation.oa';
-export { eduPersonTargetedID } from '../EduPersonSchema/eduPersonTargetedID.oa';
-export { eduPersonUniqueId } from '../EduPersonSchema/eduPersonUniqueId.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION eduPerson */
 /**

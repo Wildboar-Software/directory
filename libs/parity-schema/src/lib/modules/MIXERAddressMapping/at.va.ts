@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { mapping } from '../MIXERAddressMapping/mapping.va';
-export { mapping } from '../MIXERAddressMapping/mapping.va';
 
 /* START_OF_SYMBOL_DEFINITION at */
 /**

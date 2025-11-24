@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -12,28 +12,7 @@ import { uddiv3EntityCreationTime } from '../UDDI-Schema/uddiv3EntityCreationTim
 import { uddiv3EntityDeletionTime } from '../UDDI-Schema/uddiv3EntityDeletionTime.oa';
 import { uddiv3EntityKey } from '../UDDI-Schema/uddiv3EntityKey.oa';
 import { uddiv3NodeId } from '../UDDI-Schema/uddiv3NodeId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { id_uddi } from '../UDDI-Schema/id-uddi.va';
-export { uddiAuthorizedName } from '../UDDI-Schema/uddiAuthorizedName.oa';
-export { uddiUUID } from '../UDDI-Schema/uddiUUID.oa';
-export { uddiv3EntityCreationTime } from '../UDDI-Schema/uddiv3EntityCreationTime.oa';
-export { uddiv3EntityDeletionTime } from '../UDDI-Schema/uddiv3EntityDeletionTime.oa';
-export { uddiv3EntityKey } from '../UDDI-Schema/uddiv3EntityKey.oa';
-export { uddiv3NodeId } from '../UDDI-Schema/uddiv3NodeId.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION uddiv3EntityObituary */
 /**

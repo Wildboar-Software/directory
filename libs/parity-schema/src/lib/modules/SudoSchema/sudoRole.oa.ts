@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -18,34 +18,7 @@ import { sudoRunAs } from '../SudoSchema/sudoRunAs.oa';
 import { sudoRunAsGroup } from '../SudoSchema/sudoRunAsGroup.oa';
 import { sudoRunAsUser } from '../SudoSchema/sudoRunAsUser.oa';
 import { sudoUser } from '../SudoSchema/sudoUser.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { id_aaron_spangler } from '../SudoSchema/id-aaron-spangler.va';
-export { sudoCommand } from '../SudoSchema/sudoCommand.oa';
-export { sudoHost } from '../SudoSchema/sudoHost.oa';
-export { sudoNotAfter } from '../SudoSchema/sudoNotAfter.oa';
-export { sudoNotBefore } from '../SudoSchema/sudoNotBefore.oa';
-export { sudoOption } from '../SudoSchema/sudoOption.oa';
-export { sudoOrder } from '../SudoSchema/sudoOrder.oa';
-export { sudoRunAs } from '../SudoSchema/sudoRunAs.oa';
-export { sudoRunAsGroup } from '../SudoSchema/sudoRunAsGroup.oa';
-export { sudoRunAsUser } from '../SudoSchema/sudoRunAsUser.oa';
-export { sudoUser } from '../SudoSchema/sudoUser.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION sudoRole */
 /**

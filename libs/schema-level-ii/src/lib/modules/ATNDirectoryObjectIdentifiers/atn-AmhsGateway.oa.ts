@@ -7,7 +7,7 @@ import {
     mhs_maximum_content_length,
     mhs_or_addresses,
 } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
-import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
 import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { owner } from "@wildboar/x500/SelectedAttributeTypes";
 import { protocolInformation } from "@wildboar/x500/SelectedAttributeTypes";

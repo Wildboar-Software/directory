@@ -1,9 +1,7 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import type { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 import { ASN1Element as _Element } from '@wildboar/asn1';
 import { id_lsx_open } from '../RFC3687ComponentMatching/id-lsx-open.va';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
-export { id_lsx_open } from '../RFC3687ComponentMatching/id-lsx-open.va';
 
 /* START_OF_SYMBOL_DEFINITION open */
 /**

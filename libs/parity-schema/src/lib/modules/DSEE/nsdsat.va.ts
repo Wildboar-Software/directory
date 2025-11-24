@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { netscapeDS } from '../DSEE/netscapeDS.va';
-export { netscapeDS } from '../DSEE/netscapeDS.va';
 
 /* START_OF_SYMBOL_DEFINITION nsdsat */
 /**

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -8,24 +8,7 @@ import { ads_base } from '../ApacheDirectoryConfig/ads-base.oa';
 import { ads_interceptorClassName } from '../ApacheDirectoryConfig/ads-interceptorClassName.oa';
 import { ads_interceptorId } from '../ApacheDirectoryConfig/ads-interceptorId.oa';
 import { ads_interceptorOrder } from '../ApacheDirectoryConfig/ads-interceptorOrder.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_base } from '../ApacheDirectoryConfig/ads-base.oa';
-export { ads_interceptorClassName } from '../ApacheDirectoryConfig/ads-interceptorClassName.oa';
-export { ads_interceptorId } from '../ApacheDirectoryConfig/ads-interceptorId.oa';
-export { ads_interceptorOrder } from '../ApacheDirectoryConfig/ads-interceptorOrder.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_interceptor */
 /**

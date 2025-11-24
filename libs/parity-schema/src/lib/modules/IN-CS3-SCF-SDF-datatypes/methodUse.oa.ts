@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+import type { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     directoryOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -10,25 +10,7 @@ import {
     _decode_MethodUseDescription,
     _encode_MethodUseDescription,
 } from '../IN-CS3-SCF-SDF-datatypes/MethodUseDescription.ta';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export {
-    AttributeUsage,
-    AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    AttributeUsage_distributedOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    AttributeUsage_dSAOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    AttributeUsage_userApplications /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    directoryOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    distributedOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    dSAOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_AttributeUsage,
-    _encode_AttributeUsage,
-    _enum_for_AttributeUsage,
-} from '@wildboar/x500/InformationFramework';
-export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
-export { objectIdentifierFirstComponentMatch } from '@wildboar/x500/SelectedAttributeTypes';
-export { id_soa_methodRuleUse } from '../IN-CS3-object-identifiers/id-soa-methodRuleUse.va';
+
 export {
     MethodUseDescription,
     _decode_MethodUseDescription,

@@ -1,10 +1,7 @@
 /* eslint-disable */
-import { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
+import type { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 import { BioCert, _decode_BioCert, _encode_BioCert } from '../TAI/BioCert.ta';
 import { id_tai_ce_bioCert } from '../TAI/id-tai-ce-bioCert.va';
-export { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
-export { BioCert, _decode_BioCert, _encode_BioCert } from '../TAI/BioCert.ta';
-export { id_tai_ce_bioCert } from '../TAI/id-tai-ce-bioCert.va';
 
 /* START_OF_SYMBOL_DEFINITION bioCert */
 /**

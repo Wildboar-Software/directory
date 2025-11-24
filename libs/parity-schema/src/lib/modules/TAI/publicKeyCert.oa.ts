@@ -1,13 +1,11 @@
 /* eslint-disable */
-import { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
+import type { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 import { id_tai_ce_publicKeyCert } from '../TAI/id-tai-ce-publicKeyCert.va';
 import {
     PublicKeyCert,
     _decode_PublicKeyCert,
     _encode_PublicKeyCert,
 } from '../TAI/PublicKeyCert.ta';
-export { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
-export { id_tai_ce_publicKeyCert } from '../TAI/id-tai-ce-publicKeyCert.va';
 export {
     PublicKeyCert,
     _decode_PublicKeyCert,

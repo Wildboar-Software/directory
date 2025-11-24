@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { h320_Id } from '../H323-X500-Schema/h320-Id.va';
-export { h320_Id } from '../H323-X500-Schema/h320-Id.va';
 
 /* START_OF_SYMBOL_DEFINITION h320_id_oc */
 /**

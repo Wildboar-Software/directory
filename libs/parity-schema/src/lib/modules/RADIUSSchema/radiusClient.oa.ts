@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -13,29 +13,7 @@ import { radiusClientSecret } from '../RADIUSSchema/radiusClientSecret.oa';
 import { radiusClientShortname } from '../RADIUSSchema/radiusClientShortname.oa';
 import { radiusClientType } from '../RADIUSSchema/radiusClientType.oa';
 import { radiusClientVirtualServer } from '../RADIUSSchema/radiusClientVirtualServer.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { id_at_freeRadius } from '../RADIUSSchema/id-at-freeRadius.va';
-export { radiusClientComment } from '../RADIUSSchema/radiusClientComment.oa';
-export { radiusClientIdentifier } from '../RADIUSSchema/radiusClientIdentifier.oa';
-export { radiusClientRequireMa } from '../RADIUSSchema/radiusClientRequireMa.oa';
-export { radiusClientSecret } from '../RADIUSSchema/radiusClientSecret.oa';
-export { radiusClientShortname } from '../RADIUSSchema/radiusClientShortname.oa';
-export { radiusClientType } from '../RADIUSSchema/radiusClientType.oa';
-export { radiusClientVirtualServer } from '../RADIUSSchema/radiusClientVirtualServer.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION radiusClient */
 /**

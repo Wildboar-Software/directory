@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import type { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import {
     BootParameterSyntax,
@@ -7,13 +7,11 @@ import {
     _encode_BootParameterSyntax,
 } from '../NIS/BootParameterSyntax.ta';
 import { id_nis_lsx } from '../NIS/id-nis-lsx.va';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export {
     BootParameterSyntax,
     _decode_BootParameterSyntax,
     _encode_BootParameterSyntax,
 } from '../NIS/BootParameterSyntax.ta';
-export { id_nis_lsx } from '../NIS/id-nis-lsx.va';
 
 /* START_OF_SYMBOL_DEFINITION bootParameterSyntax */
 /**

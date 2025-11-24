@@ -1,15 +1,9 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { textTableEntry } from '../TableFramework/textTableEntry.oa';
 import { textTableKey } from '../TableFramework/textTableKey.oa';
 import { id_nf } from '../Wildboar/id-nf.va';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export { textTableEntry } from '../TableFramework/textTableEntry.oa';
-export { textTableKey } from '../TableFramework/textTableKey.oa';
-export { id_nf } from '../Wildboar/id-nf.va';
 
 /* START_OF_SYMBOL_DEFINITION textTableEntryNameForm */
 /**

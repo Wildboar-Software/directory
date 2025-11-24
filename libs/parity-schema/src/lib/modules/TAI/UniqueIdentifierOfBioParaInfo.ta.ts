@@ -1,16 +1,11 @@
 /* eslint-disable */
 import {
-    UniqueIdentifier,
+    type UniqueIdentifier,
     _decode_UniqueIdentifier,
     _encode_UniqueIdentifier,
 } from '@wildboar/x500/SelectedAttributeTypes';
 import { ASN1Element as _Element } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
-export {
-    UniqueIdentifier,
-    _decode_UniqueIdentifier,
-    _encode_UniqueIdentifier,
-} from '@wildboar/x500/SelectedAttributeTypes';
 
 /* START_OF_SYMBOL_DEFINITION UniqueIdentifierOfBioParaInfo */
 /**

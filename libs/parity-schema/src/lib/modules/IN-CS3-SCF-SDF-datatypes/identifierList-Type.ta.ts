@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    AlgorithmIdentifier,
+    type AlgorithmIdentifier,
     _decode_AlgorithmIdentifier,
     _encode_AlgorithmIdentifier,
 } from '@wildboar/x500/AuthenticationFramework';
@@ -15,11 +15,7 @@ import {
     _decode_MethodIdentifier,
     _encode_MethodIdentifier,
 } from '../IN-CS3-SCF-SDF-datatypes/MethodIdentifier.ta';
-export {
-    AlgorithmIdentifier,
-    _decode_AlgorithmIdentifier,
-    _encode_AlgorithmIdentifier,
-} from '@wildboar/x500/AuthenticationFramework';
+
 export {
     MethodIdentifier,
     _decode_MethodIdentifier,

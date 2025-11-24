@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { userPassword } from '@wildboar/x500/AuthenticationFramework';
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -11,28 +11,7 @@ import { surname } from '@wildboar/x500/SelectedAttributeTypes';
 import { id_oc_userProfile } from '../UPT-DataModel/id-oc-userProfile.va';
 import { pui } from '../UPT-DataModel/pui.oa';
 import { userCredit } from '../UPT-DataModel/userCredit.oa';
-export { userPassword } from '@wildboar/x500/AuthenticationFramework';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { seeAlso } from '@wildboar/x500/SelectedAttributeTypes';
-export { surname } from '@wildboar/x500/SelectedAttributeTypes';
-export { id_oc_userProfile } from '../UPT-DataModel/id-oc-userProfile.va';
-export { pui } from '../UPT-DataModel/pui.oa';
-export { userCredit } from '../UPT-DataModel/userCredit.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION userProfile */
 /**

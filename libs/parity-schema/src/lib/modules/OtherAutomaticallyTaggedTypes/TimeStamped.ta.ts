@@ -2,26 +2,16 @@
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    TimeStamp,
+    type TimeStamp,
     _decode_TimeStamp,
     _encode_TimeStamp,
 } from '../OtherAutomaticallyTaggedTypes/TimeStamp.ta';
 import {
-    URI,
-    _decode_URI,
-    _encode_URI,
-} from '../OtherAutomaticallyTaggedTypes/URI.ta';
-export {
-    TimeStamp,
-    _decode_TimeStamp,
-    _encode_TimeStamp,
-} from '../OtherAutomaticallyTaggedTypes/TimeStamp.ta';
-export {
-    URI,
+    type URI,
     _decode_URI,
     _encode_URI,
 } from '../OtherAutomaticallyTaggedTypes/URI.ta';

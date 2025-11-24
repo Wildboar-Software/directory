@@ -1,6 +1,5 @@
 /* eslint-disable */
 import { SECURITY_CATEGORY } from '../OtherImplicitlyTaggedTypes/SECURITY-CATEGORY.oca';
-export { SECURITY_CATEGORY } from '../OtherImplicitlyTaggedTypes/SECURITY-CATEGORY.oca';
 
 /* START_OF_SYMBOL_DEFINITION SupportedSecurityCategories */
 /**

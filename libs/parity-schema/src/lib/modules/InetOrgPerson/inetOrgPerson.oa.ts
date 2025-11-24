@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { userCertificate } from '@wildboar/x500/AuthenticationFramework';
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -29,33 +29,7 @@ import { employeeType } from '../InetOrgPerson/employeeType.oa';
 import { netscapeDirectory } from '../InetOrgPerson/netscapeDirectory.va';
 import { labeledURI } from '../OpenLDAPCoreSchema/labeledURI.oa';
 import { preferredLanguage } from './preferredLanguage.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { businessCategory } from '@wildboar/x500/SelectedAttributeTypes';
-export { givenName } from '@wildboar/x500/SelectedAttributeTypes';
-export { initials } from '@wildboar/x500/SelectedAttributeTypes';
-export { organizationalPerson } from '@wildboar/x500/SelectedObjectClasses';
-export { audio } from '../Cosine/audio.oa';
-export { homePostalAddress } from '../Cosine/homePostalAddress.oa';
-export { homeTelephoneNumber } from '../Cosine/homeTelephoneNumber.oa';
-export { carLicense } from '../InetOrgPerson/carLicense.oa';
-export { departmentNumber } from '../InetOrgPerson/departmentNumber.oa';
-export { displayName } from '../InetOrgPerson/displayName.oa';
-export { employeeNumber } from '../InetOrgPerson/employeeNumber.oa';
-export { employeeType } from '../InetOrgPerson/employeeType.oa';
-export { netscapeDirectory } from '../InetOrgPerson/netscapeDirectory.va';
+
 
 /* START_OF_SYMBOL_DEFINITION inetOrgPerson */
 /**

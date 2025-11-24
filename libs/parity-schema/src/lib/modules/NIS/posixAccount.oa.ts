@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { userPassword } from '@wildboar/x500/AuthenticationFramework';
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -15,31 +15,7 @@ import { homeDirectory } from '../NIS/homeDirectory.oa';
 import { id_nis_oc } from '../NIS/id-nis-oc.va';
 import { loginShell } from '../NIS/loginShell.oa';
 import { uidNumber } from '../NIS/uidNumber.oa';
-export { userPassword } from '@wildboar/x500/AuthenticationFramework';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { uid } from '@wildboar/x500/SelectedAttributeTypes';
-export { gecos } from '../NIS/gecos.oa';
-export { gidNumber } from '../NIS/gidNumber.oa';
-export { homeDirectory } from '../NIS/homeDirectory.oa';
-export { id_nis_oc } from '../NIS/id-nis-oc.va';
-export { loginShell } from '../NIS/loginShell.oa';
-export { uidNumber } from '../NIS/uidNumber.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION posixAccount */
 /**

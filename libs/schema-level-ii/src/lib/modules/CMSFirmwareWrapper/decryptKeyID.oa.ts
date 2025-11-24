@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { DecryptKeyIdentifier, _decode_DecryptKeyIdentifier, _encode_DecryptKeyIdentifier } from "../CMSFirmwareWrapper/DecryptKeyIdentifier.ta";
 import { id_aa_decryptKeyID } from "../CMSFirmwareWrapper/id-aa-decryptKeyID.va";

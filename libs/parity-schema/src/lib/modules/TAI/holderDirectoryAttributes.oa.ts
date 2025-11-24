@@ -1,18 +1,11 @@
 /* eslint-disable */
-import { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
+import type { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 import {
-    AttributesSyntax,
+    type AttributesSyntax,
     _decode_AttributesSyntax,
     _encode_AttributesSyntax,
 } from '../TAI/AttributesSyntax.ta';
 import { id_tai_ce_holderDirectoryAttributes } from '../TAI/id-tai-ce-holderDirectoryAttributes.va';
-export { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
-export {
-    AttributesSyntax,
-    _decode_AttributesSyntax,
-    _encode_AttributesSyntax,
-} from '../TAI/AttributesSyntax.ta';
-export { id_tai_ce_holderDirectoryAttributes } from '../TAI/id-tai-ce-holderDirectoryAttributes.va';
 
 /* START_OF_SYMBOL_DEFINITION holderDirectoryAttributes */
 /**

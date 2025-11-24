@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { ContentLength, _decode_ContentLength, _encode_ContentLength } from "@wildboar/x400/MTSAbstractService";
-import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { integer } from "@wildboar/x500/SelectedAttributeTypes";
 import { integerMatch } from "@wildboar/x500/SelectedAttributeTypes";

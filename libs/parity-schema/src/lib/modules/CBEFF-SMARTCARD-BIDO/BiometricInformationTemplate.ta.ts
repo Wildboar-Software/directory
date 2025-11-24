@@ -4,7 +4,7 @@ import {
     ASN1TagClass as _TagClass,
     EXTERNAL,
     OCTET_STRING,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {

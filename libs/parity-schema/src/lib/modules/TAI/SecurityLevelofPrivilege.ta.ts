@@ -6,12 +6,7 @@ import {
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    SecurityLevelofPrivilege_bioSecLevel,
-    _decode_SecurityLevelofPrivilege_bioSecLevel,
-    _encode_SecurityLevelofPrivilege_bioSecLevel,
-} from '../TAI/SecurityLevelofPrivilege-bioSecLevel.ta';
-export {
-    SecurityLevelofPrivilege_bioSecLevel,
+    type SecurityLevelofPrivilege_bioSecLevel,
     _decode_SecurityLevelofPrivilege_bioSecLevel,
     _encode_SecurityLevelofPrivilege_bioSecLevel,
 } from '../TAI/SecurityLevelofPrivilege-bioSecLevel.ta';

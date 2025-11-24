@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { sunroot } from '../DSEE/sunroot.va';
-export { sunroot } from '../DSEE/sunroot.va';
 
 /* START_OF_SYMBOL_DEFINITION sunds */
 /**

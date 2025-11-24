@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -16,33 +16,7 @@ import { pageSize } from '../PrinterServiceOfferDefinitions/pageSize.oa';
 import { pagesPerMinute } from '../PrinterServiceOfferDefinitions/pagesPerMinute.oa';
 import { printerType } from '../PrinterServiceOfferDefinitions/printerType.oa';
 import { queueLength } from '../PrinterServiceOfferDefinitions/queueLength.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { colourCapable } from '../PrinterServiceOfferDefinitions/colourCapable.oa';
-export { costPerPage } from '../PrinterServiceOfferDefinitions/costPerPage.oa';
-export { dotsPerInch } from '../PrinterServiceOfferDefinitions/dotsPerInch.oa';
-export { driverName } from '../PrinterServiceOfferDefinitions/driverName.oa';
-export { id_trader_oc_serviceOffer_printer } from '../PrinterServiceOfferDefinitions/id-trader-oc-serviceOffer-printer.va';
-export { languagesSupported } from '../PrinterServiceOfferDefinitions/languagesSupported.oa';
-export { locationBuilding } from '../PrinterServiceOfferDefinitions/locationBuilding.oa';
-export { locationRoom } from '../PrinterServiceOfferDefinitions/locationRoom.oa';
-export { pageSize } from '../PrinterServiceOfferDefinitions/pageSize.oa';
-export { pagesPerMinute } from '../PrinterServiceOfferDefinitions/pagesPerMinute.oa';
-export { printerType } from '../PrinterServiceOfferDefinitions/printerType.oa';
-export { queueLength } from '../PrinterServiceOfferDefinitions/queueLength.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION printerServiceOffer */
 /**

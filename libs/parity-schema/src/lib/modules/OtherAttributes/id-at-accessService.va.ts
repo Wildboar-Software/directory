@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_pbactPrivAttr } from '../OtherAttributes/id-pbactPrivAttr.va';
-export { id_pbactPrivAttr } from '../OtherAttributes/id-pbactPrivAttr.va';
 
 /* START_OF_SYMBOL_DEFINITION id_at_accessService */
 /**

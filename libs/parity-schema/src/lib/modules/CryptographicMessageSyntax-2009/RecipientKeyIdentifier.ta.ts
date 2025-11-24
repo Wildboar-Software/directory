@@ -3,26 +3,16 @@ import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     GeneralizedTime,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    OtherKeyAttribute,
+    type OtherKeyAttribute,
     _decode_OtherKeyAttribute,
     _encode_OtherKeyAttribute,
 } from '../CryptographicMessageSyntax-2009/OtherKeyAttribute.ta';
 import {
-    SubjectKeyIdentifier,
-    _decode_SubjectKeyIdentifier,
-    _encode_SubjectKeyIdentifier,
-} from '../CryptographicMessageSyntax-2009/SubjectKeyIdentifier.ta';
-export {
-    OtherKeyAttribute,
-    _decode_OtherKeyAttribute,
-    _encode_OtherKeyAttribute,
-} from '../CryptographicMessageSyntax-2009/OtherKeyAttribute.ta';
-export {
-    SubjectKeyIdentifier,
+    type SubjectKeyIdentifier,
     _decode_SubjectKeyIdentifier,
     _encode_SubjectKeyIdentifier,
 } from '../CryptographicMessageSyntax-2009/SubjectKeyIdentifier.ta';

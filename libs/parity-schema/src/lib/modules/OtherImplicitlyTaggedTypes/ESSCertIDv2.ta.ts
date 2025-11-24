@@ -8,16 +8,16 @@ import {
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    Hash,
+    type Hash,
     _decode_Hash,
     _encode_Hash,
 } from '../OtherImplicitlyTaggedTypes/Hash.ta';
 import {
-    IssuerSerial,
+    type IssuerSerial,
     _decode_IssuerSerial,
     _encode_IssuerSerial,
 } from '../OtherImplicitlyTaggedTypes/IssuerSerial.ta';

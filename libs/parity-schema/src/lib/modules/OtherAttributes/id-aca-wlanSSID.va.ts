@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_aca } from '../OtherAttributes/id-aca.va';
-export { id_aca } from '../OtherAttributes/id-aca.va';
 
 /* START_OF_SYMBOL_DEFINITION id_aca_wlanSSID */
 /**

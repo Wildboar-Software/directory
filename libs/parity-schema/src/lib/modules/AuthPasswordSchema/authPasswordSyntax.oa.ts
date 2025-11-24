@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import type { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import {
     AuthPasswordSyntax,
@@ -7,13 +7,11 @@ import {
     _encode_AuthPasswordSyntax,
 } from '../AuthPasswordSchema/AuthPasswordSyntax.ta';
 import { id_at_openldap_schema } from '../AuthPasswordSchema/id-at-openldap-schema.va';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export {
     AuthPasswordSyntax,
     _decode_AuthPasswordSyntax,
     _encode_AuthPasswordSyntax,
 } from '../AuthPasswordSchema/AuthPasswordSyntax.ta';
-export { id_at_openldap_schema } from '../AuthPasswordSchema/id-at-openldap-schema.va';
 
 /* START_OF_SYMBOL_DEFINITION authPasswordSyntax */
 /**

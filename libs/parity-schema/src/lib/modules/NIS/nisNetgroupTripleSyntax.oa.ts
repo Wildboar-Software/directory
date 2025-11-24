@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import type { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_nis_lsx } from '../NIS/id-nis-lsx.va';
 import {
@@ -7,8 +7,6 @@ import {
     _decode_NISNetgroupTripleSyntax,
     _encode_NISNetgroupTripleSyntax,
 } from '../NIS/NISNetgroupTripleSyntax.ta';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
-export { id_nis_lsx } from '../NIS/id-nis-lsx.va';
 export {
     NISNetgroupTripleSyntax,
     _decode_NISNetgroupTripleSyntax,

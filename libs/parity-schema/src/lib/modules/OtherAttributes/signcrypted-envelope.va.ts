@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { signcryption_mode } from '../OtherAttributes/signcryption-mode.va';
-export { signcryption_mode } from '../OtherAttributes/signcryption-mode.va';
 
 /* START_OF_SYMBOL_DEFINITION signcrypted_envelope */
 /**

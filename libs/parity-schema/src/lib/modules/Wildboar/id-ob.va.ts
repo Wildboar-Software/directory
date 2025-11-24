@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { ID } from '../Wildboar/ID.ta';
 import { operationalBinding } from '../Wildboar/operationalBinding.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
-export { operationalBinding } from '../Wildboar/operationalBinding.va';
 
 /* START_OF_SYMBOL_DEFINITION id_ob */
 /**

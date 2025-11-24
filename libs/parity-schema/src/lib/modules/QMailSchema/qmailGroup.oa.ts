@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -20,34 +20,7 @@ import { rfc822member } from '../QMailSchema/rfc822member.oa';
 import { rfc822moderator } from '../QMailSchema/rfc822moderator.oa';
 import { rfc822sender } from '../QMailSchema/rfc822sender.oa';
 import { senderconfirm } from '../QMailSchema/senderconfirm.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { confirmtext } from '../QMailSchema/confirmtext.oa';
-export { dnmember } from '../QMailSchema/dnmember.oa';
-export { dnmoderator } from '../QMailSchema/dnmoderator.oa';
-export { dnsender } from '../QMailSchema/dnsender.oa';
-export { filtermember } from '../QMailSchema/filtermember.oa';
-export { filtersender } from '../QMailSchema/filtersender.oa';
-export { mailAlternateAddress } from '../QMailSchema/mailAlternateAddress.oa';
-export { mailMessageStore } from '../QMailSchema/mailMessageStore.oa';
-export { membersonly } from '../QMailSchema/membersonly.oa';
-export { moderatortext } from '../QMailSchema/moderatortext.oa';
-export { rfc822member } from '../QMailSchema/rfc822member.oa';
-export { rfc822moderator } from '../QMailSchema/rfc822moderator.oa';
-export { rfc822sender } from '../QMailSchema/rfc822sender.oa';
-export { senderconfirm } from '../QMailSchema/senderconfirm.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION qmailGroup */
 /**

@@ -4,10 +4,8 @@ import {
     _decode_RelativeDistinguishedName,
     _encode_RelativeDistinguishedName,
 } from '@wildboar/pki-stub';
-import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import type { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 import { id_lsx_rdn } from '../RFC3687ComponentMatching/id-lsx-rdn.va';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
-export { id_lsx_rdn } from '../RFC3687ComponentMatching/id-lsx-rdn.va';
 
 /* START_OF_SYMBOL_DEFINITION rdn */
 /**

@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { abstractSyntax } from '../Wildboar/abstractSyntax.va';
 import { ID } from '../Wildboar/ID.ta';
-export { abstractSyntax } from '../Wildboar/abstractSyntax.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
 
 /* START_OF_SYMBOL_DEFINITION id_as */
 /**

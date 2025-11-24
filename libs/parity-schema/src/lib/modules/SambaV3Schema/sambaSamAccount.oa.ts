@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -31,47 +31,7 @@ import { sambaPwdLastSet } from '../SambaV3Schema/sambaPwdLastSet.oa';
 import { sambaPwdMustChange } from '../SambaV3Schema/sambaPwdMustChange.oa';
 import { sambaSID } from '../SambaV3Schema/sambaSID.oa';
 import { sambaUserWorkstations } from '../SambaV3Schema/sambaUserWorkstations.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { uid } from '@wildboar/x500/SelectedAttributeTypes';
-export { displayName } from '../InetOrgPerson/displayName.oa';
-export { sambaAcctFlags } from '../SambaV3Schema/sambaAcctFlags.oa';
-export { sambaBadPasswordCount } from '../SambaV3Schema/sambaBadPasswordCount.oa';
-export { sambaBadPasswordTime } from '../SambaV3Schema/sambaBadPasswordTime.oa';
-export { sambaDomainName } from '../SambaV3Schema/sambaDomainName.oa';
-export { sambaHomeDrive } from '../SambaV3Schema/sambaHomeDrive.oa';
-export { sambaHomePath } from '../SambaV3Schema/sambaHomePath.oa';
-export { sambaKickoffTime } from '../SambaV3Schema/sambaKickoffTime.oa';
-export { sambaLMPassword } from '../SambaV3Schema/sambaLMPassword.oa';
-export { sambaLogoffTime } from '../SambaV3Schema/sambaLogoffTime.oa';
-export { sambaLogonHours } from '../SambaV3Schema/sambaLogonHours.oa';
-export { sambaLogonScript } from '../SambaV3Schema/sambaLogonScript.oa';
-export { sambaLogonTime } from '../SambaV3Schema/sambaLogonTime.oa';
-export { sambaMungedDial } from '../SambaV3Schema/sambaMungedDial.oa';
-export { sambaNTPassword } from '../SambaV3Schema/sambaNTPassword.oa';
-export { sambaPasswordHistory } from '../SambaV3Schema/sambaPasswordHistory.oa';
-export { sambaPrimaryGroupSID } from '../SambaV3Schema/sambaPrimaryGroupSID.oa';
-export { sambaProfilePath } from '../SambaV3Schema/sambaProfilePath.oa';
-export { sambaPwdCanChange } from '../SambaV3Schema/sambaPwdCanChange.oa';
-export { sambaPwdLastSet } from '../SambaV3Schema/sambaPwdLastSet.oa';
-export { sambaPwdMustChange } from '../SambaV3Schema/sambaPwdMustChange.oa';
-export { sambaSID } from '../SambaV3Schema/sambaSID.oa';
-export { sambaUserWorkstations } from '../SambaV3Schema/sambaUserWorkstations.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION sambaSamAccount */
 /**

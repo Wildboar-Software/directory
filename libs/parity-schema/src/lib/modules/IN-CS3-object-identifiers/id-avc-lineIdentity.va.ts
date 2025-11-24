@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_avc } from '../IN-CS3-object-identifiers/id-avc.va';
-export { id_avc } from '../IN-CS3-object-identifiers/id-avc.va';
 
 /* START_OF_SYMBOL_DEFINITION id_avc_lineIdentity */
 /**

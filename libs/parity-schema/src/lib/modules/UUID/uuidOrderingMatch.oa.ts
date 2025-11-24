@@ -1,21 +1,12 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import type { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
 import {
-    UUID,
+    type UUID,
     _decode_UUID,
     _encode_UUID,
 } from '@wildboar/x500/SelectedAttributeTypes';
 import { uuid } from '../UUID/uuid.oa';
 import { id_uuidOrderingMatch } from './id-uuidOrderingMatch.va';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
-export {
-    UUID,
-    _decode_UUID,
-    _encode_UUID,
-} from '@wildboar/x500/SelectedAttributeTypes';
-export { uuid } from '../UUID/uuid.oa';
 
 /* START_OF_SYMBOL_DEFINITION uuidOrderingMatch */
 /**

@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { accessControlSchemes } from '../Wildboar/accessControlSchemes.va';
 import { ID } from '../Wildboar/ID.ta';
-export { accessControlSchemes } from '../Wildboar/accessControlSchemes.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
 
 /* START_OF_SYMBOL_DEFINITION id_acScheme */
 /**

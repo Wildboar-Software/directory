@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -12,28 +12,7 @@ import { dhcpOptionsDN } from '../DHCP-Schema/dhcpOptionsDN.oa';
 import { dhcpPermitList } from '../DHCP-Schema/dhcpPermitList.oa';
 import { dhcpRange } from '../DHCP-Schema/dhcpRange.oa';
 import { dhcpStatements } from '../DHCP-Schema/dhcpStatements.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { dhcpClassesDN } from '../DHCP-Schema/dhcpClassesDN.oa';
-export { dhcpLeasesDN } from '../DHCP-Schema/dhcpLeasesDN.oa';
-export { dhcpOptionsDN } from '../DHCP-Schema/dhcpOptionsDN.oa';
-export { dhcpPermitList } from '../DHCP-Schema/dhcpPermitList.oa';
-export { dhcpRange } from '../DHCP-Schema/dhcpRange.oa';
-export { dhcpStatements } from '../DHCP-Schema/dhcpStatements.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION dhcpPool */
 /**

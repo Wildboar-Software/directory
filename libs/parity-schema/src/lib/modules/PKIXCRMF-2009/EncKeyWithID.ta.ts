@@ -2,26 +2,16 @@
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    EncKeyWithID_identifier,
+    type EncKeyWithID_identifier,
     _decode_EncKeyWithID_identifier,
     _encode_EncKeyWithID_identifier,
 } from '../PKIXCRMF-2009/EncKeyWithID-identifier.ta';
 import {
-    PrivateKeyInfo,
-    _decode_PrivateKeyInfo,
-    _encode_PrivateKeyInfo,
-} from '../PKIXCRMF-2009/PrivateKeyInfo.ta';
-export {
-    EncKeyWithID_identifier,
-    _decode_EncKeyWithID_identifier,
-    _encode_EncKeyWithID_identifier,
-} from '../PKIXCRMF-2009/EncKeyWithID-identifier.ta';
-export {
-    PrivateKeyInfo,
+    type PrivateKeyInfo,
     _decode_PrivateKeyInfo,
     _encode_PrivateKeyInfo,
 } from '../PKIXCRMF-2009/PrivateKeyInfo.ta';

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { userPassword } from '@wildboar/x500/AuthenticationFramework';
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -24,35 +24,7 @@ import { qmailAccountPurge } from '../QMailSchema/qmailAccountPurge.oa';
 import { qmailDotMode } from '../QMailSchema/qmailDotMode.oa';
 import { qmailGID } from '../QMailSchema/qmailGID.oa';
 import { qmailUID } from '../QMailSchema/qmailUID.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { accountStatus } from '../QMailSchema/accountStatus.oa';
-export { deliveryMode } from '../QMailSchema/deliveryMode.oa';
-export { deliveryProgramPath } from '../QMailSchema/deliveryProgramPath.oa';
-export { mailAlternateAddress } from '../QMailSchema/mailAlternateAddress.oa';
-export { mailForwardingAddress } from '../QMailSchema/mailForwardingAddress.oa';
-export { mailHost } from '../QMailSchema/mailHost.oa';
-export { mailMessageStore } from '../QMailSchema/mailMessageStore.oa';
-export { mailQuotaCount } from '../QMailSchema/mailQuotaCount.oa';
-export { mailQuotaSize } from '../QMailSchema/mailQuotaSize.oa';
-export { mailReplyText } from '../QMailSchema/mailReplyText.oa';
-export { mailSizeMax } from '../QMailSchema/mailSizeMax.oa';
-export { qmailAccountPurge } from '../QMailSchema/qmailAccountPurge.oa';
-export { qmailDotMode } from '../QMailSchema/qmailDotMode.oa';
-export { qmailGID } from '../QMailSchema/qmailGID.oa';
-export { qmailUID } from '../QMailSchema/qmailUID.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION qmailUser */
 /**

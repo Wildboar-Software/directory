@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -8,24 +8,7 @@ import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { printer_ipp_features_supported } from '../RFC7612Printer/printer-ipp-features-supported.oa';
 import { printer_ipp_versions_supported } from '../RFC7612Printer/printer-ipp-versions-supported.oa';
 import { printer_multiple_document_jobs_supported } from '../RFC7612Printer/printer-multiple-document-jobs-supported.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { printer_ipp_features_supported } from '../RFC7612Printer/printer-ipp-features-supported.oa';
-export { printer_ipp_versions_supported } from '../RFC7612Printer/printer-ipp-versions-supported.oa';
-export { printer_multiple_document_jobs_supported } from '../RFC7612Printer/printer-multiple-document-jobs-supported.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION printerIPP */
 /**

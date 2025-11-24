@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { cu } from '../H323-X500-Schema/cu.va';
-export { cu } from '../H323-X500-Schema/cu.va';
 
 /* START_OF_SYMBOL_DEFINITION cu_oc */
 /**

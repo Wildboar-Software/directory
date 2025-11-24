@@ -1,14 +1,8 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { name } from '@wildboar/x500/SelectedAttributeTypes';
 import { calledUptUser } from '../UPT-DataModel/calledUptUser.oa';
 import { id_nf_calledUptUserNameForm } from '../UPT-DataModel/id-nf-calledUptUserNameForm.va';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export { name } from '@wildboar/x500/SelectedAttributeTypes';
-export { calledUptUser } from '../UPT-DataModel/calledUptUser.oa';
-export { id_nf_calledUptUserNameForm } from '../UPT-DataModel/id-nf-calledUptUserNameForm.va';
 
 /* START_OF_SYMBOL_DEFINITION calledUptUserNameForm */
 /**

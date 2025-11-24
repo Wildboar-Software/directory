@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -16,32 +16,7 @@ import { h323IdentitypartyNumber } from '../H323-X500-Schema/h323IdentitypartyNu
 import { h323IdentityServiceLevel } from '../H323-X500-Schema/h323IdentityServiceLevel.oa';
 import { h323IdentitytransportID } from '../H323-X500-Schema/h323IdentitytransportID.oa';
 import { h323IdentityURL_ID } from '../H323-X500-Schema/h323IdentityURL-ID.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { h323_id_oc } from '../H323-X500-Schema/h323-id-oc.va';
-export { h323IdentitydialedDigits } from '../H323-X500-Schema/h323IdentitydialedDigits.oa';
-export { h323Identityemail_ID } from '../H323-X500-Schema/h323Identityemail-ID.oa';
-export { h323IdentityEndpointType } from '../H323-X500-Schema/h323IdentityEndpointType.oa';
-export { h323IdentityGKDomain } from '../H323-X500-Schema/h323IdentityGKDomain.oa';
-export { h323Identityh323_ID } from '../H323-X500-Schema/h323Identityh323-ID.oa';
-export { h323IdentitymobileUIM } from '../H323-X500-Schema/h323IdentitymobileUIM.oa';
-export { h323IdentitypartyNumber } from '../H323-X500-Schema/h323IdentitypartyNumber.oa';
-export { h323IdentityServiceLevel } from '../H323-X500-Schema/h323IdentityServiceLevel.oa';
-export { h323IdentitytransportID } from '../H323-X500-Schema/h323IdentitytransportID.oa';
-export { h323IdentityURL_ID } from '../H323-X500-Schema/h323IdentityURL-ID.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION h323Identity */
 /**

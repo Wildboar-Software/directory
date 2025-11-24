@@ -3,7 +3,7 @@ import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     OBJECT_IDENTIFIER,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 
@@ -19,7 +19,7 @@ import * as $ from '@wildboar/asn1/functional';
  *   methodid         METHOD.&id({SupportedMethods}),
  *   inputAttributes
  *     SET OF METHOD.&InputAttributes.&id({SupportedMethods}{@methodid})
- *       OPTIONAL,
+ *       type OPTIONAL,
  *   --EDITOR: check this, for METHOD.&InputAttributes is a set of information object classes
  *   --and cannot be the governor of a component of a SEQUENCE
  *   specific-Input

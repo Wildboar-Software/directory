@@ -1,6 +1,6 @@
 import {
     id_oc_dynamicObject,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa.js";
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/id-oc-dynamicObject.va.js";
 import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";

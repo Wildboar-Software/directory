@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -16,32 +16,7 @@ import { vPIMSupportedMessageContext } from '../VPIMSchema/vPIMSupportedMessageC
 import { vPIMSupportedUABehaviors } from '../VPIMSchema/vPIMSupportedUABehaviors.oa';
 import { vPIMTelephoneNumber } from '../VPIMSchema/vPIMTelephoneNumber.oa';
 import { vPIMTextName } from '../VPIMSchema/vPIMTextName.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { iana_assigned_oid } from '../VPIMSchema/iana-assigned-oid.va';
-export { vPIMExtendedAbsenceStatus } from '../VPIMSchema/vPIMExtendedAbsenceStatus.oa';
-export { vPIMMaxMessageSize } from '../VPIMSchema/vPIMMaxMessageSize.oa';
-export { vPIMRfc822Mailbox } from '../VPIMSchema/vPIMRfc822Mailbox.oa';
-export { vPIMSpokenName } from '../VPIMSchema/vPIMSpokenName.oa';
-export { vPIMSubMailboxes } from '../VPIMSchema/vPIMSubMailboxes.oa';
-export { vPIMSupportedAudioMediaTypes } from '../VPIMSchema/vPIMSupportedAudioMediaTypes.oa';
-export { vPIMSupportedMessageContext } from '../VPIMSchema/vPIMSupportedMessageContext.oa';
-export { vPIMSupportedUABehaviors } from '../VPIMSchema/vPIMSupportedUABehaviors.oa';
-export { vPIMTelephoneNumber } from '../VPIMSchema/vPIMTelephoneNumber.oa';
-export { vPIMTextName } from '../VPIMSchema/vPIMTextName.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION vPIMUser */
 /**

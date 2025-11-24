@@ -1,14 +1,6 @@
 /* eslint-disable */
-import { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
+import type { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
 import { countryNameForm } from '@wildboar/x500/SelectedObjectClasses';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export {
-    RuleIdentifier,
-    _decode_RuleIdentifier,
-    _encode_RuleIdentifier,
-} from '@wildboar/x500/InformationFramework';
-export { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
-export { countryNameForm } from '@wildboar/x500/SelectedObjectClasses';
 
 /* START_OF_SYMBOL_DEFINITION sr0 */
 /**

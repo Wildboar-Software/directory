@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -11,28 +11,7 @@ import { id_trader_oc_serviceOffer } from '../TraderDefinitions/id-trader-oc-ser
 import { serviceInterfaceId } from '../TraderDefinitions/serviceInterfaceId.oa';
 import { serviceTypeId } from '../TraderDefinitions/serviceTypeId.oa';
 import { sOfferId } from '../TraderDefinitions/sOfferId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { dynamicProps } from '../TraderDefinitions/dynamicProps.oa';
-export { hasDynamicProperties } from '../TraderDefinitions/hasDynamicProperties.oa';
-export { hasModifiableProperties } from '../TraderDefinitions/hasModifiableProperties.oa';
-export { id_trader_oc_serviceOffer } from '../TraderDefinitions/id-trader-oc-serviceOffer.va';
-export { serviceInterfaceId } from '../TraderDefinitions/serviceInterfaceId.oa';
-export { serviceTypeId } from '../TraderDefinitions/serviceTypeId.oa';
-export { sOfferId } from '../TraderDefinitions/sOfferId.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION serviceOfferEntry */
 /**

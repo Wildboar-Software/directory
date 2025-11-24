@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    GeneralNames,
+    type GeneralNames,
     _decode_GeneralNames,
     _encode_GeneralNames,
 } from '@wildboar/x500/CertificateExtensions';
@@ -10,11 +10,7 @@ import {
     NULL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
-export {
-    GeneralNames,
-    _decode_GeneralNames,
-    _encode_GeneralNames,
-} from '@wildboar/x500/CertificateExtensions';
+
 
 /* START_OF_SYMBOL_DEFINITION MLReceiptPolicy */
 /**

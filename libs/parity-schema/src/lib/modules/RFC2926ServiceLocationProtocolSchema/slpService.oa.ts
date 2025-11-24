@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -14,29 +14,7 @@ import { service_advert_url_authenticator } from '../RFC2926ServiceLocationProto
 import { template_major_version_number } from '../RFC2926ServiceLocationProtocolSchema/template-major-version-number.oa';
 import { template_minor_version_number } from '../RFC2926ServiceLocationProtocolSchema/template-minor-version-number.oa';
 import { template_url_syntax } from '../RFC2926ServiceLocationProtocolSchema/template-url-syntax.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { id_james_kempf } from '../RFC2926ServiceLocationProtocolSchema/id-james-kempf.va';
-export { service_advert_attribute_authenticator } from '../RFC2926ServiceLocationProtocolSchema/service-advert-attribute-authenticator.oa';
-export { service_advert_scopes } from '../RFC2926ServiceLocationProtocolSchema/service-advert-scopes.oa';
-export { service_advert_service_type } from '../RFC2926ServiceLocationProtocolSchema/service-advert-service-type.oa';
-export { service_advert_url_authenticator } from '../RFC2926ServiceLocationProtocolSchema/service-advert-url-authenticator.oa';
-export { template_major_version_number } from '../RFC2926ServiceLocationProtocolSchema/template-major-version-number.oa';
-export { template_minor_version_number } from '../RFC2926ServiceLocationProtocolSchema/template-minor-version-number.oa';
-export { template_url_syntax } from '../RFC2926ServiceLocationProtocolSchema/template-url-syntax.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION slpService */
 /**

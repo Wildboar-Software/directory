@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -12,22 +12,7 @@ import { ads_replLogPurgeThresholdCount } from './ads-replLogPurgeThresholdCount
 import { ads_replRefreshNPersist } from './ads-replRefreshNPersist.oa';
 import { ads_replSearchFilter } from './ads-replSearchFilter.oa';
 import { ads_searchBaseDN } from './ads-searchBaseDN.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_base } from '../ApacheDirectoryConfig/ads-base.oa';
-export { ads_dsReplicaId } from '../ApacheDirectoryConfig/ads-dsReplicaId.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_replEventLog */
 /**

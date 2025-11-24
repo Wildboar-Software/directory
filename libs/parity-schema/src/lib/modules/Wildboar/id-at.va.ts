@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { attributeType } from '../Wildboar/attributeType.va';
 import { ID } from '../Wildboar/ID.ta';
-export { attributeType } from '../Wildboar/attributeType.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
 
 /* START_OF_SYMBOL_DEFINITION id_at */
 /**

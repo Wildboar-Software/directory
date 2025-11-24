@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { mhs_or_addresses } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
-import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { id_at_atn_amhs_global_domain_identifier } from "./id-at-atn-amhs-global-domain-identifier.va";
 

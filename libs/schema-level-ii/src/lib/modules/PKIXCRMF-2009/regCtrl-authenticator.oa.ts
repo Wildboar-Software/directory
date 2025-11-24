@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { Authenticator, _decode_Authenticator, _encode_Authenticator } from "../PKIXCRMF-2009/Authenticator.ta";
 import { id_regCtrl_authenticator } from "../PKIXCRMF-2009/id-regCtrl-authenticator.va";

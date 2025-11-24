@@ -1,10 +1,10 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+import type { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import {
     directoryOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
 import {
-    UUID,
+    type UUID,
     _decode_UUID,
     _encode_UUID,
 } from '@wildboar/x500/SelectedAttributeTypes';
@@ -12,31 +12,6 @@ import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { uuid } from '../UUID/uuid.oa';
 import { uuidMatch } from '../UUID/uuidMatch.oa';
 import { uuidOrderingMatch } from '../UUID/uuidOrderingMatch.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export {
-    AttributeUsage,
-    AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    AttributeUsage_distributedOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    AttributeUsage_dSAOperation /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    AttributeUsage_userApplications /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    directoryOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    distributedOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    dSAOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_AttributeUsage,
-    _encode_AttributeUsage,
-    _enum_for_AttributeUsage,
-} from '@wildboar/x500/InformationFramework';
-export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
-export {
-    UUID,
-    _decode_UUID,
-    _encode_UUID,
-} from '@wildboar/x500/SelectedAttributeTypes';
-export { uuid } from '../UUID/uuid.oa';
-export { uuidMatch } from '../UUID/uuidMatch.oa';
-export { uuidOrderingMatch } from '../UUID/uuidOrderingMatch.oa';
 
 /* START_OF_SYMBOL_DEFINITION superiorUUID */
 /**

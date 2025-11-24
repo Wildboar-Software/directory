@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -13,29 +13,7 @@ import { apacheDnsSoaRefresh } from '../ApacheDNS-Schema/apacheDnsSoaRefresh.oa'
 import { apacheDnsSoaRetry } from '../ApacheDNS-Schema/apacheDnsSoaRetry.oa';
 import { apacheDnsSoaRName } from '../ApacheDNS-Schema/apacheDnsSoaRName.oa';
 import { apacheDnsSoaSerial } from '../ApacheDNS-Schema/apacheDnsSoaSerial.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { apacheDnsAbstractRecord } from '../ApacheDNS-Schema/apacheDnsAbstractRecord.oa';
-export { apacheDnsClass } from '../ApacheDNS-Schema/apacheDnsClass.oa';
-export { apacheDnsSoaExpire } from '../ApacheDNS-Schema/apacheDnsSoaExpire.oa';
-export { apacheDnsSoaMinimum } from '../ApacheDNS-Schema/apacheDnsSoaMinimum.oa';
-export { apacheDnsSoaMName } from '../ApacheDNS-Schema/apacheDnsSoaMName.oa';
-export { apacheDnsSoaRefresh } from '../ApacheDNS-Schema/apacheDnsSoaRefresh.oa';
-export { apacheDnsSoaRetry } from '../ApacheDNS-Schema/apacheDnsSoaRetry.oa';
-export { apacheDnsSoaRName } from '../ApacheDNS-Schema/apacheDnsSoaRName.oa';
-export { apacheDnsSoaSerial } from '../ApacheDNS-Schema/apacheDnsSoaSerial.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION apacheDnsStartOfAuthorityRecord */
 /**

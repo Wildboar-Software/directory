@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -17,33 +17,7 @@ import { krb5PasswordEnd } from '../KerberosV5KeyDistributionCenter/krb5Password
 import { krb5Principal } from '../KerberosV5KeyDistributionCenter/krb5Principal.oa';
 import { krb5ValidEnd } from '../KerberosV5KeyDistributionCenter/krb5ValidEnd.oa';
 import { krb5ValidStart } from '../KerberosV5KeyDistributionCenter/krb5ValidStart.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { krb5AccountDisabled } from '../KerberosV5KeyDistributionCenter/krb5AccountDisabled.oa';
-export { krb5AccountExpirationTime } from '../KerberosV5KeyDistributionCenter/krb5AccountExpirationTime.oa';
-export { krb5AccountLockedOut } from '../KerberosV5KeyDistributionCenter/krb5AccountLockedOut.oa';
-export { krb5EncryptionType } from '../KerberosV5KeyDistributionCenter/krb5EncryptionType.oa';
-export { krb5KDCFlags } from '../KerberosV5KeyDistributionCenter/krb5KDCFlags.oa';
-export { krb5Key } from '../KerberosV5KeyDistributionCenter/krb5Key.oa';
-export { krb5KeyVersionNumber } from '../KerberosV5KeyDistributionCenter/krb5KeyVersionNumber.oa';
-export { krb5MaxLife } from '../KerberosV5KeyDistributionCenter/krb5MaxLife.oa';
-export { krb5MaxRenew } from '../KerberosV5KeyDistributionCenter/krb5MaxRenew.oa';
-export { krb5PasswordEnd } from '../KerberosV5KeyDistributionCenter/krb5PasswordEnd.oa';
-export { krb5Principal } from '../KerberosV5KeyDistributionCenter/krb5Principal.oa';
-export { krb5ValidEnd } from '../KerberosV5KeyDistributionCenter/krb5ValidEnd.oa';
-export { krb5ValidStart } from '../KerberosV5KeyDistributionCenter/krb5ValidStart.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION krb5KDCEntry */
 /**

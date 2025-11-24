@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -13,29 +13,7 @@ import { ads_dsPasswordHidden } from '../ApacheDirectoryConfig/ads-dsPasswordHid
 import { ads_dsReplicaId } from '../ApacheDirectoryConfig/ads-dsReplicaId.oa';
 import { ads_dsSyncPeriodMillis } from '../ApacheDirectoryConfig/ads-dsSyncPeriodMillis.oa';
 import { ads_dsTestEntries } from '../ApacheDirectoryConfig/ads-dsTestEntries.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_base } from '../ApacheDirectoryConfig/ads-base.oa';
-export { ads_directoryServiceId } from '../ApacheDirectoryConfig/ads-directoryServiceId.oa';
-export { ads_dsAccessControlEnabled } from '../ApacheDirectoryConfig/ads-dsAccessControlEnabled.oa';
-export { ads_dsAllowAnonymousAccess } from '../ApacheDirectoryConfig/ads-dsAllowAnonymousAccess.oa';
-export { ads_dsDenormalizeOpAttrsEnabled } from '../ApacheDirectoryConfig/ads-dsDenormalizeOpAttrsEnabled.oa';
-export { ads_dsPasswordHidden } from '../ApacheDirectoryConfig/ads-dsPasswordHidden.oa';
-export { ads_dsReplicaId } from '../ApacheDirectoryConfig/ads-dsReplicaId.oa';
-export { ads_dsSyncPeriodMillis } from '../ApacheDirectoryConfig/ads-dsSyncPeriodMillis.oa';
-export { ads_dsTestEntries } from '../ApacheDirectoryConfig/ads-dsTestEntries.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_directoryService */
 /**

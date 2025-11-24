@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -70,86 +70,7 @@ import { radiusTunnelServerEndpoint } from '../RADIUSSchema/radiusTunnelServerEn
 import { radiusTunnelType } from '../RADIUSSchema/radiusTunnelType.oa';
 import { radiusUserCategory } from '../RADIUSSchema/radiusUserCategory.oa';
 import { radiusVSA } from '../RADIUSSchema/radiusVSA.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { dialupAccess } from '../RADIUSSchema/dialupAccess.oa';
-export { id_at_freeRadius } from '../RADIUSSchema/id-at-freeRadius.va';
-export { radiusArapFeatures } from '../RADIUSSchema/radiusArapFeatures.oa';
-export { radiusArapSecurity } from '../RADIUSSchema/radiusArapSecurity.oa';
-export { radiusArapZoneAccess } from '../RADIUSSchema/radiusArapZoneAccess.oa';
-export { radiusAttribute } from '../RADIUSSchema/radiusAttribute.oa';
-export { radiusAuthType } from '../RADIUSSchema/radiusAuthType.oa';
-export { radiusCallbackId } from '../RADIUSSchema/radiusCallbackId.oa';
-export { radiusCallbackNumber } from '../RADIUSSchema/radiusCallbackNumber.oa';
-export { radiusCalledStationId } from '../RADIUSSchema/radiusCalledStationId.oa';
-export { radiusCallingStationId } from '../RADIUSSchema/radiusCallingStationId.oa';
-export { radiusClass } from '../RADIUSSchema/radiusClass.oa';
-export { radiusClientIPAddress } from '../RADIUSSchema/radiusClientIPAddress.oa';
-export { radiusControlAttribute } from '../RADIUSSchema/radiusControlAttribute.oa';
-export { radiusExpiration } from '../RADIUSSchema/radiusExpiration.oa';
-export { radiusFilterId } from '../RADIUSSchema/radiusFilterId.oa';
-export { radiusFramedAppleTalkLink } from '../RADIUSSchema/radiusFramedAppleTalkLink.oa';
-export { radiusFramedAppleTalkNetwork } from '../RADIUSSchema/radiusFramedAppleTalkNetwork.oa';
-export { radiusFramedAppleTalkZone } from '../RADIUSSchema/radiusFramedAppleTalkZone.oa';
-export { radiusFramedCompression } from '../RADIUSSchema/radiusFramedCompression.oa';
-export { radiusFramedIPAddress } from '../RADIUSSchema/radiusFramedIPAddress.oa';
-export { radiusFramedIPNetmask } from '../RADIUSSchema/radiusFramedIPNetmask.oa';
-export { radiusFramedIPXNetwork } from '../RADIUSSchema/radiusFramedIPXNetwork.oa';
-export { radiusFramedMTU } from '../RADIUSSchema/radiusFramedMTU.oa';
-export { radiusFramedProtocol } from '../RADIUSSchema/radiusFramedProtocol.oa';
-export { radiusFramedRoute } from '../RADIUSSchema/radiusFramedRoute.oa';
-export { radiusFramedRouting } from '../RADIUSSchema/radiusFramedRouting.oa';
-export { radiusGroupName } from '../RADIUSSchema/radiusGroupName.oa';
-export { radiusHint } from '../RADIUSSchema/radiusHint.oa';
-export { radiusHuntgroupName } from '../RADIUSSchema/radiusHuntgroupName.oa';
-export { radiusIdleTimeout } from '../RADIUSSchema/radiusIdleTimeout.oa';
-export { radiusLoginIPHost } from '../RADIUSSchema/radiusLoginIPHost.oa';
-export { radiusLoginLATGroup } from '../RADIUSSchema/radiusLoginLATGroup.oa';
-export { radiusLoginLATNode } from '../RADIUSSchema/radiusLoginLATNode.oa';
-export { radiusLoginLATPort } from '../RADIUSSchema/radiusLoginLATPort.oa';
-export { radiusLoginLATService } from '../RADIUSSchema/radiusLoginLATService.oa';
-export { radiusLoginService } from '../RADIUSSchema/radiusLoginService.oa';
-export { radiusLoginTCPPort } from '../RADIUSSchema/radiusLoginTCPPort.oa';
-export { radiusLoginTime } from '../RADIUSSchema/radiusLoginTime.oa';
-export { radiusNASIpAddress } from '../RADIUSSchema/radiusNASIpAddress.oa';
-export { radiusPasswordRetry } from '../RADIUSSchema/radiusPasswordRetry.oa';
-export { radiusPortLimit } from '../RADIUSSchema/radiusPortLimit.oa';
-export { radiusProfileDN } from '../RADIUSSchema/radiusProfileDN.oa';
-export { radiusPrompt } from '../RADIUSSchema/radiusPrompt.oa';
-export { radiusProxyToRealm } from '../RADIUSSchema/radiusProxyToRealm.oa';
-export { radiusRealm } from '../RADIUSSchema/radiusRealm.oa';
-export { radiusReplicateToRealm } from '../RADIUSSchema/radiusReplicateToRealm.oa';
-export { radiusReplyAttribute } from '../RADIUSSchema/radiusReplyAttribute.oa';
-export { radiusReplyMessage } from '../RADIUSSchema/radiusReplyMessage.oa';
-export { radiusRequestAttribute } from '../RADIUSSchema/radiusRequestAttribute.oa';
-export { radiusServiceType } from '../RADIUSSchema/radiusServiceType.oa';
-export { radiusSessionTimeout } from '../RADIUSSchema/radiusSessionTimeout.oa';
-export { radiusSimultaneousUse } from '../RADIUSSchema/radiusSimultaneousUse.oa';
-export { radiusStripUserName } from '../RADIUSSchema/radiusStripUserName.oa';
-export { radiusTerminationAction } from '../RADIUSSchema/radiusTerminationAction.oa';
-export { radiusTunnelAssignmentId } from '../RADIUSSchema/radiusTunnelAssignmentId.oa';
-export { radiusTunnelClientEndpoint } from '../RADIUSSchema/radiusTunnelClientEndpoint.oa';
-export { radiusTunnelMediumType } from '../RADIUSSchema/radiusTunnelMediumType.oa';
-export { radiusTunnelPassword } from '../RADIUSSchema/radiusTunnelPassword.oa';
-export { radiusTunnelPreference } from '../RADIUSSchema/radiusTunnelPreference.oa';
-export { radiusTunnelPrivateGroupId } from '../RADIUSSchema/radiusTunnelPrivateGroupId.oa';
-export { radiusTunnelServerEndpoint } from '../RADIUSSchema/radiusTunnelServerEndpoint.oa';
-export { radiusTunnelType } from '../RADIUSSchema/radiusTunnelType.oa';
-export { radiusUserCategory } from '../RADIUSSchema/radiusUserCategory.oa';
-export { radiusVSA } from '../RADIUSSchema/radiusVSA.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION radiusprofile */
 /**

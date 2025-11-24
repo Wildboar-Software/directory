@@ -1,13 +1,13 @@
 /* eslint-disable */
 import {
-    GeneralNames,
+    type GeneralNames,
     _decode_GeneralNames,
     _encode_GeneralNames,
 } from '@wildboar/x500/CertificateExtensions';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
@@ -25,7 +25,7 @@ import {
  *
  * ```asn1
  * IetfAttrSyntax ::= SEQUENCE {
- *     policyAuthority        [0] GeneralNames    OPTIONAL,
+ *     policyAuthority        [0] GeneralNames    type OPTIONAL,
  *     values                SEQUENCE OF CHOICE {
  *         octets    OCTET STRING,
  *         oid    OBJECT IDENTIFIER,

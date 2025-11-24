@@ -1,14 +1,7 @@
 /* eslint-disable */
-import { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
+import type { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
 import { userProfileNameForm } from '../UPT-DataModel/userProfileNameForm.oa';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export {
-    RuleIdentifier,
-    _decode_RuleIdentifier,
-    _encode_RuleIdentifier,
-} from '@wildboar/x500/InformationFramework';
-export { STRUCTURE_RULE } from '@wildboar/x500/InformationFramework';
-export { userProfileNameForm } from '../UPT-DataModel/userProfileNameForm.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION sr4 */
 /**

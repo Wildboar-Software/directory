@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -21,37 +21,7 @@ import { sambaNextUserRid } from '../SambaV3Schema/sambaNextUserRid.oa';
 import { sambaPwdHistoryLength } from '../SambaV3Schema/sambaPwdHistoryLength.oa';
 import { sambaRefuseMachinePwdChange } from '../SambaV3Schema/sambaRefuseMachinePwdChange.oa';
 import { sambaSID } from '../SambaV3Schema/sambaSID.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { sambaAlgorithmicRidBase } from '../SambaV3Schema/sambaAlgorithmicRidBase.oa';
-export { sambaDomainName } from '../SambaV3Schema/sambaDomainName.oa';
-export { sambaForceLogoff } from '../SambaV3Schema/sambaForceLogoff.oa';
-export { sambaLockoutDuration } from '../SambaV3Schema/sambaLockoutDuration.oa';
-export { sambaLockoutObservationWindow } from '../SambaV3Schema/sambaLockoutObservationWindow.oa';
-export { sambaLockoutThreshold } from '../SambaV3Schema/sambaLockoutThreshold.oa';
-export { sambaLogonToChgPwd } from '../SambaV3Schema/sambaLogonToChgPwd.oa';
-export { sambaMaxPwdAge } from '../SambaV3Schema/sambaMaxPwdAge.oa';
-export { sambaMinPwdAge } from '../SambaV3Schema/sambaMinPwdAge.oa';
-export { sambaMinPwdLength } from '../SambaV3Schema/sambaMinPwdLength.oa';
-export { sambaNextGroupRid } from '../SambaV3Schema/sambaNextGroupRid.oa';
-export { sambaNextRid } from '../SambaV3Schema/sambaNextRid.oa';
-export { sambaNextUserRid } from '../SambaV3Schema/sambaNextUserRid.oa';
-export { sambaPwdHistoryLength } from '../SambaV3Schema/sambaPwdHistoryLength.oa';
-export { sambaRefuseMachinePwdChange } from '../SambaV3Schema/sambaRefuseMachinePwdChange.oa';
-export { sambaSID } from '../SambaV3Schema/sambaSID.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION sambaDomain */
 /**

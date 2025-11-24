@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_dynGroupBase } from '../DynGroup/id-dynGroupBase.va';
-export { id_dynGroupBase } from '../DynGroup/id-dynGroupBase.va';
 
 /* START_OF_SYMBOL_DEFINITION id_dynGroupOC */
 /**

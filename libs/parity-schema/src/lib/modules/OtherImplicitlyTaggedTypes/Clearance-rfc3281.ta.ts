@@ -3,7 +3,7 @@ import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
     OBJECT_IDENTIFIER,
-    OPTIONAL,
+    type OPTIONAL,
     TRUE_BIT,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';

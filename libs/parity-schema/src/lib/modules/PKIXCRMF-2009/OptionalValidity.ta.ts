@@ -1,20 +1,15 @@
 /* eslint-disable */
 import {
-    Time,
+    type Time,
     _decode_Time,
     _encode_Time,
 } from '@wildboar/x500/AuthenticationFramework';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
-export {
-    Time,
-    _decode_Time,
-    _encode_Time,
-} from '@wildboar/x500/AuthenticationFramework';
 
 /* START_OF_SYMBOL_DEFINITION OptionalValidity */
 /**

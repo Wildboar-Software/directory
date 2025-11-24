@@ -1,16 +1,12 @@
 /* eslint-disable */
 import {
-    AlgorithmIdentifier,
+    type AlgorithmIdentifier,
     _decode_AlgorithmIdentifier,
     _encode_AlgorithmIdentifier,
 } from '@wildboar/x500/AuthenticationFramework';
 import { ASN1Element as _Element } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
-export {
-    AlgorithmIdentifier,
-    _decode_AlgorithmIdentifier,
-    _encode_AlgorithmIdentifier,
-} from '@wildboar/x500/AuthenticationFramework';
+
 
 /* START_OF_SYMBOL_DEFINITION HashAlgorithm */
 /**

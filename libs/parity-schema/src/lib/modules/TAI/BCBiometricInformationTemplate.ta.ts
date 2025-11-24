@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    SIGNED,
+    type SIGNED,
     _get_decoder_for_SIGNED,
     _get_encoder_for_SIGNED,
 } from '@wildboar/x500/AuthenticationFramework';
@@ -11,11 +11,7 @@ import {
     _decode_BCBiometricInformationTemplateContent,
     _encode_BCBiometricInformationTemplateContent,
 } from '../TAI/BCBiometricInformationTemplateContent.ta';
-export {
-    SIGNED,
-    _get_decoder_for_SIGNED,
-    _get_encoder_for_SIGNED,
-} from '@wildboar/x500/AuthenticationFramework';
+
 export {
     BCBiometricInformationTemplateContent,
     _decode_BCBiometricInformationTemplateContent,

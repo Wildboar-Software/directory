@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -23,39 +23,7 @@ import { searchTimeLimit } from '../DUAConf/searchTimeLimit.oa';
 import { serviceAuthenticationMethod } from '../DUAConf/serviceAuthenticationMethod.oa';
 import { serviceCredentialLevel } from '../DUAConf/serviceCredentialLevel.oa';
 import { serviceSearchDescriptor } from '../DUAConf/serviceSearchDescriptor.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { attributeMap } from '../DUAConf/attributeMap.oa';
-export { authenticationMethod } from '../DUAConf/authenticationMethod.oa';
-export { bindTimeLimit } from '../DUAConf/bindTimeLimit.oa';
-export { credentialLevel } from '../DUAConf/credentialLevel.oa';
-export { defaultSearchBase } from '../DUAConf/defaultSearchBase.oa';
-export { defaultSearchScope } from '../DUAConf/defaultSearchScope.oa';
-export { defaultServerList } from '../DUAConf/defaultServerList.oa';
-export { dereferenceAliases } from '../DUAConf/dereferenceAliases.oa';
-export { duaConfSchemaOID } from '../DUAConf/duaConfSchemaOID.va';
-export { followReferrals } from '../DUAConf/followReferrals.oa';
-export { objectclassMap } from '../DUAConf/objectclassMap.oa';
-export { preferredServerList } from '../DUAConf/preferredServerList.oa';
-export { profileTTL } from '../DUAConf/profileTTL.oa';
-export { searchTimeLimit } from '../DUAConf/searchTimeLimit.oa';
-export { serviceAuthenticationMethod } from '../DUAConf/serviceAuthenticationMethod.oa';
-export { serviceCredentialLevel } from '../DUAConf/serviceCredentialLevel.oa';
-export { serviceSearchDescriptor } from '../DUAConf/serviceSearchDescriptor.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION duaConfigProfile */
 /**

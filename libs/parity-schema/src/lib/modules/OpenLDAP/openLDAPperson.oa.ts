@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -12,22 +12,7 @@ import { pilotPerson } from '../Cosine/pilotPerson.oa';
 import { inetOrgPerson } from '../InetOrgPerson/inetOrgPerson.oa';
 import { id_openldap_oc } from '../OpenLDAP/id-openldap-oc.va';
 import { labeledURI } from '../OpenLDAPCoreSchema/labeledURI.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { uid } from '@wildboar/x500/SelectedAttributeTypes';
-export { id_openldap_oc } from '../OpenLDAP/id-openldap-oc.va';
+
 
 /* START_OF_SYMBOL_DEFINITION openLDAPperson */
 /**

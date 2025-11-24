@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    AlgorithmIdentifier,
+    type AlgorithmIdentifier,
     _decode_AlgorithmIdentifier,
     _encode_AlgorithmIdentifier,
 } from '@wildboar/x500/AuthenticationFramework';
@@ -11,7 +11,7 @@ import {
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    PlaintextPasswordSyntax,
+    type PlaintextPasswordSyntax,
     _decode_PlaintextPasswordSyntax,
     _encode_PlaintextPasswordSyntax,
 } from '../AuthPasswordSchema/PlaintextPasswordSyntax.ta';

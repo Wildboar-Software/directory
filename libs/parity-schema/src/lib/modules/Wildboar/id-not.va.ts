@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { ID } from '../Wildboar/ID.ta';
 import { notification } from '../Wildboar/notification.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
-export { notification } from '../Wildboar/notification.va';
 
 /* START_OF_SYMBOL_DEFINITION id_not */
 /**

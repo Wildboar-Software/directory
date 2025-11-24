@@ -11,26 +11,12 @@ import {
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    PKMACValue,
+    type PKMACValue,
     _decode_PKMACValue,
     _encode_PKMACValue,
 } from '../PKIXCRMF-2009/PKMACValue.ta';
 import {
-    SubsequentMessage,
-    _decode_SubsequentMessage,
-    _encode_SubsequentMessage,
-} from '../PKIXCRMF-2009/SubsequentMessage.ta';
-export {
-    PKMACValue,
-    _decode_PKMACValue,
-    _encode_PKMACValue,
-} from '../PKIXCRMF-2009/PKMACValue.ta';
-export {
-    challengeResp /* IMPORTED_SHORT_NAMED_INTEGER */,
-    encrCert /* IMPORTED_SHORT_NAMED_INTEGER */,
-    SubsequentMessage,
-    SubsequentMessage_challengeResp /* IMPORTED_LONG_NAMED_INTEGER */,
-    SubsequentMessage_encrCert /* IMPORTED_LONG_NAMED_INTEGER */,
+    type SubsequentMessage,
     _decode_SubsequentMessage,
     _encode_SubsequentMessage,
 } from '../PKIXCRMF-2009/SubsequentMessage.ta';

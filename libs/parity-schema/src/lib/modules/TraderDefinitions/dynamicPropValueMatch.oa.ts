@@ -1,20 +1,16 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import type { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
 import {
     DynamicPropValue,
     _decode_DynamicPropValue,
     _encode_DynamicPropValue,
 } from '../TraderDefinitions/DynamicPropValue.ta';
 import { id_trader_mr_dynamicPropValueMatch } from '../TraderDefinitions/id-trader-mr-dynamicPropValueMatch.va';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 export {
     DynamicPropValue,
     _decode_DynamicPropValue,
     _encode_DynamicPropValue,
 } from '../TraderDefinitions/DynamicPropValue.ta';
-export { id_trader_mr_dynamicPropValueMatch } from '../TraderDefinitions/id-trader-mr-dynamicPropValueMatch.va';
 
 /* START_OF_SYMBOL_DEFINITION dynamicPropValueMatch */
 /**

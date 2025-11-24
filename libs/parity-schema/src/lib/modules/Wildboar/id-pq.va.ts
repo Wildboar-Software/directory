@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { ID } from '../Wildboar/ID.ta';
 import { passwordQuality } from '../Wildboar/passwordQuality.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
-export { passwordQuality } from '../Wildboar/passwordQuality.va';
 
 /* START_OF_SYMBOL_DEFINITION id_pq */
 /**

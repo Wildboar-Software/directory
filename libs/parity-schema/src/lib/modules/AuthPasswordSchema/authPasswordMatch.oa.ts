@@ -1,20 +1,10 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import type { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
 import { octetString } from '@wildboar/x500/SelectedAttributeTypes';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_at_openldap_schema } from '../AuthPasswordSchema/id-at-openldap-schema.va';
 import {
-    PlaintextPasswordSyntax,
-    _decode_PlaintextPasswordSyntax,
-    _encode_PlaintextPasswordSyntax,
-} from '../AuthPasswordSchema/PlaintextPasswordSyntax.ta';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
-export { octetString } from '@wildboar/x500/SelectedAttributeTypes';
-export { id_at_openldap_schema } from '../AuthPasswordSchema/id-at-openldap-schema.va';
-export {
-    PlaintextPasswordSyntax,
+    type PlaintextPasswordSyntax,
     _decode_PlaintextPasswordSyntax,
     _encode_PlaintextPasswordSyntax,
 } from '../AuthPasswordSchema/PlaintextPasswordSyntax.ta';

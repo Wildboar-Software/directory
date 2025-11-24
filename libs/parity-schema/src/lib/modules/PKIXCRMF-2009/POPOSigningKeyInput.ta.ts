@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    SubjectPublicKeyInfo,
+    type SubjectPublicKeyInfo,
     _decode_SubjectPublicKeyInfo,
     _encode_SubjectPublicKeyInfo,
 } from '@wildboar/x500/AuthenticationFramework';
@@ -11,17 +11,7 @@ import {
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    POPOSigningKeyInput_authInfo,
-    _decode_POPOSigningKeyInput_authInfo,
-    _encode_POPOSigningKeyInput_authInfo,
-} from '../PKIXCRMF-2009/POPOSigningKeyInput-authInfo.ta';
-export {
-    SubjectPublicKeyInfo,
-    _decode_SubjectPublicKeyInfo,
-    _encode_SubjectPublicKeyInfo,
-} from '@wildboar/x500/AuthenticationFramework';
-export {
-    POPOSigningKeyInput_authInfo,
+    type POPOSigningKeyInput_authInfo,
     _decode_POPOSigningKeyInput_authInfo,
     _encode_POPOSigningKeyInput_authInfo,
 } from '../PKIXCRMF-2009/POPOSigningKeyInput-authInfo.ta';

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -41,57 +41,7 @@ import { printer_service_person } from '../RFC7612Printer/printer-service-person
 import { printer_sides_supported } from '../RFC7612Printer/printer-sides-supported.oa';
 import { printer_stacking_order_supported } from '../RFC7612Printer/printer-stacking-order-supported.oa';
 import { printer_uuid } from '../RFC7612Printer/printer-uuid.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { printer_charge_info_uri } from '../RFC7612Printer/printer-charge-info-uri.oa';
-export { printer_charge_info } from '../RFC7612Printer/printer-charge-info.oa';
-export { printer_charset_configured } from '../RFC7612Printer/printer-charset-configured.oa';
-export { printer_charset_supported } from '../RFC7612Printer/printer-charset-supported.oa';
-export { printer_color_supported } from '../RFC7612Printer/printer-color-supported.oa';
-export { printer_compression_supported } from '../RFC7612Printer/printer-compression-supported.oa';
-export { printer_copies_supported } from '../RFC7612Printer/printer-copies-supported.oa';
-export { printer_current_operator } from '../RFC7612Printer/printer-current-operator.oa';
-export { printer_delivery_orientation_supported } from '../RFC7612Printer/printer-delivery-orientation-supported.oa';
-export { printer_device_id } from '../RFC7612Printer/printer-device-id.oa';
-export { printer_device_service_count } from '../RFC7612Printer/printer-device-service-count.oa';
-export { printer_document_format_supported } from '../RFC7612Printer/printer-document-format-supported.oa';
-export { printer_finishings_supported } from '../RFC7612Printer/printer-finishings-supported.oa';
-export { printer_generated_natural_language_supported } from '../RFC7612Printer/printer-generated-natural-language-supported.oa';
-export { printer_geo_location } from '../RFC7612Printer/printer-geo-location.oa';
-export { printer_info } from '../RFC7612Printer/printer-info.oa';
-export { printer_job_k_octets_supported } from '../RFC7612Printer/printer-job-k-octets-supported.oa';
-export { printer_job_priority_supported } from '../RFC7612Printer/printer-job-priority-supported.oa';
-export { printer_location } from '../RFC7612Printer/printer-location.oa';
-export { printer_make_and_model } from '../RFC7612Printer/printer-make-and-model.oa';
-export { printer_media_local_supported } from '../RFC7612Printer/printer-media-local-supported.oa';
-export { printer_media_supported } from '../RFC7612Printer/printer-media-supported.oa';
-export { printer_more_info } from '../RFC7612Printer/printer-more-info.oa';
-export { printer_multiple_document_jobs_supported } from '../RFC7612Printer/printer-multiple-document-jobs-supported.oa';
-export { printer_name } from '../RFC7612Printer/printer-name.oa';
-export { printer_natural_language_configured } from '../RFC7612Printer/printer-natural-language-configured.oa';
-export { printer_number_up_supported } from '../RFC7612Printer/printer-number-up-supported.oa';
-export { printer_output_features_supported } from '../RFC7612Printer/printer-output-features-supported.oa';
-export { printer_pages_per_minute_color } from '../RFC7612Printer/printer-pages-per-minute-color.oa';
-export { printer_pages_per_minute } from '../RFC7612Printer/printer-pages-per-minute.oa';
-export { printer_print_quality_supported } from '../RFC7612Printer/printer-print-quality-supported.oa';
-export { printer_resolution_supported } from '../RFC7612Printer/printer-resolution-supported.oa';
-export { printer_service_person } from '../RFC7612Printer/printer-service-person.oa';
-export { printer_sides_supported } from '../RFC7612Printer/printer-sides-supported.oa';
-export { printer_stacking_order_supported } from '../RFC7612Printer/printer-stacking-order-supported.oa';
-export { printer_uuid } from '../RFC7612Printer/printer-uuid.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION printerAbstract */
 /**

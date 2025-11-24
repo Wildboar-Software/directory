@@ -1,22 +1,17 @@
 /* eslint-disable */
 import {
-    DigestedData,
+    type DigestedData,
     _decode_DigestedData,
     _encode_DigestedData,
 } from '@wildboar/cms';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    Pointers,
-    _decode_Pointers,
-    _encode_Pointers,
-} from '../OtherAutomaticallyTaggedTypes/Pointers.ta';
-export {
-    Pointers,
+    type Pointers,
     _decode_Pointers,
     _encode_Pointers,
 } from '../OtherAutomaticallyTaggedTypes/Pointers.ta';

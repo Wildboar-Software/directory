@@ -1,18 +1,12 @@
 /* eslint-disable */
-import { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
+import type { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
 import {
-    UUID,
+    type UUID,
     _decode_UUID,
     _encode_UUID,
 } from '@wildboar/x500/SelectedAttributeTypes';
 import { id_lsx_uuid } from '../UUID/id-lsx-uuid.va';
-export { SYNTAX_NAME } from '@wildboar/x500/InformationFramework';
-export {
-    UUID,
-    _decode_UUID,
-    _encode_UUID,
-} from '@wildboar/x500/SelectedAttributeTypes';
-export { id_lsx_uuid } from '../UUID/id-lsx-uuid.va';
+
 
 /* START_OF_SYMBOL_DEFINITION uuid */
 /**

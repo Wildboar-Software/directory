@@ -2,12 +2,7 @@
 import { ASN1Element as _Element } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    Sidechain,
-    _decode_Sidechain,
-    _encode_Sidechain,
-} from '../OtherAutomaticallyTaggedTypes/Sidechain.ta';
-export {
-    Sidechain,
+    type Sidechain,
     _decode_Sidechain,
     _encode_Sidechain,
 } from '../OtherAutomaticallyTaggedTypes/Sidechain.ta';

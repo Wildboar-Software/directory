@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { RegToken, _decode_RegToken, _encode_RegToken } from "../PKIXCRMF-2009/RegToken.ta";
 import { id_regCtrl_regToken } from "../PKIXCRMF-2009/id-regCtrl-regToken.va";

@@ -1,18 +1,16 @@
 /* eslint-disable */
-import { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
+import type { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 import {
     BDCCertificateReferer,
     _decode_BDCCertificateReferer,
     _encode_BDCCertificateReferer,
 } from '../TAI/BDCCertificateReferer.ta';
 import { id_tai_ce_bDCCertificate } from '../TAI/id-tai-ce-bDCCertificate.va';
-export { EXTENSION } from '@wildboar/x500/AuthenticationFramework';
 export {
     BDCCertificateReferer,
     _decode_BDCCertificateReferer,
     _encode_BDCCertificateReferer,
 } from '../TAI/BDCCertificateReferer.ta';
-export { id_tai_ce_bDCCertificate } from '../TAI/id-tai-ce-bDCCertificate.va';
 
 /* START_OF_SYMBOL_DEFINITION bDCCertificate */
 /**

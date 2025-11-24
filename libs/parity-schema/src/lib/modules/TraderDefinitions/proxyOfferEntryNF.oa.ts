@@ -1,14 +1,8 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { id_trader_nf_proxyOffer } from '../TraderDefinitions/id-trader-nf-proxyOffer.va';
 import { proxyOfferEntry } from '../TraderDefinitions/proxyOfferEntry.oa';
 import { proxyOfferId } from '../TraderDefinitions/proxyOfferId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export { id_trader_nf_proxyOffer } from '../TraderDefinitions/id-trader-nf-proxyOffer.va';
-export { proxyOfferEntry } from '../TraderDefinitions/proxyOfferEntry.oa';
-export { proxyOfferId } from '../TraderDefinitions/proxyOfferId.oa';
 
 /* START_OF_SYMBOL_DEFINITION proxyOfferEntryNF */
 /**

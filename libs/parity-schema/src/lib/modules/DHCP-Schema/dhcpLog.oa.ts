@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -20,36 +20,7 @@ import { dhcpRelayAgentInfo } from '../DHCP-Schema/dhcpRelayAgentInfo.oa';
 import { dhcpRequestedHostName } from '../DHCP-Schema/dhcpRequestedHostName.oa';
 import { dhcpReservedForClient } from '../DHCP-Schema/dhcpReservedForClient.oa';
 import { dhcpStartTimeOfState } from '../DHCP-Schema/dhcpStartTimeOfState.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { dhcpAddressState } from '../DHCP-Schema/dhcpAddressState.oa';
-export { dhcpAssignedHostName } from '../DHCP-Schema/dhcpAssignedHostName.oa';
-export { dhcpAssignedToClient } from '../DHCP-Schema/dhcpAssignedToClient.oa';
-export { dhcpBootpFlag } from '../DHCP-Schema/dhcpBootpFlag.oa';
-export { dhcpDnsStatus } from '../DHCP-Schema/dhcpDnsStatus.oa';
-export { dhcpDomainName } from '../DHCP-Schema/dhcpDomainName.oa';
-export { dhcpErrorLog } from '../DHCP-Schema/dhcpErrorLog.oa';
-export { dhcpExpirationTime } from '../DHCP-Schema/dhcpExpirationTime.oa';
-export { dhcpHWAddress } from '../DHCP-Schema/dhcpHWAddress.oa';
-export { dhcpLastTransactionTime } from '../DHCP-Schema/dhcpLastTransactionTime.oa';
-export { dhcpRelayAgentInfo } from '../DHCP-Schema/dhcpRelayAgentInfo.oa';
-export { dhcpRequestedHostName } from '../DHCP-Schema/dhcpRequestedHostName.oa';
-export { dhcpReservedForClient } from '../DHCP-Schema/dhcpReservedForClient.oa';
-export { dhcpStartTimeOfState } from '../DHCP-Schema/dhcpStartTimeOfState.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION dhcpLog */
 /**

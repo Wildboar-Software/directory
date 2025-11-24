@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -17,33 +17,7 @@ import { ads_replReqHandler } from '../ApacheDirectoryConfig/ads-replReqHandler.
 import { ads_saslHost } from '../ApacheDirectoryConfig/ads-saslHost.oa';
 import { ads_saslPrincipal } from '../ApacheDirectoryConfig/ads-saslPrincipal.oa';
 import { ads_saslRealms } from '../ApacheDirectoryConfig/ads-saslRealms.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_certificatePassword } from '../ApacheDirectoryConfig/ads-certificatePassword.oa';
-export { ads_confidentialityRequired } from '../ApacheDirectoryConfig/ads-confidentialityRequired.oa';
-export { ads_dsBasedServer } from '../ApacheDirectoryConfig/ads-dsBasedServer.oa';
-export { ads_keystoreFile } from '../ApacheDirectoryConfig/ads-keystoreFile.oa';
-export { ads_maxPDUSize } from '../ApacheDirectoryConfig/ads-maxPDUSize.oa';
-export { ads_maxSizeLimit } from '../ApacheDirectoryConfig/ads-maxSizeLimit.oa';
-export { ads_maxTimeLimit } from '../ApacheDirectoryConfig/ads-maxTimeLimit.oa';
-export { ads_replEnabled } from '../ApacheDirectoryConfig/ads-replEnabled.oa';
-export { ads_replPingerSleep } from '../ApacheDirectoryConfig/ads-replPingerSleep.oa';
-export { ads_replReqHandler } from '../ApacheDirectoryConfig/ads-replReqHandler.oa';
-export { ads_saslHost } from '../ApacheDirectoryConfig/ads-saslHost.oa';
-export { ads_saslPrincipal } from '../ApacheDirectoryConfig/ads-saslPrincipal.oa';
-export { ads_saslRealms } from '../ApacheDirectoryConfig/ads-saslRealms.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_ldapServer */
 /**

@@ -1,18 +1,12 @@
 /* eslint-disable */
-import { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
+import type { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
 import { directoryString } from '@wildboar/x500/SelectedAttributeTypes';
 import {
     _decode_UnboundedDirectoryString,
     _encode_UnboundedDirectoryString,
 } from '@wildboar/x500/SelectedAttributeTypes';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
-export { MATCHING_RULE } from '@wildboar/x500/InformationFramework';
-export { directoryString } from '@wildboar/x500/SelectedAttributeTypes';
-export {
-    UnboundedDirectoryString,
-    _decode_UnboundedDirectoryString,
-    _encode_UnboundedDirectoryString,
-} from '@wildboar/x500/SelectedAttributeTypes';
+
 
 /* START_OF_SYMBOL_DEFINITION directoryStringApproxMatch */
 /**

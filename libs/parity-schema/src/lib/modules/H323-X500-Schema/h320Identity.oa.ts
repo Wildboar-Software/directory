@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -11,27 +11,7 @@ import { h320IdentityExtension } from '../H323-X500-Schema/h320IdentityExtension
 import { h320IdentityNDC } from '../H323-X500-Schema/h320IdentityNDC.oa';
 import { h320IdentityServiceLevel } from '../H323-X500-Schema/h320IdentityServiceLevel.oa';
 import { h320IdentitySN } from '../H323-X500-Schema/h320IdentitySN.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { h320_id_oc } from '../H323-X500-Schema/h320-id-oc.va';
-export { h320IdentityCC } from '../H323-X500-Schema/h320IdentityCC.oa';
-export { h320IdentityExtension } from '../H323-X500-Schema/h320IdentityExtension.oa';
-export { h320IdentityNDC } from '../H323-X500-Schema/h320IdentityNDC.oa';
-export { h320IdentityServiceLevel } from '../H323-X500-Schema/h320IdentityServiceLevel.oa';
-export { h320IdentitySN } from '../H323-X500-Schema/h320IdentitySN.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION h320Identity */
 /**

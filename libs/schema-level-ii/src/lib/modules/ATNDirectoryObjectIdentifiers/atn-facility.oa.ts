@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
 import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { top } from "@wildboar/x500/InformationFramework";
 import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa";

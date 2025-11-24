@@ -7,36 +7,20 @@ import {
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    CertRequest,
+    type CertRequest,
     _decode_CertRequest,
     _encode_CertRequest,
 } from '../PKIXCRMF-2009/CertRequest.ta';
 import {
-    ProofOfPossession,
-    _decode_ProofOfPossession,
-    _encode_ProofOfPossession,
-} from '../PKIXCRMF-2009/ProofOfPossession.ta';
-export {
-    AttributeTypeAndValue,
-    _decode_AttributeTypeAndValue,
-    _encode_AttributeTypeAndValue,
-} from '@wildboar/x500/InformationFramework';
-export {
-    CertRequest,
-    _decode_CertRequest,
-    _encode_CertRequest,
-} from '../PKIXCRMF-2009/CertRequest.ta';
-export {
-    ProofOfPossession,
+    type ProofOfPossession,
     _decode_ProofOfPossession,
     _encode_ProofOfPossession,
 } from '../PKIXCRMF-2009/ProofOfPossession.ta';
 
-/* START_OF_SYMBOL_DEFINITION CertReqMsg */
 /**
  * @summary CertReqMsg
  * @description

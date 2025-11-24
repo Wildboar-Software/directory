@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_kerberos } from '../KerberosSchema/id-kerberos.va';
-export { id_kerberos } from '../KerberosSchema/id-kerberos.va';
 
 /* START_OF_SYMBOL_DEFINITION id_lsx */
 /**

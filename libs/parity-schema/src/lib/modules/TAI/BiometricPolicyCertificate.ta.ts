@@ -1,23 +1,13 @@
 /* eslint-disable */
 import {
-    SIGNED,
+    type SIGNED,
     _get_decoder_for_SIGNED,
     _get_encoder_for_SIGNED,
 } from '@wildboar/x500/AuthenticationFramework';
 import { ASN1Element as _Element } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    BiometricPolicyCertificateInfo,
-    _decode_BiometricPolicyCertificateInfo,
-    _encode_BiometricPolicyCertificateInfo,
-} from '../TAI/BiometricPolicyCertificateInfo.ta';
-export {
-    SIGNED,
-    _get_decoder_for_SIGNED,
-    _get_encoder_for_SIGNED,
-} from '@wildboar/x500/AuthenticationFramework';
-export {
-    BiometricPolicyCertificateInfo,
+    type BiometricPolicyCertificateInfo,
     _decode_BiometricPolicyCertificateInfo,
     _encode_BiometricPolicyCertificateInfo,
 } from '../TAI/BiometricPolicyCertificateInfo.ta';

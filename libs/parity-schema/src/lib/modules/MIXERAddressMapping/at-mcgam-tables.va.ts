@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { at } from '../MIXERAddressMapping/at.va';
-export { at } from '../MIXERAddressMapping/at.va';
 
 /* START_OF_SYMBOL_DEFINITION at_mcgam_tables */
 /**

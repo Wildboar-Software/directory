@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_pkix } from '../OtherAttributes/id-pkix.va';
-export { id_pkix } from '../OtherAttributes/id-pkix.va';
 
 /* START_OF_SYMBOL_DEFINITION id_aca */
 /**

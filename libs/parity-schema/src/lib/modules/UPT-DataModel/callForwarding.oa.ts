@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -8,25 +8,7 @@ import { id_oc_callForwarding } from '../UPT-DataModel/id-oc-callForwarding.va';
 import { noReplyConditionTimer } from '../UPT-DataModel/noReplyConditionTimer.oa';
 import { supplementaryService } from '../UPT-DataModel/supplementaryService.oa';
 import { typesOfNotification } from '../UPT-DataModel/typesOfNotification.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { forwardedToNumber } from '../UPT-DataModel/forwardedToNumber.oa';
-export { id_oc_callForwarding } from '../UPT-DataModel/id-oc-callForwarding.va';
-export { noReplyConditionTimer } from '../UPT-DataModel/noReplyConditionTimer.oa';
-export { supplementaryService } from '../UPT-DataModel/supplementaryService.oa';
-export { typesOfNotification } from '../UPT-DataModel/typesOfNotification.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION callForwarding */
 /**

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -9,25 +9,7 @@ import { ads_contextEntry } from '../ApacheDirectoryConfig/ads-contextEntry.oa';
 import { ads_partitionId } from '../ApacheDirectoryConfig/ads-partitionId.oa';
 import { ads_partitionSuffix } from '../ApacheDirectoryConfig/ads-partitionSuffix.oa';
 import { ads_partitionSyncOnWrite } from '../ApacheDirectoryConfig/ads-partitionSyncOnWrite.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_base } from '../ApacheDirectoryConfig/ads-base.oa';
-export { ads_contextEntry } from '../ApacheDirectoryConfig/ads-contextEntry.oa';
-export { ads_partitionId } from '../ApacheDirectoryConfig/ads-partitionId.oa';
-export { ads_partitionSuffix } from '../ApacheDirectoryConfig/ads-partitionSuffix.oa';
-export { ads_partitionSyncOnWrite } from '../ApacheDirectoryConfig/ads-partitionSyncOnWrite.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_partition */
 /**

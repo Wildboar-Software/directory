@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -15,29 +15,7 @@ import { pamIncludeSuffix } from '../PAMSchema/pamIncludeSuffix.oa';
 import { pamMissingSuffix } from '../PAMSchema/pamMissingSuffix.oa';
 import { pamSecure } from '../PAMSchema/pamSecure.oa';
 import { pamService } from '../PAMSchema/pamService.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { pamExcludeSuffix } from '../PAMSchema/pamExcludeSuffix.oa';
-export { pamFallback } from '../PAMSchema/pamFallback.oa';
-export { pamFilter } from '../PAMSchema/pamFilter.oa';
-export { pamIDAttr } from '../PAMSchema/pamIDAttr.oa';
-export { pamIDMapMethod } from '../PAMSchema/pamIDMapMethod.oa';
-export { pamIncludeSuffix } from '../PAMSchema/pamIncludeSuffix.oa';
-export { pamMissingSuffix } from '../PAMSchema/pamMissingSuffix.oa';
-export { pamSecure } from '../PAMSchema/pamSecure.oa';
-export { pamService } from '../PAMSchema/pamService.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION pamConfig */
 /**

@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_openldap } from '../OpenLDAP/id-openldap.va';
-export { id_openldap } from '../OpenLDAP/id-openldap.va';
 
 /* START_OF_SYMBOL_DEFINITION id_openldap_at */
 /**

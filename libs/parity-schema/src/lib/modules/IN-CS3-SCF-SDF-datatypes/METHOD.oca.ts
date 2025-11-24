@@ -1,8 +1,7 @@
 /* eslint-disable */
-import { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
+import type { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 import { IA5String, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
 
 /* START_OF_SYMBOL_DEFINITION METHOD */
 /**
@@ -14,9 +13,9 @@ export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
  * ```asn1
  * METHOD ::= CLASS {
  *   &InputAttributes   ATTRIBUTE OPTIONAL,
- *   &SpecificInput     OPTIONAL,
+ *   &SpecificInput     type OPTIONAL,
  *   &OutputAttributes  ATTRIBUTE OPTIONAL,
- *   &SpecificOutput    OPTIONAL,
+ *   &SpecificOutput    type OPTIONAL,
  *   &description       IA5String OPTIONAL,
  *   &id                OBJECT IDENTIFIER UNIQUE
  * }

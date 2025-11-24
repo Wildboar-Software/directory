@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -14,30 +14,7 @@ import { dhcpMaxClientLeadTime } from '../DHCP-Schema/dhcpMaxClientLeadTime.oa';
 import { dhcpServiceDN } from '../DHCP-Schema/dhcpServiceDN.oa';
 import { dhcpStatements } from '../DHCP-Schema/dhcpStatements.oa';
 import { dhcpVersion } from '../DHCP-Schema/dhcpVersion.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { dhcpDelayedServiceParameter } from '../DHCP-Schema/dhcpDelayedServiceParameter.oa';
-export { dhcpFailOverEndpointState } from '../DHCP-Schema/dhcpFailOverEndpointState.oa';
-export { dhcpHashBucketAssignment } from '../DHCP-Schema/dhcpHashBucketAssignment.oa';
-export { dhcpImplementation } from '../DHCP-Schema/dhcpImplementation.oa';
-export { dhcpMaxClientLeadTime } from '../DHCP-Schema/dhcpMaxClientLeadTime.oa';
-export { dhcpServiceDN } from '../DHCP-Schema/dhcpServiceDN.oa';
-export { dhcpStatements } from '../DHCP-Schema/dhcpStatements.oa';
-export { dhcpVersion } from '../DHCP-Schema/dhcpVersion.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION dhcpServer */
 /**

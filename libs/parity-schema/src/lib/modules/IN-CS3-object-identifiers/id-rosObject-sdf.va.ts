@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_rosObject } from '../IN-CS3-object-identifiers/id-rosObject.va';
-export { id_rosObject } from '../IN-CS3-object-identifiers/id-rosObject.va';
 
 /* START_OF_SYMBOL_DEFINITION id_rosObject_sdf */
 /**

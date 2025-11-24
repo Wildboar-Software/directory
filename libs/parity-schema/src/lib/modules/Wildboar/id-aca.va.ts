@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { accessControlAttribute } from '../Wildboar/accessControlAttribute.va';
 import { ID } from '../Wildboar/ID.ta';
-export { accessControlAttribute } from '../Wildboar/accessControlAttribute.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
 
 /* START_OF_SYMBOL_DEFINITION id_aca */
 /**

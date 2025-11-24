@@ -2,12 +2,7 @@
 import { ASN1Element as _Element } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    Pointer,
-    _decode_Pointer,
-    _encode_Pointer,
-} from '../OtherAutomaticallyTaggedTypes/Pointer.ta';
-export {
-    Pointer,
+    type Pointer,
     _decode_Pointer,
     _encode_Pointer,
 } from '../OtherAutomaticallyTaggedTypes/Pointer.ta';

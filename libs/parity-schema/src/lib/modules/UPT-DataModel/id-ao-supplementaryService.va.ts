@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_ao } from '../UPT-DataModel/id-ao.va';
-export { id_ao } from '../UPT-DataModel/id-ao.va';
 
 /* START_OF_SYMBOL_DEFINITION id_ao_supplementaryService */
 /**

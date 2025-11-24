@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_ppolicy_oc } from '../LDAPPasswordPolicy/id-ppolicy-oc.va';
-export { id_ppolicy_oc } from '../LDAPPasswordPolicy/id-ppolicy-oc.va';
 
 /* START_OF_SYMBOL_DEFINITION id_oc_pwdPolicy */
 /**

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { mhs_distribution_list } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
-import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
 import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { atn_AF_address } from "../ATNDirectoryObjectIdentifiers/atn-AF-address.oa";
 import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa";

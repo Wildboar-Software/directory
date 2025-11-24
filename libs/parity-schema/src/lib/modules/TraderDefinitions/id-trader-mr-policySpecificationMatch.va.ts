@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_trader_mr } from '../TraderDefinitions/id-trader-mr.va';
-export { id_trader_mr } from '../TraderDefinitions/id-trader-mr.va';
 
 /* START_OF_SYMBOL_DEFINITION id_trader_mr_policySpecificationMatch */
 /**

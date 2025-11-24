@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -24,39 +24,7 @@ import { nsAIMid } from '../MozillaSchema/nsAIMid.oa';
 import { workurl } from '../MozillaSchema/workurl.oa';
 import { xmozillanickname } from '../MozillaSchema/xmozillanickname.oa';
 import { xmozillausehtmlmail } from '../MozillaSchema/xmozillausehtmlmail.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { countryName } from '@wildboar/x500/SelectedAttributeTypes';
-export { friendlyCountryName } from '../Cosine/friendlyCountryName.oa';
-export { custom1 } from '../MozillaSchema/custom1.oa';
-export { custom2 } from '../MozillaSchema/custom2.oa';
-export { custom3 } from '../MozillaSchema/custom3.oa';
-export { custom4 } from '../MozillaSchema/custom4.oa';
-export { homeurl } from '../MozillaSchema/homeurl.oa';
-export { mozillaHomeCountryName } from '../MozillaSchema/mozillaHomeCountryName.oa';
-export { mozillaHomeFriendlyCountryName } from '../MozillaSchema/mozillaHomeFriendlyCountryName.oa';
-export { mozillaHomeLocalityName } from '../MozillaSchema/mozillaHomeLocalityName.oa';
-export { mozillaHomePostalAddress2 } from '../MozillaSchema/mozillaHomePostalAddress2.oa';
-export { mozillaHomePostalCode } from '../MozillaSchema/mozillaHomePostalCode.oa';
-export { mozillaHomeState } from '../MozillaSchema/mozillaHomeState.oa';
-export { mozillaPostalAddress2 } from '../MozillaSchema/mozillaPostalAddress2.oa';
-export { mozillaSecondEmail } from '../MozillaSchema/mozillaSecondEmail.oa';
-export { nsAIMid } from '../MozillaSchema/nsAIMid.oa';
-export { workurl } from '../MozillaSchema/workurl.oa';
-export { xmozillanickname } from '../MozillaSchema/xmozillanickname.oa';
-export { xmozillausehtmlmail } from '../MozillaSchema/xmozillausehtmlmail.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION mozillaAbPersonObsolete */
 /**

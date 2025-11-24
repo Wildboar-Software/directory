@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -12,29 +12,7 @@ import { id_trader_oc_proxyOffer } from '../TraderDefinitions/id-trader-oc-proxy
 import { ifMatchAll } from '../TraderDefinitions/ifMatchAll.oa';
 import { proxyLookUpInterfaceId } from '../TraderDefinitions/proxyLookUpInterfaceId.oa';
 import { proxyOfferId } from '../TraderDefinitions/proxyOfferId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { constraintRecipe } from '../TraderDefinitions/constraintRecipe.oa';
-export { dynamicProps } from '../TraderDefinitions/dynamicProps.oa';
-export { hasDynamicProperties } from '../TraderDefinitions/hasDynamicProperties.oa';
-export { hasModifiableProperties } from '../TraderDefinitions/hasModifiableProperties.oa';
-export { id_trader_oc_proxyOffer } from '../TraderDefinitions/id-trader-oc-proxyOffer.va';
-export { ifMatchAll } from '../TraderDefinitions/ifMatchAll.oa';
-export { proxyLookUpInterfaceId } from '../TraderDefinitions/proxyLookUpInterfaceId.oa';
-export { proxyOfferId } from '../TraderDefinitions/proxyOfferId.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION proxyOfferEntry */
 /**

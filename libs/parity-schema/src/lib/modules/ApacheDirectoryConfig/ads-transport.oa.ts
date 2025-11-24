@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -11,27 +11,7 @@ import { ads_transportBacklog } from '../ApacheDirectoryConfig/ads-transportBack
 import { ads_transportEnableSSL } from '../ApacheDirectoryConfig/ads-transportEnableSSL.oa';
 import { ads_transportId } from '../ApacheDirectoryConfig/ads-transportId.oa';
 import { ads_transportNbThreads } from '../ApacheDirectoryConfig/ads-transportNbThreads.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_base } from '../ApacheDirectoryConfig/ads-base.oa';
-export { ads_systemPort } from '../ApacheDirectoryConfig/ads-systemPort.oa';
-export { ads_transportAddress } from '../ApacheDirectoryConfig/ads-transportAddress.oa';
-export { ads_transportBacklog } from '../ApacheDirectoryConfig/ads-transportBacklog.oa';
-export { ads_transportEnableSSL } from '../ApacheDirectoryConfig/ads-transportEnableSSL.oa';
-export { ads_transportId } from '../ApacheDirectoryConfig/ads-transportId.oa';
-export { ads_transportNbThreads } from '../ApacheDirectoryConfig/ads-transportNbThreads.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_transport */
 /**

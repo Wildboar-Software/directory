@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { gi } from '../H323-X500-Schema/gi.va';
-export { gi } from '../H323-X500-Schema/gi.va';
 
 /* START_OF_SYMBOL_DEFINITION gi_oc */
 /**

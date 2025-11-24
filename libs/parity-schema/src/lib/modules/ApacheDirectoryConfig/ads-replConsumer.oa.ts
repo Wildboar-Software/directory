@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -13,29 +13,7 @@ import { ads_replProvPort } from '../ApacheDirectoryConfig/ads-replProvPort.oa';
 import { ads_replStrictCertValidation } from '../ApacheDirectoryConfig/ads-replStrictCertValidation.oa';
 import { ads_replUseTls } from '../ApacheDirectoryConfig/ads-replUseTls.oa';
 import { ads_searchBaseDN } from '../ApacheDirectoryConfig/ads-searchBaseDN.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_base } from '../ApacheDirectoryConfig/ads-base.oa';
-export { ads_replConsumerId } from '../ApacheDirectoryConfig/ads-replConsumerId.oa';
-export { ads_replConsumerImpl } from '../ApacheDirectoryConfig/ads-replConsumerImpl.oa';
-export { ads_replCookie } from '../ApacheDirectoryConfig/ads-replCookie.oa';
-export { ads_replProvHostName } from '../ApacheDirectoryConfig/ads-replProvHostName.oa';
-export { ads_replProvPort } from '../ApacheDirectoryConfig/ads-replProvPort.oa';
-export { ads_replStrictCertValidation } from '../ApacheDirectoryConfig/ads-replStrictCertValidation.oa';
-export { ads_replUseTls } from '../ApacheDirectoryConfig/ads-replUseTls.oa';
-export { ads_searchBaseDN } from '../ApacheDirectoryConfig/ads-searchBaseDN.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_replConsumer */
 /**

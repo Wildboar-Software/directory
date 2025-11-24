@@ -7,7 +7,7 @@ import {
     mhs_message_store_dn,
     mhs_or_addresses,
 } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
-import { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
+import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
 import { auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { top } from "@wildboar/x500/InformationFramework";
 import { atn_AF_address } from "../ATNDirectoryObjectIdentifiers/atn-AF-address.oa";

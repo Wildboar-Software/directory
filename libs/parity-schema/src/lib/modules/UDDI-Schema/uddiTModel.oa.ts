@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -19,35 +19,7 @@ import { uddiTModelKey } from '../UDDI-Schema/uddiTModelKey.oa';
 import { uddiv3DigitalSignature } from '../UDDI-Schema/uddiv3DigitalSignature.oa';
 import { uddiv3NodeId } from '../UDDI-Schema/uddiv3NodeId.oa';
 import { uddiv3TModelKey } from '../UDDI-Schema/uddiv3TModelKey.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { id_uddi } from '../UDDI-Schema/id-uddi.va';
-export { uddiAuthorizedName } from '../UDDI-Schema/uddiAuthorizedName.oa';
-export { uddiCategoryBag } from '../UDDI-Schema/uddiCategoryBag.oa';
-export { uddiDescription } from '../UDDI-Schema/uddiDescription.oa';
-export { uddiIdentifierBag } from '../UDDI-Schema/uddiIdentifierBag.oa';
-export { uddiIsHidden } from '../UDDI-Schema/uddiIsHidden.oa';
-export { uddiName } from '../UDDI-Schema/uddiName.oa';
-export { uddiOperator } from '../UDDI-Schema/uddiOperator.oa';
-export { uddiOverviewDescription } from '../UDDI-Schema/uddiOverviewDescription.oa';
-export { uddiOverviewURL } from '../UDDI-Schema/uddiOverviewURL.oa';
-export { uddiTModelKey } from '../UDDI-Schema/uddiTModelKey.oa';
-export { uddiv3DigitalSignature } from '../UDDI-Schema/uddiv3DigitalSignature.oa';
-export { uddiv3NodeId } from '../UDDI-Schema/uddiv3NodeId.oa';
-export { uddiv3TModelKey } from '../UDDI-Schema/uddiv3TModelKey.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION uddiTModel */
 /**

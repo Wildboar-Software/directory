@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { h235_Id } from '../H323-X500-Schema/h235-Id.va';
-export { h235_Id } from '../H323-X500-Schema/h235-Id.va';
 
 /* START_OF_SYMBOL_DEFINITION h235_id_oc */
 /**

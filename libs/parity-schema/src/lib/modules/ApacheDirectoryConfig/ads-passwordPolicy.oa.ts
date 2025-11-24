@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -27,43 +27,7 @@ import { ads_pwdMinLength } from '../ApacheDirectoryConfig/ads-pwdMinLength.oa';
 import { ads_pwdMustChange } from '../ApacheDirectoryConfig/ads-pwdMustChange.oa';
 import { ads_pwdSafeModify } from '../ApacheDirectoryConfig/ads-pwdSafeModify.oa';
 import { ads_pwdValidator } from '../ApacheDirectoryConfig/ads-pwdValidator.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { ads_base } from '../ApacheDirectoryConfig/ads-base.oa';
-export { ads_pwdAllowUserChange } from '../ApacheDirectoryConfig/ads-pwdAllowUserChange.oa';
-export { ads_pwdAttribute } from '../ApacheDirectoryConfig/ads-pwdAttribute.oa';
-export { ads_pwdCheckQuality } from '../ApacheDirectoryConfig/ads-pwdCheckQuality.oa';
-export { ads_pwdExpireWarning } from '../ApacheDirectoryConfig/ads-pwdExpireWarning.oa';
-export { ads_pwdFailureCountInterval } from '../ApacheDirectoryConfig/ads-pwdFailureCountInterval.oa';
-export { ads_pwdGraceAuthNLimit } from '../ApacheDirectoryConfig/ads-pwdGraceAuthNLimit.oa';
-export { ads_pwdGraceExpire } from '../ApacheDirectoryConfig/ads-pwdGraceExpire.oa';
-export { ads_pwdId } from '../ApacheDirectoryConfig/ads-pwdId.oa';
-export { ads_pwdInHistory } from '../ApacheDirectoryConfig/ads-pwdInHistory.oa';
-export { ads_pwdLockout } from '../ApacheDirectoryConfig/ads-pwdLockout.oa';
-export { ads_pwdLockoutDuration } from '../ApacheDirectoryConfig/ads-pwdLockoutDuration.oa';
-export { ads_pwdMaxAge } from '../ApacheDirectoryConfig/ads-pwdMaxAge.oa';
-export { ads_pwdMaxDelay } from '../ApacheDirectoryConfig/ads-pwdMaxDelay.oa';
-export { ads_pwdMaxFailure } from '../ApacheDirectoryConfig/ads-pwdMaxFailure.oa';
-export { ads_pwdMaxIdle } from '../ApacheDirectoryConfig/ads-pwdMaxIdle.oa';
-export { ads_pwdMaxLength } from '../ApacheDirectoryConfig/ads-pwdMaxLength.oa';
-export { ads_pwdMinAge } from '../ApacheDirectoryConfig/ads-pwdMinAge.oa';
-export { ads_pwdMinDelay } from '../ApacheDirectoryConfig/ads-pwdMinDelay.oa';
-export { ads_pwdMinLength } from '../ApacheDirectoryConfig/ads-pwdMinLength.oa';
-export { ads_pwdMustChange } from '../ApacheDirectoryConfig/ads-pwdMustChange.oa';
-export { ads_pwdSafeModify } from '../ApacheDirectoryConfig/ads-pwdSafeModify.oa';
-export { ads_pwdValidator } from '../ApacheDirectoryConfig/ads-pwdValidator.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION ads_passwordPolicy */
 /**

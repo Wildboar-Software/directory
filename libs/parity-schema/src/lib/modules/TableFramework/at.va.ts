@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { tables } from '../TableFramework/tables.va';
-export { tables } from '../TableFramework/tables.va';
 
 /* START_OF_SYMBOL_DEFINITION at */
 /**

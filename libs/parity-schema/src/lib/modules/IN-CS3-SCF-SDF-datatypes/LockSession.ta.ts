@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    DistinguishedName,
+    type DistinguishedName,
     _decode_DistinguishedName,
     _encode_DistinguishedName,
 } from '@wildboar/x500/InformationFramework';
@@ -11,11 +11,7 @@ import {
     OBJECT_IDENTIFIER,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
-export {
-    DistinguishedName,
-    _decode_DistinguishedName,
-    _encode_DistinguishedName,
-} from '@wildboar/x500/InformationFramework';
+
 
 /* START_OF_SYMBOL_DEFINITION LockSession */
 /**

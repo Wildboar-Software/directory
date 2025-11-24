@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_oc } from '../IN-CS3-object-identifiers/id-oc.va';
-export { id_oc } from '../IN-CS3-object-identifiers/id-oc.va';
 
 /* START_OF_SYMBOL_DEFINITION id_oc_tokensStock */
 /**

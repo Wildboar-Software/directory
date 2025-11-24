@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -22,38 +22,7 @@ import { pgpRevoked } from '../LegacyPGPFramework/pgpRevoked.oa';
 import { pgpSignerID } from '../LegacyPGPFramework/pgpSignerID.oa';
 import { pgpSubKeyID } from '../LegacyPGPFramework/pgpSubKeyID.oa';
 import { pgpUserID } from '../LegacyPGPFramework/pgpUserID.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { gpgFingerprint } from '../LegacyPGPFramework/gpgFingerprint.oa';
-export { gpgMailbox } from '../LegacyPGPFramework/gpgMailbox.oa';
-export { gpgSubCertID } from '../LegacyPGPFramework/gpgSubCertID.oa';
-export { gpgSubFingerprint } from '../LegacyPGPFramework/gpgSubFingerprint.oa';
-export { mcafee } from '../LegacyPGPFramework/mcafee.va';
-export { pgpCertID } from '../LegacyPGPFramework/pgpCertID.oa';
-export { pgpDisabled } from '../LegacyPGPFramework/pgpDisabled.oa';
-export { pgpKey } from '../LegacyPGPFramework/pgpKey.oa';
-export { pgpKeyCreateTime } from '../LegacyPGPFramework/pgpKeyCreateTime.oa';
-export { pgpKeyExpireTime } from '../LegacyPGPFramework/pgpKeyExpireTime.oa';
-export { pgpKeyID } from '../LegacyPGPFramework/pgpKeyID.oa';
-export { pgpKeySize } from '../LegacyPGPFramework/pgpKeySize.oa';
-export { pgpKeyType } from '../LegacyPGPFramework/pgpKeyType.oa';
-export { pgpRevoked } from '../LegacyPGPFramework/pgpRevoked.oa';
-export { pgpSignerID } from '../LegacyPGPFramework/pgpSignerID.oa';
-export { pgpSubKeyID } from '../LegacyPGPFramework/pgpSubKeyID.oa';
-export { pgpUserID } from '../LegacyPGPFramework/pgpUserID.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION pgpKeyInfo */
 /**

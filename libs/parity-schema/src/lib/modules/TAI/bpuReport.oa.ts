@@ -11,8 +11,6 @@ export {
     _decode_BPUReport,
     _encode_BPUReport,
 } from '../TAI/BPUReport.ta';
-export { CONTENT_TYPE } from '../TAI/CONTENT-TYPE.oca';
-export { id_bpuReport } from '../TAI/id-bpuReport.va';
 
 /* START_OF_SYMBOL_DEFINITION bpuReport */
 /**

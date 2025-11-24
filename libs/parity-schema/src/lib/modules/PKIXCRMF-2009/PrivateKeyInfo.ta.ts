@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    AlgorithmIdentifier,
+    type AlgorithmIdentifier,
     _decode_AlgorithmIdentifier,
     _encode_AlgorithmIdentifier,
 } from '@wildboar/x500/AuthenticationFramework';
@@ -9,20 +9,10 @@ import {
     ASN1TagClass as _TagClass,
     INTEGER,
     OCTET_STRING,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    Attributes,
-    _decode_Attributes,
-    _encode_Attributes,
-} from '../PKIXCRMF-2009/Attributes.ta';
-export {
-    AlgorithmIdentifier,
-    _decode_AlgorithmIdentifier,
-    _encode_AlgorithmIdentifier,
-} from '@wildboar/x500/AuthenticationFramework';
-export {
     Attributes,
     _decode_Attributes,
     _encode_Attributes,

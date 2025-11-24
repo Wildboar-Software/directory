@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { ExtensionReq, _decode_ExtensionReq, _encode_ExtensionReq } from "../EnrollmentMessageSyntax-2009/ExtensionReq.ta";
 import { id_ExtensionReq } from "../EnrollmentMessageSyntax-2009/id-ExtensionReq.va";

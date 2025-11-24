@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_tai } from '../TAI/id-tai.va';
-export { id_tai } from '../TAI/id-tai.va';
 
 /* START_OF_SYMBOL_DEFINITION id_tai_ce */
 /**

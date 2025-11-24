@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -10,27 +10,7 @@ import { limitingFollowRule } from '../TraderDefinitions/limitingFollowRule.oa';
 import { linkId } from '../TraderDefinitions/linkId.oa';
 import { linkName } from '../TraderDefinitions/linkName.oa';
 import { targetTraderInterfaceId } from '../TraderDefinitions/targetTraderInterfaceId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { defPassOnFollowRule } from '../TraderDefinitions/defPassOnFollowRule.oa';
-export { id_trader_oc_traderLink } from '../TraderDefinitions/id-trader-oc-traderLink.va';
-export { limitingFollowRule } from '../TraderDefinitions/limitingFollowRule.oa';
-export { linkId } from '../TraderDefinitions/linkId.oa';
-export { linkName } from '../TraderDefinitions/linkName.oa';
-export { targetTraderInterfaceId } from '../TraderDefinitions/targetTraderInterfaceId.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION traderLinkEntry */
 /**

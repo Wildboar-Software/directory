@@ -1,14 +1,8 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
 import { id_trader_nf_traderPolicy } from '../TraderDefinitions/id-trader-nf-traderPolicy.va';
 import { traderPolicyEntry } from '../TraderDefinitions/traderPolicyEntry.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { id_trader_nf_traderPolicy } from '../TraderDefinitions/id-trader-nf-traderPolicy.va';
-export { traderPolicyEntry } from '../TraderDefinitions/traderPolicyEntry.oa';
 
 /* START_OF_SYMBOL_DEFINITION traderPolicyEntryNF */
 /**

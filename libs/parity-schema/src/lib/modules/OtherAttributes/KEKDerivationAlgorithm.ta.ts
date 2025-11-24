@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {
-    AlgorithmIdentifier,
+    type AlgorithmIdentifier,
     _decode_AlgorithmIdentifier,
     _encode_AlgorithmIdentifier,
 } from '@wildboar/x500/AuthenticationFramework';
@@ -15,11 +15,7 @@ import {
     _decode_PBKDF2_params,
     _encode_PBKDF2_params,
 } from '../OtherAttributes/PBKDF2-params.ta';
-export {
-    AlgorithmIdentifier,
-    _decode_AlgorithmIdentifier,
-    _encode_AlgorithmIdentifier,
-} from '@wildboar/x500/AuthenticationFramework';
+
 export {
     PBKDF2_params,
     _decode_PBKDF2_params,

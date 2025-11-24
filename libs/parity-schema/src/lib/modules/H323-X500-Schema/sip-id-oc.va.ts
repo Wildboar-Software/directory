@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { sip_Id } from '../H323-X500-Schema/sip-Id.va';
-export { sip_Id } from '../H323-X500-Schema/sip-Id.va';
 
 /* START_OF_SYMBOL_DEFINITION sip_id_oc */
 /**

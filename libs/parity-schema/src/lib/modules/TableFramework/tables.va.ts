@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { mhs_ds } from '../TableFramework/mhs-ds.va';
-export { mhs_ds } from '../TableFramework/mhs-ds.va';
 
 /* START_OF_SYMBOL_DEFINITION tables */
 /**

@@ -6,22 +6,12 @@ import {
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
 import {
-    POPOPrivKey,
+    type POPOPrivKey,
     _decode_POPOPrivKey,
     _encode_POPOPrivKey,
 } from '../PKIXCRMF-2009/POPOPrivKey.ta';
 import {
-    POPOSigningKey,
-    _decode_POPOSigningKey,
-    _encode_POPOSigningKey,
-} from '../PKIXCRMF-2009/POPOSigningKey.ta';
-export {
-    POPOPrivKey,
-    _decode_POPOPrivKey,
-    _encode_POPOPrivKey,
-} from '../PKIXCRMF-2009/POPOPrivKey.ta';
-export {
-    POPOSigningKey,
+    type POPOSigningKey,
     _decode_POPOSigningKey,
     _encode_POPOSigningKey,
 } from '../PKIXCRMF-2009/POPOSigningKey.ta';

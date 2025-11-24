@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { ID } from '../Wildboar/ID.ta';
 import { matchingRule } from '../Wildboar/matchingRule.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
-export { matchingRule } from '../Wildboar/matchingRule.va';
 
 /* START_OF_SYMBOL_DEFINITION id_mr */
 /**

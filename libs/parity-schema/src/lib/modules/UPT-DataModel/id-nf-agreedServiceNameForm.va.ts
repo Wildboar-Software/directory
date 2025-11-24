@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_nf } from '../UPT-DataModel/id-nf.va';
-export { id_nf } from '../UPT-DataModel/id-nf.va';
 
 /* START_OF_SYMBOL_DEFINITION id_nf_agreedServiceNameForm */
 /**

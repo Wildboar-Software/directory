@@ -4,7 +4,7 @@ import { cACertificate } from '@wildboar/x500/AuthenticationFramework';
 import { certificateRevocationList } from '@wildboar/x500/AuthenticationFramework';
 import { crossCertificatePair } from '@wildboar/x500/AuthenticationFramework';
 import { userCertificate } from '@wildboar/x500/AuthenticationFramework';
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -13,24 +13,7 @@ import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { h235_id_oc } from '../H323-X500-Schema/h235-id-oc.va';
 import { h235IdentityEndpointID } from '../H323-X500-Schema/h235IdentityEndpointID.oa';
 import { h235IdentityPassword } from '../H323-X500-Schema/h235IdentityPassword.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { h235_id_oc } from '../H323-X500-Schema/h235-id-oc.va';
-export { h235IdentityEndpointID } from '../H323-X500-Schema/h235IdentityEndpointID.oa';
-export { h235IdentityPassword } from '../H323-X500-Schema/h235IdentityPassword.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION h235Identity */
 /**

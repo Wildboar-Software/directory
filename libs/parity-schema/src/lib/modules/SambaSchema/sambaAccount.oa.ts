@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -27,42 +27,7 @@ import { rid } from '../SambaSchema/rid.oa';
 import { scriptPath } from '../SambaSchema/scriptPath.oa';
 import { smbHome } from '../SambaSchema/smbHome.oa';
 import { userWorkstations } from '../SambaSchema/userWorkstations.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { uid } from '@wildboar/x500/SelectedAttributeTypes';
-export { displayName } from '../InetOrgPerson/displayName.oa';
-export { acctFlags } from '../SambaSchema/acctFlags.oa';
-export { domain } from '../SambaSchema/domain.oa';
-export { homeDrive } from '../SambaSchema/homeDrive.oa';
-export { id_samba_oc } from '../SambaSchema/id-samba-oc.va';
-export { kickoffTime } from '../SambaSchema/kickoffTime.oa';
-export { lmPassword } from '../SambaSchema/lmPassword.oa';
-export { logoffTime } from '../SambaSchema/logoffTime.oa';
-export { logonTime } from '../SambaSchema/logonTime.oa';
-export { ntPassword } from '../SambaSchema/ntPassword.oa';
-export { primaryGroupID } from '../SambaSchema/primaryGroupID.oa';
-export { profilePath } from '../SambaSchema/profilePath.oa';
-export { pwdCanChange } from '../SambaSchema/pwdCanChange.oa';
-export { pwdLastSet } from '../SambaSchema/pwdLastSet.oa';
-export { pwdMustChange } from '../SambaSchema/pwdMustChange.oa';
-export { rid } from '../SambaSchema/rid.oa';
-export { scriptPath } from '../SambaSchema/scriptPath.oa';
-export { smbHome } from '../SambaSchema/smbHome.oa';
-export { userWorkstations } from '../SambaSchema/userWorkstations.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION sambaAccount */
 /**

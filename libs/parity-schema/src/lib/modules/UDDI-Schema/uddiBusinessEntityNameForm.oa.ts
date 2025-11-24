@@ -1,15 +1,9 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { ObjectIdentifier as _OID } from '@wildboar/asn1';
 import { id_uddi } from '../UDDI-Schema/id-uddi.va';
 import { uddiBusinessEntity } from '../UDDI-Schema/uddiBusinessEntity.oa';
 import { uddiBusinessKey } from '../UDDI-Schema/uddiBusinessKey.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export { id_uddi } from '../UDDI-Schema/id-uddi.va';
-export { uddiBusinessEntity } from '../UDDI-Schema/uddiBusinessEntity.oa';
-export { uddiBusinessKey } from '../UDDI-Schema/uddiBusinessKey.oa';
 
 /* START_OF_SYMBOL_DEFINITION uddiBusinessEntityNameForm */
 /**

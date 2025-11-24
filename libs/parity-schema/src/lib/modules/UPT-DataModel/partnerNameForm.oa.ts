@@ -1,14 +1,8 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { id_nf_partnerNameForm } from '../UPT-DataModel/id-nf-partnerNameForm.va';
 import { partner } from '../UPT-DataModel/partner.oa';
 import { providerId } from '../UPT-DataModel/providerId.oa';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export { id_nf_partnerNameForm } from '../UPT-DataModel/id-nf-partnerNameForm.va';
-export { partner } from '../UPT-DataModel/partner.oa';
-export { providerId } from '../UPT-DataModel/providerId.oa';
 
 /* START_OF_SYMBOL_DEFINITION partnerNameForm */
 /**

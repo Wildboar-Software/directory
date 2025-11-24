@@ -1,14 +1,8 @@
 /* eslint-disable */
-import { NAME_FORM } from '@wildboar/x500/InformationFramework';
+import type { NAME_FORM } from '@wildboar/x500/InformationFramework';
 import { organizationalUnitName } from '@wildboar/x500/SelectedAttributeTypes';
 import { administrativeUnit } from '../UPT-DataModel/administrativeUnit.oa';
 import { id_nf_adminUnitNameForm } from '../UPT-DataModel/id-nf-adminUnitNameForm.va';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { NAME_FORM } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export { organizationalUnitName } from '@wildboar/x500/SelectedAttributeTypes';
-export { administrativeUnit } from '../UPT-DataModel/administrativeUnit.oa';
-export { id_nf_adminUnitNameForm } from '../UPT-DataModel/id-nf-adminUnitNameForm.va';
 
 /* START_OF_SYMBOL_DEFINITION adminUnitNameForm */
 /**

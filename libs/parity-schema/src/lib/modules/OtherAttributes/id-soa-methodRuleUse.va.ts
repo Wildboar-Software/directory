@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_soa } from '../OtherAttributes/id-soa.va';
-export { id_soa } from '../OtherAttributes/id-soa.va';
 
 /* START_OF_SYMBOL_DEFINITION id_soa_methodRuleUse */
 /**

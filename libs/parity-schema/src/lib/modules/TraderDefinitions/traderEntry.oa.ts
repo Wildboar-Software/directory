@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { userPassword } from '@wildboar/x500/AuthenticationFramework';
-import { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
+import type { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
 import {
     structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
 } from '@wildboar/x500/InformationFramework';
@@ -27,44 +27,7 @@ import { supportsModifiableProperties } from '../TraderDefinitions/supportsModif
 import { supportsProxyOffers } from '../TraderDefinitions/supportsProxyOffers.oa';
 import { traderInterface } from '../TraderDefinitions/traderInterface.oa';
 import { typeRepos } from '../TraderDefinitions/typeRepos.oa';
-export { userPassword } from '@wildboar/x500/AuthenticationFramework';
-export { ATTRIBUTE } from '@wildboar/x500/InformationFramework';
-export { OBJECT_CLASS } from '@wildboar/x500/InformationFramework';
-export {
-    abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    ObjectClassKind,
-    ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */,
-    structural /* IMPORTED_SHORT_ENUMERATION_ITEM */,
-    _decode_ObjectClassKind,
-    _encode_ObjectClassKind,
-    _enum_for_ObjectClassKind,
-} from '@wildboar/x500/InformationFramework';
-export { top } from '@wildboar/x500/InformationFramework';
-export { commonName } from '@wildboar/x500/SelectedAttributeTypes';
-export { description } from '@wildboar/x500/SelectedAttributeTypes';
-export { defFollowPolicy } from '../TraderDefinitions/defFollowPolicy.oa';
-export { defHopCount } from '../TraderDefinitions/defHopCount.oa';
-export { defMatchCard } from '../TraderDefinitions/defMatchCard.oa';
-export { defReturnCard } from '../TraderDefinitions/defReturnCard.oa';
-export { defSearchCard } from '../TraderDefinitions/defSearchCard.oa';
-export { dsaName } from '../TraderDefinitions/dsaName.oa';
-export { id_trader_oc_traderEntry } from '../TraderDefinitions/id-trader-oc-traderEntry.va';
-export { maxFollowPolicy } from '../TraderDefinitions/maxFollowPolicy.oa';
-export { maxHopCount } from '../TraderDefinitions/maxHopCount.oa';
-export { maxLinkFollowPolicy } from '../TraderDefinitions/maxLinkFollowPolicy.oa';
-export { maxList } from '../TraderDefinitions/maxList.oa';
-export { maxMatchCard } from '../TraderDefinitions/maxMatchCard.oa';
-export { maxReturnCard } from '../TraderDefinitions/maxReturnCard.oa';
-export { maxSearchCard } from '../TraderDefinitions/maxSearchCard.oa';
-export { requestIdStem } from '../TraderDefinitions/requestIdStem.oa';
-export { supportsDynamicProperties } from '../TraderDefinitions/supportsDynamicProperties.oa';
-export { supportsModifiableProperties } from '../TraderDefinitions/supportsModifiableProperties.oa';
-export { supportsProxyOffers } from '../TraderDefinitions/supportsProxyOffers.oa';
-export { traderInterface } from '../TraderDefinitions/traderInterface.oa';
-export { typeRepos } from '../TraderDefinitions/typeRepos.oa';
+
 
 /* START_OF_SYMBOL_DEFINITION traderEntry */
 /**

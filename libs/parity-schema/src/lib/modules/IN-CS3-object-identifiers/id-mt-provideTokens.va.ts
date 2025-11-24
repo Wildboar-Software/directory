@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { id_mt } from '../IN-CS3-object-identifiers/id-mt.va';
-export { id_mt } from '../IN-CS3-object-identifiers/id-mt.va';
 
 /* START_OF_SYMBOL_DEFINITION id_mt_provideTokens */
 /**

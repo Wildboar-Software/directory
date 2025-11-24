@@ -1,40 +1,25 @@
 /* eslint-disable */
 import {
-    IssuerSerial,
+    type IssuerSerial,
     _decode_IssuerSerial,
     _encode_IssuerSerial,
 } from '@wildboar/x500/AttributeCertificateDefinitions';
 import {
-    ObjectDigestInfo,
+    type ObjectDigestInfo,
     _decode_ObjectDigestInfo,
     _encode_ObjectDigestInfo,
 } from '@wildboar/x500/AttributeCertificateDefinitions';
 import {
-    GeneralNames,
+    type GeneralNames,
     _decode_GeneralNames,
     _encode_GeneralNames,
 } from '@wildboar/x500/CertificateExtensions';
 import {
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    OPTIONAL,
+    type OPTIONAL,
 } from '@wildboar/asn1';
 import * as $ from '@wildboar/asn1/functional';
-export {
-    IssuerSerial,
-    _decode_IssuerSerial,
-    _encode_IssuerSerial,
-} from '@wildboar/x500/AttributeCertificateDefinitions';
-export {
-    ObjectDigestInfo,
-    _decode_ObjectDigestInfo,
-    _encode_ObjectDigestInfo,
-} from '@wildboar/x500/AttributeCertificateDefinitions';
-export {
-    GeneralNames,
-    _decode_GeneralNames,
-    _encode_GeneralNames,
-} from '@wildboar/x500/CertificateExtensions';
 
 /* START_OF_SYMBOL_DEFINITION BioTempIssuer */
 /**

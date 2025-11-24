@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { ObjectIdentifier as _OID, OBJECT_IDENTIFIER } from '@wildboar/asn1';
 import { modules } from '../IN-CS3-object-identifiers/modules.va';
-export { modules } from '../IN-CS3-object-identifiers/modules.va';
 
 /* START_OF_SYMBOL_DEFINITION scf_srf_Operations */
 /**

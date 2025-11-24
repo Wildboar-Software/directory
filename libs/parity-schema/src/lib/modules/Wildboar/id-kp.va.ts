@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { ID } from '../Wildboar/ID.ta';
 import { keyPurposes } from '../Wildboar/keyPurposes.va';
-export { ID, _decode_ID, _encode_ID } from '../Wildboar/ID.ta';
-export { keyPurposes } from '../Wildboar/keyPurposes.va';
 
 /* START_OF_SYMBOL_DEFINITION id_kp */
 /**
