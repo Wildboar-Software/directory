@@ -1,4 +1,4 @@
-import * as pem from "pem-ts";
+import * as pem from "@wildboar/pem";
 import {
     _decode_Certificate,
 } from "@wildboar/x500/AuthenticationFramework";

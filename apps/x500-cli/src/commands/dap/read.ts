@@ -65,7 +65,7 @@ import {
     ServiceControls_scopeOfReferral_dmd,
 } from "@wildboar/x500/DirectoryAbstractService";
 import * as fs from "node:fs/promises";
-import { PEMObject } from "pem-ts";
+import { PEMObject } from "@wildboar/pem";
 
 function priorityFromString (str: string): ServiceControls["priority"] {
     switch (str.trim().toLowerCase()) {

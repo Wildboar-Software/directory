@@ -32,7 +32,7 @@ import {
 } from "./constants.js";
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
-import { PEMObject } from "pem-ts";
+import { PEMObject } from "@wildboar/pem";
 import { BERElement, DERElement, ObjectIdentifier } from "@wildboar/asn1";
 import {
     CertificateList,

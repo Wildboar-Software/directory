@@ -16,7 +16,7 @@ import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import { OBJECT_IDENTIFIER, BERElement } from "@wildboar/asn1";
 import { KeyObject, createPrivateKey } from "crypto";
 import { CertificatePair, CertificationPath } from "@wildboar/x500/AuthenticationFramework";
-import { PEMObject } from "pem-ts";
+import { PEMObject } from "@wildboar/pem";
 import {
     Certificate,
     _decode_Certificate,

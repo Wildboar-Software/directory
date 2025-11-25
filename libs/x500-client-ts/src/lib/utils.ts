@@ -111,7 +111,7 @@ import { rose_transport_from_itot_stack } from "./itot.js";
 import { create_itot_stack, PresentationAddress } from "@wildboar/osi-net";
 import { naddrToURI } from "@wildboar/x500";
 import { readFileSync } from "node:fs";
-import { PEMObject } from "pem-ts";
+import { PEMObject } from "@wildboar/pem";
 import { differenceInSeconds } from "date-fns";
 import { randomBytes } from "node:crypto";
 import { ServiceControls } from "@wildboar/x500/DirectoryAbstractService";

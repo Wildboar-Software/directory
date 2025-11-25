@@ -4,7 +4,7 @@ import {
     Certificate,
     _decode_Certificate,
 } from "@wildboar/x500/AuthenticationFramework";
-import { PEMObject } from "pem-ts";
+import { PEMObject } from "@wildboar/pem";
 import { DERElement, ObjectIdentifier } from "@wildboar/asn1";
 import type {
     TrustAnchorList,

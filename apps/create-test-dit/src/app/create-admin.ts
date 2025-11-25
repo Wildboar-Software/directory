@@ -68,7 +68,7 @@ import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     _decode_Certificate,
 } from "@wildboar/x500/AuthenticationFramework";
-import { PEMObject } from "pem-ts";
+import { PEMObject } from "@wildboar/pem";
 import { addHours } from "date-fns";
 
 const TEMPORARY_PASSWORD: string = "asdf";

@@ -220,7 +220,7 @@ import {
     _encode_ContentInfo,
     EncapsulatedContentInfo,
 } from "@wildboar/cms";
-import { PEMObject } from "pem-ts";
+import { PEMObject } from "@wildboar/pem";
 import { createCMSSignedData } from "../pki/createCMSSignedData.js";
 import { PkiPath } from "@wildboar/pki-stub";
 import { id_data } from "@wildboar/cms";

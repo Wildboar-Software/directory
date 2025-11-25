@@ -1,6 +1,6 @@
 import { getOCSPResponse as check } from "./check";
 import { URL } from "url";
-import { PEMObject } from "pem-ts";
+import { PEMObject } from "@wildboar/pem";
 import { BERElement } from "@wildboar/asn1";
 import {
     _decode_Certificate,

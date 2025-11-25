@@ -79,7 +79,7 @@ import {
     uid,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import * as fs from "fs/promises";
-import * as pem from "pem-ts";
+import * as pem from "@wildboar/pem";
 import { BERElement } from "@wildboar/asn1";
 
 // inetOrgPerson OBJECT-CLASS ::= {
