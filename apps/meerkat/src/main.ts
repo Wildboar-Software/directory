@@ -1,5 +1,5 @@
-import { loadSync as loadDotenvSync } from "@std/dotenv";
-loadDotenvSync();
+import { configDotenv } from "dotenv";
+configDotenv();
 import i18n from "i18next";
 import I18FileSystemBackend from "i18next-fs-backend";
 import { osLocaleSync } from "os-locale";
