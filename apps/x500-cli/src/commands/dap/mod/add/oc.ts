@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../../types";
+import type { Connection, Context } from "../../../../types.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     modifyEntry,
@@ -19,11 +19,11 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import printCode from "../../../../printers/Code";
-import destringifyDN from "../../../../utils/destringifyDN";
+import printCode from "../../../../printers/Code.js";
+import destringifyDN from "../../../../utils/destringifyDN.js";
 import type {
     ModAddObjectClassArgs,
-} from "../../../../yargs/dap_mod_add_oc";
+} from "../../../../yargs/dap_mod_add_oc.js";
 import {
     objectClasses,
 } from "@wildboar/x500/SchemaAdministration";

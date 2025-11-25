@@ -1,9 +1,9 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
+import bind from "../net/bind.js";
 import {
     do_join_nssr as command,
-} from "../commands/dop/join_nssr";
+} from "../commands/dop/join_nssr.js";
 import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 
 export

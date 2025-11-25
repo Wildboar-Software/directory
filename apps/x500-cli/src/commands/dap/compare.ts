@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     compare,
@@ -18,13 +18,13 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import destringifyDN from "../../utils/destringifyDN";
+import destringifyDN from "../../utils/destringifyDN.js";
 import {
     AttributeValueAssertion,
 } from "@wildboar/x500/InformationFramework";
-import printError from "../../printers/Error_";
-import stringifyDN from "../../utils/stringifyDN";
-import { destringifyAttributeValue } from "../../utils/destringifyAttributeValue";
+import printError from "../../printers/Error_.js";
+import stringifyDN from "../../utils/stringifyDN.js";
+import { destringifyAttributeValue } from "../../utils/destringifyAttributeValue.js";
 
 export
 async function do_compare (

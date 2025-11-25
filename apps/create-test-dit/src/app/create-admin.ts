@@ -1,4 +1,4 @@
-import type { Connection, Context } from "./types";
+import type { Connection, Context } from "./types.js";
 import {
     TRUE_BIT,
     FALSE_BIT,
@@ -45,7 +45,7 @@ import {
 import {
     ErrorProtectionRequest_none,
 } from "@wildboar/x500/DirectoryAbstractService";
-import printCode from "./printCode";
+import printCode from "./printCode.js";
 import {
     DER,
     _encodeObjectIdentifier,

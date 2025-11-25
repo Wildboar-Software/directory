@@ -1,4 +1,4 @@
-// import type { Connection, Context } from "../../../../types";
+// import type { Connection, Context } from "../../../../types.js";
 // import { ObjectIdentifier, ASN1Element } from "@wildboar/asn1";
 // import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 // import {
@@ -23,8 +23,8 @@
 // import {
 //     objectClass,
 // } from "@wildboar/x500/InformationFramework";
-// import printCode from "../../../../printers/Code";
-// import destringifyDN from "../../../../utils/destringifyDN";
+// import printCode from "../../../../printers/Code.js";
+// import destringifyDN from "../../../../utils/destringifyDN.js";
 // import {
 //     collectiveAttributeSubentry,
 // } from "@wildboar/x500/InformationFramework";

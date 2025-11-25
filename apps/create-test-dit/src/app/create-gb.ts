@@ -1,4 +1,4 @@
-import type { Connection, Context } from "./types";
+import type { Connection, Context } from "./types.js";
 import {
     TRUE,
     FALSE,
@@ -58,7 +58,7 @@ import {
 import {
     ErrorProtectionRequest_none,
 } from "@wildboar/x500/DirectoryAbstractService";
-import print from "./printCode";
+import print from "./printCode.js";
 import {
     DER,
     _encodeBoolean,
@@ -108,7 +108,7 @@ import {
     AUTHENTICATED_USER_BASELINE,
     AUTHENTICATED_USER_SELF_BASELINE,
     GLOBAL_DIRECTORY_ADMIN_BASELINE,
-} from "./aci";
+} from "./aci.js";
 import { RDNSequence } from "@wildboar/x500/InformationFramework";
 import { compareCode } from "@wildboar/x500";
 import {
@@ -118,18 +118,22 @@ import {
     UpdateProblem_entryAlreadyExists, UpdateProblem_namingViolation,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import { createMockPersonAttributes } from "./mock-entries";
-import { idempotentAddEntry } from "./utils";
-import { commonAuxiliaryObjectClasses, deviceAuxiliaryObjectClasses } from "./objectClassSets";
+import { createMockPersonAttributes } from "./mock-entries.js";
+import { idempotentAddEntry } from "./utils.js";
+import { commonAuxiliaryObjectClasses, deviceAuxiliaryObjectClasses } from "./objectClassSets.js";
 import {
-    bootableDevice, bootFile, bootParameter,
+    bootableDevice,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/bootableDevice.oa.js";
+import { bootFile } from "@wildboar/parity-schema/src/lib/modules/NIS/bootFile.oa.js";
+import { bootParameter } from "@wildboar/parity-schema/src/lib/modules/NIS/bootParameter.oa.js";
 import {
-    ieee802Device, macAddress,
+    ieee802Device,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/ieee802Device.oa.js";
+import { macAddress } from "@wildboar/parity-schema/src/lib/modules/NIS/macAddress.oa.js";
 import {
-    ipHost, ipHostNumber,
+    ipHost,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa.js";
+import { ipHostNumber } from "@wildboar/parity-schema/src/lib/modules/NIS/ipHostNumber.oa.js";
 import {
     BootParameterSyntax,
     _encode_BootParameterSyntax,

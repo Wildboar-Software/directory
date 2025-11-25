@@ -1,4 +1,4 @@
-import type { Connection, Context } from "./types";
+import type { Connection, Context } from "./types.js";
 import {
     TRUE,
     FALSE,
@@ -44,7 +44,7 @@ import {
     updateError,
     UpdateProblem_entryAlreadyExists,
 } from "@wildboar/x500/DirectoryAbstractService";
-import print from "./printCode";
+import print from "./printCode.js";
 import {
     DER,
     _encodeBoolean,
@@ -78,7 +78,7 @@ import {
     AUTHENTICATED_USER_BASELINE,
     AUTHENTICATED_USER_SELF_BASELINE,
     GLOBAL_DIRECTORY_ADMIN_BASELINE,
-} from "./aci";
+} from "./aci.js";
 import { RDNSequence } from "@wildboar/x500/InformationFramework";
 import { compareCode } from "@wildboar/x500";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
@@ -102,7 +102,7 @@ import {
 import {
     ipHost,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa.js";
-import { commonAuxiliaryObjectClasses } from "./objectClassSets";
+import { commonAuxiliaryObjectClasses } from "./objectClassSets.js";
 import { unstructuredName } from "@wildboar/pkcs/PKCS-9";
 import { unstructuredAddress } from "@wildboar/pkcs/PKCS-9";
 import { addHours } from "date-fns";

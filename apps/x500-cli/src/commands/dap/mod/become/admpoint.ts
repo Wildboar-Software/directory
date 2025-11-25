@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../../types";
+import type { Connection, Context } from "../../../../types.js";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
@@ -35,8 +35,8 @@ import { id_ar_collectiveAttributeInnerArea } from "@wildboar/x500/InformationFr
 import { id_ar_contextDefaultSpecificArea } from "@wildboar/x500/InformationFramework";
 import { id_ar_serviceSpecificArea } from "@wildboar/x500/InformationFramework";
 import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/InformationFramework";
-import printCode from "../../../../printers/Code";
-import destringifyDN from "../../../../utils/destringifyDN";
+import printCode from "../../../../printers/Code.js";
+import destringifyDN from "../../../../utils/destringifyDN.js";
 
 export
 async function do_modify_become_admpoint (

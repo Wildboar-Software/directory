@@ -1,11 +1,11 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import { TRUE, FALSE } from "@wildboar/asn1";
 import {
     EntryInformation,
 } from "@wildboar/x500/DirectoryAbstractService";
-import printValue from "./Value";
-import stringifyDN from "../utils/stringifyDN";
-import printAttributeValue from "./AttributeValue";
+import printValue from "./Value.js";
+import stringifyDN from "../utils/stringifyDN.js";
+import printAttributeValue from "./AttributeValue.js";
 import chalk from "chalk";
 import { EOL } from "node:os";
 

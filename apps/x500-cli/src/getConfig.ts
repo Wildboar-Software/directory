@@ -1,9 +1,9 @@
-import type { Context } from "./types";
+import type { Context } from "./types.js";
 import * as fs from "fs/promises";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
 import { parse as yamlParse } from "@std/yaml";
-import validator from "./configValidator";
-import { findConfigurationFile } from "./config/findConfigurationFile";
+import validator from "./configValidator.js";
+import { findConfigurationFile } from "./config/findConfigurationFile.js";
 
 export
 const DEFAULT_CONFIGURATION_FILE: string = `apiVersion: v1.0.0
@@ -35,8 +35,8 @@ async function getConfig (ctx: Context): Promise<X500ClientConfig | null> {
             ? yamlParse(fileContents)
             : JSON.parse(fileContents);
     } catch (e) {
-        ctx.log.error(`Error parsing configuration file: ${matchedFileName}.`);
-        ctx.log.error(e);
+        const properties = (typeof e === "object" && !!e) ? { ...e } : {};
+        ctx.log.error(`Error parsing configuration file: ${matchedFileName}.`, properties);
     }
     if (!config || !(typeof config === "object")) {
         return null;

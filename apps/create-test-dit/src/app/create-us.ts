@@ -1,4 +1,4 @@
-import type { Connection, Context } from "./types";
+import type { Connection, Context } from "./types.js";
 import {
     FALSE_BIT,
     OBJECT_IDENTIFIER,
@@ -33,7 +33,7 @@ import {
     _encodePrintableString,
     _encodeUTF8String,
 } from "@wildboar/asn1/functional";
-import sleep, { idempotentAddEntry } from "./utils";
+import sleep, { idempotentAddEntry } from "./utils.js";
 import {
     createMockCertificate,
     createMockCRL,
@@ -41,7 +41,7 @@ import {
     createMockOrganizationAttributes,
     createMockUsername,
     createMockEmail,
-} from "./mock-entries";
+} from "./mock-entries.js";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import {
     _encode_Certificate,
@@ -72,35 +72,36 @@ import {
     eduPersonAffiliation,
 } from "@wildboar/parity-schema/src/lib/modules/EduPersonSchema/eduPersonAffiliation.oa.js";
 import {
-    gidNumber,
-    homeDirectory,
-    loginShell,
     posixAccount,
-    uidNumber,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/posixAccount.oa.js";
+import { gidNumber } from "@wildboar/parity-schema/src/lib/modules/NIS/gidNumber.oa.js";
+import { homeDirectory } from "@wildboar/parity-schema/src/lib/modules/NIS/homeDirectory.oa.js";
+import { loginShell } from "@wildboar/parity-schema/src/lib/modules/NIS/loginShell.oa.js";
+import { uidNumber } from "@wildboar/parity-schema/src/lib/modules/NIS/uidNumber.oa.js";
 import {
     uid,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import {
-    shadowAccount, shadowLastChange, shadowMax, shadowMin,
+    shadowAccount,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/shadowAccount.oa.js";
+import { shadowLastChange } from "@wildboar/parity-schema/src/lib/modules/NIS/shadowLastChange.oa.js";
+import { shadowMax } from "@wildboar/parity-schema/src/lib/modules/NIS/shadowMax.oa.js";
+import { shadowMin } from "@wildboar/parity-schema/src/lib/modules/NIS/shadowMin.oa.js";
 import {
     openLDAPdisplayableObject,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/openLDAPdisplayableObject.oa.js";
 import {
-    mailQuotaSize, qmailUser,
+    qmailUser,
 } from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailUser.oa.js";
-import {
-    displayName,
-    kickoffTime,
-    rid,
-    sambaAccount,
-} from "@wildboar/parity-schema/src/lib/modules/SambaSchema/sambaAccount.oa.js";
-import {
-    sambaDomainName,
-    sambaProfilePath,
-    sambaSamAccount, sambaSID,
-} from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSamAccount.oa.js";
+import { mailQuotaSize } from "@wildboar/parity-schema/src/lib/modules/QMailSchema/mailQuotaSize.oa.js";
+import { sambaAccount } from "@wildboar/parity-schema/src/lib/modules/SambaSchema/sambaAccount.oa.js";
+import { displayName } from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/displayName.oa.js";
+import { kickoffTime } from "@wildboar/parity-schema/src/lib/modules/SambaSchema/kickoffTime.oa.js";
+import { rid } from "@wildboar/parity-schema/src/lib/modules/SambaSchema/rid.oa.js";
+import { sambaSamAccount } from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSamAccount.oa.js";
+import { sambaSID } from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaSID.oa.js";
+import { sambaProfilePath } from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaProfilePath.oa.js";
+import { sambaDomainName } from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaDomainName.oa.js";
 import {
     mhs_user,
 } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
@@ -153,7 +154,7 @@ import {
 import {
     ResultAttribute,
 } from "@wildboar/x500/ServiceAdministration";
-import { OCALA_USERS, OCALA_USERS_SERVICES } from "./aci";
+import { OCALA_USERS, OCALA_USERS_SERVICES } from "./aci.js";
 import { _encode_ACIItem } from "@wildboar/x500/BasicAccessControl";
 import {
     id_ar_accessControlInnerArea,

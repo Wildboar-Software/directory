@@ -1,6 +1,6 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import { DER } from "@wildboar/asn1/functional";
-import destringifyDN from "../../utils/destringifyDN";
+import destringifyDN from "../../utils/destringifyDN.js";
 import {
     OperationalBindingID,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -24,8 +24,8 @@ import {
 import {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
-import { getAlgorithmInfoFromKey } from "../../crypto/getAlgorithmInfoFromKey";
-import printError from "../../printers/Error_";
+import { getAlgorithmInfoFromKey } from "../../crypto/getAlgorithmInfoFromKey.js";
+import printError from "../../printers/Error_.js";
 import { uriToNSAP } from "@wildboar/x500";
 import {
     TerminateOperationalBindingArgumentData,

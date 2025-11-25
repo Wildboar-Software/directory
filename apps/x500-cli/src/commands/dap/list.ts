@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import { ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import {
@@ -21,15 +21,32 @@ import type {
 import {
     ServiceControls,
 } from "@wildboar/x500/DirectoryAbstractService";
-import destringifyDN from "../../utils/destringifyDN";
-import printError from "../../printers/Error_";
+import destringifyDN from "../../utils/destringifyDN.js";
+import printError from "../../printers/Error_.js";
 import {
     PagedResultsRequest,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/DirectoryAbstractService";
-import * as sco from "@wildboar/x500/DirectoryAbstractService";
+import {
+    ServiceControlOptions,
+    ServiceControlOptions_preferChaining,
+    ServiceControlOptions_chainingProhibited,
+    ServiceControlOptions_localScope,
+    // ServiceControlOptions_dontUseCopy,
+    ServiceControlOptions_dontDereferenceAliases,
+    ServiceControlOptions_subentries,
+    ServiceControlOptions_copyShallDo,
+    ServiceControlOptions_partialNameResolution,
+    ServiceControlOptions_manageDSAIT,
+    // ServiceControlOptions_noSubtypeMatch,
+    // ServiceControlOptions_noSubtypeSelection,
+    ServiceControlOptions_countFamily,
+    // ServiceControlOptions_dontSelectFriends,
+    // ServiceControlOptions_dontMatchFriends,
+    // ServiceControlOptions_allowWriteableCopy,
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_priority_low,
     ServiceControls_priority_medium,
@@ -46,7 +63,7 @@ import {
     ErrorProtectionRequest_signed,
     SecurityParameters,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { print as printListResult } from "../../printers/ListResult";
+import { print as printListResult } from "../../printers/ListResult.js";
 
 function priorityFromString (str: string): ServiceControls["priority"] {
     switch (str.trim().toLowerCase()) {
@@ -86,33 +103,33 @@ async function do_list (
         }
         : undefined;
 
-    const serviceControlOptions: sco.ServiceControlOptions = new Uint8ClampedArray(15);
+    const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(15);
     if (argv.preferChaining) {
-        serviceControlOptions[sco.ServiceControlOptions_preferChaining] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_preferChaining] = TRUE_BIT;
     }
     if (argv.chainingProhibited) {
-        serviceControlOptions[sco.ServiceControlOptions_chainingProhibited] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_chainingProhibited] = TRUE_BIT;
     }
     if (argv.localScope) {
-        serviceControlOptions[sco.ServiceControlOptions_localScope] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_localScope] = TRUE_BIT;
     }
     if (argv.dontDereferenceAliases) {
-        serviceControlOptions[sco.ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;
     }
     if (argv.subentries) {
-        serviceControlOptions[sco.ServiceControlOptions_subentries] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_subentries] = TRUE_BIT;
     }
     if (argv.copyShallDo) {
-        serviceControlOptions[sco.ServiceControlOptions_copyShallDo] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_copyShallDo] = TRUE_BIT;
     }
     if (argv.partialNameResolution) {
-        serviceControlOptions[sco.ServiceControlOptions_partialNameResolution] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_partialNameResolution] = TRUE_BIT;
     }
     if (argv.manageDSAIT) {
-        serviceControlOptions[sco.ServiceControlOptions_manageDSAIT] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_manageDSAIT] = TRUE_BIT;
     }
     if (argv.countFamily) {
-        serviceControlOptions[sco.ServiceControlOptions_countFamily] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_countFamily] = TRUE_BIT;
     }
 
     const serviceControls = new ServiceControls(

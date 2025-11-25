@@ -1,6 +1,6 @@
 import * as fs from "fs/promises";
-import { DEFAULT_CONFIGURATION_FILE } from "../getConfig";
-import { PREFERRED_CONFIG_FILE_LOCATION } from "../configFileLocations";
+import { DEFAULT_CONFIGURATION_FILE } from "../getConfig.js";
+import { PREFERRED_CONFIG_FILE_LOCATION } from "../configFileLocations.js";
 
 export
 function createConfigurationFile () {

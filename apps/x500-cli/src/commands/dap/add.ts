@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import { TRUE_BIT } from "@wildboar/asn1";
 import {
     addEntry,
@@ -20,8 +20,8 @@ import type {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
 import { DER } from "@wildboar/asn1/functional";
-import destringifyDN from "../../utils/destringifyDN";
-import printError from "../../printers/Error_";
+import destringifyDN from "../../utils/destringifyDN.js";
+import printError from "../../printers/Error_.js";
 import {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
@@ -30,7 +30,7 @@ import {
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { uriToNSAP } from "@wildboar/x500"
 import type { ArgumentsCamelCase } from "yargs";
-import type { CommonAddOptions } from "../../yargs/add_common_add_opts";
+import type { CommonAddOptions } from "../../yargs/add_common_add_opts.js";
 import {
     ServiceControls,
 } from "@wildboar/x500/DirectoryAbstractService";

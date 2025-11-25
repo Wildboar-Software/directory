@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../../types";
+import type { Connection, Context } from "../../../../types.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     modifyEntry,
@@ -19,12 +19,12 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import printCode from "../../../../printers/Code";
-import destringifyDN from "../../../../utils/destringifyDN";
+import printCode from "../../../../printers/Code.js";
+import destringifyDN from "../../../../utils/destringifyDN.js";
 import { FALSE_BIT, ObjectIdentifier, TRUE_BIT, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     ModAddACIItemArgs,
-} from "../../../../yargs/dap_mod_add_aci";
+} from "../../../../yargs/dap_mod_add_aci.js";
 import {
     ACIItem,
 } from "@wildboar/x500/BasicAccessControl";
@@ -52,14 +52,14 @@ import {
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import { lexSubtreeSpec } from "../../../../parsers/lexSubtreeSpec";
+import { lexSubtreeSpec } from "../../../../parsers/lexSubtreeSpec.js";
 import {
     MaxValueCount,
 } from "@wildboar/x500/BasicAccessControl";
 import {
     RestrictedValue,
 } from "@wildboar/x500/BasicAccessControl";
-import { lexRefinement } from "../../../../parsers/parseRefinement";
+import { lexRefinement } from "../../../../parsers/parseRefinement.js";
 import {
     GrantsAndDenials,
     GrantsAndDenials_denyAdd,

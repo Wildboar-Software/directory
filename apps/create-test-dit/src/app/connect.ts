@@ -1,4 +1,4 @@
-import type { Connection } from "./types";
+import type { Connection } from "./types.js";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
@@ -33,7 +33,7 @@ import * as crypto from "crypto";
 import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import { strict as assert } from "assert";
 import { DER } from "@wildboar/asn1/functional";
-import printCode from "./printCode";
+import printCode from "./printCode.js";
 
 export
 async function connect (

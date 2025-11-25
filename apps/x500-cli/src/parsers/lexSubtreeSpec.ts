@@ -1,15 +1,15 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import {
     SubtreeSpecification,
 } from "@wildboar/x500/InformationFramework";
 import type {
     ChopSpecification_specificExclusions_Item,
 } from "@wildboar/x500/InformationFramework";
-import decodeLDAPDN from "../utils/destringifyDN";
+import decodeLDAPDN from "../utils/destringifyDN.js";
 import type {
     Refinement,
 } from "@wildboar/x500/InformationFramework";
-import isDigit from "../utils/isDigit";
+import isDigit from "../utils/isDigit.js";
 import { ObjectIdentifier } from "@wildboar/asn1";
 import { ctx } from "../ctx.js";
 

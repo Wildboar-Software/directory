@@ -7,9 +7,9 @@ import {
     LimitProblem_sizeLimitExceeded,
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { print as printAttribute } from "./Attribute";
-import { print as printContinuationRef } from "./ContinuationReference";
-import Context from "../types";
+import { print as printAttribute } from "./Attribute.js";
+import { print as printContinuationRef } from "./ContinuationReference.js";
+import Context from "../types.js";
 import { EOL } from "node:os";
 
 function printLimitProblem (lp: LimitProblem): string {

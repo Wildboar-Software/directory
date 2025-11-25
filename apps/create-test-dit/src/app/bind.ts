@@ -1,5 +1,5 @@
-import type { Context, Connection } from "./types";
-import connect from "./connect";
+import type { Context, Connection } from "./types.js";
+import connect from "./connect.js";
 import {
     IdmBindError,
 } from "@wildboar/x500/IDMProtocolSpecification";

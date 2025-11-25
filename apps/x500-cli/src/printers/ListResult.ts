@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type {
     ListResult,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -12,11 +12,11 @@ import type {
     ListResultData_listInfo_subordinates_Item as Subordinate,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { EOL } from "node:os";
-import stringifyDN from "../utils/stringifyDN";
+import stringifyDN from "../utils/stringifyDN.js";
 import chalk from "chalk";
-import { print as printPOQ } from "./poq";
-import { print as printAttribute } from "./Attribute";
-import { print as printSP } from "./SecurityParameters";
+import { print as printPOQ } from "./poq.js";
+import { print as printAttribute } from "./Attribute.js";
+import { print as printSP } from "./SecurityParameters.js";
 
 const cyan: (str: string) => string = process.env.NO_COLOR
     ? (str: string): string => str

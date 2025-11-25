@@ -1,7 +1,7 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
-import search from "../commands/dap/search";
+import bind from "../net/bind.js";
+import search from "../commands/dap/search.js";
 
 export
 function create (ctx: Context): CommandModule {

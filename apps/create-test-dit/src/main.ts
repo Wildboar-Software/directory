@@ -1,14 +1,14 @@
 import { program } from "commander";
 import ctx from "./app/ctx.js";
-import bind from "./app/bind";
+import bind from "./app/bind.js";
 import { DER, _encodeUTF8String } from "@wildboar/asn1/functional";
-import createCountries from "./app/create-countries";
-import createAdmin from "./app/create-admin";
-import { seedUS } from "./app/create-us";
-import { seedGB } from "./app/create-gb";
-import { seedRU } from "./app/create-ru";
-import { seedMoscow } from "./app/create-moscow";
-import { adminDN } from "./app/constants";
+import createCountries from "./app/create-countries.js";
+import createAdmin from "./app/create-admin.js";
+import { seedUS } from "./app/create-us.js";
+import { seedGB } from "./app/create-gb.js";
+import { seedRU } from "./app/create-ru.js";
+import { seedMoscow } from "./app/create-moscow.js";
+import { adminDN } from "./app/constants.js";
 import {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
@@ -22,9 +22,9 @@ import { _encodePrintableString } from "@wildboar/asn1/functional";
 import {
     localityName,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import { sleep } from "./app/utils";
-import seedUN from "./app/create-un";
-import seedCA from "./app/create-ca";
+import { sleep } from "./app/utils.js";
+import seedUN from "./app/create-un.js";
+import seedCA from "./app/create-ca.js";
 
 program.version("1.0.0");
 

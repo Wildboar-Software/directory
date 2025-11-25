@@ -1,8 +1,8 @@
-import type { Context, Connection } from "../types";
+import type { Context, Connection } from "../types.js";
 import * as fs from "fs";
 import * as readline from "readline";
-import MutableWriteable from "../utils/MutableWriteable";
-import connect from "./connect";
+import MutableWriteable from "../utils/MutableWriteable.js";
+import connect from "./connect.js";
 import {
     IdmBindError,
 } from "@wildboar/x500/IDMProtocolSpecification";
@@ -33,7 +33,7 @@ import {
 import {
     ACPathData,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
-import destringifyDN from "../utils/destringifyDN";
+import destringifyDN from "../utils/destringifyDN.js";
 
 /**
  * @summary Produce a `PkiPath` from a PEM-encoded X.509 certificate chain.

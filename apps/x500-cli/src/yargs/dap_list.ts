@@ -1,7 +1,7 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
-import list from "../commands/dap/list";
+import bind from "../net/bind.js";
+import list from "../commands/dap/list.js";
 
 // ListArgumentData ::= SET {
 //     object        [0]  Name,

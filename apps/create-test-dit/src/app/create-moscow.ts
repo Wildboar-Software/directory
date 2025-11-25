@@ -1,4 +1,4 @@
-import type { Connection, Context } from "./types";
+import type { Connection, Context } from "./types.js";
 import {
     TRUE,
     FALSE,
@@ -60,7 +60,7 @@ import {
 import {
     ErrorProtectionRequest_none,
 } from "@wildboar/x500/DirectoryAbstractService";
-import print from "./printCode";
+import print from "./printCode.js";
 import {
     DER,
     _encodeBoolean,
@@ -109,7 +109,7 @@ import {
     AUTHENTICATED_USER_BASELINE,
     AUTHENTICATED_USER_SELF_BASELINE,
     GLOBAL_DIRECTORY_ADMIN_BASELINE,
-} from "./aci";
+} from "./aci.js";
 import { RDNSequence } from "@wildboar/x500/InformationFramework";
 import { compareCode } from "@wildboar/x500";
 import {
@@ -119,7 +119,7 @@ import {
     UpdateProblem_entryAlreadyExists, UpdateProblem_namingViolation,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import { commonAuxiliaryObjectClasses } from "./objectClassSets";
+import { commonAuxiliaryObjectClasses } from "./objectClassSets.js";
 import {
     inetOrgPersonNameForm,
 } from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa.js";

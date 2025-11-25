@@ -1,4 +1,4 @@
-import type { Context, Connection } from "../types";
+import type { Context, Connection } from "../types.js";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
@@ -47,8 +47,8 @@ import { EventEmitter } from "node:events";
 import { IDMConnection } from "@wildboar/idm";
 import { URL } from "url";
 import * as crypto from "crypto";
-import destringifyDN from "../utils/destringifyDN";
-import generateSimpleCredsValidity from "../utils/generateSimpleCredsValidity";
+import destringifyDN from "../utils/destringifyDN.js";
+import generateSimpleCredsValidity from "../utils/generateSimpleCredsValidity.js";
 import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import { strict as assert } from "assert";
 import { DER } from "@wildboar/asn1/functional";
@@ -60,7 +60,7 @@ import {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
 import { KeyObject, sign, createSign } from "node:crypto";
-import { getAlgorithmInfoFromKey } from "../crypto/getAlgorithmInfoFromKey";
+import { getAlgorithmInfoFromKey } from "../crypto/getAlgorithmInfoFromKey.js";
 import { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import { addSeconds, addYears } from "date-fns";
 import { Name } from "@wildboar/pki-stub";

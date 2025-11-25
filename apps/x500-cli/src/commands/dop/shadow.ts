@@ -1,4 +1,4 @@
-import type { Connection, Context, IndexableOID } from "../../types";
+import type { Connection, Context, IndexableOID } from "../../types.js";
 import {
     DER,
     _encodeNull,
@@ -9,7 +9,7 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import destringifyDN from "../../utils/destringifyDN";
+import destringifyDN from "../../utils/destringifyDN.js";
 import {
     EstablishOperationalBindingArgumentData,
     _encode_EstablishOperationalBindingArgumentData,
@@ -40,14 +40,14 @@ import {
 import {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
-import { getAlgorithmInfoFromKey } from "../../crypto/getAlgorithmInfoFromKey";
+import { getAlgorithmInfoFromKey } from "../../crypto/getAlgorithmInfoFromKey.js";
 import {
     EstablishOperationalBindingArgument,
 } from "@wildboar/x500/OperationalBindingManagement";
 import {
     _decode_EstablishOperationalBindingResult,
 } from "@wildboar/x500/OperationalBindingManagement";
-import printError from "../../printers/Error_";
+import printError from "../../printers/Error_.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { uriToNSAP } from "@wildboar/x500";
 import { shadowOperationalBinding } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -69,7 +69,7 @@ import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/Directory
 import {
     ChopSpecification_specificExclusions_Item,
 } from "@wildboar/x500/InformationFramework";
-import { lexRefinement } from "../../parsers/parseRefinement";
+import { lexRefinement } from "../../parsers/parseRefinement.js";
 import { ClassAttributeSelection } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { contexts } from "@wildboar/x500";
 import {

@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     removeEntry,
@@ -16,8 +16,8 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import destringifyDN from "../../utils/destringifyDN";
-import printError from "../../printers/Error_";
+import destringifyDN from "../../utils/destringifyDN.js";
+import printError from "../../printers/Error_.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 
 export

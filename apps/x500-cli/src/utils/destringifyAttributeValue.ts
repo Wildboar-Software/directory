@@ -1,6 +1,6 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import { normalizeAttributeDescription } from "@wildboar/ldap";
-import { getLDAPSyntax } from "./getLDAPSyntax";
+import { getLDAPSyntax } from "./getLDAPSyntax.js";
 import { LDAPString } from "@wildboar/ldap";
 import { ASN1Element, OBJECT_IDENTIFIER, ObjectIdentifier, BERElement } from "@wildboar/asn1";
 

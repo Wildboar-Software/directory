@@ -1,4 +1,4 @@
-import type { Connection, Context } from "./types";
+import type { Connection, Context } from "./types.js";
 import {
     addEntry,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -6,7 +6,7 @@ import {
     AddEntryArgument,
     _encode_AddEntryArgument,
 } from "@wildboar/x500/DirectoryAbstractService";
-import print from "./printCode";
+import print from "./printCode.js";
 import { DER } from "@wildboar/asn1/functional";
 import { compareCode } from "@wildboar/x500";
 import {

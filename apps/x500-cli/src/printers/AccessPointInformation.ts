@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
@@ -14,7 +14,7 @@ import {
     MasterOrShadowAccessPoint_category_shadow,
     MasterOrShadowAccessPoint_category_writeableCopy,
 } from "@wildboar/x500/DistributedOperations";
-import stringifyDN from "../utils/stringifyDN";
+import stringifyDN from "../utils/stringifyDN.js";
 import { naddrToURI } from "@wildboar/x500";
 import { EOL } from "node:os";
 

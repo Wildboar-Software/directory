@@ -1,6 +1,6 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import { findConfigurationFile } from "../config/findConfigurationFile";
+import { findConfigurationFile } from "../config/findConfigurationFile.js";
 
 export
 function create (ctx: Context): CommandModule {

@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { ASN1Element } from "@wildboar/asn1";
 import { destringifyRDNSequence } from "@wildboar/ldap";
 import type {
@@ -8,7 +8,7 @@ import { normalizeAttributeDescription } from "@wildboar/ldap";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/InformationFramework";
-import { getLDAPSyntax } from "../getLDAPSyntax";
+import { getLDAPSyntax } from "../getLDAPSyntax.js";
 
 export
 function destringifyDN (

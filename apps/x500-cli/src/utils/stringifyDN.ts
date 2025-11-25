@@ -1,10 +1,10 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { stringifyRDNSequence } from "@wildboar/ldap";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { getLDAPSyntax } from "../getLDAPSyntax";
+import { getLDAPSyntax } from "../getLDAPSyntax.js";
 
 export
 function stringifyDN (

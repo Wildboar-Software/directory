@@ -1,9 +1,9 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
+import bind from "../net/bind.js";
 import {
     do_shadow as command,
-} from "../commands/dop/shadow";
+} from "../commands/dop/shadow.js";
 import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import * as _ from "lodash";
 

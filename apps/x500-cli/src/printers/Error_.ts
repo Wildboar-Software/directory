@@ -1,4 +1,4 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     Code,
@@ -13,14 +13,69 @@ import { referral } from "@wildboar/x500/DirectoryAbstractService";
 import { abandoned } from "@wildboar/x500/DirectoryAbstractService";
 import { abandonFailed } from "@wildboar/x500/DirectoryAbstractService";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import * as secp from "@wildboar/x500/DirectoryAbstractService";
-import * as serp from "@wildboar/x500/DirectoryAbstractService";
-import * as attp from "@wildboar/x500/DirectoryAbstractService";
-import * as updp from "@wildboar/x500/DirectoryAbstractService";
-import * as namp from "@wildboar/x500/DirectoryAbstractService";
-import * as abfp from "@wildboar/x500/DirectoryAbstractService";
-import stringifyDN from "../utils/stringifyDN";
-import printAttributeValue from "./AttributeValue";
+import {
+    SecurityProblem_inappropriateAuthentication,
+    SecurityProblem_invalidCredentials,
+    SecurityProblem_insufficientAccessRights,
+    SecurityProblem_invalidSignature,
+    SecurityProblem_protectionRequired,
+    SecurityProblem_noInformation,
+    SecurityProblem_blockedCredentials,
+    // SecurityProblem_invalidQOPMatch,
+    SecurityProblem_spkmError,
+    SecurityProblem_unsupportedAuthenticationMethod,
+    SecurityProblem_passwordExpired,
+    SecurityProblem_inappropriateAlgorithms,
+    AbandonProblem_noSuchOperation,
+    AbandonProblem_tooLate,
+    AbandonProblem_cannotAbandon,
+    ServiceProblem_busy,
+    ServiceProblem_unavailable,
+    ServiceProblem_unwillingToPerform,
+    ServiceProblem_chainingRequired,
+    ServiceProblem_unableToProceed,
+    ServiceProblem_invalidReference,
+    ServiceProblem_timeLimitExceeded,
+    ServiceProblem_administrativeLimitExceeded,
+    ServiceProblem_loopDetected,
+    ServiceProblem_unavailableCriticalExtension,
+    ServiceProblem_outOfScope,
+    ServiceProblem_ditError,
+    ServiceProblem_invalidQueryReference,
+    ServiceProblem_requestedServiceNotAvailable,
+    ServiceProblem_unsupportedMatchingUse,
+    ServiceProblem_ambiguousKeyAttributes,
+    ServiceProblem_saslBindInProgress,
+    ServiceProblem_notSupportedByLDAP,
+    NameProblem_noSuchObject,
+    NameProblem_aliasProblem,
+    NameProblem_invalidAttributeSyntax,
+    NameProblem_aliasDereferencingProblem,
+    UpdateProblem_namingViolation,
+    UpdateProblem_objectClassViolation,
+    UpdateProblem_notAllowedOnNonLeaf,
+    UpdateProblem_notAllowedOnRDN,
+    UpdateProblem_entryAlreadyExists,
+    UpdateProblem_affectsMultipleDSAs,
+    UpdateProblem_objectClassModificationProhibited,
+    UpdateProblem_noSuchSuperior,
+    UpdateProblem_notAncestor,
+    UpdateProblem_parentNotAncestor,
+    UpdateProblem_hierarchyRuleViolation,
+    UpdateProblem_familyRuleViolation,
+    UpdateProblem_insufficientPasswordQuality,
+    UpdateProblem_passwordInHistory,
+    UpdateProblem_noPasswordSlot,
+    AttributeProblem_noSuchAttributeOrValue,
+    AttributeProblem_invalidAttributeSyntax,
+    AttributeProblem_undefinedAttributeType,
+    AttributeProblem_inappropriateMatching,
+    AttributeProblem_constraintViolation,
+    AttributeProblem_attributeOrValueAlreadyExists,
+    AttributeProblem_contextViolation,
+} from "@wildboar/x500/DirectoryAbstractService";
+import stringifyDN from "../utils/stringifyDN.js";
+import printAttributeValue from "./AttributeValue.js";
 import { naddrToURI } from "@wildboar/x500";
 import {
     MasterOrShadowAccessPoint_category_master,
@@ -35,34 +90,93 @@ const colorize: (str: string) => string = process.env.NO_COLOR
     : chalk.red;
 
 const securityErrorProblemNames: Map<number, string> = new Map(
-    Object.entries(secp)
-        .filter(([ name, value ]) => (name.indexOf("_") === -1) && (typeof value === "number"))
-        .map(([ name, value ]) => [ value as number, name ]),
+    Object.entries({
+        SecurityProblem_inappropriateAuthentication,
+        SecurityProblem_invalidCredentials,
+        SecurityProblem_insufficientAccessRights,
+        SecurityProblem_invalidSignature,
+        SecurityProblem_protectionRequired,
+        SecurityProblem_noInformation,
+        SecurityProblem_blockedCredentials,
+        // SecurityProblem_invalidQOPMatch,
+        SecurityProblem_spkmError,
+        SecurityProblem_unsupportedAuthenticationMethod,
+        SecurityProblem_passwordExpired,
+        SecurityProblem_inappropriateAlgorithms,
+    })
+        .map(([ name, value ]) => [ value as number, name.split("_")[1] ]),
 );
 const serviceErrorProblemNames: Map<number, string> = new Map(
-    Object.entries(serp)
-        .filter(([ name, value ]) => (name.indexOf("_") === -1) && (typeof value === "number"))
-        .map(([ name, value ]) => [ value as number, name ]),
+    Object.entries({
+        ServiceProblem_busy,
+        ServiceProblem_unavailable,
+        ServiceProblem_unwillingToPerform,
+        ServiceProblem_chainingRequired,
+        ServiceProblem_unableToProceed,
+        ServiceProblem_invalidReference,
+        ServiceProblem_timeLimitExceeded,
+        ServiceProblem_administrativeLimitExceeded,
+        ServiceProblem_loopDetected,
+        ServiceProblem_unavailableCriticalExtension,
+        ServiceProblem_outOfScope,
+        ServiceProblem_ditError,
+        ServiceProblem_invalidQueryReference,
+        ServiceProblem_requestedServiceNotAvailable,
+        ServiceProblem_unsupportedMatchingUse,
+        ServiceProblem_ambiguousKeyAttributes,
+        ServiceProblem_saslBindInProgress,
+        ServiceProblem_notSupportedByLDAP,
+    })
+        .map(([ name, value ]) => [ value as number, name.split("_")[1] ]),
 );
 const nameErrorProblemNames: Map<number, string> = new Map(
-    Object.entries(namp)
-        .filter(([ name, value ]) => (name.indexOf("_") === -1) && (typeof value === "number"))
-        .map(([ name, value ]) => [ value as number, name ]),
+    Object.entries({
+        NameProblem_noSuchObject,
+        NameProblem_aliasProblem,
+        NameProblem_invalidAttributeSyntax,
+        NameProblem_aliasDereferencingProblem,
+    })
+        .map(([ name, value ]) => [ value as number, name.split("_")[1] ]),
 );
 const attributeErrorProblemNames: Map<number, string> = new Map(
-    Object.entries(attp)
-        .filter(([ name, value ]) => (name.indexOf("_") === -1) && (typeof value === "number"))
-        .map(([ name, value ]) => [ value as number, name ]),
+    Object.entries({
+        AttributeProblem_noSuchAttributeOrValue,
+        AttributeProblem_invalidAttributeSyntax,
+        AttributeProblem_undefinedAttributeType,
+        AttributeProblem_inappropriateMatching,
+        AttributeProblem_constraintViolation,
+        AttributeProblem_attributeOrValueAlreadyExists,
+        AttributeProblem_contextViolation,
+    })
+        .map(([ name, value ]) => [ value as number, name.split("_")[1] ]),
 );
 const updateErrorProblemNames: Map<number, string> = new Map(
-    Object.entries(updp)
-        .filter(([ name, value ]) => (name.indexOf("_") === -1) && (typeof value === "number"))
-        .map(([ name, value ]) => [ value as number, name ]),
+    Object.entries({
+        UpdateProblem_namingViolation,
+        UpdateProblem_objectClassViolation,
+        UpdateProblem_notAllowedOnNonLeaf,
+        UpdateProblem_notAllowedOnRDN,
+        UpdateProblem_entryAlreadyExists,
+        UpdateProblem_affectsMultipleDSAs,
+        UpdateProblem_objectClassModificationProhibited,
+        UpdateProblem_noSuchSuperior,
+        UpdateProblem_notAncestor,
+        UpdateProblem_parentNotAncestor,
+        UpdateProblem_hierarchyRuleViolation,
+        UpdateProblem_familyRuleViolation,
+        UpdateProblem_insufficientPasswordQuality,
+        UpdateProblem_passwordInHistory,
+        UpdateProblem_noPasswordSlot,
+    })
+        .map(([ name, value ]) => [ value as number, name.split("_")[1] ]),
 );
 const abandonFailedProblemNames: Map<number, string> = new Map(
-    Object.entries(abfp)
-        .filter(([ name, value ]) => (name.indexOf("_") === -1) && (typeof value === "number"))
-        .map(([ name, value ]) => [ value as number, name ]),
+    Object.entries({
+        AbandonProblem_noSuchOperation,
+        AbandonProblem_tooLate,
+        AbandonProblem_cannotAbandon,
+    })
+        .map(([ name, value ]) => [ value as number, name.split("_")[1] ]),
 );
 
 const UNKNOWN_PROBLEM: string = "UNKNOWN PROBLEM";

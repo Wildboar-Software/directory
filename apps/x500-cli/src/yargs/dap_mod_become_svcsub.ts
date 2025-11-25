@@ -1,7 +1,7 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
-import { do_modify_become_svcsub as command } from "../commands/dap/mod/become/svcsub";
+import bind from "../net/bind.js";
+import { do_modify_become_svcsub as command } from "../commands/dap/mod/become/svcsub.js";
 
 export
 interface BecomeServiceSubentryArgs {

@@ -1,11 +1,11 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import { getConfig } from "../getConfig";
-import { saveConfig } from "../saveConfig";
+import { getConfig } from "../getConfig.js";
+import { saveConfig } from "../saveConfig.js";
 import { strict as assert } from "assert";
-import { createConfigurationFile } from "../config/createConfigurationFile";
+import { createConfigurationFile } from "../config/createConfigurationFile.js";
 import * as readline from "readline";
-import MutableWriteable from "../utils/MutableWriteable";
+import MutableWriteable from "../utils/MutableWriteable.js";
 
 export
 function create (ctx: Context): CommandModule<unknown, { name: string, binddn: string }> {

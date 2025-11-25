@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../types";
+import type { Connection, Context } from "../../../types.js";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
@@ -11,11 +11,11 @@ import {
     _encodeOctetString,
     _encodePrintableString,
 } from "@wildboar/asn1/functional";
-import do_addEntry from "../add";
+import do_addEntry from "../add.js";
 import {
     _encode_RDNSequence,
 } from "@wildboar/x500/InformationFramework";
-import destringifyDN from "../../../utils/destringifyDN";
+import destringifyDN from "../../../utils/destringifyDN.js";
 import {
     PostalAddress,
     _encode_PostalAddress,
@@ -25,7 +25,7 @@ import {
     _encode_FacsimileTelephoneNumber,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import type { ArgumentsCamelCase } from "yargs";
-import type { CommonAddOptions } from "../../../yargs/add_common_add_opts";
+import type { CommonAddOptions } from "../../../yargs/add_common_add_opts.js";
 
 // organizationalPerson OBJECT-CLASS ::= {
 //     SUBCLASS OF  {person}

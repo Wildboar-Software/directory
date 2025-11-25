@@ -34,6 +34,7 @@
         "@docusaurus/core": "3.7.0",
         "@docusaurus/plugin-pwa": "3.7.0",
         "@docusaurus/preset-classic": "3.7.0",
+        "@logtape/logtape": "npm:@jsr/logtape__logtape@^1.2.0-dev.369+2dd942c9",
         "@mdx-js/react": "^3.0.0",
         "@prisma/client": "^6.4.1",
         "@std/yaml": "npm:@jsr/std__yaml@^1.0.10",
@@ -95,7 +96,6 @@
         "serve-static": "^1.15.0",
         "tiny-typed-emitter": "^2.1.0",
         "tslib": "^2.8.1",
-        "winston": "^3.17.0",
         "yargs": "^17.7.2"
     },
     "devDependencies": {

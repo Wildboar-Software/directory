@@ -1,10 +1,10 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
+import bind from "../net/bind.js";
 import {
     do_modify_add_cr as command,
-} from "../commands/dap/mod/add/cr";
-import type { SchemaObjectArgs } from "../types";
+} from "../commands/dap/mod/add/cr.js";
+import type { SchemaObjectArgs } from "../types.js";
 
 // dITContentRules ATTRIBUTE ::= {
 //     WITH SYNTAX              DITContentRuleDescription

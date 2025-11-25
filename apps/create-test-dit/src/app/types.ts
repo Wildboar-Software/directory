@@ -5,7 +5,7 @@ import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
 import type { Request } from "@wildboar/x500";
 import type { ResultOrError } from "@wildboar/x500";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
-import type { Logger } from "winston";
+import type { Logger } from "@logtape/logtape";
 
 export
 type UUID = string;

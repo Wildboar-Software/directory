@@ -6,8 +6,7 @@
         "types": ["node"],
         "esModuleInterop": true,
         "resolveJsonModule": true,
-        "sourceMap": true,
-        "lib": ["ES2021.String"]
+        "sourceMap": true
     },
     "exclude": [
         "**/*.spec.ts",

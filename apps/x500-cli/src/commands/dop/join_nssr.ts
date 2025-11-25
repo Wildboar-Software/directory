@@ -1,9 +1,9 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import { DER } from "@wildboar/asn1/functional";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import destringifyDN from "../../utils/destringifyDN";
+import destringifyDN from "../../utils/destringifyDN.js";
 import {
     NonSpecificHierarchicalAgreement,
     _encode_NonSpecificHierarchicalAgreement,
@@ -45,14 +45,14 @@ import {
 import {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
-import { getAlgorithmInfoFromKey } from "../../crypto/getAlgorithmInfoFromKey";
+import { getAlgorithmInfoFromKey } from "../../crypto/getAlgorithmInfoFromKey.js";
 import {
     EstablishOperationalBindingArgument,
 } from "@wildboar/x500/OperationalBindingManagement";
 import {
     _decode_EstablishOperationalBindingResult,
 } from "@wildboar/x500/OperationalBindingManagement";
-import printError from "../../printers/Error_";
+import printError from "../../printers/Error_.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { uriToNSAP } from "@wildboar/x500";
 

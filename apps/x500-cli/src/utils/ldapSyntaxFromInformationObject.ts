@@ -1,7 +1,7 @@
 import {
     SYNTAX_NAME,
 } from "@wildboar/x500/InformationFramework";
-import type { LDAPSyntaxInfo } from "../types";
+import type { LDAPSyntaxInfo } from "../types.js";
 
 export
 function attributeFromInformationObject (io: SYNTAX_NAME): LDAPSyntaxInfo {

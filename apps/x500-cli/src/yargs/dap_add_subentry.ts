@@ -1,8 +1,8 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
-import addEntry from "../commands/dap/add/subentry";
-import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts";
+import bind from "../net/bind.js";
+import addEntry from "../commands/dap/add/subentry.js";
+import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts.js";
 
 // subentry OBJECT-CLASS ::= {
 //     SUBCLASS OF      {top}

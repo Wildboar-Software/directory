@@ -1,12 +1,12 @@
 import type { ASN1Element } from "@wildboar/asn1";
-import type { Context, AttributeInfo } from "../types";
+import type { Context, AttributeInfo } from "../types.js";
 import {
     _decode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import printValue from "./Value";
+import printValue from "./Value.js";
 import { dn } from "@wildboar/x500/SelectedAttributeTypes";
-import stringifyDN from "../utils/stringifyDN";
-import { getLDAPSyntax } from "../getLDAPSyntax";
+import stringifyDN from "../utils/stringifyDN.js";
+import { getLDAPSyntax } from "../getLDAPSyntax.js";
 
 export
 function printAttributeValue (

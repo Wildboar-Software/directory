@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../../types";
+import type { Connection, Context } from "../../../../types.js";
 import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     DER,
@@ -29,14 +29,14 @@ import type {
 import {
     objectClass,
 } from "@wildboar/x500/InformationFramework";
-import printCode from "../../../../printers/Code";
-import destringifyDN from "../../../../utils/destringifyDN";
+import printCode from "../../../../printers/Code.js";
+import destringifyDN from "../../../../utils/destringifyDN.js";
 import {
     pwdAdminSubentry,
 } from "@wildboar/x500/InformationFramework";
 import type {
     PwdSubArgs,
-} from "../../../../yargs/dap_mod_become_pwdsub";
+} from "../../../../yargs/dap_mod_become_pwdsub.js";
 import {
     pwdModifyEntryAllowed,
 } from "@wildboar/x500/PasswordPolicy";

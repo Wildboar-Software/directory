@@ -15,11 +15,15 @@ import {
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { PrismaClient } from "@prisma/client";
 import { EventEmitter } from "node:events";
-import winston from "winston";
-import isDebugging from "is-debugging";
+import {
+    configure as configureLogging,
+    getConsoleSink,
+    getLogger,
+    ansiColorFormatter,
+    jsonLinesFormatter,
+} from "@logtape/logtape";
 import i18n from "i18next";
 import { uriToNSAP } from "@wildboar/x500";
-import * as path from "path";
 import { URL } from "url";
 import {
     DEFAULT_IDM_BUFFER_SIZE,
@@ -288,90 +292,6 @@ const root: Vertex = {
     },
 };
 const bulkInsertMode: boolean = (process.env.MEERKAT_BULK_INSERT_MODE === "1");
-const logNoColor: boolean = (
-    (process.env.MEERKAT_NO_COLOR === "1")
-    || !!(process.env.NO_COLOR) // See: https://no-color.org/
-);
-const logNoTimestamp: boolean = (process.env.MEERKAT_NO_TIMESTAMP === "1");
-const logLevel: string = (process.env.MEERKAT_LOG_LEVEL || "info");
-const logJson: boolean = (process.env.MEERKAT_LOG_JSON === "1");
-const logNoConsole: boolean = (process.env.MEERKAT_NO_CONSOLE === "1");
-// const logToWindows: boolean = (process.env.MEERKAT_LOG_WINDOWS === "1");
-// const logToSyslog: boolean = (process.env.MEERKAT_LOG_SYSLOG === "1");
-const logToFile: string | undefined = (() => {
-    if (!process.env.MEERKAT_LOG_FILE?.length) {
-        return undefined;
-    }
-    try {
-        path.parse(process.env.MEERKAT_LOG_FILE);
-        return process.env.MEERKAT_LOG_FILE;
-    } catch {
-        console.error(`INVALID MEERKAT_LOG_FILE PATH ${process.env.MEERKAT_LOG_FILE}`);
-        process.exit(1);
-    }
-})();
-const logFileMaxSize: number = Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_SIZE || "1000000");
-const logFileMaxFiles: number = Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_FILES || "100");
-const logFileZip: boolean = (process.env.MEERKAT_LOG_ZIP === "1");
-const logFilesTailable: boolean = (process.env.MEERKAT_LOG_TAILABLE === "1");
-const logToHTTP: winston.transports.HttpTransportOptions | undefined = (() => {
-    if (!process.env.MEERKAT_LOG_HTTP?.length) {
-        return undefined;
-    }
-    try {
-        const url = new URL(process.env.MEERKAT_LOG_HTTP);
-        const ssl: boolean = (url.protocol.toLowerCase() === "https:");
-        const port = Number.parseInt(url.port);
-        return {
-            ssl,
-            host: url.host,
-            port: Number.isSafeInteger(port) && (port > 0)
-                ? port
-                : (ssl ? 443 : 80),
-            auth: url.username?.length
-                ? {
-                    username: url.username,
-                    password: url.password,
-                }
-                : undefined,
-            path: url.pathname,
-        };
-    } catch {
-        console.error(`INVALID MEERKAT_LOG_HTTP URL ${process.env.MEERKAT_LOG_HTTP}`);
-        process.exit(1);
-    }
-})();
-
-const winstonLogFormats: winston.Logform.Format[] = [];
-if (!logNoColor) {
-    winstonLogFormats.push(winston.format.colorize());
-}
-if (!logNoTimestamp) {
-    winstonLogFormats.push(winston.format.timestamp());
-}
-if (logJson) {
-    winstonLogFormats.push(winston.format.json());
-} else {
-    winstonLogFormats.push(winston.format.align());
-    winstonLogFormats.push(winston.format.printf(info => `${info.timestamp} [${info.level}]: ${info.message}`));
-}
-
-const winstonTransports: winston.transport[] = [];
-if (!logNoConsole) {
-    winstonTransports.push(new winston.transports.Console());
-}
-if (logToFile) {
-    winstonTransports.push(new winston.transports.File({
-        filename: logToFile,
-        maxsize: logFileMaxSize,
-        maxFiles: logFileMaxFiles,
-        zippedArchive: logFileZip,
-        tailable: logFilesTailable,
-    }));
-}
-if (logToHTTP) {
-    winstonTransports.push(new winston.transports.Http(logToHTTP));
-}
 
 const tlsCAFileContents: string | undefined = process.env.MEERKAT_TLS_CA_FILE
     ? fs.readFileSync(process.env.MEERKAT_TLS_CA_FILE, { encoding: "utf-8" })
@@ -589,25 +509,16 @@ const config: Configuration = {
     },
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
-        level: logLevel as LogLevel,
-        console: !logNoConsole,
-        color: !logNoColor,
-        timestamp: !logNoTimestamp,
-        json: logJson,
-        file: logToFile
-            ? {
-                path: logToFile,
-                maxSize: logFileMaxSize,
-                maxFiles: logFileMaxFiles,
-                zip: logFileZip,
-                tailable: logFilesTailable,
-            }
-            : undefined,
-        http: logToHTTP
-            ? {
-                url: process.env.MEERKAT_LOG_HTTP!,
-            }
-            : undefined,
+        options: {
+            sinks: {
+                safe: getConsoleSink(),
+                all: getConsoleSink({ formatter: jsonLinesFormatter }),
+            },
+            loggers: [
+                { category: ["logtape", "meta"], lowestLevel: "debug", sinks: ["safe"] },
+                { category: [], lowestLevel: "debug", sinks: ["all"] },
+            ]
+        },
     },
     maxConnections: process.env.MEERKAT_MAX_CONNECTIONS
         ? Number.parseInt(process.env.MEERKAT_MAX_CONNECTIONS)
@@ -1028,6 +939,8 @@ const config: Configuration = {
     },
 };
 
+await configureLogging(config.log.options);
+
 const ctx: MeerkatContext = {
     /* It seems like I have to do this. For some reason, the types do not
     align with the Javascript of this package: if I get a type error, the
@@ -1060,16 +973,7 @@ const ctx: MeerkatContext = {
     dit: {
         root,
     },
-    log: winston.createLogger({
-        level: isDebugging
-            ? "debug"
-            : logLevel,
-        format: winston.format.combine(...winstonLogFormats),
-        transports: winstonTransports,
-        defaultMeta: {
-            app: "meerkat",
-        },
-    }),
+    log: getLogger(),
     db: new PrismaClient({
         // log: ["query"],
         // log: ['query', 'info', 'warn', 'error'],

@@ -1,9 +1,9 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
+import bind from "../net/bind.js";
 import {
     do_modify_become_acsub as command,
-} from "../commands/dap/mod/become/acsub";
+} from "../commands/dap/mod/become/acsub.js";
 
 export
 function create (ctx: Context): CommandModule {

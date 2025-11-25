@@ -1,9 +1,9 @@
 import type {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import Context from "../types";
-import printAttributeValue from "./AttributeValue";
-import printValue from "./Value";
+import Context from "../types.js";
+import printAttributeValue from "./AttributeValue.js";
+import printValue from "./Value.js";
 import { EOL } from "node:os";
 
 export

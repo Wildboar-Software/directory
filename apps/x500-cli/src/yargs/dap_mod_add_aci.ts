@@ -1,9 +1,9 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
+import bind from "../net/bind.js";
 import {
     do_modify_add_aci as command,
-} from "../commands/dap/mod/add/aci";
+} from "../commands/dap/mod/add/aci.js";
 
 export
 interface ModAddACIItemArgs {

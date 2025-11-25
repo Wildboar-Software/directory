@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import { BIT_STRING, ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import {
@@ -24,8 +24,8 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import destringifyDN from "../../utils/destringifyDN";
-import printError from "../../printers/Error_";
+import destringifyDN from "../../utils/destringifyDN.js";
+import printError from "../../printers/Error_.js";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -49,11 +49,40 @@ import {
 import {
     PagedResultsRequest_newRequest, SortKey,
 } from "@wildboar/x500/DirectoryAbstractService";
-import * as hs from "@wildboar/x500/DirectoryAbstractService";
+import {
+    HierarchySelections,
+    HierarchySelections_self,
+    HierarchySelections_children,
+    HierarchySelections_parent,
+    HierarchySelections_hierarchy,
+    HierarchySelections_top,
+    HierarchySelections_subtree,
+    HierarchySelections_siblings,
+    HierarchySelections_siblingChildren,
+    HierarchySelections_siblingSubtree,
+    HierarchySelections_all,
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls,
 } from "@wildboar/x500/DirectoryAbstractService";
-import * as sco from "@wildboar/x500/DirectoryAbstractService";
+import {
+    ServiceControlOptions,
+    ServiceControlOptions_preferChaining,
+    ServiceControlOptions_chainingProhibited,
+    ServiceControlOptions_localScope,
+    ServiceControlOptions_dontUseCopy,
+    ServiceControlOptions_dontDereferenceAliases,
+    ServiceControlOptions_subentries,
+    ServiceControlOptions_copyShallDo,
+    ServiceControlOptions_partialNameResolution,
+    ServiceControlOptions_manageDSAIT,
+    ServiceControlOptions_noSubtypeMatch,
+    ServiceControlOptions_noSubtypeSelection,
+    ServiceControlOptions_countFamily,
+    ServiceControlOptions_dontSelectFriends,
+    ServiceControlOptions_dontMatchFriends,
+    ServiceControlOptions_allowWriteableCopy,
+} from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_priority_low,
     ServiceControls_priority_medium,
@@ -77,7 +106,7 @@ import {
     ErrorProtectionRequest_signed,
     SecurityParameters,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { print as printSearchResult } from "../../printers/SearchResult";
+import { print as printSearchResult } from "../../printers/SearchResult.js";
 
 function subsetFromString (str: string): SearchArgumentData_subset {
     const str_ = str.toLowerCase();
@@ -166,22 +195,22 @@ async function search_new (
             ),
         }
         : undefined;
-    const hierarchySelections: hs.HierarchySelections | undefined = argv.hierarchySelections
+    const hierarchySelections: HierarchySelections | undefined = argv.hierarchySelections
         ? (() => {
             const ret = new Uint8ClampedArray(10);
             for (const h of argv.hierarchySelections as string[]) {
                 const bit: number = ({
-                    "self": hs.HierarchySelections_self,
-                    "children": hs.HierarchySelections_children,
-                    "parent": hs.HierarchySelections_parent,
-                    "hierarchy": hs.HierarchySelections_hierarchy,
-                    "top": hs.HierarchySelections_top,
-                    "subtree": hs.HierarchySelections_subtree,
-                    "siblings": hs.HierarchySelections_siblings,
-                    "siblingChildren": hs.HierarchySelections_siblingChildren,
-                    "siblingSubtree": hs.HierarchySelections_siblingSubtree,
-                    "all": hs.HierarchySelections_all,
-                }[h]) ?? hs.HierarchySelections_self;
+                    "self": HierarchySelections_self,
+                    "children": HierarchySelections_children,
+                    "parent": HierarchySelections_parent,
+                    "hierarchy": HierarchySelections_hierarchy,
+                    "top": HierarchySelections_top,
+                    "subtree": HierarchySelections_subtree,
+                    "siblings": HierarchySelections_siblings,
+                    "siblingChildren": HierarchySelections_siblingChildren,
+                    "siblingSubtree": HierarchySelections_siblingSubtree,
+                    "all": HierarchySelections_all,
+                }[h]) ?? HierarchySelections_self;
                 ret[bit] = TRUE_BIT;
             }
             return ret;
@@ -224,51 +253,51 @@ async function search_new (
     if (argv.searchFamily) {
         searchOptions[SearchControlOptions_searchFamily] = TRUE_BIT;
     }
-    const serviceControlOptions: sco.ServiceControlOptions = new Uint8ClampedArray(15);
+    const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(15);
     if (argv.preferChaining) {
-        serviceControlOptions[sco.ServiceControlOptions_preferChaining] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_preferChaining] = TRUE_BIT;
     }
     if (argv.chainingProhibited) {
-        serviceControlOptions[sco.ServiceControlOptions_chainingProhibited] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_chainingProhibited] = TRUE_BIT;
     }
     if (argv.localScope) {
-        serviceControlOptions[sco.ServiceControlOptions_localScope] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_localScope] = TRUE_BIT;
     }
     if (argv.dontUseCopy) {
-        serviceControlOptions[sco.ServiceControlOptions_dontUseCopy] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_dontUseCopy] = TRUE_BIT;
     }
     if (argv.dontDereferenceAliases) {
-        serviceControlOptions[sco.ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;
     }
     if (argv.subentries) {
-        serviceControlOptions[sco.ServiceControlOptions_subentries] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_subentries] = TRUE_BIT;
     }
     if (argv.copyShallDo) {
-        serviceControlOptions[sco.ServiceControlOptions_copyShallDo] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_copyShallDo] = TRUE_BIT;
     }
     if (argv.partialNameResolution) {
-        serviceControlOptions[sco.ServiceControlOptions_partialNameResolution] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_partialNameResolution] = TRUE_BIT;
     }
     if (argv.manageDSAIT) {
-        serviceControlOptions[sco.ServiceControlOptions_manageDSAIT] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_manageDSAIT] = TRUE_BIT;
     }
     if (argv.noSubtypeMatch) {
-        serviceControlOptions[sco.ServiceControlOptions_noSubtypeMatch] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_noSubtypeMatch] = TRUE_BIT;
     }
     if (argv.noSubtypeSelection) {
-        serviceControlOptions[sco.ServiceControlOptions_noSubtypeSelection] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_noSubtypeSelection] = TRUE_BIT;
     }
     if (argv.countFamily) {
-        serviceControlOptions[sco.ServiceControlOptions_countFamily] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_countFamily] = TRUE_BIT;
     }
     if (argv.dontSelectFriends) {
-        serviceControlOptions[sco.ServiceControlOptions_dontSelectFriends] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_dontSelectFriends] = TRUE_BIT;
     }
     if (argv.dontMatchFriends) {
-        serviceControlOptions[sco.ServiceControlOptions_dontMatchFriends] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_dontMatchFriends] = TRUE_BIT;
     }
     if (argv.allowWriteableCopy) {
-        serviceControlOptions[sco.ServiceControlOptions_allowWriteableCopy] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_allowWriteableCopy] = TRUE_BIT;
     }
     const serviceControls = new ServiceControls(
         serviceControlOptions,

@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../../types";
+import type { Connection, Context } from "../../../../types.js";
 import { ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
@@ -23,14 +23,14 @@ import type {
 import {
     objectClass,
 } from "@wildboar/x500/InformationFramework";
-import printCode from "../../../../printers/Code";
-import destringifyDN from "../../../../utils/destringifyDN";
+import printCode from "../../../../printers/Code.js";
+import destringifyDN from "../../../../utils/destringifyDN.js";
 import {
     serviceAdminSubentry,
 } from "@wildboar/x500/InformationFramework";
 import type {
     BecomeServiceSubentryArgs,
-} from "../../../../yargs/dap_mod_become_svcsub";
+} from "../../../../yargs/dap_mod_become_svcsub.js";
 import {
     SearchRuleDescription,
 } from "@wildboar/x500/InformationFramework";
@@ -40,7 +40,7 @@ import {
 import {
     ResultAttribute,
 } from "@wildboar/x500/ServiceAdministration";
-import { lexRefinement } from "../../../../parsers/parseRefinement";
+import { lexRefinement } from "../../../../parsers/parseRefinement.js";
 import {
     FamilyGrouping,
     FamilyGrouping_entryOnly,

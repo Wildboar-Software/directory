@@ -1,4 +1,4 @@
-import type { ContextTypeInfo } from "../types";
+import type { ContextTypeInfo } from "../types.js";
 import type {
     CONTEXT,
 } from "@wildboar/x500/InformationFramework";

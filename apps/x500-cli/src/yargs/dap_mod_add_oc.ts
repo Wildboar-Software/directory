@@ -1,10 +1,10 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
+import bind from "../net/bind.js";
 import {
     do_modify_add_oc as command,
-} from "../commands/dap/mod/add/oc";
-import type { SchemaObjectArgs } from "../types";
+} from "../commands/dap/mod/add/oc.js";
+import type { SchemaObjectArgs } from "../types.js";
 
 // ObjectClassDescription ::= SEQUENCE {
 //     identifier        OBJECT-CLASS.&id,

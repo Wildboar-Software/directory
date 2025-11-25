@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     changePassword,
@@ -16,10 +16,10 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import destringifyDN from "../../utils/destringifyDN";
-import MutableWriteable from "../../utils/MutableWriteable";
+import destringifyDN from "../../utils/destringifyDN.js";
+import MutableWriteable from "../../utils/MutableWriteable.js";
 import * as readline from "readline";
-import printError from "../../printers/Error_";
+import printError from "../../printers/Error_.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 
 const mutedOut = new MutableWriteable();

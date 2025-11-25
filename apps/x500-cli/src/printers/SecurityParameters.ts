@@ -3,9 +3,9 @@ import {
     SecurityParameters,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { EOL } from "node:os";
-import Context from "../types";
-import stringifyDN from "../utils/stringifyDN";
-import { print as printCode } from "./Code";
+import Context from "../types.js";
+import stringifyDN from "../utils/stringifyDN.js";
+import { print as printCode } from "./Code.js";
 
 export
 function print (ctx: Context, sp: SecurityParameters): string {

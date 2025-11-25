@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import {
     TRUE_BIT,
     FALSE_BIT,
@@ -18,7 +18,7 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import destringifyDN from "../../utils/destringifyDN";
+import destringifyDN from "../../utils/destringifyDN.js";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
@@ -54,7 +54,7 @@ import {
 import {
     ErrorProtectionRequest_none,
 } from "@wildboar/x500/DirectoryAbstractService";
-import printCode from "../../printers/Code";
+import printCode from "../../printers/Code.js";
 import countries from "i18n-iso-countries";
 import {
     DER,

@@ -365,10 +365,8 @@ async function handleRequestAndErrors (
             association_id: assn.id,
             messageID: message.messageID.toString(),
         };
-        ctx.log.info(`${assn.id}#${message.messageID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
-        if (isDebugging || (ctx.log.level === "debug")) {
-            console.error(e);
-        }
+        Object.assign(logInfo, e);
+        ctx.log.error(`${assn.id}#${message.messageID}: ${e?.name ?? "?"}: ${e?.message ?? e?.msg ?? e?.m}`, logInfo);
         if (!stats.outcome) {
             stats.outcome = {};
         }

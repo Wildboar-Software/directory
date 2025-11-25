@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../types";
+import type { Connection, Context } from "../../../types.js";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
@@ -10,9 +10,9 @@ import {
     _encodeUTF8String,
     _encodePrintableString,
 } from "@wildboar/asn1/functional";
-import do_addEntry from "../add";
+import do_addEntry from "../add.js";
 import type { ArgumentsCamelCase } from "yargs";
-import type { CommonAddOptions } from "../../../yargs/add_common_add_opts";
+import type { CommonAddOptions } from "../../../yargs/add_common_add_opts.js";
 
 export
 async function do_addEntry_country (

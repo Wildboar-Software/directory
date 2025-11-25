@@ -6,8 +6,8 @@ import {
     OperationProgress_nameResolutionPhase_notStarted as notStarted,
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/DistributedOperations";
-import Context from "../types";
-import stringifyDN from "../utils/stringifyDN";
+import Context from "../types.js";
+import stringifyDN from "../utils/stringifyDN.js";
 import { EOL } from "node:os";
 import {
     ReferenceType,
@@ -21,7 +21,7 @@ import {
     ReferenceType_self,
     ReferenceType_ditBridge,
 } from "@wildboar/x500/DistributedOperations";
-import { print as printAPI } from "./AccessPointInformation";
+import { print as printAPI } from "./AccessPointInformation.js";
 
 function printOperationProgress (op: OperationProgress): string {
     return ({

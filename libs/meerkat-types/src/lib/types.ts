@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Logger } from "winston";
+import type { Logger, Config } from "@logtape/logtape";
 import {
     ObjectClassKind,
     Name,
@@ -1623,21 +1623,22 @@ interface Configuration {
          * implications.
          */
         boundDN: boolean;
-        level: LogLevel;
-        color: boolean;
-        timestamp: boolean;
-        json: boolean;
-        console: boolean;
-        http?: {
-            url: string;
-        };
-        file?: {
-            path: string;
-            maxSize: number;
-            maxFiles: number;
-            zip: boolean;
-            tailable: boolean;
-        };
+        options: Config<"meerkat" | string, "all" | string>;
+        // level: LogLevel;
+        // color: boolean;
+        // timestamp: boolean;
+        // json: boolean;
+        // console: boolean;
+        // http?: {
+        //     url: string;
+        // };
+        // file?: {
+        //     path: string;
+        //     maxSize: number;
+        //     maxFiles: number;
+        //     zip: boolean;
+        //     tailable: boolean;
+        // };
     };
 
     /**
@@ -3040,7 +3041,7 @@ interface Context {
     /** The current configuration of the DSA */
     config: Configuration;
 
-    /** The `winston` logger */
+    /** The logger */
     log: Logger;
 
     /** The Prisma client (for interacting with the database) */

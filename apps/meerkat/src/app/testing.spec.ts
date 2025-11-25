@@ -14,13 +14,15 @@ import {
     PresentationAddress,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { EventEmitter } from "node:events";
-import winston from "winston";
-import isDebugging from "is-debugging";
 import i18n from "i18next";
 import {
     uriToNSAP,
-} from "@wildboar/x500/src/lib/distributed/uri";
-import * as path from "path";
+} from "@wildboar/x500";
+import {
+    configure as configureLogging,
+    getConsoleSink,
+    getLogger,
+} from "@logtape/logtape";
 import { URL } from "url";
 import {
     DEFAULT_IDM_BUFFER_SIZE,
@@ -44,39 +46,21 @@ import {
 } from "@wildboar/tal";
 import {
     id_stc_build_valid_pkc_path,
-} from "@wildboar/scvp/src/lib/modules/SCVP-2009/id-stc-build-valid-pkc-path.va";
-import {
     id_stc_build_aa_path,
-} from "@wildboar/scvp/src/lib/modules/SCVP-2009/id-stc-build-aa-path.va";
+} from "@wildboar/scvp";
 import {
     id_ct_contentInfo,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-ct-contentInfo.va";
-import {
     id_ct_authData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-ct-authData.va";
-import {
     id_signedData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-signedData.va";
-import {
     id_digestedData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/id-digestedData.va";
-import {
     ContentInfo,
     _decode_ContentInfo,
     _encode_ContentInfo,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/ContentInfo.ta";
-import {
     _decode_AuthenticatedData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/AuthenticatedData.ta";
-import {
     _decode_SignedData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/SignedData.ta";
-import type {
     EncapsulatedContentInfo,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/EncapsulatedContentInfo.ta";
-import {
     _decode_DigestedData,
-} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/DigestedData.ta";
+} from "@wildboar/cms";
 import {
     Certificate,
     _decode_Certificate,
@@ -103,7 +87,7 @@ import type {
 } from "@wildboar/pki-stub";
 import { rootCertificates } from "tls";
 import { strict as assert } from "assert";
-import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
+import { attributes as x500at } from "@wildboar/x500";
 import { attributeFromInformationObject } from "./init/attributeFromInformationObject.js";
 import { loadMatchingRules } from "./init/loadMatchingRules.js";
 
@@ -298,90 +282,6 @@ const root: Vertex = {
     },
 };
 const bulkInsertMode: boolean = (process.env.MEERKAT_BULK_INSERT_MODE === "1");
-const logNoColor: boolean = (
-    (process.env.MEERKAT_NO_COLOR === "1")
-    || !!(process.env.NO_COLOR) // See: https://no-color.org/
-);
-const logNoTimestamp: boolean = (process.env.MEERKAT_NO_TIMESTAMP === "1");
-const logLevel: string = (process.env.MEERKAT_LOG_LEVEL || "info");
-const logJson: boolean = (process.env.MEERKAT_LOG_JSON === "1");
-const logNoConsole: boolean = (process.env.MEERKAT_NO_CONSOLE === "1");
-// const logToWindows: boolean = (process.env.MEERKAT_LOG_WINDOWS === "1");
-// const logToSyslog: boolean = (process.env.MEERKAT_LOG_SYSLOG === "1");
-const logToFile: string | undefined = (() => {
-    if (!process.env.MEERKAT_LOG_FILE?.length) {
-        return undefined;
-    }
-    try {
-        path.parse(process.env.MEERKAT_LOG_FILE);
-        return process.env.MEERKAT_LOG_FILE;
-    } catch {
-        console.error(`INVALID MEERKAT_LOG_FILE PATH ${process.env.MEERKAT_LOG_FILE}`);
-        process.exit(1);
-    }
-})();
-const logFileMaxSize: number = Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_SIZE || "1000000");
-const logFileMaxFiles: number = Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_FILES || "100");
-const logFileZip: boolean = (process.env.MEERKAT_LOG_ZIP === "1");
-const logFilesTailable: boolean = (process.env.MEERKAT_LOG_TAILABLE === "1");
-const logToHTTP: winston.transports.HttpTransportOptions | undefined = (() => {
-    if (!process.env.MEERKAT_LOG_HTTP?.length) {
-        return undefined;
-    }
-    try {
-        const url = new URL(process.env.MEERKAT_LOG_HTTP);
-        const ssl: boolean = (url.protocol.toLowerCase() === "https:");
-        const port = Number.parseInt(url.port);
-        return {
-            ssl,
-            host: url.host,
-            port: Number.isSafeInteger(port) && (port > 0)
-                ? port
-                : (ssl ? 443 : 80),
-            auth: url.username?.length
-                ? {
-                    username: url.username,
-                    password: url.password,
-                }
-                : undefined,
-            path: url.pathname,
-        };
-    } catch {
-        console.error(`INVALID MEERKAT_LOG_HTTP URL ${process.env.MEERKAT_LOG_HTTP}`);
-        process.exit(1);
-    }
-})();
-
-const winstonLogFormats: winston.Logform.Format[] = [];
-if (!logNoColor) {
-    winstonLogFormats.push(winston.format.colorize());
-}
-if (!logNoTimestamp) {
-    winstonLogFormats.push(winston.format.timestamp());
-}
-if (logJson) {
-    winstonLogFormats.push(winston.format.json());
-} else {
-    winstonLogFormats.push(winston.format.align());
-    winstonLogFormats.push(winston.format.printf(info => `${info.timestamp} [${info.level}]: ${info.message}`));
-}
-
-const winstonTransports: winston.transport[] = [];
-if (!logNoConsole) {
-    winstonTransports.push(new winston.transports.Console());
-}
-if (logToFile) {
-    winstonTransports.push(new winston.transports.File({
-        filename: logToFile,
-        maxsize: logFileMaxSize,
-        maxFiles: logFileMaxFiles,
-        zippedArchive: logFileZip,
-        tailable: logFilesTailable,
-    }));
-}
-if (logToHTTP) {
-    winstonTransports.push(new winston.transports.Http(logToHTTP));
-}
 
 const tlsCAFileContents: string | undefined = process.env.MEERKAT_TLS_CA_FILE
     ? fs.readFileSync(process.env.MEERKAT_TLS_CA_FILE, { encoding: "utf-8" })
@@ -586,25 +486,16 @@ const config: Configuration = {
     },
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
-        level: logLevel as LogLevel,
-        console: !logNoConsole,
-        color: !logNoColor,
-        timestamp: !logNoTimestamp,
-        json: logJson,
-        file: logToFile
-            ? {
-                path: logToFile,
-                maxSize: logFileMaxSize,
-                maxFiles: logFileMaxFiles,
-                zip: logFileZip,
-                tailable: logFilesTailable,
-            }
-            : undefined,
-        http: logToHTTP
-            ? {
-                url: process.env.MEERKAT_LOG_HTTP!,
-            }
-            : undefined,
+        options: {
+            sinks: {
+                safe: getConsoleSink(),
+                all: getConsoleSink(),
+            },
+            loggers: [
+                { category: ["logtape", "meta"], lowestLevel: "debug", sinks: ["safe"] },
+                { category: [], lowestLevel: "debug", sinks: ["all"] },
+            ]
+        },
     },
     maxConnections: process.env.MEERKAT_MAX_CONNECTIONS
         ? Number.parseInt(process.env.MEERKAT_MAX_CONNECTIONS)
@@ -1012,6 +903,8 @@ const config: Configuration = {
     },
 };
 
+await configureLogging(config.log.options);
+
 const ctx: MeerkatContext = {
     alreadyAssertedAttributeCertificates: new Set(),
     externalProcedureAuthFunctions: new Map(),
@@ -1022,7 +915,11 @@ const ctx: MeerkatContext = {
     updatingShadow: new Set(),
     systemProposedRelaxations: new Map(),
     systemProposedTightenings: new Map(),
-    i18n,
+    /* It seems like I have to do this. For some reason, the types do not
+    align with the Javascript of this package: if I get a type error, the
+    running program works, but if I fix the type error, the program will crash
+    with a type error. I HATE Javascript. */
+    i18n: i18n as unknown as i18n.i18n,
     config,
     dsa: {
         // This may get overwritten, since `npm_package_version` is not always defined.
@@ -1050,16 +947,7 @@ const ctx: MeerkatContext = {
     dit: {
         root,
     },
-    log: winston.createLogger({
-        level: isDebugging
-            ? "debug"
-            : logLevel,
-        format: winston.format.combine(...winstonLogFormats),
-        transports: winstonTransports,
-        defaultMeta: {
-            app: "meerkat",
-        },
-    }),
+    log: getLogger(),
     db: 0 as never,
     telemetry: {
         init: async (): Promise<void> => {},

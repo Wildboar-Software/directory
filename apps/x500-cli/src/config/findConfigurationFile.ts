@@ -1,6 +1,6 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import * as fs from "fs/promises";
-import { CONFIG_FILE_LOCATIONS } from "../configFileLocations";
+import { CONFIG_FILE_LOCATIONS } from "../configFileLocations.js";
 
 export
 async function findConfigurationFile (ctx: Context): Promise<string | undefined> {

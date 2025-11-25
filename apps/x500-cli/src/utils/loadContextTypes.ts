@@ -1,5 +1,5 @@
-import type { Context } from "../types";
-import contextTypeFromInformationObject from "./contextTypeFromInformationObject";
+import type { Context } from "../types.js";
+import contextTypeFromInformationObject from "./contextTypeFromInformationObject.js";
 import { contexts as x500c } from "@wildboar/x500";
 import type {
     CONTEXT,
@@ -16,13 +16,13 @@ import {
 
 import {
     basicServiceContext,
-} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/basicServiceContext.oa";
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/basicServiceContext.oa.js";
 import {
     lineIdentityContext,
-} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/lineIdentityContext.oa";
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/lineIdentityContext.oa.js";
 import {
     assignmentContext,
-} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/assignmentContext.oa";
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/assignmentContext.oa.js";
 
 export
 function loadContextTypes (ctx: Context): void {

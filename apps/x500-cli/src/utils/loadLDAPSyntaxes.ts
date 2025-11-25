@@ -1,5 +1,5 @@
-import type { Context } from "../types";
-import ldapSyntaxFromInformationObject from "./ldapSyntaxFromInformationObject";
+import type { Context } from "../types.js";
+import ldapSyntaxFromInformationObject from "./ldapSyntaxFromInformationObject.js";
 import { attributeTypeDescription } from "@wildboar/x500/SelectedAttributeTypes";
 import { bitString } from "@wildboar/x500/SelectedAttributeTypes";
 import { boolean_ } from "@wildboar/x500/SelectedAttributeTypes";

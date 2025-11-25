@@ -1,9 +1,9 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
+import bind from "../net/bind.js";
 import {
     do_terminate as command,
-} from "../commands/dop/terminate";
+} from "../commands/dop/terminate.js";
 import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 
 export

@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../types";
+import type { Connection, Context } from "../../types.js";
 import { ASN1Construction, ASN1Element, ASN1TagClass, DERElement, ObjectIdentifier, TRUE, TRUE_BIT } from "@wildboar/asn1";
 import { DER, _encodeBoolean } from "@wildboar/asn1/functional";
 import {
@@ -19,13 +19,13 @@ import {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import destringifyDN from "../../utils/destringifyDN";
-import stringifyDN from "../../utils/stringifyDN";
-import printEntryInformation from "../../printers/EntryInformation";
+import destringifyDN from "../../utils/destringifyDN.js";
+import stringifyDN from "../../utils/stringifyDN.js";
+import printEntryInformation from "../../printers/EntryInformation.js";
 import {
     AttributeValueAssertion,
 } from "@wildboar/x500/InformationFramework";
-import printError from "../../printers/Error_";
+import printError from "../../printers/Error_.js";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -36,7 +36,24 @@ import { EOL } from "node:os";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";
-import * as sco from "@wildboar/x500/DirectoryAbstractService";
+import {
+    ServiceControlOptions,
+    ServiceControlOptions_preferChaining,
+    ServiceControlOptions_chainingProhibited,
+    ServiceControlOptions_localScope,
+    ServiceControlOptions_dontUseCopy,
+    ServiceControlOptions_dontDereferenceAliases,
+    ServiceControlOptions_subentries,
+    ServiceControlOptions_copyShallDo,
+    ServiceControlOptions_partialNameResolution,
+    ServiceControlOptions_manageDSAIT,
+    ServiceControlOptions_noSubtypeMatch,
+    ServiceControlOptions_noSubtypeSelection,
+    ServiceControlOptions_countFamily,
+    ServiceControlOptions_dontSelectFriends,
+    ServiceControlOptions_dontMatchFriends,
+    ServiceControlOptions_allowWriteableCopy,
+} from "@wildboar/x500/DirectoryAbstractService";
 import { ServiceControls } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceControls_priority_low,
@@ -93,51 +110,51 @@ async function do_read (
             : undefined,
         argv.returnContexts,
     );
-    const serviceControlOptions: sco.ServiceControlOptions = new Uint8ClampedArray(15);
+    const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(15);
     if (argv.preferChaining) {
-        serviceControlOptions[sco.ServiceControlOptions_preferChaining] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_preferChaining] = TRUE_BIT;
     }
     if (argv.chainingProhibited) {
-        serviceControlOptions[sco.ServiceControlOptions_chainingProhibited] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_chainingProhibited] = TRUE_BIT;
     }
     if (argv.localScope) {
-        serviceControlOptions[sco.ServiceControlOptions_localScope] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_localScope] = TRUE_BIT;
     }
     if (argv.dontUseCopy) {
-        serviceControlOptions[sco.ServiceControlOptions_dontUseCopy] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_dontUseCopy] = TRUE_BIT;
     }
     if (argv.dontDereferenceAliases) {
-        serviceControlOptions[sco.ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_dontDereferenceAliases] = TRUE_BIT;
     }
     if (argv.subentries) {
-        serviceControlOptions[sco.ServiceControlOptions_subentries] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_subentries] = TRUE_BIT;
     }
     if (argv.copyShallDo) {
-        serviceControlOptions[sco.ServiceControlOptions_copyShallDo] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_copyShallDo] = TRUE_BIT;
     }
     if (argv.partialNameResolution) {
-        serviceControlOptions[sco.ServiceControlOptions_partialNameResolution] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_partialNameResolution] = TRUE_BIT;
     }
     if (argv.manageDSAIT) {
-        serviceControlOptions[sco.ServiceControlOptions_manageDSAIT] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_manageDSAIT] = TRUE_BIT;
     }
     if (argv.noSubtypeMatch) {
-        serviceControlOptions[sco.ServiceControlOptions_noSubtypeMatch] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_noSubtypeMatch] = TRUE_BIT;
     }
     if (argv.noSubtypeSelection) {
-        serviceControlOptions[sco.ServiceControlOptions_noSubtypeSelection] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_noSubtypeSelection] = TRUE_BIT;
     }
     if (argv.countFamily) {
-        serviceControlOptions[sco.ServiceControlOptions_countFamily] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_countFamily] = TRUE_BIT;
     }
     if (argv.dontSelectFriends) {
-        serviceControlOptions[sco.ServiceControlOptions_dontSelectFriends] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_dontSelectFriends] = TRUE_BIT;
     }
     if (argv.dontMatchFriends) {
-        serviceControlOptions[sco.ServiceControlOptions_dontMatchFriends] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_dontMatchFriends] = TRUE_BIT;
     }
     if (argv.allowWriteableCopy) {
-        serviceControlOptions[sco.ServiceControlOptions_allowWriteableCopy] = TRUE_BIT;
+        serviceControlOptions[ServiceControlOptions_allowWriteableCopy] = TRUE_BIT;
     }
     const serviceControls = new ServiceControls(
         serviceControlOptions,

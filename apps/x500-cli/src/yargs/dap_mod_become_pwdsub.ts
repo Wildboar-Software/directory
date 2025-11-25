@@ -1,7 +1,7 @@
-import type { Context } from "../types";
+import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import bind from "../net/bind";
-import { do_modify_become_pwdsub as command } from "../commands/dap/mod/become/pwdsub";
+import bind from "../net/bind.js";
+import { do_modify_become_pwdsub as command } from "../commands/dap/mod/become/pwdsub.js";
 
 export
 interface PwdSubArgs {

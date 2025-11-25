@@ -1,7 +1,7 @@
 import {
     ATTRIBUTE,
 } from "@wildboar/x500/InformationFramework";
-import type { AttributeInfo } from "../types";
+import type { AttributeInfo } from "../types.js";
 
 export
 function attributeFromInformationObject (io: ATTRIBUTE, name?: string): AttributeInfo {

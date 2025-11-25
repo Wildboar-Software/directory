@@ -1,4 +1,4 @@
-import { CONFIG_FILE_LOCATIONS, PREFERRED_CONFIG_FILE_LOCATION } from "./configFileLocations";
+import { CONFIG_FILE_LOCATIONS, PREFERRED_CONFIG_FILE_LOCATION } from "./configFileLocations.js";
 import * as fs from "fs/promises";
 import { strict as assert } from "assert";
 import { stringify as yamlStringify } from "@std/yaml";

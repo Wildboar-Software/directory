@@ -1,4 +1,4 @@
-import type { Context, LDAPSyntaxInfo } from "../types";
+import type { Context, LDAPSyntaxInfo } from "../types.js";
 import type {
     AttributeType,
 } from "@wildboar/x500/InformationFramework";

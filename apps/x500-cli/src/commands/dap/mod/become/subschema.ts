@@ -1,4 +1,4 @@
-import type { Connection, Context } from "../../../../types";
+import type { Connection, Context } from "../../../../types.js";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
     modifyEntry,
@@ -22,8 +22,8 @@ import type {
 import {
     objectClass,
 } from "@wildboar/x500/InformationFramework";
-import printCode from "../../../../printers/Code";
-import destringifyDN from "../../../../utils/destringifyDN";
+import printCode from "../../../../printers/Code.js";
+import destringifyDN from "../../../../utils/destringifyDN.js";
 import {
     subschema,
 } from "@wildboar/x500/SchemaAdministration";
