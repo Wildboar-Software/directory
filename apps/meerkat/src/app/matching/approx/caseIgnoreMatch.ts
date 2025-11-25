@@ -4,7 +4,7 @@ import {
     _decode_UnboundedDirectoryString as _decode_UDS,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { directoryStringToString } from "@wildboar/x500";
-import fl from "fast-levenshtein";
+import { distance } from "fastest-levenshtein";
 
 export
 function getCaseIgnoreMatch (tolerateDeviations: number): EqualityMatcher {
@@ -14,7 +14,7 @@ function getCaseIgnoreMatch (tolerateDeviations: number): EqualityMatcher {
     ): boolean => {
         const a: string = directoryStringToString(_decode_UDS(assertion));
         const v: string = directoryStringToString(_decode_UDS(value));
-        const deviations = fl.get(a.trim().toLowerCase(), v.trim().toLowerCase());
+        const deviations = distance(a.trim().toLowerCase(), v.trim().toLowerCase());
         return (deviations <= tolerateDeviations);
     };
 }

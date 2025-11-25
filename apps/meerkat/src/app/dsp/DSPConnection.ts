@@ -49,7 +49,7 @@ import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep.js";
 import { strict as assert } from "assert";
-import flat from "flat";
+import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics.js";
 import { printInvokeId } from "../utils/printInvokeId.js";
@@ -102,8 +102,6 @@ import {
     changePassword,
 } from "@wildboar/x500/DirectoryAbstractService";
 import _ from "lodash";
-
-const flatten = flat.flatten;
 
 /**
  * @summary The handles a request, but not errors

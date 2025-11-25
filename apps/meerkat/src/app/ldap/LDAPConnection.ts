@@ -66,7 +66,7 @@ import {
     AuthenticationLevel_basicLevels_level_none as none,
 } from "@wildboar/x500/BasicAccessControl";
 import { EventEmitter } from "node:events";
-import flat from "flat";
+import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics.js";
 import { strict as assert } from "assert";
@@ -94,8 +94,6 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import { createWriteStream } from "node:fs";
 import _ from "lodash";
-
-const flatten = flat.flatten;
 
 const {
     modifyPassword,

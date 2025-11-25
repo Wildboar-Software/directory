@@ -1,6 +1,6 @@
 import { type EqualityMatcher } from "@wildboar/x500";
 import type { ASN1Element } from "@wildboar/asn1";
-import fl from "fast-levenshtein";
+import { distance } from "fastest-levenshtein";
 
 function normalizeUserPart (str: string): string {
     return str
@@ -20,7 +20,7 @@ function getIntEmailMatch (tolerateDeviations: number): EqualityMatcher {
         const v = value.utf8String.toLowerCase();
         const [ auser ] = a.split("@");
         const [ vuser ] = v.split("@");
-        const deviations = fl.get(
+        const deviations = distance(
             normalizeUserPart(auser),
             normalizeUserPart(vuser),
         );

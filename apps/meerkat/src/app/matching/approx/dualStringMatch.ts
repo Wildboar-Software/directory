@@ -5,7 +5,7 @@ import {
     _decode_DualStringSyntax,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import { directoryStringToString } from "@wildboar/x500";
-import fl from "fast-levenshtein";
+import { distance } from "fastest-levenshtein";
 
 export
 function getDualStringMatch (tolerateDeviations: number): EqualityMatcher {
@@ -15,11 +15,11 @@ function getDualStringMatch (tolerateDeviations: number): EqualityMatcher {
     ): boolean => {
         const a: DualStringSyntax = _decode_DualStringSyntax(assertion);
         const v: DualStringSyntax = _decode_DualStringSyntax(value);
-        const operationDeviations = fl.get(
+        const operationDeviations = distance(
             directoryStringToString(a.operation),
             directoryStringToString(v.operation),
         );
-        const objectDeviations = fl.get(
+        const objectDeviations = distance(
             directoryStringToString(a.object),
             directoryStringToString(v.object),
         );

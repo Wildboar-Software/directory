@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { MeerkatContext, default as ctx } from "../ctx.js";
 import * as fs from "fs/promises";
 import * as path from "path";
-import flat from "flat";
+import { flatten } from "flat";
 import { getServerStatistics } from "../telemetry/getServerStatistics.js";
 import sleep from "../utils/sleep.js";
 import stringifyDN from "../x500/stringifyDN.js";
@@ -35,7 +35,7 @@ import { id_oc_child } from "@wildboar/x500/InformationFramework";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
 import readValues from "../database/entry/readValues.js";
 import deleteEntry from "../database/deleteEntry.js";
-import escape from "escape-html";
+import { escape } from "@std/html";
 import type { DistinguishedName } from "@wildboar/pki-stub";
 import dnToVertex from "../dit/dnToVertex.js";
 import {
@@ -271,8 +271,6 @@ import { AttributeCertificate } from "@wildboar/pki-stub";
 import * as os from "node:os";
 import { fileURLToPath } from "node:url";
 import { timingSafeEqual, randomInt } from "crypto";
-
-const flatten = flat.flatten;
 
 async function unauthorized (
     ctx: Context,

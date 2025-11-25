@@ -48,7 +48,7 @@ import getServerStatistics from "../telemetry/getServerStatistics.js";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics.js";
 import { codeToString } from "@wildboar/x500";
 import { strict as assert } from "assert";
-import flat from "flat";
+import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500";
 import { printInvokeId } from "../utils/printInvokeId.js";
 import {
@@ -96,8 +96,6 @@ import {
 import { _encode_ShadowErrorData } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { shadowError } from "@wildboar/x500/DirectoryShadowAbstractService";
 import _ from "lodash";
-
-const flatten = flat.flatten;
 
 // id-opcode-requestShadowUpdate     Code ::= local:1
 // id-opcode-updateShadow            Code ::= local:2

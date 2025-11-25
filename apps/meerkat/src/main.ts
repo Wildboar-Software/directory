@@ -1,8 +1,8 @@
-import * as dotenv from "dotenv";
-dotenv.config();
+import { loadSync as loadDotenvSync } from "@std/dotenv";
+loadDotenvSync();
 import i18n from "i18next";
 import I18FileSystemBackend from "i18next-fs-backend";
-import osLocale from "os-locale";
+import { osLocaleSync } from "os-locale";
 import * as path from "path";
 import main from "./app/main.js";
 import { fileURLToPath } from "node:url";
@@ -14,7 +14,7 @@ i18n
     .use(I18FileSystemBackend)
     .init({
         debug: false,
-        lng: osLocale.sync().slice(0, 2),
+        lng: osLocaleSync().slice(0, 2),
         ns: [
             "main",
             "err",

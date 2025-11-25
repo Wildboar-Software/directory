@@ -85,7 +85,7 @@ import getServerStatistics from "../telemetry/getServerStatistics.js";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics.js";
 import { codeToString } from "@wildboar/x500";
 import { strict as assert } from "assert";
-import flat from "flat";
+import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500";
 import { printInvokeId } from "../utils/printInvokeId.js";
 import {
@@ -112,8 +112,6 @@ import {
 } from "@wildboar/rose-transport";
 import { cacheNamingContexts } from "../dit/cacheNamingContexts.js";
 import _ from "lodash";
-
-const flatten = flat.flatten;
 
 const securityParametersTagByOpCode: Map<number, number> = new Map([
     [100, 8], // establishOperationalBinding

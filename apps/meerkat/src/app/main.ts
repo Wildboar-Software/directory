@@ -45,10 +45,10 @@ import {
     updatesDomain,
 } from "./constants.js";
 import createDatabaseReport from "./telemetry/createDatabaseReport.js";
-import semver from "semver";
+import { parse as parseSemver, greaterThan as semverGreaterThan } from "@std/semver";
 import { setSafeTimeout } from "@wildboar/safe-timers";
 import { randomUUID } from "crypto";
-import flat from "flat";
+import { flatten } from "flat";
 import { getServerStatistics } from "./telemetry/getServerStatistics.js";
 import { naddrToURI } from "@wildboar/x500";
 import { getOnOCSPRequestCallback } from "./pki/getOnOCSPRequestCallback.js";
@@ -92,7 +92,6 @@ import * as routes from "./admin/web.js";
 import { fileURLToPath } from "node:url";
 import _ from "lodash";
 
-const flatten = flat.flatten;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -122,7 +121,7 @@ import("hbs").then();
  * @async
  */
 async function checkForUpdates (ctx: MeerkatContext, currentVersionString: string): Promise<void> {
-    const currentVersion = semver.parse(currentVersionString);
+    const currentVersion = parseSemver(currentVersionString);
     if (!currentVersion) {
         return;
     }
@@ -137,8 +136,8 @@ async function checkForUpdates (ctx: MeerkatContext, currentVersionString: strin
                 .filter((field) => !!field.length)
                 .map((field) => field.split("=")),
         );
-        const secureVersion = semver.parse(fields["secure"] || "");
-        const latestVersion = semver.parse(fields["latest"] || "");
+        const secureVersion = parseSemver(fields["secure"] || "");
+        const latestVersion = parseSemver(fields["latest"] || "");
         const latestMajor = Number.parseInt(fields["major"], 10) || 1;
         const deprecated = fields["deprecated"];
         const insecure = fields["insecure"];
@@ -155,7 +154,7 @@ async function checkForUpdates (ctx: MeerkatContext, currentVersionString: strin
             return;
         }
         if (secureVersion) {
-            if (semver.gt(secureVersion, currentVersion)) {
+            if (semverGreaterThan(secureVersion, currentVersion)) {
                 ctx.log.warn(ctx.i18n.t("log:security_update_available", {
                     version: fields["secure"],
                 }));
