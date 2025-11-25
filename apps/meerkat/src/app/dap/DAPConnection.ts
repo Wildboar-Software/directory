@@ -59,7 +59,6 @@ import {
 import {
     changePassword,
 } from "@wildboar/x500/DirectoryAbstractService";
-import isDebugging from "is-debugging";
 import printCode from "../utils/printCode.js";
 import { ASN1Element, FALSE } from "@wildboar/asn1";
 import {
@@ -653,6 +652,7 @@ class DAPAssociation extends ClientAssociation {
                 remoteAddress: this.socket.remoteAddress,
                 remotePort: this.socket.remotePort,
                 association_id: this.id,
+                problem: undefined,
             };
             if (e instanceof DirectoryBindError) {
                 ctx.log.warn(e.message, logInfo);
@@ -702,10 +702,11 @@ class DAPAssociation extends ClientAssociation {
                     },
                 });
             } else {
-                ctx.log.warn(`${this.id}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
-                if (isDebugging) {
-                    console.error(e);
+                if (typeof e === "object" && e !== null) {
+                    logInfo.problem = e.data?.problem;
+                    Object.assign(logInfo, _.omit(e, "data"));
                 }
+                ctx.log.warn(`${this.id}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
                 this.rose.write_abort(AbortReason.reason_not_specified);
                 ctx.telemetry.trackException({
                     exception: e,

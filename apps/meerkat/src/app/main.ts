@@ -46,7 +46,6 @@ import {
 } from "./constants.js";
 import createDatabaseReport from "./telemetry/createDatabaseReport.js";
 import semver from "semver";
-import isDebugging from "is-debugging";
 import { setSafeTimeout } from "@wildboar/safe-timers";
 import { randomUUID } from "crypto";
 import flat from "flat";
@@ -91,6 +90,7 @@ import { BERElement } from "@wildboar/asn1";
 import { cacheNamingContexts } from "./dit/cacheNamingContexts.js";
 import * as routes from "./admin/web.js";
 import { fileURLToPath } from "node:url";
+import _ from "lodash";
 
 const flatten = flat.flatten;
 const __filename = fileURLToPath(import.meta.url);
@@ -404,9 +404,6 @@ function attachUnboundEventListenersToIDMConnection (
                 },
             });
         } catch (e) {
-            if (isDebugging) {
-                console.error(e);
-            }
             ctx.log.warn(ctx.i18n.t("log:bind_error", {
                 host: originalSocket.remoteAddress,
                 source,
@@ -416,6 +413,14 @@ function attachUnboundEventListenersToIDMConnection (
                 remoteAddress: idm.s.remoteAddress,
                 remotePort: idm.s.remotePort,
                 protocol: idmBind.protocolID.toString(),
+                ...(typeof e === "object" && e !== null)
+                    ? {
+                        problem: e.data?.problem,
+                        ...(_.omit(e, "data")),
+                    }
+                    : {
+                        ...e,
+                    },
             });
             idm.writeAbort(Abort_reasonNotSpecified);
             startTimes.delete(idm.s);
@@ -892,9 +897,6 @@ function attachUnboundEventListenersToITOTConnection (
                 },
             });
         } catch (e) {
-            if (isDebugging) {
-                console.error(e);
-            }
             ctx.log.warn(ctx.i18n.t("log:bind_error", {
                 host: originalSocket.remoteAddress,
                 source,
@@ -904,6 +906,14 @@ function attachUnboundEventListenersToITOTConnection (
                 remoteAddress: itot.network.socket.remoteAddress,
                 remotePort: itot.network.socket.remotePort,
                 protocol: bind.protocol_id.toString(),
+                ...(typeof e === "object" && e !== null)
+                    ? {
+                        problem: e.data?.problem,
+                        ...(_.omit(e, "data")),
+                    }
+                    : {
+                        ...e,
+                    },
             });
             rose.write_abort(AbortReason.reason_not_specified);
             startTimes.delete(itot.network.socket);

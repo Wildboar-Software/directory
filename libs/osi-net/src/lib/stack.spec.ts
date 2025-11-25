@@ -98,10 +98,8 @@ import { _encode_TheOsiBindErr } from "@wildboar/x500/OSIProtocolSpecification";
 import { ABRT_source_acse_service_user } from '@wildboar/acse';
 import { ABRT_diagnostic_authentication_required } from '@wildboar/acse';
 import { randomBytes, randomInt } from 'node:crypto';
-import isDebugging from 'is-debugging';
 import { AttributeTypeAndValue } from '@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta';
 import { Provider_reason_user_data_not_readable } from '@wildboar/copp';
-// import {  } from "vitest";
 
 const id_ber = ObjectIdentifier.fromParts([2, 1, 1]);
 const id_acse = ObjectIdentifier.fromParts([2, 2, 1, 0, 1]);
@@ -118,7 +116,7 @@ function withSockets(
     ) => void
 ): Promise<void> {
     const server = createServer();
-    const port: number = isDebugging ? DEFAULT_PORT : randomInt(44400, 44600);
+    const port: number = randomInt(44400, 44600);
     // const port = DEFAULT_PORT;
     return new Promise((done) => {
         server.on('listening', () => {

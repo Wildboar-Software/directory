@@ -84,7 +84,6 @@ import {
 import getServerStatistics from "../telemetry/getServerStatistics.js";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics.js";
 import { codeToString } from "@wildboar/x500";
-import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 import flat from "flat";
 import { naddrToURI } from "@wildboar/x500";
@@ -661,6 +660,7 @@ class DOPAssociation extends ClientAssociation {
                 remoteAddress: this.socket.remoteAddress,
                 remotePort: this.socket.remotePort,
                 association_id: this.id,
+                problem: undefined,
             };
             if (e instanceof DSABindError) {
                 ctx.log.warn(e.message, logInfo);
@@ -709,10 +709,11 @@ class DOPAssociation extends ClientAssociation {
                     },
                 });
             } else {
-                ctx.log.warn(`${this.id}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
-                if (isDebugging) {
-                    console.error(e);
+                if (typeof e === "object" && e !== null) {
+                    logInfo.problem = e.data?.problem;
+                    Object.assign(logInfo, _.omit(e, "data"));
                 }
+                ctx.log.warn(`${this.id}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
                 this.rose.write_abort(AbortReason.reason_not_specified);
                 ctx.telemetry.trackException({
                     exception: e,

@@ -59,7 +59,6 @@ import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import { URL } from "node:url";
 import { Socket, createConnection } from "node:net";
 import { connect as tlsConnect, TLSSocket } from "node:tls";
-import isDebugging from "is-debugging";
 import stringifyDN from "../x500/stringifyDN.js";
 import { DSABindResult } from "@wildboar/x500/DistributedOperations";
 import { createWriteStream } from "node:fs";
@@ -241,10 +240,10 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                     ctx.log.warn(ctx.i18n.t("err:tls_auth_failure", {
                         url: uriString,
                         e: socket.authorizationError,
-                    }), logInfo);
-                    if (isDebugging && socket.authorizationError) {
-                        console.error(socket.authorizationError);
-                    }
+                    }), {
+                        ...logInfo,
+                        e: { ...(socket.authorizationError ?? {}) },
+                    });
                 }
             });
             socket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid, code) => {
@@ -315,10 +314,10 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                                     ctx.log.warn(ctx.i18n.t("err:tls_auth_failure", {
                                         url: uriString,
                                         e: tlsSocket.authorizationError,
-                                    }));
-                                    if (isDebugging && tlsSocket.authorizationError) {
-                                        console.error(tlsSocket.authorizationError);
-                                    }
+                                    }), {
+                                        ...logInfo,
+                                        e: tlsSocket.authorizationError,
+                                    });
                                 }
                             });
                             tlsSocket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid, code) => {

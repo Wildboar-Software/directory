@@ -36,8 +36,8 @@ import {
 import { shadowError } from "@wildboar/x500/DirectoryShadowAbstractService";
 import stringifyDN from "../x500/stringifyDN.js";
 import printCode from "../utils/printCode.js";
-import isDebugging from "is-debugging";
 import { differenceInMilliseconds } from "date-fns";
+import _ from "lodash";
 
 /**
  * @summary Update a shadow consumer
@@ -459,24 +459,32 @@ async function _updateShadowConsumer (
             }));
         }
     } catch (e) {
-        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", {
-            e,
-            obid: ob.binding_identifier.toString(),
-        }));
-        if (isDebugging) {
-            console.error(e);
-        }
+        const extraLogData =  (typeof e === "object" && e !== null)
+            ? {
+                problem: e.data?.problem,
+                ...(_.omit(e, "data")),
+                obid: ob.binding_identifier.toString(),
+            }
+            : {
+                ...e,
+                obid: ob.binding_identifier.toString(),
+            };
+        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", extraLogData), extraLogData);
     } finally {
         try {
             await disp_client?.unbind(); // INTENTIONAL_NO_AWAIT
         } catch (e) {
-            ctx.log.error(ctx.i18n.t("err:disp_unbind_error", {
-                e,
-                obid: ob.binding_identifier.toString(),
-            }));
-            if (isDebugging) {
-                console.error(e);
-            }
+            const extraLogData =  (typeof e === "object" && e !== null)
+                ? {
+                    problem: e.data?.problem,
+                    ...(_.omit(e, "data")),
+                    obid: ob.binding_identifier.toString(),
+                }
+                : {
+                    ...e,
+                    obid: ob.binding_identifier.toString(),
+                };
+            ctx.log.error(ctx.i18n.t("err:disp_unbind_error", extraLogData), extraLogData);
         }
     }
 }
@@ -508,10 +516,15 @@ async function updateShadowConsumer (
     try {
         await _updateShadowConsumer(ctx, ob_db_id, forceTotalRefresh);
     } catch (e) {
-        ctx.log.error(e);
-        if (isDebugging) {
-            console.error(e);
-        }
+        const extraLogData =  (typeof e === "object" && e !== null)
+            ? {
+                problem: e.data?.problem,
+                ...(_.omit(e, "data")),
+            }
+            : {
+                ...e,
+            };
+        ctx.log.error(e, extraLogData);
     } finally {
         ctx.updatingShadow.delete(ob_db_id);
     }

@@ -6,7 +6,7 @@ import { updateShadowConsumer } from "./createShadowUpdate.js";
 import { addSeconds, differenceInMilliseconds } from "date-fns";
 import { setSafeTimeout } from "@wildboar/safe-timers";
 import request_a_shadow_update from "./requestAShadowUpdate.js";
-import isDebugging from "is-debugging";
+import _ from "lodash";
 
 /**
  * @summary Schedule periodic shadow updates
@@ -69,13 +69,17 @@ function scheduleShadowUpdates (
             const update = () => {
                 updateShadowConsumer(ctx, ob_db_id)
                     .catch((e) => {
-                        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", {
-                            e,
-                            obid: ob_id.toString(),
-                        }));
-                        if (isDebugging) {
-                            console.error(e);
-                        }
+                        const extraLogData =  (typeof e === "object" && e !== null)
+                            ? {
+                                problem: e.data?.problem,
+                                ...(_.omit(e, "data")),
+                                obid: ob_id.toString(),
+                            }
+                            : {
+                                ...e,
+                                obid: ob_id.toString(),
+                            };
+                        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", extraLogData), extraLogData);
                     });
             };
             update();
@@ -86,13 +90,17 @@ function scheduleShadowUpdates (
                 request_a_shadow_update(ctx, ob_db_id)
                     .then()
                     .catch((e) => {
-                        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_request_failure", {
-                            e,
-                            obid: ob_id.toString(),
-                        }));
-                        if (isDebugging) {
-                            console.error(e);
-                        }
+                        const extraLogData =  (typeof e === "object" && e !== null)
+                            ? {
+                                problem: e.data?.problem,
+                                ...(_.omit(e, "data")),
+                                obid: ob_id.toString(),
+                            }
+                            : {
+                                ...e,
+                                obid: ob_id.toString(),
+                            };
+                        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_request_failure", extraLogData), extraLogData);
                     });
             };
             update();

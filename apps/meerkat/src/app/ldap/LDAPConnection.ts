@@ -69,7 +69,6 @@ import { EventEmitter } from "node:events";
 import flat from "flat";
 import { naddrToURI } from "@wildboar/x500";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics.js";
-import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 import { stringifyDN } from "../x500/stringifyDN.js";
 import {
@@ -596,6 +595,7 @@ class LDAPAssociation extends ClientAssociation {
             remotePort: this.socket.remotePort,
             association_id: this.id,
             usingTLS: (this.socket instanceof tls.TLSSocket),
+            problem: undefined,
         };
         // #region Pre-flight check if the message will fit in the buffer, if possible.
         if ((this.buffer.length + data.length) > ctx.config.ldap.bufferSize) {
@@ -821,10 +821,11 @@ class LDAPAssociation extends ClientAssociation {
                         this.socket.write(_encode_LDAPMessage(res, BER).toBytes());
                     })
                     .catch((e) => {
-                        ctx.log.error(e.message, extraLogData);
-                        if (isDebugging) {
-                            console.error(e);
+                        if (typeof e === "object" && e !== null) {
+                            extraLogData.problem = e.data?.problem;
+                            Object.assign(extraLogData, _.omit(e, "data"));
                         }
+                        ctx.log.error(e.message, extraLogData);
                         ctx.telemetry.trackException({
                             exception: e,
                             properties: telemetryProperties,
