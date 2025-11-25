@@ -1,5 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "isolatedModules": true,
+    "isolatedDeclarations": true
+  },
   "files": [],
   "include": [],
   "references": [

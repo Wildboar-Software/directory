@@ -34,7 +34,7 @@ import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     id_err_operationalBindingError,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import { setTimeout as safeSetTimeout } from "safe-timers";
+import { setSafeTimeout } from "@wildboar/safe-timers";
 import { getDateFromOBTime } from "../getDateFromOBTime.js";
 import { printInvokeId } from "../../utils/printInvokeId.js";
 import {
@@ -429,7 +429,7 @@ async function terminateOperationalBinding (
         case (id_op_binding_shadow.toString()):
         {
             for (const ob of obs) {
-                safeSetTimeout(
+                setSafeTimeout(
                     () => terminate(ctx, ob.id),
                     Math.max(differenceInMilliseconds(terminationTime, now), 1000),
                 );

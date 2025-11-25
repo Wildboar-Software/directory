@@ -4,7 +4,7 @@ import {
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { updateShadowConsumer } from "./createShadowUpdate.js";
 import { addSeconds, differenceInMilliseconds } from "date-fns";
-import { setTimeout as safeSetTimeout } from "safe-timers";
+import { setSafeTimeout } from "@wildboar/safe-timers";
 import request_a_shadow_update from "./requestAShadowUpdate.js";
 import isDebugging from "is-debugging";
 
@@ -118,7 +118,7 @@ function scheduleShadowUpdates (
         scheduleShadowUpdates_();
     } else { // Otherwise, we have to wait until the first update
         const time_until_first_update = Math.abs(differenceInMilliseconds(now, next_period_start));
-        const timeout = safeSetTimeout(scheduleShadowUpdates_, time_until_first_update);
+        const timeout = setSafeTimeout(scheduleShadowUpdates_, time_until_first_update);
         ctx.pendingShadowingUpdateCycles.set(ob_id, timeout);
     }
 }

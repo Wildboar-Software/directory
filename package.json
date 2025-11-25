@@ -47,6 +47,7 @@
         "@wildboar/pkcs": "npm:@jsr/wildboar__pkcs@^2.0.1",
         "@wildboar/pki-stub": "npm:@jsr/wildboar__pki-stub@^2.0.2",
         "@wildboar/platcert": "npm:@jsr/wildboar__platcert@^2.0.1",
+        "@wildboar/safe-timers": "npm:@jsr/wildboar__safe-timers@^1.0.1",
         "@wildboar/safecurves-pkix-18": "npm:@jsr/wildboar__safecurves-pkix-18@^2.0.0",
         "@wildboar/scrypt-0": "npm:@jsr/wildboar__scrypt-0@^2.0.1",
         "@wildboar/scvp": "npm:@jsr/wildboar__scvp@^2.0.1",

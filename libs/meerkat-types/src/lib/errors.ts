@@ -1,79 +1,41 @@
+import { ASN1Element, INTEGER } from "@wildboar/asn1";
 import type {
     AbandonedData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import type {
     AbandonFailedData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import type {
     AttributeErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     NameErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import type {
     ReferralData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     SecurityErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ServiceErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     UpdateErrorData,
+    DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     OpBindingErrorParam,
+    operationalBindingError,
 } from "@wildboar/x500/OperationalBindingManagement";
 import {
     ShadowErrorData,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import type {
+    InvokeId,
     Code,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_errcode_abandoned,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import {
     id_errcode_abandonFailed,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import {
     id_errcode_attributeError,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import {
     id_errcode_nameError,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import {
     id_errcode_referral,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import {
     id_errcode_securityError,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import {
     id_errcode_serviceError,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import {
     id_errcode_updateError,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import {
-    operationalBindingError,
-} from "@wildboar/x500/OperationalBindingManagement";
-import {
     id_errcode_shadowError,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import { ASN1Element, INTEGER } from "@wildboar/asn1";
-import {
-    DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     Abort,
-} from "@wildboar/x500/IDMProtocolSpecification";
-import type {
     IdmReject_reason,
 } from "@wildboar/x500/IDMProtocolSpecification";
-import type {
-    InvokeId,
-} from "@wildboar/x500/CommonProtocolSpecification";
 
 /**
  * @summary A superclass of all errors received from bind operations
@@ -579,8 +541,8 @@ class ChainedError extends Error {
      */
     constructor (
         readonly message: string,
-        readonly error?: ASN1Element,
-        readonly errcode?: Code,
+        readonly error?: ASN1Element | undefined,
+        readonly errcode?: Code | undefined,
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message);

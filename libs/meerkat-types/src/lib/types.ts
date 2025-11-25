@@ -1,18 +1,12 @@
-import { randomUUID } from "crypto";
-import {
-    Logger,
-} from "winston";
+import { randomUUID } from "node:crypto";
+import { Logger } from "winston";
 import {
     ObjectClassKind,
-} from "@wildboar/x500/InformationFramework";
-import type {
     Name,
-} from "@wildboar/x500/InformationFramework";
-import type {
     RelativeDistinguishedName,
-} from "@wildboar/x500/InformationFramework";
-import {
     AttributeUsage,
+    Attribute,
+    AttributeType,
 } from "@wildboar/x500/InformationFramework";
 import type {
     EqualityMatcher,
@@ -22,17 +16,12 @@ import type {
 } from "@wildboar/x500";
 import type { ASN1Element, OBJECT_IDENTIFIER, BOOLEAN, EXTERNAL } from "@wildboar/asn1";
 import type {
+    PwdResponseValue,
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/DirectoryAbstractService";
 import type {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import type {
-    Attribute,
-} from "@wildboar/x500/InformationFramework";
-import type {
-    AttributeType,
-} from "@wildboar/x500/InformationFramework";
 import type { LDAPSyntaxDecoder } from "@wildboar/ldap";
 import type { LDAPSyntaxEncoder } from "@wildboar/ldap";
 import type { PrismaClient, Prisma, Entry } from "@prisma/client";
@@ -45,63 +34,40 @@ import type { DitBridgeKnowledge } from "@wildboar/x500/DistributedOperations";
 import type { AuthenticationLevel } from "@wildboar/x500/BasicAccessControl";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/BasicAccessControl";
-import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
 import type {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import type { KeyObject } from "crypto";
+import type { KeyObject } from "node:crypto";
 import type { PkiPath } from "@wildboar/x500/AuthenticationFramework";
 import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
 import type { cpus, networkInterfaces } from "os";
 import type { Socket } from "net";
 import {
-    OPTIONALLY_PROTECTED,
-} from "@wildboar/x500/EnhancedSecurity";
-import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
+    DSACredentials,
 } from "@wildboar/x500/DistributedOperations";
 import {
     DITStructureRuleDescription,
-} from "@wildboar/x500/SchemaAdministration";
-import {
     DITContentRuleDescription,
-} from "@wildboar/x500/SchemaAdministration";
-import {
     MatchingRuleUseDescription,
-} from "@wildboar/x500/SchemaAdministration";
-import {
     FriendsDescription,
-} from "@wildboar/x500/SchemaAdministration";
-import {
     DITContextUseDescription,
 } from "@wildboar/x500/SchemaAdministration";
 import { EventEmitter } from "node:events";
 import type { i18n } from "i18next";
+import { Context as X500Context } from "@wildboar/x500/InformationFramework";
+import type { TlsOptions, TLSSocket } from "node:tls";
+import type { CertificateList } from "@wildboar/x500/AuthenticationFramework";
+import type { TrustAnchorList } from "@wildboar/tal";
+import type { AttributeCertificationPath } from "@wildboar/x500/AttributeCertificateDefinitions";
+import type { SafeTimeout } from "@wildboar/safe-timers";
 import {
-    Context as X500Context,
-} from "@wildboar/x500/InformationFramework";
-import type { TlsOptions, TLSSocket } from "tls";
-import type {
-    CertificateList,
-} from "@wildboar/x500/AuthenticationFramework";
-import type {
-    TrustAnchorList,
-} from "@wildboar/tal";
-import type {
-    AttributeCertificationPath,
-} from "@wildboar/x500/AttributeCertificateDefinitions";
-import type {
-    PwdResponseValue,
-} from "@wildboar/x500/DirectoryAbstractService";
-import { Timeout } from "safe-timers";
-import { Clearance } from "@wildboar/x500/EnhancedSecurity";
-import {
+    Clearance,
     SignedSecurityLabel,
+    OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/EnhancedSecurity";
-import { DSACredentials } from "@wildboar/x500/DistributedOperations";
 import { DirectoryBindError, DSABindError } from "./errors";
 import type { URL } from "url";
 
@@ -3244,7 +3210,7 @@ interface Context {
      *
      * @see {@link shadowUpdateCycles}
      */
-    pendingShadowingUpdateCycles: Map<number, Timeout>;
+    pendingShadowingUpdateCycles: Map<number, SafeTimeout>;
 
     /**
      * A mapping of the shadow operational binding IDs for which the updateMode
@@ -3422,7 +3388,7 @@ abstract class ClientAssociation implements WithIntegerProtocolVersion, WithSube
     public socket!: Socket;
 
     /** A UUID that uniquely identifies this association */
-    public readonly id = randomUUID();
+    public readonly id: UUID = randomUUID();
 
     public subentriesCache: Map<number, Vertex[]> = new Map();
     public subentriesCacheExpiration: Date = new Date();

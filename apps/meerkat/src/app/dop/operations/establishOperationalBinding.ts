@@ -166,6 +166,7 @@ import { id_op_modifyOperationalBinding } from "@wildboar/x500/CommonProtocolSpe
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates.js";
 import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { cacheNamingContexts } from "../../dit/cacheNamingContexts.js";
+import { clearSafeTimeout } from "@wildboar/safe-timers";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -338,7 +339,9 @@ async function modifySOB_delete_me (
     // be unique across (type, id).
     const t1 = ctx.pendingShadowingUpdateCycles.get(binding_identifier);
     const t2 = ctx.shadowUpdateCycles.get(binding_identifier);
-    t1?.clear();
+    if (t1) {
+        clearSafeTimeout(t1);
+    }
     if (t2) {
         clearTimeout(t2);
     }

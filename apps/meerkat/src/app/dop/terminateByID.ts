@@ -20,6 +20,7 @@ import {
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { removeConsumer } from "./terminate/removeConsumer.js";
 import { removeSupplier } from "./terminate/removeSupplier.js";
+import { clearSafeTimeout } from "@wildboar/safe-timers";
 
 /**
  * @summary Terminates an operational binding by its database ID.
@@ -134,7 +135,9 @@ async function terminate (
             // be unique across (type, id).
             const t1 = ctx.pendingShadowingUpdateCycles.get(ob.binding_identifier);
             const t2 = ctx.shadowUpdateCycles.get(ob.binding_identifier);
-            t1?.clear();
+            if (t1) {
+                clearSafeTimeout(t1);
+            }
             if (t2) {
                 clearTimeout(t2);
             }
