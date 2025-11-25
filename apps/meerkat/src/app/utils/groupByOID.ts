@@ -16,6 +16,8 @@ import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
  * @returns A dictionary of items by common object identifier.
  *
  * @function
+ * 
+ * @deprecated Use the `groupByOID` from `@wildboar/x500` instead.
  */
 export
 function groupByOID <T>(

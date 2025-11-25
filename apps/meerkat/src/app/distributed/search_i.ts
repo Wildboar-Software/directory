@@ -1150,7 +1150,7 @@ async function apply_mr_mapping (
     const subs_cache = searchState.matching_rule_substitutions;
     const substitutions = mrm.substitution ?? [];
     const attrs = groupByOID(substitutions, (s) => s.attribute);
-    for (const [attr, subs] of Object.entries(attrs)) { // Each iteration of this loop is a different attribute type.
+    for (const [attr, subs] of attrs.entries()) { // Each iteration of this loop is a different attribute type.
         if (dontMapAttributes.has(attr)) {
             continue;
         }

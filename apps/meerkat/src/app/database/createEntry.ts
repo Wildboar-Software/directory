@@ -66,10 +66,10 @@ async function createDse (
     modifier: DistinguishedName = [],
     signErrors: boolean = false,
 ): Promise<Vertex> {
-    const groupedAttrs = groupByOID(attributes, attr => attr.type_);
+    const groupedAttrs: Map<IndexableOID, Attribute[]> = groupByOID(attributes, attr => attr.type_);
     const objectClasses: OBJECT_IDENTIFIER[] = [];
     const objectClassIndex: Set<IndexableOID> = new Set();
-    for (const oc_attr of groupedAttrs[ID_OC] ?? []) {
+    for (const oc_attr of groupedAttrs.get(ID_OC) ?? []) {
         for (const value of oc_attr.values) {
             const oc_oid = value.objectIdentifier;
             objectClasses.push(oc_oid);
@@ -90,7 +90,7 @@ async function createDse (
     );
     const isFamilyMember = objectClassIndex.has(ID_PARENT) || objectClassIndex.has(ID_CHILD);
     const isDynamic = objectClassIndex.has(ID_DYNOBJ);
-    if (isDynamic && !groupedAttrs[ID_TTL]?.length) {
+    if (isDynamic && !groupedAttrs.get(ID_TTL)?.length) {
         // WARNING: This _does_ modify the attributes by reference, but it is an edge case.
         attributes.push(new Attribute(
             entryTtl["&id"],
@@ -100,7 +100,7 @@ async function createDse (
             undefined,
         ));
     }
-    const adminRoles = groupedAttrs[ID_ADMIN_ROLE]
+    const adminRoles = groupedAttrs.get(ID_ADMIN_ROLE)
         ?.flatMap((a) => a.values)
         .map((v) => v.objectIdentifier) ?? [];
     const isAdmPoint = adminRoles.length > 0;
@@ -169,7 +169,7 @@ async function createDse (
             },
         },
     });
-    const aliasedEntryValue = groupedAttrs[ID_AEN]?.[0].values[0];
+    const aliasedEntryValue = groupedAttrs.get(ID_AEN)?.[0].values[0];
 
     // Rather than calling vertexFromDatabaseEntry(), we create a "good enough"
     // vertex based on what we already know. This could save many database
@@ -311,7 +311,7 @@ async function createEntry (
     const groupedAttrs = groupByOID(attributes, attr => attr.type_);
     const objectClasses: OBJECT_IDENTIFIER[] = [];
     const objectClassIndex: Set<IndexableOID> = new Set();
-    for (const oc_attr of groupedAttrs[ID_OC] ?? []) {
+    for (const oc_attr of groupedAttrs.get(ID_OC) ?? []) {
         for (const value of oc_attr.values) {
             const oc_oid = value.objectIdentifier;
             objectClasses.push(oc_oid);
@@ -332,7 +332,7 @@ async function createEntry (
     );
     const isFamilyMember = objectClassIndex.has(ID_PARENT) || objectClassIndex.has(ID_CHILD);
     const isDynamic = objectClassIndex.has(ID_DYNOBJ);
-    if (isDynamic && !groupedAttrs[ID_TTL]?.length) {
+    if (isDynamic && !groupedAttrs.get(ID_TTL)?.length) {
         // WARNING: This _does_ modify the attributes by reference, but it is an edge case.
         attributes.push(new Attribute(
             entryTtl["&id"],
@@ -342,7 +342,7 @@ async function createEntry (
             undefined,
         ));
     }
-    const adminRoles = groupedAttrs[ID_ADMIN_ROLE]
+    const adminRoles = groupedAttrs.get(ID_ADMIN_ROLE)
         ?.flatMap((a) => a.values)
         .map((v) => v.objectIdentifier) ?? [];
     const isAdmPoint = adminRoles.length > 0;
@@ -411,7 +411,7 @@ async function createEntry (
             },
         },
     });
-    const aliasedEntryValue = groupedAttrs[ID_AEN]?.[0].values[0];
+    const aliasedEntryValue = groupedAttrs.get(ID_AEN)?.[0].values[0];
 
     // Rather than calling vertexFromDatabaseEntry(), we create a "good enough"
     // vertex based on what we already know. This could save many database
@@ -443,7 +443,7 @@ async function createEntry (
             admPoint: isAdmPoint
                 ? {
                     administrativeRole: new Set(adminRoles.map((ar) => ar.toString())),
-                    accessControlScheme: groupedAttrs[ID_ACS]?.[0]?.values[0]?.objectIdentifier,
+                    accessControlScheme: groupedAttrs.get(ID_ACS)?.[0]?.values[0]?.objectIdentifier,
                 }
                 : undefined,
             alias: isAlias && aliasedEntryValue

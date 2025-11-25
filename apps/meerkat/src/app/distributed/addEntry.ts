@@ -1653,7 +1653,7 @@ async function addEntry (
                 return checkNameForm(rdn, nf.mandatoryAttributes, nf.optionalAttributes);
             });
         if (structuralRuleThatAppliesToImmediateSuperior) {
-            await ctx.db.entry.update({ // INTENTIONAL_NO_AWAIT
+            await ctx.db.entry.update({
                 where: {
                     id: immediateSuperior.dse.id,
                 },
@@ -1662,6 +1662,7 @@ async function addEntry (
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }).catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_update_gsr"), e));
+            immediateSuperior.dse.governingStructureRule = Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier);
         }
     }
 

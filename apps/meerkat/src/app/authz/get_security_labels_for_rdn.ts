@@ -73,7 +73,7 @@ async function get_security_labels_for_rdn (
         const type = ObjectIdentifier.fromBytes(dbval.type_oid);
         const type_str = type.toString();
         const value = attributeValueFromDB(dbval);
-        const atavs = atavsByType[type_str];
+        const atavs = atavsByType.get(type_str)!;
         if (atavs.length > 1) {
             throw new MistypedArgumentError();
         }
@@ -87,17 +87,18 @@ async function get_security_labels_for_rdn (
                 return _decode_SignedSecurityLabel(el);
             });
             const groupedContexts = groupByOID(dbval.ContextValue, (c) => c.type);
-            const contexts = Object.entries(groupedContexts).map(([ type_str, c ]) => {
-                return new X500Context(
-                    ObjectIdentifier.fromString(type_str),
-                    c.map((cv) => {
-                        const el = new BERElement();
-                        el.fromBytes(cv.ber);
-                        return el;
-                    }),
-                    c[0]?.fallback,
-                );
-            });
+            const contexts = Array.from(groupedContexts.entries())
+                .map(([ type_str, c ]) => {
+                    return new X500Context(
+                        ObjectIdentifier.fromString(type_str),
+                        c.map((cv) => {
+                            const el = new BERElement();
+                            el.fromBytes(cv.ber);
+                            return el;
+                        }),
+                        c[0]?.fallback,
+                    );
+                });
             ret.push([ {
                 type: atav.type_,
                 value: atav.value,
