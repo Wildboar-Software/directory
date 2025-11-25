@@ -5,7 +5,7 @@ import {
     do_shadow as command,
 } from "../commands/dop/shadow.js";
 import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
-import * as _ from "lodash";
+import _ from "lodash";
 
 
 export

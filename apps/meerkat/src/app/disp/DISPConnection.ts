@@ -96,6 +96,7 @@ import {
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { _encode_ShadowErrorData } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { shadowError } from "@wildboar/x500/DirectoryShadowAbstractService";
+import _ from "lodash";
 
 const flatten = flat.flatten;
 
@@ -203,6 +204,7 @@ async function handleRequestAndErrors (
         association_id: assn.id,
         invokeID: printInvokeId(request.invoke_id),
         opcode,
+        problem: undefined,
     };
     if (!("present" in request.invoke_id)) {
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
@@ -351,7 +353,10 @@ async function handleRequestAndErrors (
                 // idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
-        Object.assign(logInfo, e);
+        if (typeof e === "object" && e !== null) {
+            logInfo.problem = e.data?.problem;
+            Object.assign(logInfo, _.omit(e, "data"));
+        }
         ctx.log.error(`${assn.id}#${invoke_id}: ${e?.name ?? "?"}: ${e?.message ?? e?.msg ?? e?.m}`, logInfo);
         if (!stats.outcome) {
             stats.outcome = {};

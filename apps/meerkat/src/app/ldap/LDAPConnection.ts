@@ -94,6 +94,7 @@ import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { createWriteStream } from "node:fs";
+import _ from "lodash";
 
 const flatten = flat.flatten;
 
@@ -364,8 +365,12 @@ async function handleRequestAndErrors (
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
             messageID: message.messageID.toString(),
+            problem: undefined,
         };
-        Object.assign(logInfo, e);
+        if (typeof e === "object" && e !== null) {
+            logInfo.problem ??= e.data?.problem;
+            Object.assign(logInfo, _.omit(e, "data"));
+        }
         ctx.log.error(`${assn.id}#${message.messageID}: ${e?.name ?? "?"}: ${e?.message ?? e?.msg ?? e?.m}`, logInfo);
         if (!stats.outcome) {
             stats.outcome = {};
