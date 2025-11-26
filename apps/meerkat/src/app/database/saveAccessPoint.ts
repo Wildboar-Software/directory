@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import {
     AccessPoint,
     _encode_AccessPoint,
@@ -20,7 +20,7 @@ import {
     _encode_SupplierAndConsumers,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { naddrToURI } from "@wildboar/x500";
-import { Knowledge } from "@prisma/client";
+import { Knowledge } from "../generated/client.js";
 import rdnToJson from "../x500/rdnToJson.js";
 import { DER } from "@wildboar/asn1/functional";
 import { URL } from "url";
@@ -84,7 +84,7 @@ async function saveAccessPoint (
     nsk_group?: bigint,
     nhob_id?: number,
 ): Promise<number> {
-    const ber: Buffer = ((): Buffer => {
+    const ber: Buffer<ArrayBuffer> = ((): Buffer<ArrayBuffer> => {
         if (ap instanceof AccessPoint) {
             return _encode_AccessPoint(ap, DER).toBytes();
         } else if (ap instanceof MasterOrShadowAccessPoint) {
@@ -122,7 +122,7 @@ async function saveAccessPoint (
             active: true,
             NSAP: {
                 createMany: {
-                    data: ap.address.nAddresses.map((nsap) => {
+                    data: ap.address.nAddresses.map((nsap: Uint8Array<ArrayBuffer>) => {
                         const uri = naddrToURI(nsap);
                         if (!uri) {
                             return {

@@ -1,4 +1,4 @@
-import type { ClientAssociation } from "@wildboar/meerkat-types";
+import type { ClientAssociation } from "./types/index.js";
 import express from "express";
 import * as net from "net";
 import * as tls from "tls";
@@ -81,7 +81,7 @@ import { createWriteStream } from "node:fs";
 import { disp_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import DISPAssociation from "./disp/DISPConnection.js";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { OperationalBindingInitiator } from "@prisma/client";
+import { OperationalBindingInitiator } from "./generated/client.js";
 import {
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/DirectoryShadowAbstractService";

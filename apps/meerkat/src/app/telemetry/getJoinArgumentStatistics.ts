@@ -1,7 +1,7 @@
 import type {
     JoinArgumentStatistics,
     JoinAttPairStatistics,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import type {
     JoinArgument,
 } from "@wildboar/x500/DirectoryAbstractService";

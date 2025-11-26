@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import { BERElement, ObjectIdentifier } from "@wildboar/asn1";
 import contextTypeFromInformationObject from "./contextTypeFromInformationObject.js";
 import { contexts as x500c } from "@wildboar/x500";

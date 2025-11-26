@@ -1,5 +1,5 @@
 import { MeerkatContext } from "../../ctx.js";
-import { ShadowError, UnknownError } from "@wildboar/meerkat-types";
+import { ShadowError, UnknownError } from "../../types/index.js";
 import {
     RequestShadowUpdateArgument,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -27,7 +27,7 @@ import { updateShadowConsumer } from "../createShadowUpdate.js";
 import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { addSeconds } from "date-fns";
 import { UpdateWindow } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { OperationalBindingInitiator } from "@prisma/client";
+import { OperationalBindingInitiator } from "../../generated/client.js";
 
 /**
  * @summary The requestShadowUpdate operation defined in ITU Rec. X.525 (2019)

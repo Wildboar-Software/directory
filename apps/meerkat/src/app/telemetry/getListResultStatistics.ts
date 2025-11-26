@@ -1,4 +1,4 @@
-import type { ListResultStatistics } from "@wildboar/meerkat-types";
+import type { ListResultStatistics } from "../types/index.js";
 import type { ListResult } from "@wildboar/x500/DirectoryAbstractService";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 

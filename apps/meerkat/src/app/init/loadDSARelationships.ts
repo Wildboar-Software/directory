@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import rdnFromJson from "../x500/rdnFromJson.js";
 import { stringifyDN } from "../x500/stringifyDN.js";
 import { DER } from "@wildboar/asn1/functional";
@@ -6,7 +6,7 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.js";
-import { Prisma, OperationalBindingInitiator } from "@prisma/client";
+import { OperationalBindingInitiator } from "../generated/client.js";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
@@ -17,7 +17,7 @@ import {
 const HOB: string = id_op_binding_hierarchical.toString();
 const NHOB: string = id_op_binding_non_specific_hierarchical.toString();
 
-function getWhere (): Prisma.OperationalBindingWhereInput {
+function getWhere () {
     const now = new Date();
     // This where clause was pretty much ripped from `getRelevantOperationalBindings()`.
     return {

@@ -1,4 +1,4 @@
-import type { ClientAssociation, Context, Vertex } from "@wildboar/meerkat-types";
+import type { ClientAssociation, Context, Vertex } from "../../types/index.js";
 import {
     type EntryInformation_information_Item,
 } from "@wildboar/x500/DirectoryAbstractService";

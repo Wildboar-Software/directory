@@ -1,4 +1,4 @@
-import type { Context, PendingUpdates, Vertex } from "@wildboar/meerkat-types";
+import type { Context, PendingUpdates, Vertex } from "../../types/index.js";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
@@ -15,7 +15,7 @@ import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/DistributedOperations";
 import dnToVertex from "../../dit/dnToVertex.js";
-import { Knowledge } from "@prisma/client";
+import { Knowledge } from "../../generated/client.js";
 import { DER, _decodeObjectIdentifier } from "@wildboar/asn1/functional";
 import createEntry from "../../database/createEntry.js";
 import {

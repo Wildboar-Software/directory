@@ -1,4 +1,4 @@
-import { ServiceError, ClientAssociation } from "@wildboar/meerkat-types";
+import { ServiceError, ClientAssociation } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {

@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import { type LDAPSyntaxEncoder } from "@wildboar/ldap";
 import { ASN1Element } from "@wildboar/asn1";
 import { directoryStringToString } from "@wildboar/x500";

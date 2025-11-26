@@ -1,5 +1,5 @@
 import type { MeerkatContext } from "../ctx.js";
-import type { ClientAssociation, IndexableDN } from "@wildboar/meerkat-types";
+import type { ClientAssociation, IndexableDN } from "../types/index.js";
 import {
     ContinuationReference, ReferenceType_ditBridge,
 } from "@wildboar/x500/DistributedOperations";

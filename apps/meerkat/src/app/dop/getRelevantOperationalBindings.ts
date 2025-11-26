@@ -1,8 +1,8 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { OperationalBindingInitiator } from "@prisma/client";
+import { OperationalBindingInitiator } from "../generated/client.js";
 import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 
 /**

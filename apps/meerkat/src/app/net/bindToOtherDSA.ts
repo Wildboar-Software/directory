@@ -41,7 +41,7 @@ import {
     OperationInvocationInfo,
     DSABindError,
     BindReturn,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { PresentationAddress } from "@wildboar/pki-stub";
 import {

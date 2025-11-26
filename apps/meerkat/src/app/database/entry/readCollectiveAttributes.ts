@@ -2,7 +2,7 @@ import type {
     Context,
     IndexableOID,
     Vertex,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";

@@ -11,7 +11,7 @@ import { commonName } from "@wildboar/x500/src/lib/collections/attributes";
 import { DER } from "@wildboar/asn1/functional";
 import { organization } from "@wildboar/x500/src/lib/collections/objectClasses";
 import { getMockCtx } from "../testing.spec.js";
-import { IndexableDN } from "@wildboar/meerkat-types";
+import { IndexableDN } from "../types/index.js";
 import { strict as assert } from "node:assert";
 
 describe("getNamesFromFamilyEntry()", () => {

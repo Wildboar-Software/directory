@@ -1,5 +1,5 @@
-import { Vertex, ClientAssociation, OperationStatistics } from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationStatistics } from "../types/index.js";
+import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import * as net from "net";
 import * as tls from "tls";

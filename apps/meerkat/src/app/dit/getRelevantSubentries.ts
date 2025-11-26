@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { Context, Vertex } from "../types/index.js";
 import { dnWithinSubtreeSpecification } from "@wildboar/x500";
 import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
@@ -8,7 +8,7 @@ import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { subtreeSpecification } from "@wildboar/x500/InformationFramework";
 import { _decode_SubtreeSpecification } from "@wildboar/x500/InformationFramework";
 import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
-import type { Prisma } from "@prisma/client";
+import type { EntryWhereInput } from "../generated/models/Entry.js";
 
 /**
  * @summary Get the subentries whose subtree specification select for an entry
@@ -36,7 +36,7 @@ async function getRelevantSubentries (
     entry: Vertex | OBJECT_IDENTIFIER[],
     entryDN: DistinguishedName,
     admPoint: Vertex,
-    where?: Prisma.EntryWhereInput,
+    where?: EntryWhereInput,
     subentryCache?: Map<number, Vertex[]>,
 ): Promise<Vertex[]> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);

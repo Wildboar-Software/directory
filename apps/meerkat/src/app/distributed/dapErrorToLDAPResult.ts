@@ -1,5 +1,5 @@
-import type { Context } from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
+import * as errors from "../types/index.js";
 import {
     LDAPResult,
 } from "@wildboar/ldap";

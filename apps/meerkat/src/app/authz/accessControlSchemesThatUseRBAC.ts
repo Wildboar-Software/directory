@@ -7,7 +7,7 @@ import {
 import {
     rule_and_simple_access_control,
 } from "@wildboar/x500/BasicAccessControl";
-import { IndexableOID } from "@wildboar/meerkat-types";
+import { IndexableOID } from "../types/index.js";
 
 /**
  * @summary The access control schemes that use rule-based access control

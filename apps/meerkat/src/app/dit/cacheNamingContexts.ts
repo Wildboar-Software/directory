@@ -1,4 +1,4 @@
-import { Context } from "@wildboar/meerkat-types";
+import { Context } from "../types/index.js";
 import getEntryExistsFilter from "../database/entryExistsFilter.js";
 import getDNFromEntryId from "../database/getDNFromEntryId.js";
 

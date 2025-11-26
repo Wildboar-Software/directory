@@ -1,7 +1,7 @@
 import {
     BindReturn,
     DirectoryBindError,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";

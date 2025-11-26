@@ -1,4 +1,4 @@
-import type { IndexableOID } from "@wildboar/meerkat-types";
+import type { IndexableOID } from "../types/index.js";
 import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 
 /**

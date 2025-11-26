@@ -10,12 +10,12 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import {
     nonSpecificKnowledge,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { DER } from "@wildboar/asn1/functional";
-import { Prisma, Knowledge } from "@prisma/client";
+import { Knowledge, Prisma } from "../../generated/client.js";
 import { randomInt } from "crypto";
 import rdnToJson from "../../x500/rdnToJson.js";
 import rdnFromJson from "../../x500/rdnFromJson.js";

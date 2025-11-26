@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import { validateObjectClasses } from "./validateObjectClasses.js";
 import { objectClasses as seloc } from "@wildboar/x500";
 import { objectClassFromInformationObject } from "../init/objectClassFromInformationObject.js";

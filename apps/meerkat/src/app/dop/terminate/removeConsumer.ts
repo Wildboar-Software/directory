@@ -1,5 +1,5 @@
-import { Context } from "@wildboar/meerkat-types";
-import { Knowledge } from "@prisma/client";
+import { Context } from "../../types/index.js";
+import { Knowledge } from "../../generated/client.js";
 import {
     _decode_ConsumerInformation,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";

@@ -1,6 +1,6 @@
 import type {
     AccessPointInformationStatistics,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import type { AccessPointInformation } from "@wildboar/x500/DistributedOperations";
 import getMasterOrShadowAccessPointStatistics from "./getMasterOrShadowAccessPointStatistics.js";
 

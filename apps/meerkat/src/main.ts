@@ -1,5 +1,7 @@
-import { configDotenv } from "dotenv";
-configDotenv();
+/* This MUST be an ESM import instead of using dotenv.config(), because the ESM
+imports get hoisted to the top of the file (virtually speaking), but we need these
+environment variables to be loaded before any other code is executed. */
+import 'dotenv/config';
 import i18n from "i18next";
 import I18FileSystemBackend from "i18next-fs-backend";
 import { osLocaleSync } from "os-locale";
@@ -9,6 +11,8 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// const { default: main } = await import("./app/main.js");
 
 i18n
     .use(I18FileSystemBackend)
@@ -38,6 +42,8 @@ i18n
         },
     })
         .then(main)
+        // .then(async () => await import("./app/main.js").then(({ default: main }) => main()))
+        // .then(({ default: main }) => main())
         .catch((e) => {
             console.error(`COULD_NOT_START: ${e}`);
             console.error(e?.stack ?? "NO STACK");

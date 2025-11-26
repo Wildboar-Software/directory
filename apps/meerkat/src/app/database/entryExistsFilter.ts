@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+// import type { Prisma } from "@prisma/client";
 
 /**
  * @summary Gets a Prisma filter that returns entries that could appear in results.
@@ -12,7 +12,7 @@ import type { Prisma } from "@prisma/client";
  * @function
 */
 export
-const getEntryExistsFilter = (): Prisma.EntryWhereInput => {
+const getEntryExistsFilter = () => {
     return {
         deleteTimestamp: null,
         OR: [

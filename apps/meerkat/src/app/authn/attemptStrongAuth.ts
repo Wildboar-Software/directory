@@ -4,7 +4,7 @@ import {
     DSABindError,
     BindReturn,
     MistypedArgumentError,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import {
     NameAndOptionalUID,

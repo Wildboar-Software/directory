@@ -1,4 +1,4 @@
-import type { UUID } from "@wildboar/meerkat-types";
+import type { UUID } from "../types/index.js";
 
 /**
  * @summary Converts a binary UUID to a string UUID

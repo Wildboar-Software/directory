@@ -1,4 +1,4 @@
-import type { Context, OPCR } from "@wildboar/meerkat-types";
+import type { Context, OPCR } from "../types/index.js";
 import { unpackBits } from "@wildboar/asn1";
 import {
     DER,

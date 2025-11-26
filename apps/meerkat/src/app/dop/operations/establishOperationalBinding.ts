@@ -1,6 +1,6 @@
 import type { MeerkatContext } from "../../ctx.js";
-import * as errors from "@wildboar/meerkat-types";
-import { Vertex } from "@wildboar/meerkat-types";
+import * as errors from "../../types/index.js";
+import { Vertex } from "../../types/index.js";
 import DOPAssociation from "../DOPConnection.js";
 import { INTEGER, FALSE, unpackBits, ASN1TagClass, ASN1Construction, OBJECT_IDENTIFIER, TRUE } from "@wildboar/asn1";
 import type {
@@ -69,7 +69,7 @@ import {
 import { compareDistinguishedName } from "@wildboar/x500";
 import { ASN1Element, packBits } from "@wildboar/asn1";
 import becomeSubordinate from "../establish/becomeSubordinate.js";
-import { OperationalBindingInitiator, Knowledge } from "@prisma/client";
+import { OperationalBindingInitiator, Knowledge } from "../../generated/client.js";
 import {
     _encode_CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";
@@ -140,7 +140,7 @@ import {
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import becomeNonSpecificSuperior from "../establish/becomeNonSpecificSuperior.js";
 import becomeSuperior from "../establish/becomeSuperior.js";
-import { Prisma, ShadowedKnowledgeType } from "@prisma/client";
+import { ShadowedKnowledgeType } from "../../generated/client.js";
 import stringifyDN from "../../x500/stringifyDN.js";
 import {
     top,
@@ -764,7 +764,7 @@ async function relayedEstablishOperationalBinding (
                 );
             }
             const access_point_id = await saveAccessPoint(ctx, relayTo, Knowledge.OB_REQUEST);
-            const ob_db_data: Prisma.OperationalBindingCreateInput = {
+            const ob_db_data = {
                 accepted: true,
                 outbound: true,
                 binding_type: bindingType.toString(),
@@ -1516,7 +1516,7 @@ async function establishOperationalBinding (
 
     const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
 
-    const ob_db_data: Prisma.OperationalBindingCreateInput = {
+    const ob_db_data = {
         outbound: false,
         binding_type: data.bindingType.toString(),
         binding_identifier: Number(bindingID.identifier),

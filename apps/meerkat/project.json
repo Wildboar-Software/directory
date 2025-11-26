@@ -5,6 +5,17 @@
     "projectType": "application",
     "tags": [],
     "targets": {
+        "build2": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/apps/meerkat",
+                "tsConfig": "apps/meerkat/tsconfig.app.json",
+                "packageJson": "apps/meerkat/package.json",
+                "main": "apps/meerkat/src/index.ts",
+                "assets": ["apps/meerkat/*.md"]
+            }
+        },
         "build": {
             "executor": "@nx/esbuild:esbuild",
             "outputs": ["{options.outputPath}"],

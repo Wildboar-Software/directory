@@ -1,5 +1,5 @@
-import { Context, ClientAssociation } from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+import { Context, ClientAssociation } from "../types/index.js";
+import * as errors from "../types/index.js";
 import {
     _decode_AbandonArgument,
 } from "@wildboar/x500/DirectoryAbstractService";

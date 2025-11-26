@@ -1,4 +1,4 @@
-import type { Vertex, Context } from "@wildboar/meerkat-types";
+import type { Vertex, Context } from "../types/index.js";
 import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import accessControlSchemesThatUseEntryACI from "./accessControlSchemesThatUseEntryACI.js";
 import accessControlSchemesThatUsePrescriptiveACI from "./accessControlSchemesThatUsePrescriptiveACI.js";
@@ -18,7 +18,7 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/BasicAccessControl";
 import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB.js";
-import { Prisma } from "@prisma/client";
+import type { AttributeValueWhereInput } from "../generated/models/AttributeValue.js";
 import accessControlSchemesThatUseASingleAdminPoint from "./accessControlSchemesThatUseASingleAdminPoint.js";
 
 const AC_SUBENTRY: string = accessControlSubentry["&id"].toString();
@@ -127,7 +127,7 @@ async function getACIItems (
             .slice(0, indexOfFirstACSA + 1)
             .filter((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(AC_SPECIFIC));
 
-    const aciQueries: Prisma.AttributeValueWhereInput[] = [];
+    const aciQueries: AttributeValueWhereInput[] = [];
     if (usePrescriptiveACI) {
         aciQueries.push({
             entry_id: {

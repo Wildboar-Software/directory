@@ -8,15 +8,16 @@
 // _this_ database.
 
 datasource db {
-  url      = env("DATABASE_URL")
   provider = "mysql"
   // provider = "postgresql"
   // provider = "sqlserver"
 }
 
 generator client {
-  provider = "prisma-client-js"
-  previewFeatures = ["relationJoins"]
+  provider = "prisma-client"
+  output = "../app/generated"
+  engineType      = "client" // enable Prisma ORM without Rust
+  moduleFormat = "esm"
 }
 
 // Subentry attributes, such as those documented in X.501, Section 14.4.3,

@@ -1,6 +1,6 @@
-import type { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
+import type { Context, Vertex, ClientAssociation, OperationReturn } from "../types/index.js";
 import { ObjectIdentifier, unpackBits } from "@wildboar/asn1";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     ChangePasswordArgument,

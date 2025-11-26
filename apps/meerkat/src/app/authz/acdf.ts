@@ -1,4 +1,4 @@
-import { Context, Vertex, ClientAssociation, Value } from "@wildboar/meerkat-types";
+import { Context, Vertex, ClientAssociation, Value } from "../types/index.js";
 import { bacACDF } from "@wildboar/x500";
 import {
     SignedSecurityLabel,

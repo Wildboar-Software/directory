@@ -1,4 +1,4 @@
-import { Context } from "@wildboar/meerkat-types";
+import { Context } from "../../types/index.js";
 import { compareDistinguishedName, EqualityMatcher } from "@wildboar/x500";
 import { ASN1Element } from "@wildboar/asn1";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";

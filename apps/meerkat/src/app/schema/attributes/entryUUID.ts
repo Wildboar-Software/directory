@@ -1,4 +1,4 @@
-import type { AttributeInfo } from "@wildboar/meerkat-types";
+import type { AttributeInfo } from "../../types/index.js";
 import {
     ASN1Element,
     ObjectIdentifier,

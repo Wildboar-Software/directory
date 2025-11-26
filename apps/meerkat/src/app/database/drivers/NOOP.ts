@@ -1,4 +1,4 @@
-// import type { SpecialAttributeDatabaseEditor } from "@wildboar/meerkat-types";
+// import type { SpecialAttributeDatabaseEditor } from "../../types/index.js";
 
 export
 const NOOP = async () => {};

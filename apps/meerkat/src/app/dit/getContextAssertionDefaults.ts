@@ -1,7 +1,7 @@
 import type {
     Context,
     Vertex,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import {
     contextAssertionDefaults,
     contextAssertionSubentry,

@@ -180,7 +180,7 @@ import {
     Release_request_reason_normal,
 } from "@wildboar/acse";
 import { getRDN } from "@wildboar/x500";
-import { IndexableOID } from "@wildboar/meerkat-types";
+import { IndexableOID } from "../types/index.js";
 import {
     Associate_source_diagnostic_acse_service_user_null_,
     Associate_source_diagnostic_acse_service_user_no_reason_given,

@@ -1,6 +1,5 @@
-import type { Context, Vertex, IndexableOID } from "@wildboar/meerkat-types";
+import type { Context, Vertex, IndexableOID } from "../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
-import { Prisma } from "@prisma/client";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
 import {
     DistinguishedName, _decode_DistinguishedName,
@@ -34,6 +33,8 @@ import {
     ID_ACS,
 } from "../../oidstr.js";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
+import type { EntryCreateInput } from "../generated/models/Entry.js";
+import type { DistinguishedValueCreateWithoutEntryInput } from "../generated/models/DistinguishedValue.js";
 
 /**
  * @summary Create a DSE more efficiently than with `createVertex`, but with a catch
@@ -61,7 +62,7 @@ async function createDse (
     ctx: Context,
     superior: Vertex,
     rdn: RDN,
-    entryInit: Partial<Prisma.EntryCreateInput>,
+    entryInit: Partial<EntryCreateInput>,
     attributes: Attribute[],
     modifier: DistinguishedName = [],
     signErrors: boolean = false,
@@ -140,7 +141,7 @@ async function createDse (
             governingStructureRule: entryInit.governingStructureRule,
             RDN: {
                 createMany: {
-                    data: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
+                    data: rdn.map((atav, i): DistinguishedValueCreateWithoutEntryInput => ({
                         type_oid: atav.type_.toBytes(),
                         tag_class: atav.value.tagClass,
                         constructed: (atav.value.construction === ASN1Construction.constructed),
@@ -303,7 +304,7 @@ async function createEntry (
     ctx: Context,
     superior: Vertex,
     rdn: RDN,
-    entryInit: Partial<Prisma.EntryCreateInput>,
+    entryInit: Partial<EntryCreateInput>,
     attributes: Attribute[],
     modifier: DistinguishedName = [],
     signErrors: boolean = false,
@@ -382,7 +383,7 @@ async function createEntry (
             governingStructureRule: entryInit.governingStructureRule,
             RDN: {
                 createMany: {
-                    data: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
+                    data: rdn.map((atav, i): DistinguishedValueCreateWithoutEntryInput => ({
                         type_oid: atav.type_.toBytes(),
                         tag_class: atav.value.tagClass,
                         constructed: (atav.value.construction === ASN1Construction.constructed),

@@ -6,7 +6,7 @@ import {
     OfflinePKIConfig,
     RemoteCRLOptions,
     SigningInfo,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import { Certificate } from "@wildboar/x500/AuthenticationFramework";
 import {
     SubjectPublicKeyInfo,

@@ -1,4 +1,4 @@
-import { Context, MistypedArgumentError, Value } from "@wildboar/meerkat-types";
+import { Context, MistypedArgumentError, Value } from "../types/index.js";
 import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import { attributeValueFromDB } from "../database/attributeValueFromDB.js";

@@ -1,4 +1,4 @@
-import type { Context, IndexableOID } from "@wildboar/meerkat-types";
+import type { Context, IndexableOID } from "../types/index.js";
 import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     ObjectClassKind_structural,

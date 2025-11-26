@@ -1,4 +1,4 @@
-import { Vertex, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationReturn, IndexableOID } from "../types/index.js";
 import {
     ObjectIdentifier,
     TRUE_BIT,
@@ -15,7 +15,7 @@ import {
     OCTET_STRING,
 } from "@wildboar/asn1";
 import type { MeerkatContext } from "../ctx.js";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import {
     _decode_ReadArgument,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -158,7 +158,7 @@ function createAttributeCertificate (
     attributes: Attribute[],
     single_use: boolean,
     no_assertion: boolean,
-): OCTET_STRING | undefined {
+): Buffer<ArrayBuffer> | undefined {
     const key = ctx.config.signing.key;
     const certPath = ctx.config.signing.certPath;
     if (!key || !certPath) {
@@ -724,7 +724,7 @@ async function read (
         const no_assertion: BOOLEAN = ac_els.find((el) => el.tagNumber === 1)?.inner.boolean ?? FALSE;
         const attributes = permittedEntryInfo.information
             .flatMap((info) => ("attribute" in info) ? info.attribute : []);
-        const attrCert: OCTET_STRING | undefined = createAttributeCertificate(
+        const attrCert: Buffer<ArrayBuffer> | undefined = createAttributeCertificate(
             ctx,
             targetDN,
             attributes,

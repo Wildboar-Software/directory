@@ -1,9 +1,9 @@
-import type { Context, ClientAssociation, Vertex, IndexableOID, Value } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation, Vertex, IndexableOID, Value } from "../types/index.js";
 import type { BOOLEAN, INTEGER } from "@wildboar/asn1";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import {
     id_at_objectClass,
 } from "@wildboar/x500/InformationFramework";

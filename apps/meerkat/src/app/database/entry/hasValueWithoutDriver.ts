@@ -1,7 +1,7 @@
 import {
     Context,
     Value,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { type EqualityMatcher } from "@wildboar/x500";
 import { attributeValueFromDB } from "../attributeValueFromDB.js";
 

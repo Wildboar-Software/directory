@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import { ASN1Construction, BERElement, ObjectIdentifier } from "@wildboar/asn1";
 import type {
     RelativeDistinguishedName as RDN,

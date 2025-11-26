@@ -2,8 +2,9 @@ import type {
     Context,
     Vertex,
     PendingUpdates,
-} from "@wildboar/meerkat-types";
-import type { Prisma } from "@prisma/client";
+} from "../../types/index.js";
+import type { Prisma } from "../../generated/client.js";
+import type { AttributeValueCreateManyInput } from "../../generated/models/AttributeValue.js";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import { validateValues } from "./addValues.js";
 import {
@@ -82,7 +83,7 @@ async function addAttributes (
                 }
             }),
     );
-    const noContextValueCreates: Prisma.AttributeValueCreateManyInput[] = [];
+    const noContextValueCreates: AttributeValueCreateManyInput[] = [];
     const contextPromises: Prisma.PrismaPromise<any>[] = [];
     for (const attr of unspecialAttributes) {
         const type_oid = attr.type_.toBytes();

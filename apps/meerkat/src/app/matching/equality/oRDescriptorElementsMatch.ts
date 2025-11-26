@@ -3,7 +3,7 @@ import { DER } from "@wildboar/asn1/functional";
 import { EqualityMatcher, teletexToString } from "@wildboar/x500";
 import { _encode_ORName } from "@wildboar/x400/MTSAbstractService";
 import { _decode_ORDescriptor } from "@wildboar/x400/IPMSInformationObjects";
-import { Context } from "@wildboar/meerkat-types";
+import { Context } from "../../types/index.js";
 import getORNameElementsMatch from "./oRNameElementsMatch.js";
 
 // ORDescriptor ::= SET {

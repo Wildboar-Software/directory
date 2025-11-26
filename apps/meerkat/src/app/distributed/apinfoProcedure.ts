@@ -1,5 +1,5 @@
-import type { ClientAssociation, Vertex } from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+import type { ClientAssociation, Vertex } from "../types/index.js";
+import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { BOOLEAN } from "@wildboar/asn1";
 import { AccessPointInformation } from "@wildboar/x500/DistributedOperations";

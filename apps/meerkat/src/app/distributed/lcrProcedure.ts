@@ -1,5 +1,5 @@
 import type { MeerkatContext } from "../ctx.js";
-import type { ClientAssociation } from "@wildboar/meerkat-types";
+import type { ClientAssociation } from "../types/index.js";
 import { TRUE, TRUE_BIT } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import {

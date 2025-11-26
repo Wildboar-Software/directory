@@ -14,7 +14,7 @@ import type {
 import {
     id_oa_allAttributeTypes,
 } from "@wildboar/x500/InformationFramework";
-import { Context, IndexableOID } from "@wildboar/meerkat-types";
+import { Context, IndexableOID } from "../types/index.js";
 import { ClassAttributeSelection } from "@wildboar/x500/DirectoryShadowAbstractService";
 import getAncestorObjectClasses from "./getAncestorObjectClasses.js";
 import { ALL_USER_ATTRIBUTES_KEY } from "../constants.js";

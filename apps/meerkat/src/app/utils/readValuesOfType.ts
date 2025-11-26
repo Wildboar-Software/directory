@@ -1,4 +1,4 @@
-import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
+import type { Context, Vertex, Value } from "../types/index.js";
 import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     EntryInformationSelection,

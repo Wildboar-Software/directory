@@ -1,4 +1,4 @@
-import type { DIT, Vertex, DSE } from "@wildboar/meerkat-types";
+import type { DIT, Vertex, DSE } from "../types/index.js";
 import { strict as assert } from "assert";
 import keepSubsetOfDITById from "./keepSubsetOfDITById.js";
 

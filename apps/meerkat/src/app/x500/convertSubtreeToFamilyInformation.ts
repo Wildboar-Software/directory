@@ -1,4 +1,4 @@
-import type { DIT, Vertex } from "@wildboar/meerkat-types";
+import type { DIT, Vertex } from "../types/index.js";
 import {
     EntryInformation_information_Item,
 } from "@wildboar/x500/DirectoryAbstractService";

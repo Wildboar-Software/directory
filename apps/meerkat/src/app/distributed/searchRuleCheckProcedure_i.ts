@@ -1,4 +1,4 @@
-import { Context, Vertex, ServiceError, ClientAssociation, AttributeError } from "@wildboar/meerkat-types";
+import { Context, Vertex, ServiceError, ClientAssociation, AttributeError } from "../types/index.js";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { ACDFTupleExtended, ACDFTuple, getACDFTuplesFromACIItem } from "@wildboar/x500";
 import {
@@ -169,7 +169,7 @@ import { check_of_controls_and_hierarchy_selections } from "../service/check_of_
 import { check_of_matching_use } from "../service/check_of_matching_use.js";
 import { acdf } from "../authz/acdf.js";
 
-const SEARCH_RULE_BYTES: Buffer = searchRules["&id"].toBytes();
+const SEARCH_RULE_BYTES: Buffer<ArrayBuffer> = searchRules["&id"].toBytes();
 
 export
 interface SearchRuleCheckResult {

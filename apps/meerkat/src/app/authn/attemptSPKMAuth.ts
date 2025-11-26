@@ -1,5 +1,5 @@
 import { MeerkatContext } from "../ctx.js";
-import { Context, BindReturn, MistypedArgumentError, Vertex, DirectoryBindError, DSABindError } from "@wildboar/meerkat-types";
+import { Context, BindReturn, MistypedArgumentError, Vertex, DirectoryBindError, DSABindError } from "../types/index.js";
 import { CertificationData, REQ_TOKEN } from "@wildboar/x500/SpkmGssTokens";
 import { verifyAnyCertPath } from "../pki/verifyAnyCertPath.js";
 import { VCP_RETURN_OK, VerifyCertPathResult } from "../pki/verifyCertPath.js";

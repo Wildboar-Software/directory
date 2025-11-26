@@ -8,7 +8,7 @@ import {
     Refinement,
 } from "@wildboar/x500/InformationFramework";
 import isPrefix from "./isPrefix.js";
-import { Context } from "@wildboar/meerkat-types";
+import { Context } from "../types/index.js";
 
 /**
  * @summary Get a subtree specification that is the intersection of two subtrees
