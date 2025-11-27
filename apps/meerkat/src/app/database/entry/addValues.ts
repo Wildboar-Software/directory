@@ -5,9 +5,10 @@ import {
     PendingUpdates,
     AttributeError,
     AttributeTypeDatabaseDriver,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { ASN1Construction } from "@wildboar/asn1";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "../../generated/client.js";
+import type { AttributeValueCreateManyInput } from "../../generated/models/AttributeValue.js";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson.js";
 import {
@@ -339,7 +340,7 @@ async function addValues(
         }),
         ...pendingUpdates.otherWrites,
         ctx.db.attributeValue.createMany({
-            data: unspecialValuesWithNoContexts.map((attr): Prisma.AttributeValueCreateManyInput => ({
+            data: unspecialValuesWithNoContexts.map((attr): AttributeValueCreateManyInput => ({
                 entry_id: entry.dse.id,
                 type_oid: attr.type.toBytes(),
                 operational: ((ctx.attributeTypes.get(attr.type.toString())?.usage ?? userApplications) !== userApplications),

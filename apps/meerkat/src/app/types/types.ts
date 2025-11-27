@@ -24,7 +24,6 @@ import type {
 } from "@wildboar/x500/DistributedOperations";
 import type { LDAPSyntaxDecoder } from "@wildboar/ldap";
 import type { LDAPSyntaxEncoder } from "@wildboar/ldap";
-import type { PrismaClient, Prisma, Entry } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import type { SupplierInformation } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import type { ConsumerInformation } from "@wildboar/x500/DSAOperationalAttributeTypes";
@@ -68,8 +67,9 @@ import {
     SignedSecurityLabel,
     OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/EnhancedSecurity";
-import { DirectoryBindError, DSABindError } from "./errors";
+import { DirectoryBindError, DSABindError } from "./errors.js";
 import type { URL } from "url";
+import type { PrismaClient, Entry, Prisma } from '../generated/client.js';
 
 type EventReceiver<T> = (params: T) => void;
 

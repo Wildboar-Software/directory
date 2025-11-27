@@ -1,5 +1,5 @@
 import type { MeerkatContext } from "../ctx.js";
-import type { ClientAssociation } from "@wildboar/meerkat-types";
+import type { ClientAssociation } from "../types/index.js";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/DistributedOperations";

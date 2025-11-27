@@ -10,7 +10,7 @@ import {
 } from "@wildboar/x500/CertificateExtensions";
 import { MeerkatContext } from "../ctx.js";
 import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import type { SigningInfo } from "@wildboar/meerkat-types";
+import type { SigningInfo } from "../types/index.js";
 
 /**
  * @summary Verify a certification path using common-sense defaults.

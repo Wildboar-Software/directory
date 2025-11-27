@@ -6,8 +6,8 @@ import type {
     PagedResultsRequestState,
     IndexableOID,
     Context,
-} from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+} from "../types/index.js";
+import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import * as crypto from "crypto";
 import { DER } from "@wildboar/asn1/functional";
@@ -287,7 +287,7 @@ import {
     searchRules,
 } from "@wildboar/x500/InformationFramework";
 import { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
-import { Prisma } from "@prisma/client";
+import type { EntryWhereInput } from "../generated/models/Entry.js";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes.js";
 import {
     MRMapping,
@@ -372,7 +372,7 @@ const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
 const AUTONOMOUS: string = id_ar_autonomousArea.toString();
-const FALSE_CONTENT_OCTETS: Buffer = Buffer.from([ 0x00 ]);
+const FALSE_CONTENT_OCTETS: Buffer<ArrayBuffer> = Buffer.from([ 0x00 ]);
 
 export
 interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
@@ -583,7 +583,7 @@ function convertFilterItemToPrismaSelect (
     selectFriends: boolean,
     mr_subs: SearchState["matching_rule_substitutions"],
     request_attributes?: EvaluateFilterSettings["requestAttributes"],
-): Partial<Prisma.EntryWhereInput> | undefined {
+): Partial<EntryWhereInput> | undefined {
     if ("equality" in filterItem) {
         const type_ = filterItem.equality.type_;
         const type_str = type_.toString();
@@ -978,20 +978,20 @@ function convertFilterToPrismaSelect (
     selectFriends: boolean,
     mr_subs: SearchState["matching_rule_substitutions"],
     request_attributes?: EvaluateFilterSettings["requestAttributes"],
-): Partial<Prisma.EntryWhereInput> | undefined {
+): Partial<EntryWhereInput> | undefined {
     if ("item" in filter) {
         return convertFilterItemToPrismaSelect(ctx, filter.item, relevantSubentries, selectFriends, mr_subs, request_attributes);
     } else if ("and" in filter) {
         return {
             AND: filter.and
                 .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs, request_attributes))
-                .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
+                .filter((sub): sub is Partial<EntryWhereInput> => !!sub),
         };
     } else if ("or" in filter) {
         return {
             OR: filter.or
                 .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs, request_attributes))
-                .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
+                .filter((sub): sub is Partial<EntryWhereInput> => !!sub),
         };
     } else if ("not" in filter) {
         return {

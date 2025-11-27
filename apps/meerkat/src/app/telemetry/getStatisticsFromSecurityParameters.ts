@@ -1,4 +1,4 @@
-import type { SecurityParametersStatistics } from "@wildboar/meerkat-types";
+import type { SecurityParametersStatistics } from "../types/index.js";
 import type {
     SecurityParameters,
 } from "@wildboar/x500/DirectoryAbstractService";

@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { Context, Vertex } from "../types/index.js";
 import {
     BERElement,
     DERElement,

@@ -1,4 +1,4 @@
-import type { Context, LDAPSyntaxInfo } from "@wildboar/meerkat-types";
+import type { Context, LDAPSyntaxInfo } from "../types/index.js";
 import type {
     AttributeType,
 } from "@wildboar/x500/InformationFramework";

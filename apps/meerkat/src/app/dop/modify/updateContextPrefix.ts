@@ -1,4 +1,4 @@
-import { Context, Vertex, OperationalBindingError } from "@wildboar/meerkat-types";
+import { Context, Vertex, OperationalBindingError } from "../../types/index.js";
 import type {
     SuperiorToSubordinateModification,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
@@ -9,7 +9,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import dnToVertex from "../../dit/dnToVertex.js";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
+import { Knowledge, OperationalBindingInitiator } from "../../generated/client.js";
 import { DER } from "@wildboar/asn1/functional";
 import createEntry from "../../database/createEntry.js";
 import addAttributes from "../../database/entry/addAttributes.js";

@@ -1,11 +1,11 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import { ASN1Construction, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/InformationFramework";
 import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
-import { Prisma } from "@prisma/client";
+import type { EntryWhereInput } from "../generated/models/Entry.js";
 
 /**
  * @summary Determine the database ID of a subordinate by its RDN
@@ -47,7 +47,7 @@ async function rdnToID (
             ? {
                 immediate_superior_id: superior_id,
                 ...getEntryExistsFilter(),
-                AND: atav_strs.map(([ type_, str ]): Prisma.EntryWhereInput => ({
+                AND: atav_strs.map(([ type_, str ]): EntryWhereInput => ({
                     RDN: {
                         some: {
                             type_oid: type_.toBytes(),

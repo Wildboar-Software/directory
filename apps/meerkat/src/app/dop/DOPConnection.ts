@@ -7,8 +7,8 @@ import {
     DSABindError,
     BindReturn,
     MistypedArgumentError,
-} from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+} from "../types/index.js";
+import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { ASN1Element, ASN1TagClass, TRUE_BIT } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";

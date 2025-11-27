@@ -1,5 +1,5 @@
-import type { Context } from "@wildboar/meerkat-types";
-import type { Prisma } from "@prisma/client";
+import type { Context } from "../types/index.js";
+import type { EntryWhereInput } from "../generated/models/Entry.js";
 import { MAX_RESULTS } from "../constants.js";
 import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 
@@ -27,7 +27,7 @@ async function listSubordinates (
     take?: number,
     skip?: number,
     cursorId?: number,
-    where?: Partial<Prisma.EntryWhereInput>,
+    where?: Partial<EntryWhereInput>,
 ) {
     return ctx.db.entry.findMany({
         take: take ?? MAX_RESULTS, // You MUST specify a "take" number when using a cursor.

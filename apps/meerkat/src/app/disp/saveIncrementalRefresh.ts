@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { Context, Vertex } from "../types/index.js";
 import {
     IncrementalStepRefresh,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -6,7 +6,7 @@ import {
     SubordinateChanges, _encode_IncrementalStepRefresh,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { BER } from "@wildboar/asn1/functional";
-import { ShadowIncrementType } from "@prisma/client";
+import { ShadowIncrementType } from "../generated/client.js";
 
 /**
  * @summary Enqueue an incremental refresh for replication to a shadow consumer

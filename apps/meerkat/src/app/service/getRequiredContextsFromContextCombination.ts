@@ -1,4 +1,4 @@
-import { IndexableOID } from "@wildboar/meerkat-types";
+import { IndexableOID } from "../types/index.js";
 import { ContextCombination } from "@wildboar/x500/ServiceAdministration";
 
 /**

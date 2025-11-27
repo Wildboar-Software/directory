@@ -10,7 +10,7 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { ASN1Construction } from "@wildboar/asn1";
 import { DER, _encodeInteger } from "@wildboar/asn1/functional";
 import {
@@ -19,7 +19,7 @@ import {
 import {
     pwdAdminSubentry,
 } from "@wildboar/x500/InformationFramework";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "../../generated/client.js";
 import { attributeValueFromDB } from "../attributeValueFromDB.js";
 
 const ID_PWD_SUBENTRY: string = pwdAdminSubentry["&id"].toString();

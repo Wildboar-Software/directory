@@ -158,7 +158,6 @@ import {
     Release_request_reason_normal,
 } from "@wildboar/acse";
 import { getRDN } from "@wildboar/x500";
-import { IndexableOID } from "@wildboar/meerkat-types";
 import {
     Associate_source_diagnostic_acse_service_user_null_,
     Associate_source_diagnostic_acse_service_user_no_reason_given,
@@ -186,7 +185,7 @@ const supported_contexts: OBJECT_IDENTIFIER[] = [
     id_ac_shadowConsumerInitiatedAsynchronousAC,
 ];
 
-const app_context_to_abstract_syntax_pci: Map<IndexableOID, number> = new Map([
+const app_context_to_abstract_syntax_pci: Map<string, number> = new Map([
     [ id_ac_directoryAccessAC.toString(), 3 ],
     [ id_ac_directorySystemAC.toString(), 5 ],
     [ id_ac_directoryOperationalBindingManagementAC.toString(), 7 ],
@@ -241,7 +240,7 @@ const rose_abort_to_osi_abort: Map<AbortReason, ABRT_diagnostic> = new Map([
     [ AbortReason.protocol_error, _enum_for_ABRT_diagnostic.protocol_error ],
 ]);
 
-const app_context_to_abstract_syntax: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
+const app_context_to_abstract_syntax: Map<string, OBJECT_IDENTIFIER> = new Map([
     [ id_ac_directoryAccessAC.toString(), id_as_directoryAccessAS ],
     [ id_ac_directorySystemAC.toString(), id_as_directorySystemAS ],
     [

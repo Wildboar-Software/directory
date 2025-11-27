@@ -1,4 +1,4 @@
-import type { ContinuationReferenceStatistics } from "@wildboar/meerkat-types";
+import type { ContinuationReferenceStatistics } from "../types/index.js";
 import type { ContinuationReference } from "@wildboar/x500/DistributedOperations";
 import { getAccessPointInformationStatistics } from "./getAccessPointInformationStatistics.js";
 

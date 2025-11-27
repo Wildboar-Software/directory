@@ -1,4 +1,4 @@
-import type { Vertex } from "@wildboar/meerkat-types";
+import type { Vertex } from "../types/index.js";
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/InformationFramework";

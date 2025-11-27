@@ -10,7 +10,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
     PendingUpdates,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import {
     DERElement,
     BERElement,

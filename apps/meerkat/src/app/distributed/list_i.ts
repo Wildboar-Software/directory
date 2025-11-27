@@ -4,11 +4,11 @@ import {
     WithRequestStatistics,
     WithOutcomeStatistics,
     PagedResultsRequestState,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { ObjectIdentifier, TRUE_BIT, FALSE } from "@wildboar/asn1";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import * as crypto from "crypto";
 import {
     ListArgument,
@@ -101,7 +101,7 @@ import {
 import {
     parent,
 } from "@wildboar/x500/InformationFramework";
-import type { Prisma } from "@prisma/client";
+import type { EntryWhereInput } from "../generated/models/Entry.js";
 import { MAX_RESULTS, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import {
     ProtectionRequest_signed,
@@ -528,7 +528,7 @@ async function list_i (
     const sizeLimit: number = pagingRequest
         ? MAX_RESULTS
         : Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
-    const whereArgs: Partial<Prisma.EntryWhereInput> = {
+    const whereArgs: Partial<EntryWhereInput> = {
         subentry: subentries,
         EntryObjectClass: (data.listFamily && target.dse.objectClass.has(PARENT))
             ? {

@@ -1,4 +1,4 @@
-import type { RemoteCRLOptions } from "@wildboar/meerkat-types";
+import type { RemoteCRLOptions } from "../types/index.js";
 import { curlHTTP, curlHTTP2, curlFTP, curlLDAP } from "./curl.js";
 import { BERElement, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {

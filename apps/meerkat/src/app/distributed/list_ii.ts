@@ -1,7 +1,7 @@
-import { Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationReturn } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { ObjectIdentifier, TRUE_BIT, FALSE, unpackBits } from "@wildboar/asn1";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import * as crypto from "crypto";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import readSubordinates from "../dit/readSubordinates.js";
@@ -94,7 +94,7 @@ import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcome
 import failover from "../utils/failover.js";
 import getACIItems from "../authz/getACIItems.js";
 import { MAX_RESULTS, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
-import type { Prisma } from "@prisma/client";
+import type { EntryWhereInput } from "../generated/models/Entry.js";
 import {
     child,
 } from "@wildboar/x500/InformationFramework";
@@ -481,7 +481,7 @@ async function list_ii (
         ? MAX_RESULTS
         : Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
     let limitExceeded: LimitProblem | undefined;
-    const whereArgs: Partial<Prisma.EntryWhereInput> = {
+    const whereArgs: Partial<EntryWhereInput> = {
         subentry: subentries,
         EntryObjectClass: (data.listFamily && target.dse.objectClass.has(PARENT))
             ? {

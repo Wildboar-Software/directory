@@ -1,4 +1,4 @@
-import { Context, Vertex } from "@wildboar/meerkat-types";
+import { Context, Vertex } from "../types/index.js";
 import { clearance } from "@wildboar/x500/EnhancedSecurity";
 import { uniqueIdentifier } from "@wildboar/x500/SelectedAttributeTypes";
 import { attributeValueFromDB } from "./attributeValueFromDB.js";

@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 
 // TODO: Make sure this query is completely indexed.
 /**

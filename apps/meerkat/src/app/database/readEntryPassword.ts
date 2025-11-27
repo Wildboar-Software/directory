@@ -1,6 +1,6 @@
 
 
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { Context, Vertex } from "../types/index.js";
 import type { UserPwd } from "@wildboar/x500/PasswordPolicy";
 import { UserPwd_encrypted } from "@wildboar/x500/PasswordPolicy";
 import { AlgorithmIdentifier } from "@wildboar/pki-stub";

@@ -1,5 +1,5 @@
 import { MeerkatContext } from "../../ctx.js";
-import { Vertex, Context, ShadowError, Value, UnknownError, IndexableOID } from "@wildboar/meerkat-types";
+import { Vertex, Context, ShadowError, Value, UnknownError, IndexableOID } from "../../types/index.js";
 import {
     UpdateShadowArgument,
     UpdateShadowResult,
@@ -94,7 +94,8 @@ import { clearance } from "@wildboar/x500/EnhancedSecurity";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import readSubordinates from "../../dit/readSubordinates.js";
 import { Refinement } from "@wildboar/x500/InformationFramework";
-import { OperationalBindingInitiator, Prisma } from "@prisma/client";
+import { OperationalBindingInitiator } from "../../generated/client.js";
+import type { EntryWhereInput } from "../../generated/models/Entry.js";
 import createEntry, { createDse } from "../../database/createEntry.js";
 import stringifyDN from "../../x500/stringifyDN.js";
 import { ContentChange } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -178,7 +179,7 @@ const MAX_DEPTH: number = 10_000;
  * @param ref The refinement
  * @returns A Prisma Entry filter
  */
-function convert_refinement_to_prisma_filter (ref: Refinement): Partial<Prisma.EntryWhereInput> {
+function convert_refinement_to_prisma_filter (ref: Refinement): Partial<EntryWhereInput> {
     if ("item" in ref) {
         return {
             EntryObjectClass: {

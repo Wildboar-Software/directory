@@ -1,4 +1,4 @@
-import type { Context, IndexableOID } from "@wildboar/meerkat-types";
+import type { Context, IndexableOID } from "../types/index.js";
 
 /**
  * @summary Get an object class' superclasses all the way up to `top`

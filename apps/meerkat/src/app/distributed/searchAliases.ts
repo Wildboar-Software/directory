@@ -1,4 +1,4 @@
-import type { Vertex, ClientAssociation } from "@wildboar/meerkat-types";
+import type { Vertex, ClientAssociation } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { BOOLEAN, TRUE } from "@wildboar/asn1";
 import isPrefix from "../x500/isPrefix.js";

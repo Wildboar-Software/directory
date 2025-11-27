@@ -1,8 +1,8 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import { attributes as x500at } from "@wildboar/x500";
 import { matchingRules as x500mr } from "@wildboar/x500";
 import attributeFromInformationObject from "./attributeFromInformationObject.js";
-import { AttributeUsage } from "@prisma/client";
+import { AttributeUsage } from "../generated/client.js";
 import entryUUID from "../schema/attributes/entryUUID.js";
 import { userPwdHistory } from "@wildboar/x500/PasswordPolicy";
 import { userPwdRecentlyExpired } from "@wildboar/x500/PasswordPolicy";

@@ -1,4 +1,4 @@
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import type { INTEGER } from "@wildboar/asn1";
 import {
     LDAPResult,

@@ -10,8 +10,8 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
-} from "@wildboar/meerkat-types";
-import { Knowledge } from "@prisma/client";
+} from "../../types/index.js";
+import { Knowledge } from "../../generated/client.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     specificKnowledge,

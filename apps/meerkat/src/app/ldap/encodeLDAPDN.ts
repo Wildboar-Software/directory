@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import { OBJECT_IDENTIFIER, ASN1Element } from "@wildboar/asn1";
 import { stringifyRDNSequence } from "@wildboar/ldap";
 import type { RDNSequence } from "@wildboar/x500/InformationFramework";

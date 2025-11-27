@@ -1,5 +1,5 @@
-import { Context, IndexableOID, Value, Vertex, ClientAssociation, OperationReturn, ChainedError } from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+import { Context, IndexableOID, Value, Vertex, ClientAssociation, OperationReturn, ChainedError } from "../types/index.js";
+import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import {
     id_sc_subentry,
@@ -117,7 +117,7 @@ import {
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import getDistinguishedName from "../x500/getDistinguishedName.js";
 import saveAccessPoint from "../database/saveAccessPoint.js";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
+import { Knowledge, OperationalBindingInitiator } from "../generated/client.js";
 import { rdnToJson } from "../x500/rdnToJson.js";
 import { getDateFromOBTime } from "../dop/getDateFromOBTime.js";
 import { printInvokeId } from "../utils/printInvokeId.js";

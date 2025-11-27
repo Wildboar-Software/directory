@@ -5,7 +5,7 @@ import {
     MistypedPDUError,
     BindReturn,
     DirectoryBindError,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import {
     RejectReason,
     ROSETransport,
@@ -13,7 +13,7 @@ import {
     AbortReason,
 } from "@wildboar/rose-transport";
 import type { MeerkatContext } from "../ctx.js";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import versions from "../versions.js";
 import {
     DirectoryBindResult,

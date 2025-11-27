@@ -1,7 +1,7 @@
-import { OperationalBindingError } from "@wildboar/meerkat-types";
+import { OperationalBindingError } from "../../types/index.js";
 import type DOPAssociation from "../DOPConnection.js";
 import type { MeerkatContext } from "../../ctx.js";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../../types/index.js";
 import type {
     ModifyOperationalBindingArgument,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -37,7 +37,7 @@ import type {
     Code,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { ASN1Element, BERElement, FALSE, packBits, unpackBits } from "@wildboar/asn1";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
+import { Knowledge, OperationalBindingInitiator } from "../../generated/client.js";
 import { getDateFromTime } from "@wildboar/x500";
 import {
     _encode_CertificationPath,

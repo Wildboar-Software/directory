@@ -1,4 +1,4 @@
-import { Vertex, ServiceError } from "@wildboar/meerkat-types";
+import { Vertex, ServiceError } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import type {
     AccessPoint,

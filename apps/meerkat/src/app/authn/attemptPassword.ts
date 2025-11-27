@@ -1,4 +1,4 @@
-import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
+import type { Context, Vertex, Value } from "../types/index.js";
 import {
     UserPwd, _encode_UserPwd,
 } from "@wildboar/x500/PasswordPolicy";
@@ -54,7 +54,6 @@ import { userPwd } from "@wildboar/x500/PasswordPolicy";
 import { userPassword } from "@wildboar/x500/AuthenticationFramework";
 import { id_oa_pwdGraces } from "@wildboar/x500/PasswordPolicy";
 import { pwdExpireWarning } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdExpireWarning.oa.js";
-import { Prisma } from "@prisma/client";
 import { pwdLockout } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa.js";
 import { pwdAccountLockedTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa.js";
 import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa.js";
@@ -68,6 +67,9 @@ import {
 import { SimpleCredentials_validity_time2 } from "@wildboar/x500/DirectoryAbstractService";
 import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash.js";
 import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB.js";
+import type { AttributeValueUncheckedCreateInput } from "../generated/models/AttributeValue.js";
+import type { Prisma } from "../generated/client.js";
+import { PrismaPromise } from "@prisma/client/runtime/client";
 
 const START_TIME_OID: string = pwdStartTime["&id"].toString();
 const EXPIRY_TIME_OID: string = pwdExpiryTime["&id"].toString();
@@ -470,7 +472,7 @@ async function attemptPassword (
     const nowElement = _encodeGeneralizedTime(new Date(), DER);
     if (!passwordIsCorrect) {
         const newFailsEl = _encodeInteger(fails + 1, DER);
-        const new_attrs: Prisma.AttributeValueUncheckedCreateInput[] = [
+        const new_attrs: AttributeValueUncheckedCreateInput[] = [
             {
                 entry_id: vertex.dse.id,
                 type_oid: pwdFails["&id"].toBytes(),
@@ -516,7 +518,7 @@ async function attemptPassword (
             });
         }
 
-        const dbPromises: Prisma.PrismaPromise<any>[] = [
+        const dbPromises: PrismaPromise<any>[] = [
             ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: vertex.dse.id,

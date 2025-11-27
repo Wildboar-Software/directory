@@ -4,7 +4,7 @@ import type {
     IndexableOID,
     Value,
     SpecialAttributeDatabaseReader,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
 import type {
     EntryInformationSelection,

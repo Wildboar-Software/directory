@@ -11,26 +11,20 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
     ObjectClassInfo,
-} from "@wildboar/meerkat-types";
-import {
-    ObjectIdentifier,
-} from "@wildboar/asn1";
+} from "../../types/index.js";
+import { ObjectIdentifier } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import { objectClasses } from "@wildboar/x500/SchemaAdministration";
 import { subschema } from "@wildboar/x500/SchemaAdministration";
 import { directoryStringToString } from "@wildboar/x500";
-import {
-    ObjectClassDescription,
-} from "@wildboar/x500/SchemaAdministration";
-import {
-    ObjectClassInformation,
-} from "@wildboar/x500/SchemaAdministration";
+import { ObjectClassDescription, ObjectClassInformation } from "@wildboar/x500/SchemaAdministration";
 import {
     ObjectClassKind_abstract,
     ObjectClassKind_auxiliary,
     ObjectClassKind_structural,
 } from "@wildboar/x500/InformationFramework";
-import { Prisma, ObjectClassKind as PrismaObjectClassKind } from "@prisma/client";
+import { ObjectClassKind as PrismaObjectClassKind } from "../../generated/client.js";
+import type { ObjectClassDescriptionCreateInput } from "../../generated/models/ObjectClassDescription.js";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 
@@ -130,7 +124,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     const description = decoded.description
         ? directoryStringToString(decoded.description)
         : undefined;
-    const create: Prisma.ObjectClassDescriptionCreateInput = {
+    const create: ObjectClassDescriptionCreateInput = {
         identifier: OID,
         name,
         description,

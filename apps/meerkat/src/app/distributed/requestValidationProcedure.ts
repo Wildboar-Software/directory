@@ -1,6 +1,6 @@
-import { Context, ClientAssociation, MistypedArgumentError, UnknownOperationError, MistypedPDUError } from "@wildboar/meerkat-types";
+import { Context, ClientAssociation, MistypedArgumentError, UnknownOperationError, MistypedPDUError } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import { addSeconds } from "date-fns";
 import { ChainingArguments } from "@wildboar/x500/DistributedOperations";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";

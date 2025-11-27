@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import type { RDNSequence } from "@wildboar/x500/InformationFramework";
 import { AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
 import { normalizeAttributeDescription } from "@wildboar/ldap";

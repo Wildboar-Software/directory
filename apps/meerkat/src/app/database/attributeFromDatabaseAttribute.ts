@@ -1,4 +1,4 @@
-import type { Context, Value } from "@wildboar/meerkat-types";
+import type { Context, Value } from "../types/index.js";
 import { ObjectIdentifier, BERElement } from "@wildboar/asn1";
 import groupByOID from "../utils/groupByOID.js";
 import {
