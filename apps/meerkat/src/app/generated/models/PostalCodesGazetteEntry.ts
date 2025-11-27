@@ -226,7 +226,6 @@ export type PostalCodesGazetteEntryOrderByWithRelationInput = {
   locality?: Prisma.SortOrder
   postal_code?: Prisma.SortOrder
   PostalCodeBoundaryPoints?: Prisma.PostalCodeBoundaryPointsOrderByRelationAggregateInput
-  _relevance?: Prisma.PostalCodesGazetteEntryOrderByRelevanceInput
 }
 
 export type PostalCodesGazetteEntryWhereUniqueInput = Prisma.AtLeast<{
@@ -321,12 +320,6 @@ export type PostalCodesGazetteEntryUncheckedUpdateManyInput = {
   st?: Prisma.StringFieldUpdateOperationsInput | string
   locality?: Prisma.StringFieldUpdateOperationsInput | string
   postal_code?: Prisma.StringFieldUpdateOperationsInput | string
-}
-
-export type PostalCodesGazetteEntryOrderByRelevanceInput = {
-  fields: Prisma.PostalCodesGazetteEntryOrderByRelevanceFieldEnum | Prisma.PostalCodesGazetteEntryOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
 }
 
 export type PostalCodesGazetteEntryC2cStLocalityPostal_codeCompoundUniqueInput = {
@@ -474,7 +467,21 @@ export type PostalCodesGazetteEntrySelect<ExtArgs extends runtime.Types.Extensio
   _count?: boolean | Prisma.PostalCodesGazetteEntryCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["postalCodesGazetteEntry"]>
 
+export type PostalCodesGazetteEntrySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  c2c?: boolean
+  st?: boolean
+  locality?: boolean
+  postal_code?: boolean
+}, ExtArgs["result"]["postalCodesGazetteEntry"]>
 
+export type PostalCodesGazetteEntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  c2c?: boolean
+  st?: boolean
+  locality?: boolean
+  postal_code?: boolean
+}, ExtArgs["result"]["postalCodesGazetteEntry"]>
 
 export type PostalCodesGazetteEntrySelectScalar = {
   id?: boolean
@@ -489,6 +496,8 @@ export type PostalCodesGazetteEntryInclude<ExtArgs extends runtime.Types.Extensi
   PostalCodeBoundaryPoints?: boolean | Prisma.PostalCodesGazetteEntry$PostalCodeBoundaryPointsArgs<ExtArgs>
   _count?: boolean | Prisma.PostalCodesGazetteEntryCountOutputTypeDefaultArgs<ExtArgs>
 }
+export type PostalCodesGazetteEntryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type PostalCodesGazetteEntryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $PostalCodesGazetteEntryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "PostalCodesGazetteEntry"
@@ -619,6 +628,30 @@ export interface PostalCodesGazetteEntryDelegate<ExtArgs extends runtime.Types.E
   createMany<T extends PostalCodesGazetteEntryCreateManyArgs>(args?: Prisma.SelectSubset<T, PostalCodesGazetteEntryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many PostalCodesGazetteEntries and returns the data saved in the database.
+   * @param {PostalCodesGazetteEntryCreateManyAndReturnArgs} args - Arguments to create many PostalCodesGazetteEntries.
+   * @example
+   * // Create many PostalCodesGazetteEntries
+   * const postalCodesGazetteEntry = await prisma.postalCodesGazetteEntry.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many PostalCodesGazetteEntries and only return the `id`
+   * const postalCodesGazetteEntryWithIdOnly = await prisma.postalCodesGazetteEntry.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends PostalCodesGazetteEntryCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, PostalCodesGazetteEntryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PostalCodesGazetteEntryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a PostalCodesGazetteEntry.
    * @param {PostalCodesGazetteEntryDeleteArgs} args - Arguments to delete one PostalCodesGazetteEntry.
    * @example
@@ -681,6 +714,36 @@ export interface PostalCodesGazetteEntryDelegate<ExtArgs extends runtime.Types.E
    * 
    */
   updateMany<T extends PostalCodesGazetteEntryUpdateManyArgs>(args: Prisma.SelectSubset<T, PostalCodesGazetteEntryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more PostalCodesGazetteEntries and returns the data updated in the database.
+   * @param {PostalCodesGazetteEntryUpdateManyAndReturnArgs} args - Arguments to update many PostalCodesGazetteEntries.
+   * @example
+   * // Update many PostalCodesGazetteEntries
+   * const postalCodesGazetteEntry = await prisma.postalCodesGazetteEntry.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more PostalCodesGazetteEntries and only return the `id`
+   * const postalCodesGazetteEntryWithIdOnly = await prisma.postalCodesGazetteEntry.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends PostalCodesGazetteEntryUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, PostalCodesGazetteEntryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PostalCodesGazetteEntryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one PostalCodesGazetteEntry.
@@ -1105,7 +1168,24 @@ export type PostalCodesGazetteEntryCreateManyArgs<ExtArgs extends runtime.Types.
    * The data used to create many PostalCodesGazetteEntries.
    */
   data: Prisma.PostalCodesGazetteEntryCreateManyInput | Prisma.PostalCodesGazetteEntryCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * PostalCodesGazetteEntry createManyAndReturn
+ */
+export type PostalCodesGazetteEntryCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PostalCodesGazetteEntry
+   */
+  select?: Prisma.PostalCodesGazetteEntrySelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PostalCodesGazetteEntry
+   */
+  omit?: Prisma.PostalCodesGazetteEntryOmit<ExtArgs> | null
+  /**
+   * The data used to create many PostalCodesGazetteEntries.
+   */
+  data: Prisma.PostalCodesGazetteEntryCreateManyInput | Prisma.PostalCodesGazetteEntryCreateManyInput[]
 }
 
 /**
@@ -1138,6 +1218,32 @@ export type PostalCodesGazetteEntryUpdateArgs<ExtArgs extends runtime.Types.Exte
  * PostalCodesGazetteEntry updateMany
  */
 export type PostalCodesGazetteEntryUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * The data used to update PostalCodesGazetteEntries.
+   */
+  data: Prisma.XOR<Prisma.PostalCodesGazetteEntryUpdateManyMutationInput, Prisma.PostalCodesGazetteEntryUncheckedUpdateManyInput>
+  /**
+   * Filter which PostalCodesGazetteEntries to update
+   */
+  where?: Prisma.PostalCodesGazetteEntryWhereInput
+  /**
+   * Limit how many PostalCodesGazetteEntries to update.
+   */
+  limit?: number
+}
+
+/**
+ * PostalCodesGazetteEntry updateManyAndReturn
+ */
+export type PostalCodesGazetteEntryUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PostalCodesGazetteEntry
+   */
+  select?: Prisma.PostalCodesGazetteEntrySelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PostalCodesGazetteEntry
+   */
+  omit?: Prisma.PostalCodesGazetteEntryOmit<ExtArgs> | null
   /**
    * The data used to update PostalCodesGazetteEntries.
    */

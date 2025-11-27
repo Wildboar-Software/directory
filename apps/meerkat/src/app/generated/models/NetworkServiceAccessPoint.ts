@@ -243,7 +243,6 @@ export type NetworkServiceAccessPointOrderByWithRelationInput = {
   bytes?: Prisma.SortOrder
   access_point_id?: Prisma.SortOrder
   access_point?: Prisma.AccessPointOrderByWithRelationInput
-  _relevance?: Prisma.NetworkServiceAccessPointOrderByRelevanceInput
 }
 
 export type NetworkServiceAccessPointWhereUniqueInput = Prisma.AtLeast<{
@@ -354,12 +353,6 @@ export type NetworkServiceAccessPointOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type NetworkServiceAccessPointOrderByRelevanceInput = {
-  fields: Prisma.NetworkServiceAccessPointOrderByRelevanceFieldEnum | Prisma.NetworkServiceAccessPointOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type NetworkServiceAccessPointCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   hostname?: Prisma.SortOrder
@@ -463,7 +456,6 @@ export type NetworkServiceAccessPointCreateOrConnectWithoutAccess_pointInput = {
 
 export type NetworkServiceAccessPointCreateManyAccess_pointInputEnvelope = {
   data: Prisma.NetworkServiceAccessPointCreateManyAccess_pointInput | Prisma.NetworkServiceAccessPointCreateManyAccess_pointInput[]
-  skipDuplicates?: boolean
 }
 
 export type NetworkServiceAccessPointUpsertWithWhereUniqueWithoutAccess_pointInput = {
@@ -537,7 +529,25 @@ export type NetworkServiceAccessPointSelect<ExtArgs extends runtime.Types.Extens
   access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["networkServiceAccessPoint"]>
 
+export type NetworkServiceAccessPointSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  hostname?: boolean
+  port?: boolean
+  url?: boolean
+  bytes?: boolean
+  access_point_id?: boolean
+  access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["networkServiceAccessPoint"]>
 
+export type NetworkServiceAccessPointSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  hostname?: boolean
+  port?: boolean
+  url?: boolean
+  bytes?: boolean
+  access_point_id?: boolean
+  access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["networkServiceAccessPoint"]>
 
 export type NetworkServiceAccessPointSelectScalar = {
   id?: boolean
@@ -550,6 +560,12 @@ export type NetworkServiceAccessPointSelectScalar = {
 
 export type NetworkServiceAccessPointOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "hostname" | "port" | "url" | "bytes" | "access_point_id", ExtArgs["result"]["networkServiceAccessPoint"]>
 export type NetworkServiceAccessPointInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
+}
+export type NetworkServiceAccessPointIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
+}
+export type NetworkServiceAccessPointIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
 }
 
@@ -683,6 +699,30 @@ export interface NetworkServiceAccessPointDelegate<ExtArgs extends runtime.Types
   createMany<T extends NetworkServiceAccessPointCreateManyArgs>(args?: Prisma.SelectSubset<T, NetworkServiceAccessPointCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many NetworkServiceAccessPoints and returns the data saved in the database.
+   * @param {NetworkServiceAccessPointCreateManyAndReturnArgs} args - Arguments to create many NetworkServiceAccessPoints.
+   * @example
+   * // Create many NetworkServiceAccessPoints
+   * const networkServiceAccessPoint = await prisma.networkServiceAccessPoint.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many NetworkServiceAccessPoints and only return the `id`
+   * const networkServiceAccessPointWithIdOnly = await prisma.networkServiceAccessPoint.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends NetworkServiceAccessPointCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, NetworkServiceAccessPointCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NetworkServiceAccessPointPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a NetworkServiceAccessPoint.
    * @param {NetworkServiceAccessPointDeleteArgs} args - Arguments to delete one NetworkServiceAccessPoint.
    * @example
@@ -745,6 +785,36 @@ export interface NetworkServiceAccessPointDelegate<ExtArgs extends runtime.Types
    * 
    */
   updateMany<T extends NetworkServiceAccessPointUpdateManyArgs>(args: Prisma.SelectSubset<T, NetworkServiceAccessPointUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more NetworkServiceAccessPoints and returns the data updated in the database.
+   * @param {NetworkServiceAccessPointUpdateManyAndReturnArgs} args - Arguments to update many NetworkServiceAccessPoints.
+   * @example
+   * // Update many NetworkServiceAccessPoints
+   * const networkServiceAccessPoint = await prisma.networkServiceAccessPoint.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more NetworkServiceAccessPoints and only return the `id`
+   * const networkServiceAccessPointWithIdOnly = await prisma.networkServiceAccessPoint.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends NetworkServiceAccessPointUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, NetworkServiceAccessPointUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NetworkServiceAccessPointPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one NetworkServiceAccessPoint.
@@ -1170,7 +1240,28 @@ export type NetworkServiceAccessPointCreateManyArgs<ExtArgs extends runtime.Type
    * The data used to create many NetworkServiceAccessPoints.
    */
   data: Prisma.NetworkServiceAccessPointCreateManyInput | Prisma.NetworkServiceAccessPointCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * NetworkServiceAccessPoint createManyAndReturn
+ */
+export type NetworkServiceAccessPointCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NetworkServiceAccessPoint
+   */
+  select?: Prisma.NetworkServiceAccessPointSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the NetworkServiceAccessPoint
+   */
+  omit?: Prisma.NetworkServiceAccessPointOmit<ExtArgs> | null
+  /**
+   * The data used to create many NetworkServiceAccessPoints.
+   */
+  data: Prisma.NetworkServiceAccessPointCreateManyInput | Prisma.NetworkServiceAccessPointCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NetworkServiceAccessPointIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1215,6 +1306,36 @@ export type NetworkServiceAccessPointUpdateManyArgs<ExtArgs extends runtime.Type
    * Limit how many NetworkServiceAccessPoints to update.
    */
   limit?: number
+}
+
+/**
+ * NetworkServiceAccessPoint updateManyAndReturn
+ */
+export type NetworkServiceAccessPointUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NetworkServiceAccessPoint
+   */
+  select?: Prisma.NetworkServiceAccessPointSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the NetworkServiceAccessPoint
+   */
+  omit?: Prisma.NetworkServiceAccessPointOmit<ExtArgs> | null
+  /**
+   * The data used to update NetworkServiceAccessPoints.
+   */
+  data: Prisma.XOR<Prisma.NetworkServiceAccessPointUpdateManyMutationInput, Prisma.NetworkServiceAccessPointUncheckedUpdateManyInput>
+  /**
+   * Filter which NetworkServiceAccessPoints to update
+   */
+  where?: Prisma.NetworkServiceAccessPointWhereInput
+  /**
+   * Limit how many NetworkServiceAccessPoints to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NetworkServiceAccessPointIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

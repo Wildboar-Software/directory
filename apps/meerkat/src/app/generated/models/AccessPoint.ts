@@ -970,7 +970,6 @@ export type AccessPointCreateOrConnectWithoutEntryInput = {
 
 export type AccessPointCreateManyEntryInputEnvelope = {
   data: Prisma.AccessPointCreateManyEntryInput | Prisma.AccessPointCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type AccessPointUpsertWithWhereUniqueWithoutEntryInput = {
@@ -1169,7 +1168,6 @@ export type AccessPointCreateOrConnectWithoutNon_supplying_masterInput = {
 
 export type AccessPointCreateManyNon_supplying_masterInputEnvelope = {
   data: Prisma.AccessPointCreateManyNon_supplying_masterInput | Prisma.AccessPointCreateManyNon_supplying_masterInput[]
-  skipDuplicates?: boolean
 }
 
 export type AccessPointCreateWithoutIs_consumer_ofInput = {
@@ -1226,7 +1224,6 @@ export type AccessPointCreateOrConnectWithoutIs_consumer_ofInput = {
 
 export type AccessPointCreateManyIs_consumer_ofInputEnvelope = {
   data: Prisma.AccessPointCreateManyIs_consumer_ofInput | Prisma.AccessPointCreateManyIs_consumer_ofInput[]
-  skipDuplicates?: boolean
 }
 
 export type AccessPointUpsertWithoutNon_supplying_master_forInput = {
@@ -2171,7 +2168,49 @@ export type AccessPointSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   _count?: boolean | Prisma.AccessPointCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["accessPoint"]>
 
+export type AccessPointSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  ber?: boolean
+  knowledge_type?: boolean
+  ae_title?: boolean
+  category?: boolean
+  chainingRequired?: boolean
+  supplier_is_master?: boolean
+  non_supplying_master_id?: boolean
+  is_consumer_of_id?: boolean
+  entry_id?: boolean
+  nsk_group?: boolean
+  nssr_binding_identifier?: boolean
+  trust_ibra?: boolean
+  disclose_cross_refs?: boolean
+  active?: boolean
+  created_at?: boolean
+  non_supplying_master?: boolean | Prisma.AccessPoint$non_supplying_masterArgs<ExtArgs>
+  is_consumer_of?: boolean | Prisma.AccessPoint$is_consumer_ofArgs<ExtArgs>
+  entry?: boolean | Prisma.AccessPoint$entryArgs<ExtArgs>
+}, ExtArgs["result"]["accessPoint"]>
 
+export type AccessPointSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  ber?: boolean
+  knowledge_type?: boolean
+  ae_title?: boolean
+  category?: boolean
+  chainingRequired?: boolean
+  supplier_is_master?: boolean
+  non_supplying_master_id?: boolean
+  is_consumer_of_id?: boolean
+  entry_id?: boolean
+  nsk_group?: boolean
+  nssr_binding_identifier?: boolean
+  trust_ibra?: boolean
+  disclose_cross_refs?: boolean
+  active?: boolean
+  created_at?: boolean
+  non_supplying_master?: boolean | Prisma.AccessPoint$non_supplying_masterArgs<ExtArgs>
+  is_consumer_of?: boolean | Prisma.AccessPoint$is_consumer_ofArgs<ExtArgs>
+  entry?: boolean | Prisma.AccessPoint$entryArgs<ExtArgs>
+}, ExtArgs["result"]["accessPoint"]>
 
 export type AccessPointSelectScalar = {
   id?: boolean
@@ -2204,6 +2243,16 @@ export type AccessPointInclude<ExtArgs extends runtime.Types.Extensions.Internal
   NSAP?: boolean | Prisma.AccessPoint$NSAPArgs<ExtArgs>
   credentials?: boolean | Prisma.AccessPoint$credentialsArgs<ExtArgs>
   _count?: boolean | Prisma.AccessPointCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type AccessPointIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  non_supplying_master?: boolean | Prisma.AccessPoint$non_supplying_masterArgs<ExtArgs>
+  is_consumer_of?: boolean | Prisma.AccessPoint$is_consumer_ofArgs<ExtArgs>
+  entry?: boolean | Prisma.AccessPoint$entryArgs<ExtArgs>
+}
+export type AccessPointIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  non_supplying_master?: boolean | Prisma.AccessPoint$non_supplying_masterArgs<ExtArgs>
+  is_consumer_of?: boolean | Prisma.AccessPoint$is_consumer_ofArgs<ExtArgs>
+  entry?: boolean | Prisma.AccessPoint$entryArgs<ExtArgs>
 }
 
 export type $AccessPointPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2354,6 +2403,30 @@ export interface AccessPointDelegate<ExtArgs extends runtime.Types.Extensions.In
   createMany<T extends AccessPointCreateManyArgs>(args?: Prisma.SelectSubset<T, AccessPointCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many AccessPoints and returns the data saved in the database.
+   * @param {AccessPointCreateManyAndReturnArgs} args - Arguments to create many AccessPoints.
+   * @example
+   * // Create many AccessPoints
+   * const accessPoint = await prisma.accessPoint.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many AccessPoints and only return the `id`
+   * const accessPointWithIdOnly = await prisma.accessPoint.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends AccessPointCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, AccessPointCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccessPointPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a AccessPoint.
    * @param {AccessPointDeleteArgs} args - Arguments to delete one AccessPoint.
    * @example
@@ -2416,6 +2489,36 @@ export interface AccessPointDelegate<ExtArgs extends runtime.Types.Extensions.In
    * 
    */
   updateMany<T extends AccessPointUpdateManyArgs>(args: Prisma.SelectSubset<T, AccessPointUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more AccessPoints and returns the data updated in the database.
+   * @param {AccessPointUpdateManyAndReturnArgs} args - Arguments to update many AccessPoints.
+   * @example
+   * // Update many AccessPoints
+   * const accessPoint = await prisma.accessPoint.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more AccessPoints and only return the `id`
+   * const accessPointWithIdOnly = await prisma.accessPoint.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends AccessPointUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, AccessPointUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccessPointPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one AccessPoint.
@@ -2859,7 +2962,28 @@ export type AccessPointCreateManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * The data used to create many AccessPoints.
    */
   data: Prisma.AccessPointCreateManyInput | Prisma.AccessPointCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * AccessPoint createManyAndReturn
+ */
+export type AccessPointCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AccessPoint
+   */
+  select?: Prisma.AccessPointSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the AccessPoint
+   */
+  omit?: Prisma.AccessPointOmit<ExtArgs> | null
+  /**
+   * The data used to create many AccessPoints.
+   */
+  data: Prisma.AccessPointCreateManyInput | Prisma.AccessPointCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AccessPointIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2904,6 +3028,36 @@ export type AccessPointUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Limit how many AccessPoints to update.
    */
   limit?: number
+}
+
+/**
+ * AccessPoint updateManyAndReturn
+ */
+export type AccessPointUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AccessPoint
+   */
+  select?: Prisma.AccessPointSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the AccessPoint
+   */
+  omit?: Prisma.AccessPointOmit<ExtArgs> | null
+  /**
+   * The data used to update AccessPoints.
+   */
+  data: Prisma.XOR<Prisma.AccessPointUpdateManyMutationInput, Prisma.AccessPointUncheckedUpdateManyInput>
+  /**
+   * Filter which AccessPoints to update
+   */
+  where?: Prisma.AccessPointWhereInput
+  /**
+   * Limit how many AccessPoints to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AccessPointIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

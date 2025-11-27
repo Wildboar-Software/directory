@@ -230,7 +230,6 @@ export type PasswordOrderByWithRelationInput = {
   algorithm_oid?: Prisma.SortOrder
   algorithm_parameters_der?: Prisma.SortOrderInput | Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.PasswordOrderByRelevanceInput
 }
 
 export type PasswordWhereUniqueInput = Prisma.AtLeast<{
@@ -329,12 +328,6 @@ export type PasswordListRelationFilter = {
 
 export type PasswordOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type PasswordOrderByRelevanceInput = {
-  fields: Prisma.PasswordOrderByRelevanceFieldEnum | Prisma.PasswordOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
 }
 
 export type PasswordCountOrderByAggregateInput = {
@@ -441,7 +434,6 @@ export type PasswordCreateOrConnectWithoutEntryInput = {
 
 export type PasswordCreateManyEntryInputEnvelope = {
   data: Prisma.PasswordCreateManyEntryInput | Prisma.PasswordCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type PasswordUpsertWithWhereUniqueWithoutEntryInput = {
@@ -509,7 +501,23 @@ export type PasswordSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["password"]>
 
+export type PasswordSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  encrypted?: boolean
+  algorithm_oid?: boolean
+  algorithm_parameters_der?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["password"]>
 
+export type PasswordSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  encrypted?: boolean
+  algorithm_oid?: boolean
+  algorithm_parameters_der?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["password"]>
 
 export type PasswordSelectScalar = {
   id?: boolean
@@ -521,6 +529,12 @@ export type PasswordSelectScalar = {
 
 export type PasswordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "encrypted" | "algorithm_oid" | "algorithm_parameters_der", ExtArgs["result"]["password"]>
 export type PasswordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type PasswordIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type PasswordIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -653,6 +667,30 @@ export interface PasswordDelegate<ExtArgs extends runtime.Types.Extensions.Inter
   createMany<T extends PasswordCreateManyArgs>(args?: Prisma.SelectSubset<T, PasswordCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many Passwords and returns the data saved in the database.
+   * @param {PasswordCreateManyAndReturnArgs} args - Arguments to create many Passwords.
+   * @example
+   * // Create many Passwords
+   * const password = await prisma.password.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many Passwords and only return the `id`
+   * const passwordWithIdOnly = await prisma.password.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends PasswordCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, PasswordCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a Password.
    * @param {PasswordDeleteArgs} args - Arguments to delete one Password.
    * @example
@@ -715,6 +753,36 @@ export interface PasswordDelegate<ExtArgs extends runtime.Types.Extensions.Inter
    * 
    */
   updateMany<T extends PasswordUpdateManyArgs>(args: Prisma.SelectSubset<T, PasswordUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more Passwords and returns the data updated in the database.
+   * @param {PasswordUpdateManyAndReturnArgs} args - Arguments to update many Passwords.
+   * @example
+   * // Update many Passwords
+   * const password = await prisma.password.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more Passwords and only return the `id`
+   * const passwordWithIdOnly = await prisma.password.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends PasswordUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, PasswordUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one Password.
@@ -1139,7 +1207,28 @@ export type PasswordCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * The data used to create many Passwords.
    */
   data: Prisma.PasswordCreateManyInput | Prisma.PasswordCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * Password createManyAndReturn
+ */
+export type PasswordCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Password
+   */
+  select?: Prisma.PasswordSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the Password
+   */
+  omit?: Prisma.PasswordOmit<ExtArgs> | null
+  /**
+   * The data used to create many Passwords.
+   */
+  data: Prisma.PasswordCreateManyInput | Prisma.PasswordCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PasswordIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1184,6 +1273,36 @@ export type PasswordUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many Passwords to update.
    */
   limit?: number
+}
+
+/**
+ * Password updateManyAndReturn
+ */
+export type PasswordUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Password
+   */
+  select?: Prisma.PasswordSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the Password
+   */
+  omit?: Prisma.PasswordOmit<ExtArgs> | null
+  /**
+   * The data used to update Passwords.
+   */
+  data: Prisma.XOR<Prisma.PasswordUpdateManyMutationInput, Prisma.PasswordUncheckedUpdateManyInput>
+  /**
+   * Filter which Passwords to update
+   */
+  where?: Prisma.PasswordWhereInput
+  /**
+   * Limit how many Passwords to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PasswordIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

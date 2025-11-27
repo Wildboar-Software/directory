@@ -206,7 +206,6 @@ export type NamedObjectIdentifierOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   oid?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  _relevance?: Prisma.NamedObjectIdentifierOrderByRelevanceInput
 }
 
 export type NamedObjectIdentifierWhereUniqueInput = Prisma.AtLeast<{
@@ -277,12 +276,6 @@ export type NamedObjectIdentifierUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
-export type NamedObjectIdentifierOrderByRelevanceInput = {
-  fields: Prisma.NamedObjectIdentifierOrderByRelevanceFieldEnum | Prisma.NamedObjectIdentifierOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type NamedObjectIdentifierCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   oid?: Prisma.SortOrder
@@ -317,7 +310,17 @@ export type NamedObjectIdentifierSelect<ExtArgs extends runtime.Types.Extensions
   name?: boolean
 }, ExtArgs["result"]["namedObjectIdentifier"]>
 
+export type NamedObjectIdentifierSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  oid?: boolean
+  name?: boolean
+}, ExtArgs["result"]["namedObjectIdentifier"]>
 
+export type NamedObjectIdentifierSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  oid?: boolean
+  name?: boolean
+}, ExtArgs["result"]["namedObjectIdentifier"]>
 
 export type NamedObjectIdentifierSelectScalar = {
   id?: boolean
@@ -452,6 +455,30 @@ export interface NamedObjectIdentifierDelegate<ExtArgs extends runtime.Types.Ext
   createMany<T extends NamedObjectIdentifierCreateManyArgs>(args?: Prisma.SelectSubset<T, NamedObjectIdentifierCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many NamedObjectIdentifiers and returns the data saved in the database.
+   * @param {NamedObjectIdentifierCreateManyAndReturnArgs} args - Arguments to create many NamedObjectIdentifiers.
+   * @example
+   * // Create many NamedObjectIdentifiers
+   * const namedObjectIdentifier = await prisma.namedObjectIdentifier.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many NamedObjectIdentifiers and only return the `id`
+   * const namedObjectIdentifierWithIdOnly = await prisma.namedObjectIdentifier.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends NamedObjectIdentifierCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, NamedObjectIdentifierCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NamedObjectIdentifierPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a NamedObjectIdentifier.
    * @param {NamedObjectIdentifierDeleteArgs} args - Arguments to delete one NamedObjectIdentifier.
    * @example
@@ -514,6 +541,36 @@ export interface NamedObjectIdentifierDelegate<ExtArgs extends runtime.Types.Ext
    * 
    */
   updateMany<T extends NamedObjectIdentifierUpdateManyArgs>(args: Prisma.SelectSubset<T, NamedObjectIdentifierUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more NamedObjectIdentifiers and returns the data updated in the database.
+   * @param {NamedObjectIdentifierUpdateManyAndReturnArgs} args - Arguments to update many NamedObjectIdentifiers.
+   * @example
+   * // Update many NamedObjectIdentifiers
+   * const namedObjectIdentifier = await prisma.namedObjectIdentifier.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more NamedObjectIdentifiers and only return the `id`
+   * const namedObjectIdentifierWithIdOnly = await prisma.namedObjectIdentifier.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends NamedObjectIdentifierUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, NamedObjectIdentifierUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NamedObjectIdentifierPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one NamedObjectIdentifier.
@@ -911,7 +968,24 @@ export type NamedObjectIdentifierCreateManyArgs<ExtArgs extends runtime.Types.Ex
    * The data used to create many NamedObjectIdentifiers.
    */
   data: Prisma.NamedObjectIdentifierCreateManyInput | Prisma.NamedObjectIdentifierCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * NamedObjectIdentifier createManyAndReturn
+ */
+export type NamedObjectIdentifierCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NamedObjectIdentifier
+   */
+  select?: Prisma.NamedObjectIdentifierSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the NamedObjectIdentifier
+   */
+  omit?: Prisma.NamedObjectIdentifierOmit<ExtArgs> | null
+  /**
+   * The data used to create many NamedObjectIdentifiers.
+   */
+  data: Prisma.NamedObjectIdentifierCreateManyInput | Prisma.NamedObjectIdentifierCreateManyInput[]
 }
 
 /**
@@ -940,6 +1014,32 @@ export type NamedObjectIdentifierUpdateArgs<ExtArgs extends runtime.Types.Extens
  * NamedObjectIdentifier updateMany
  */
 export type NamedObjectIdentifierUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * The data used to update NamedObjectIdentifiers.
+   */
+  data: Prisma.XOR<Prisma.NamedObjectIdentifierUpdateManyMutationInput, Prisma.NamedObjectIdentifierUncheckedUpdateManyInput>
+  /**
+   * Filter which NamedObjectIdentifiers to update
+   */
+  where?: Prisma.NamedObjectIdentifierWhereInput
+  /**
+   * Limit how many NamedObjectIdentifiers to update.
+   */
+  limit?: number
+}
+
+/**
+ * NamedObjectIdentifier updateManyAndReturn
+ */
+export type NamedObjectIdentifierUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NamedObjectIdentifier
+   */
+  select?: Prisma.NamedObjectIdentifierSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the NamedObjectIdentifier
+   */
+  omit?: Prisma.NamedObjectIdentifierOmit<ExtArgs> | null
   /**
    * The data used to update NamedObjectIdentifiers.
    */

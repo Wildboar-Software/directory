@@ -36,6 +36,7 @@
         "@docusaurus/preset-classic": "3.7.0",
         "@logtape/logtape": "npm:@jsr/logtape__logtape@^1.2.0-dev.369+2dd942c9",
         "@mdx-js/react": "^3.0.0",
+        "@prisma/adapter-better-sqlite3": "^7.0.1",
         "@prisma/adapter-mariadb": "^7.0.1",
         "@prisma/client": "^7.0.1",
         "@std/html": "npm:@jsr/std__html@^1.0.5",

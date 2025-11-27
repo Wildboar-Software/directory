@@ -707,7 +707,6 @@ export type OperationalBindingOrderByWithRelationInput = {
   access_point?: Prisma.AccessPointOrderByWithRelationInput
   master_access_point?: Prisma.AccessPointOrderByWithRelationInput
   next_version?: Prisma.OperationalBindingOrderByRelationAggregateInput
-  _relevance?: Prisma.OperationalBindingOrderByRelevanceInput
 }
 
 export type OperationalBindingWhereUniqueInput = Prisma.AtLeast<{
@@ -1308,12 +1307,6 @@ export type OperationalBindingNullableScalarRelationFilter = {
   isNot?: Prisma.OperationalBindingWhereInput | null
 }
 
-export type OperationalBindingOrderByRelevanceInput = {
-  fields: Prisma.OperationalBindingOrderByRelevanceFieldEnum | Prisma.OperationalBindingOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type OperationalBindingCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   entry_id?: Prisma.SortOrder
@@ -1825,7 +1818,6 @@ export type OperationalBindingCreateOrConnectWithoutEntryInput = {
 
 export type OperationalBindingCreateManyEntryInputEnvelope = {
   data: Prisma.OperationalBindingCreateManyEntryInput | Prisma.OperationalBindingCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type OperationalBindingUpsertWithWhereUniqueWithoutEntryInput = {
@@ -2024,7 +2016,6 @@ export type OperationalBindingCreateOrConnectWithoutAccess_pointInput = {
 
 export type OperationalBindingCreateManyAccess_pointInputEnvelope = {
   data: Prisma.OperationalBindingCreateManyAccess_pointInput | Prisma.OperationalBindingCreateManyAccess_pointInput[]
-  skipDuplicates?: boolean
 }
 
 export type OperationalBindingCreateWithoutMaster_access_pointInput = {
@@ -2147,7 +2138,6 @@ export type OperationalBindingCreateOrConnectWithoutMaster_access_pointInput = {
 
 export type OperationalBindingCreateManyMaster_access_pointInputEnvelope = {
   data: Prisma.OperationalBindingCreateManyMaster_access_pointInput | Prisma.OperationalBindingCreateManyMaster_access_pointInput[]
-  skipDuplicates?: boolean
 }
 
 export type OperationalBindingUpsertWithWhereUniqueWithoutAccess_pointInput = {
@@ -2420,7 +2410,6 @@ export type OperationalBindingCreateOrConnectWithoutPreviousInput = {
 
 export type OperationalBindingCreateManyPreviousInputEnvelope = {
   data: Prisma.OperationalBindingCreateManyPreviousInput | Prisma.OperationalBindingCreateManyPreviousInput[]
-  skipDuplicates?: boolean
 }
 
 export type OperationalBindingUpsertWithoutNext_versionInput = {
@@ -3557,7 +3546,127 @@ export type OperationalBindingSelect<ExtArgs extends runtime.Types.Extensions.In
   _count?: boolean | Prisma.OperationalBindingCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["operationalBinding"]>
 
+export type OperationalBindingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  previous_id?: boolean
+  outbound?: boolean
+  uuid?: boolean
+  binding_type?: boolean
+  binding_identifier?: boolean
+  binding_version?: boolean
+  agreement_ber?: boolean
+  access_point_id?: boolean
+  initiator?: boolean
+  initiator_ber?: boolean
+  validity_start?: boolean
+  validity_end?: boolean
+  security_certification_path?: boolean
+  security_name?: boolean
+  security_time?: boolean
+  security_random?: boolean
+  security_target?: boolean
+  security_operationCode?: boolean
+  security_errorProtection?: boolean
+  security_errorCode?: boolean
+  new_context_prefix_rdn?: boolean
+  immediate_superior?: boolean
+  shadowed_context_prefix?: boolean
+  knowledge_type?: boolean
+  subordinates?: boolean
+  supply_contexts?: boolean
+  supplier_initiated?: boolean
+  periodic_beginTime?: boolean
+  periodic_windowSize?: boolean
+  periodic_updateInterval?: boolean
+  othertimes?: boolean
+  master_access_point_id?: boolean
+  secondary_shadows?: boolean
+  source_ip?: boolean
+  source_tcp_port?: boolean
+  source_ae_title?: boolean
+  source_credentials_type?: boolean
+  source_certificate_path?: boolean
+  source_bind_token?: boolean
+  source_strong_name?: boolean
+  source_attr_cert_path?: boolean
+  requested_time?: boolean
+  responded_time?: boolean
+  terminated_time?: boolean
+  accepted?: boolean
+  last_update?: boolean
+  last_ob_problem?: boolean
+  last_shadow_problem?: boolean
+  local_last_update?: boolean
+  remote_last_update?: boolean
+  requested_strategy?: boolean
+  requested_strategy_external_ber?: boolean
+  entry?: boolean | Prisma.OperationalBinding$entryArgs<ExtArgs>
+  previous?: boolean | Prisma.OperationalBinding$previousArgs<ExtArgs>
+  access_point?: boolean | Prisma.OperationalBinding$access_pointArgs<ExtArgs>
+  master_access_point?: boolean | Prisma.OperationalBinding$master_access_pointArgs<ExtArgs>
+}, ExtArgs["result"]["operationalBinding"]>
 
+export type OperationalBindingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  previous_id?: boolean
+  outbound?: boolean
+  uuid?: boolean
+  binding_type?: boolean
+  binding_identifier?: boolean
+  binding_version?: boolean
+  agreement_ber?: boolean
+  access_point_id?: boolean
+  initiator?: boolean
+  initiator_ber?: boolean
+  validity_start?: boolean
+  validity_end?: boolean
+  security_certification_path?: boolean
+  security_name?: boolean
+  security_time?: boolean
+  security_random?: boolean
+  security_target?: boolean
+  security_operationCode?: boolean
+  security_errorProtection?: boolean
+  security_errorCode?: boolean
+  new_context_prefix_rdn?: boolean
+  immediate_superior?: boolean
+  shadowed_context_prefix?: boolean
+  knowledge_type?: boolean
+  subordinates?: boolean
+  supply_contexts?: boolean
+  supplier_initiated?: boolean
+  periodic_beginTime?: boolean
+  periodic_windowSize?: boolean
+  periodic_updateInterval?: boolean
+  othertimes?: boolean
+  master_access_point_id?: boolean
+  secondary_shadows?: boolean
+  source_ip?: boolean
+  source_tcp_port?: boolean
+  source_ae_title?: boolean
+  source_credentials_type?: boolean
+  source_certificate_path?: boolean
+  source_bind_token?: boolean
+  source_strong_name?: boolean
+  source_attr_cert_path?: boolean
+  requested_time?: boolean
+  responded_time?: boolean
+  terminated_time?: boolean
+  accepted?: boolean
+  last_update?: boolean
+  last_ob_problem?: boolean
+  last_shadow_problem?: boolean
+  local_last_update?: boolean
+  remote_last_update?: boolean
+  requested_strategy?: boolean
+  requested_strategy_external_ber?: boolean
+  entry?: boolean | Prisma.OperationalBinding$entryArgs<ExtArgs>
+  previous?: boolean | Prisma.OperationalBinding$previousArgs<ExtArgs>
+  access_point?: boolean | Prisma.OperationalBinding$access_pointArgs<ExtArgs>
+  master_access_point?: boolean | Prisma.OperationalBinding$master_access_pointArgs<ExtArgs>
+}, ExtArgs["result"]["operationalBinding"]>
 
 export type OperationalBindingSelectScalar = {
   id?: boolean
@@ -3624,6 +3733,18 @@ export type OperationalBindingInclude<ExtArgs extends runtime.Types.Extensions.I
   master_access_point?: boolean | Prisma.OperationalBinding$master_access_pointArgs<ExtArgs>
   next_version?: boolean | Prisma.OperationalBinding$next_versionArgs<ExtArgs>
   _count?: boolean | Prisma.OperationalBindingCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type OperationalBindingIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.OperationalBinding$entryArgs<ExtArgs>
+  previous?: boolean | Prisma.OperationalBinding$previousArgs<ExtArgs>
+  access_point?: boolean | Prisma.OperationalBinding$access_pointArgs<ExtArgs>
+  master_access_point?: boolean | Prisma.OperationalBinding$master_access_pointArgs<ExtArgs>
+}
+export type OperationalBindingIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.OperationalBinding$entryArgs<ExtArgs>
+  previous?: boolean | Prisma.OperationalBinding$previousArgs<ExtArgs>
+  access_point?: boolean | Prisma.OperationalBinding$access_pointArgs<ExtArgs>
+  master_access_point?: boolean | Prisma.OperationalBinding$master_access_pointArgs<ExtArgs>
 }
 
 export type $OperationalBindingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3808,6 +3929,30 @@ export interface OperationalBindingDelegate<ExtArgs extends runtime.Types.Extens
   createMany<T extends OperationalBindingCreateManyArgs>(args?: Prisma.SelectSubset<T, OperationalBindingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many OperationalBindings and returns the data saved in the database.
+   * @param {OperationalBindingCreateManyAndReturnArgs} args - Arguments to create many OperationalBindings.
+   * @example
+   * // Create many OperationalBindings
+   * const operationalBinding = await prisma.operationalBinding.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many OperationalBindings and only return the `id`
+   * const operationalBindingWithIdOnly = await prisma.operationalBinding.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends OperationalBindingCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, OperationalBindingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OperationalBindingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a OperationalBinding.
    * @param {OperationalBindingDeleteArgs} args - Arguments to delete one OperationalBinding.
    * @example
@@ -3870,6 +4015,36 @@ export interface OperationalBindingDelegate<ExtArgs extends runtime.Types.Extens
    * 
    */
   updateMany<T extends OperationalBindingUpdateManyArgs>(args: Prisma.SelectSubset<T, OperationalBindingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more OperationalBindings and returns the data updated in the database.
+   * @param {OperationalBindingUpdateManyAndReturnArgs} args - Arguments to update many OperationalBindings.
+   * @example
+   * // Update many OperationalBindings
+   * const operationalBinding = await prisma.operationalBinding.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more OperationalBindings and only return the `id`
+   * const operationalBindingWithIdOnly = await prisma.operationalBinding.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends OperationalBindingUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, OperationalBindingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OperationalBindingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one OperationalBinding.
@@ -4347,7 +4522,28 @@ export type OperationalBindingCreateManyArgs<ExtArgs extends runtime.Types.Exten
    * The data used to create many OperationalBindings.
    */
   data: Prisma.OperationalBindingCreateManyInput | Prisma.OperationalBindingCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * OperationalBinding createManyAndReturn
+ */
+export type OperationalBindingCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OperationalBinding
+   */
+  select?: Prisma.OperationalBindingSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the OperationalBinding
+   */
+  omit?: Prisma.OperationalBindingOmit<ExtArgs> | null
+  /**
+   * The data used to create many OperationalBindings.
+   */
+  data: Prisma.OperationalBindingCreateManyInput | Prisma.OperationalBindingCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OperationalBindingIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -4392,6 +4588,36 @@ export type OperationalBindingUpdateManyArgs<ExtArgs extends runtime.Types.Exten
    * Limit how many OperationalBindings to update.
    */
   limit?: number
+}
+
+/**
+ * OperationalBinding updateManyAndReturn
+ */
+export type OperationalBindingUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OperationalBinding
+   */
+  select?: Prisma.OperationalBindingSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the OperationalBinding
+   */
+  omit?: Prisma.OperationalBindingOmit<ExtArgs> | null
+  /**
+   * The data used to update OperationalBindings.
+   */
+  data: Prisma.XOR<Prisma.OperationalBindingUpdateManyMutationInput, Prisma.OperationalBindingUncheckedUpdateManyInput>
+  /**
+   * Filter which OperationalBindings to update
+   */
+  where?: Prisma.OperationalBindingWhereInput
+  /**
+   * Limit how many OperationalBindings to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OperationalBindingIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

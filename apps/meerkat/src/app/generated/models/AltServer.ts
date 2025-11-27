@@ -197,7 +197,6 @@ export type AltServerWhereInput = {
 export type AltServerOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   uri?: Prisma.SortOrder
-  _relevance?: Prisma.AltServerOrderByRelevanceInput
 }
 
 export type AltServerWhereUniqueInput = Prisma.AtLeast<{
@@ -258,12 +257,6 @@ export type AltServerUncheckedUpdateManyInput = {
   uri?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
-export type AltServerOrderByRelevanceInput = {
-  fields: Prisma.AltServerOrderByRelevanceFieldEnum | Prisma.AltServerOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type AltServerCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   uri?: Prisma.SortOrder
@@ -294,7 +287,15 @@ export type AltServerSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   uri?: boolean
 }, ExtArgs["result"]["altServer"]>
 
+export type AltServerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  uri?: boolean
+}, ExtArgs["result"]["altServer"]>
 
+export type AltServerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  uri?: boolean
+}, ExtArgs["result"]["altServer"]>
 
 export type AltServerSelectScalar = {
   id?: boolean
@@ -427,6 +428,30 @@ export interface AltServerDelegate<ExtArgs extends runtime.Types.Extensions.Inte
   createMany<T extends AltServerCreateManyArgs>(args?: Prisma.SelectSubset<T, AltServerCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many AltServers and returns the data saved in the database.
+   * @param {AltServerCreateManyAndReturnArgs} args - Arguments to create many AltServers.
+   * @example
+   * // Create many AltServers
+   * const altServer = await prisma.altServer.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many AltServers and only return the `id`
+   * const altServerWithIdOnly = await prisma.altServer.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends AltServerCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, AltServerCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AltServerPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a AltServer.
    * @param {AltServerDeleteArgs} args - Arguments to delete one AltServer.
    * @example
@@ -489,6 +514,36 @@ export interface AltServerDelegate<ExtArgs extends runtime.Types.Extensions.Inte
    * 
    */
   updateMany<T extends AltServerUpdateManyArgs>(args: Prisma.SelectSubset<T, AltServerUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more AltServers and returns the data updated in the database.
+   * @param {AltServerUpdateManyAndReturnArgs} args - Arguments to update many AltServers.
+   * @example
+   * // Update many AltServers
+   * const altServer = await prisma.altServer.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more AltServers and only return the `id`
+   * const altServerWithIdOnly = await prisma.altServer.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends AltServerUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, AltServerUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AltServerPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one AltServer.
@@ -885,7 +940,24 @@ export type AltServerCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * The data used to create many AltServers.
    */
   data: Prisma.AltServerCreateManyInput | Prisma.AltServerCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * AltServer createManyAndReturn
+ */
+export type AltServerCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AltServer
+   */
+  select?: Prisma.AltServerSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the AltServer
+   */
+  omit?: Prisma.AltServerOmit<ExtArgs> | null
+  /**
+   * The data used to create many AltServers.
+   */
+  data: Prisma.AltServerCreateManyInput | Prisma.AltServerCreateManyInput[]
 }
 
 /**
@@ -914,6 +986,32 @@ export type AltServerUpdateArgs<ExtArgs extends runtime.Types.Extensions.Interna
  * AltServer updateMany
  */
 export type AltServerUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * The data used to update AltServers.
+   */
+  data: Prisma.XOR<Prisma.AltServerUpdateManyMutationInput, Prisma.AltServerUncheckedUpdateManyInput>
+  /**
+   * Filter which AltServers to update
+   */
+  where?: Prisma.AltServerWhereInput
+  /**
+   * Limit how many AltServers to update.
+   */
+  limit?: number
+}
+
+/**
+ * AltServer updateManyAndReturn
+ */
+export type AltServerUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AltServer
+   */
+  select?: Prisma.AltServerSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the AltServer
+   */
+  omit?: Prisma.AltServerOmit<ExtArgs> | null
   /**
    * The data used to update AltServers.
    */

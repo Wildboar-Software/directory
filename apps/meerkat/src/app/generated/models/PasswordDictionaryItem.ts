@@ -210,7 +210,6 @@ export type PasswordDictionaryItemOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   bit?: Prisma.SortOrder
   item?: Prisma.SortOrder
-  _relevance?: Prisma.PasswordDictionaryItemOrderByRelevanceInput
 }
 
 export type PasswordDictionaryItemWhereUniqueInput = Prisma.AtLeast<{
@@ -282,12 +281,6 @@ export type PasswordDictionaryItemUncheckedUpdateManyInput = {
   item?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
-export type PasswordDictionaryItemOrderByRelevanceInput = {
-  fields: Prisma.PasswordDictionaryItemOrderByRelevanceFieldEnum | Prisma.PasswordDictionaryItemOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type PasswordDictionaryItemBitItemCompoundUniqueInput = {
   bit: number
   item: string
@@ -329,7 +322,17 @@ export type PasswordDictionaryItemSelect<ExtArgs extends runtime.Types.Extension
   item?: boolean
 }, ExtArgs["result"]["passwordDictionaryItem"]>
 
+export type PasswordDictionaryItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  bit?: boolean
+  item?: boolean
+}, ExtArgs["result"]["passwordDictionaryItem"]>
 
+export type PasswordDictionaryItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  bit?: boolean
+  item?: boolean
+}, ExtArgs["result"]["passwordDictionaryItem"]>
 
 export type PasswordDictionaryItemSelectScalar = {
   id?: boolean
@@ -464,6 +467,30 @@ export interface PasswordDictionaryItemDelegate<ExtArgs extends runtime.Types.Ex
   createMany<T extends PasswordDictionaryItemCreateManyArgs>(args?: Prisma.SelectSubset<T, PasswordDictionaryItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many PasswordDictionaryItems and returns the data saved in the database.
+   * @param {PasswordDictionaryItemCreateManyAndReturnArgs} args - Arguments to create many PasswordDictionaryItems.
+   * @example
+   * // Create many PasswordDictionaryItems
+   * const passwordDictionaryItem = await prisma.passwordDictionaryItem.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many PasswordDictionaryItems and only return the `id`
+   * const passwordDictionaryItemWithIdOnly = await prisma.passwordDictionaryItem.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends PasswordDictionaryItemCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, PasswordDictionaryItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordDictionaryItemPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a PasswordDictionaryItem.
    * @param {PasswordDictionaryItemDeleteArgs} args - Arguments to delete one PasswordDictionaryItem.
    * @example
@@ -526,6 +553,36 @@ export interface PasswordDictionaryItemDelegate<ExtArgs extends runtime.Types.Ex
    * 
    */
   updateMany<T extends PasswordDictionaryItemUpdateManyArgs>(args: Prisma.SelectSubset<T, PasswordDictionaryItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more PasswordDictionaryItems and returns the data updated in the database.
+   * @param {PasswordDictionaryItemUpdateManyAndReturnArgs} args - Arguments to update many PasswordDictionaryItems.
+   * @example
+   * // Update many PasswordDictionaryItems
+   * const passwordDictionaryItem = await prisma.passwordDictionaryItem.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more PasswordDictionaryItems and only return the `id`
+   * const passwordDictionaryItemWithIdOnly = await prisma.passwordDictionaryItem.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends PasswordDictionaryItemUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, PasswordDictionaryItemUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordDictionaryItemPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one PasswordDictionaryItem.
@@ -923,7 +980,24 @@ export type PasswordDictionaryItemCreateManyArgs<ExtArgs extends runtime.Types.E
    * The data used to create many PasswordDictionaryItems.
    */
   data: Prisma.PasswordDictionaryItemCreateManyInput | Prisma.PasswordDictionaryItemCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * PasswordDictionaryItem createManyAndReturn
+ */
+export type PasswordDictionaryItemCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PasswordDictionaryItem
+   */
+  select?: Prisma.PasswordDictionaryItemSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PasswordDictionaryItem
+   */
+  omit?: Prisma.PasswordDictionaryItemOmit<ExtArgs> | null
+  /**
+   * The data used to create many PasswordDictionaryItems.
+   */
+  data: Prisma.PasswordDictionaryItemCreateManyInput | Prisma.PasswordDictionaryItemCreateManyInput[]
 }
 
 /**
@@ -952,6 +1026,32 @@ export type PasswordDictionaryItemUpdateArgs<ExtArgs extends runtime.Types.Exten
  * PasswordDictionaryItem updateMany
  */
 export type PasswordDictionaryItemUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * The data used to update PasswordDictionaryItems.
+   */
+  data: Prisma.XOR<Prisma.PasswordDictionaryItemUpdateManyMutationInput, Prisma.PasswordDictionaryItemUncheckedUpdateManyInput>
+  /**
+   * Filter which PasswordDictionaryItems to update
+   */
+  where?: Prisma.PasswordDictionaryItemWhereInput
+  /**
+   * Limit how many PasswordDictionaryItems to update.
+   */
+  limit?: number
+}
+
+/**
+ * PasswordDictionaryItem updateManyAndReturn
+ */
+export type PasswordDictionaryItemUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PasswordDictionaryItem
+   */
+  select?: Prisma.PasswordDictionaryItemSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PasswordDictionaryItem
+   */
+  omit?: Prisma.PasswordDictionaryItemOmit<ExtArgs> | null
   /**
    * The data used to update PasswordDictionaryItems.
    */

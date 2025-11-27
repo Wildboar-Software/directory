@@ -435,7 +435,27 @@ export type PendingShadowIncrementalStepRefreshSelect<ExtArgs extends runtime.Ty
   type?: boolean
 }, ExtArgs["result"]["pendingShadowIncrementalStepRefresh"]>
 
+export type PendingShadowIncrementalStepRefreshSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  binding_identifier?: boolean
+  time?: boolean
+  ber?: boolean
+  submitted?: boolean
+  acknowledged?: boolean
+  rename?: boolean
+  type?: boolean
+}, ExtArgs["result"]["pendingShadowIncrementalStepRefresh"]>
 
+export type PendingShadowIncrementalStepRefreshSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  binding_identifier?: boolean
+  time?: boolean
+  ber?: boolean
+  submitted?: boolean
+  acknowledged?: boolean
+  rename?: boolean
+  type?: boolean
+}, ExtArgs["result"]["pendingShadowIncrementalStepRefresh"]>
 
 export type PendingShadowIncrementalStepRefreshSelectScalar = {
   id?: boolean
@@ -580,6 +600,30 @@ export interface PendingShadowIncrementalStepRefreshDelegate<ExtArgs extends run
   createMany<T extends PendingShadowIncrementalStepRefreshCreateManyArgs>(args?: Prisma.SelectSubset<T, PendingShadowIncrementalStepRefreshCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many PendingShadowIncrementalStepRefreshes and returns the data saved in the database.
+   * @param {PendingShadowIncrementalStepRefreshCreateManyAndReturnArgs} args - Arguments to create many PendingShadowIncrementalStepRefreshes.
+   * @example
+   * // Create many PendingShadowIncrementalStepRefreshes
+   * const pendingShadowIncrementalStepRefresh = await prisma.pendingShadowIncrementalStepRefresh.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many PendingShadowIncrementalStepRefreshes and only return the `id`
+   * const pendingShadowIncrementalStepRefreshWithIdOnly = await prisma.pendingShadowIncrementalStepRefresh.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends PendingShadowIncrementalStepRefreshCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, PendingShadowIncrementalStepRefreshCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PendingShadowIncrementalStepRefreshPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a PendingShadowIncrementalStepRefresh.
    * @param {PendingShadowIncrementalStepRefreshDeleteArgs} args - Arguments to delete one PendingShadowIncrementalStepRefresh.
    * @example
@@ -642,6 +686,36 @@ export interface PendingShadowIncrementalStepRefreshDelegate<ExtArgs extends run
    * 
    */
   updateMany<T extends PendingShadowIncrementalStepRefreshUpdateManyArgs>(args: Prisma.SelectSubset<T, PendingShadowIncrementalStepRefreshUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more PendingShadowIncrementalStepRefreshes and returns the data updated in the database.
+   * @param {PendingShadowIncrementalStepRefreshUpdateManyAndReturnArgs} args - Arguments to update many PendingShadowIncrementalStepRefreshes.
+   * @example
+   * // Update many PendingShadowIncrementalStepRefreshes
+   * const pendingShadowIncrementalStepRefresh = await prisma.pendingShadowIncrementalStepRefresh.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more PendingShadowIncrementalStepRefreshes and only return the `id`
+   * const pendingShadowIncrementalStepRefreshWithIdOnly = await prisma.pendingShadowIncrementalStepRefresh.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends PendingShadowIncrementalStepRefreshUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, PendingShadowIncrementalStepRefreshUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PendingShadowIncrementalStepRefreshPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one PendingShadowIncrementalStepRefresh.
@@ -1044,7 +1118,24 @@ export type PendingShadowIncrementalStepRefreshCreateManyArgs<ExtArgs extends ru
    * The data used to create many PendingShadowIncrementalStepRefreshes.
    */
   data: Prisma.PendingShadowIncrementalStepRefreshCreateManyInput | Prisma.PendingShadowIncrementalStepRefreshCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * PendingShadowIncrementalStepRefresh createManyAndReturn
+ */
+export type PendingShadowIncrementalStepRefreshCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PendingShadowIncrementalStepRefresh
+   */
+  select?: Prisma.PendingShadowIncrementalStepRefreshSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PendingShadowIncrementalStepRefresh
+   */
+  omit?: Prisma.PendingShadowIncrementalStepRefreshOmit<ExtArgs> | null
+  /**
+   * The data used to create many PendingShadowIncrementalStepRefreshes.
+   */
+  data: Prisma.PendingShadowIncrementalStepRefreshCreateManyInput | Prisma.PendingShadowIncrementalStepRefreshCreateManyInput[]
 }
 
 /**
@@ -1073,6 +1164,32 @@ export type PendingShadowIncrementalStepRefreshUpdateArgs<ExtArgs extends runtim
  * PendingShadowIncrementalStepRefresh updateMany
  */
 export type PendingShadowIncrementalStepRefreshUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * The data used to update PendingShadowIncrementalStepRefreshes.
+   */
+  data: Prisma.XOR<Prisma.PendingShadowIncrementalStepRefreshUpdateManyMutationInput, Prisma.PendingShadowIncrementalStepRefreshUncheckedUpdateManyInput>
+  /**
+   * Filter which PendingShadowIncrementalStepRefreshes to update
+   */
+  where?: Prisma.PendingShadowIncrementalStepRefreshWhereInput
+  /**
+   * Limit how many PendingShadowIncrementalStepRefreshes to update.
+   */
+  limit?: number
+}
+
+/**
+ * PendingShadowIncrementalStepRefresh updateManyAndReturn
+ */
+export type PendingShadowIncrementalStepRefreshUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PendingShadowIncrementalStepRefresh
+   */
+  select?: Prisma.PendingShadowIncrementalStepRefreshSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PendingShadowIncrementalStepRefresh
+   */
+  omit?: Prisma.PendingShadowIncrementalStepRefreshOmit<ExtArgs> | null
   /**
    * The data used to update PendingShadowIncrementalStepRefreshes.
    */

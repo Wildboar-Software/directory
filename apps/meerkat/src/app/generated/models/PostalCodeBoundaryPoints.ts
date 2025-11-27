@@ -414,7 +414,6 @@ export type PostalCodeBoundaryPointsCreateOrConnectWithoutPostal_codeInput = {
 
 export type PostalCodeBoundaryPointsCreateManyPostal_codeInputEnvelope = {
   data: Prisma.PostalCodeBoundaryPointsCreateManyPostal_codeInput | Prisma.PostalCodeBoundaryPointsCreateManyPostal_codeInput[]
-  skipDuplicates?: boolean
 }
 
 export type PostalCodeBoundaryPointsUpsertWithWhereUniqueWithoutPostal_codeInput = {
@@ -476,7 +475,21 @@ export type PostalCodeBoundaryPointsSelect<ExtArgs extends runtime.Types.Extensi
   postal_code?: boolean | Prisma.PostalCodesGazetteEntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["postalCodeBoundaryPoints"]>
 
+export type PostalCodeBoundaryPointsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  postal_code_id?: boolean
+  northing?: boolean
+  easting?: boolean
+  postal_code?: boolean | Prisma.PostalCodesGazetteEntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["postalCodeBoundaryPoints"]>
 
+export type PostalCodeBoundaryPointsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  postal_code_id?: boolean
+  northing?: boolean
+  easting?: boolean
+  postal_code?: boolean | Prisma.PostalCodesGazetteEntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["postalCodeBoundaryPoints"]>
 
 export type PostalCodeBoundaryPointsSelectScalar = {
   id?: boolean
@@ -487,6 +500,12 @@ export type PostalCodeBoundaryPointsSelectScalar = {
 
 export type PostalCodeBoundaryPointsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "postal_code_id" | "northing" | "easting", ExtArgs["result"]["postalCodeBoundaryPoints"]>
 export type PostalCodeBoundaryPointsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  postal_code?: boolean | Prisma.PostalCodesGazetteEntryDefaultArgs<ExtArgs>
+}
+export type PostalCodeBoundaryPointsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  postal_code?: boolean | Prisma.PostalCodesGazetteEntryDefaultArgs<ExtArgs>
+}
+export type PostalCodeBoundaryPointsIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   postal_code?: boolean | Prisma.PostalCodesGazetteEntryDefaultArgs<ExtArgs>
 }
 
@@ -618,6 +637,30 @@ export interface PostalCodeBoundaryPointsDelegate<ExtArgs extends runtime.Types.
   createMany<T extends PostalCodeBoundaryPointsCreateManyArgs>(args?: Prisma.SelectSubset<T, PostalCodeBoundaryPointsCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many PostalCodeBoundaryPoints and returns the data saved in the database.
+   * @param {PostalCodeBoundaryPointsCreateManyAndReturnArgs} args - Arguments to create many PostalCodeBoundaryPoints.
+   * @example
+   * // Create many PostalCodeBoundaryPoints
+   * const postalCodeBoundaryPoints = await prisma.postalCodeBoundaryPoints.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many PostalCodeBoundaryPoints and only return the `id`
+   * const postalCodeBoundaryPointsWithIdOnly = await prisma.postalCodeBoundaryPoints.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends PostalCodeBoundaryPointsCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, PostalCodeBoundaryPointsCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PostalCodeBoundaryPointsPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a PostalCodeBoundaryPoints.
    * @param {PostalCodeBoundaryPointsDeleteArgs} args - Arguments to delete one PostalCodeBoundaryPoints.
    * @example
@@ -680,6 +723,36 @@ export interface PostalCodeBoundaryPointsDelegate<ExtArgs extends runtime.Types.
    * 
    */
   updateMany<T extends PostalCodeBoundaryPointsUpdateManyArgs>(args: Prisma.SelectSubset<T, PostalCodeBoundaryPointsUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more PostalCodeBoundaryPoints and returns the data updated in the database.
+   * @param {PostalCodeBoundaryPointsUpdateManyAndReturnArgs} args - Arguments to update many PostalCodeBoundaryPoints.
+   * @example
+   * // Update many PostalCodeBoundaryPoints
+   * const postalCodeBoundaryPoints = await prisma.postalCodeBoundaryPoints.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more PostalCodeBoundaryPoints and only return the `id`
+   * const postalCodeBoundaryPointsWithIdOnly = await prisma.postalCodeBoundaryPoints.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends PostalCodeBoundaryPointsUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, PostalCodeBoundaryPointsUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PostalCodeBoundaryPointsPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one PostalCodeBoundaryPoints.
@@ -1103,7 +1176,28 @@ export type PostalCodeBoundaryPointsCreateManyArgs<ExtArgs extends runtime.Types
    * The data used to create many PostalCodeBoundaryPoints.
    */
   data: Prisma.PostalCodeBoundaryPointsCreateManyInput | Prisma.PostalCodeBoundaryPointsCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * PostalCodeBoundaryPoints createManyAndReturn
+ */
+export type PostalCodeBoundaryPointsCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PostalCodeBoundaryPoints
+   */
+  select?: Prisma.PostalCodeBoundaryPointsSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PostalCodeBoundaryPoints
+   */
+  omit?: Prisma.PostalCodeBoundaryPointsOmit<ExtArgs> | null
+  /**
+   * The data used to create many PostalCodeBoundaryPoints.
+   */
+  data: Prisma.PostalCodeBoundaryPointsCreateManyInput | Prisma.PostalCodeBoundaryPointsCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PostalCodeBoundaryPointsIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1148,6 +1242,36 @@ export type PostalCodeBoundaryPointsUpdateManyArgs<ExtArgs extends runtime.Types
    * Limit how many PostalCodeBoundaryPoints to update.
    */
   limit?: number
+}
+
+/**
+ * PostalCodeBoundaryPoints updateManyAndReturn
+ */
+export type PostalCodeBoundaryPointsUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PostalCodeBoundaryPoints
+   */
+  select?: Prisma.PostalCodeBoundaryPointsSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PostalCodeBoundaryPoints
+   */
+  omit?: Prisma.PostalCodeBoundaryPointsOmit<ExtArgs> | null
+  /**
+   * The data used to update PostalCodeBoundaryPoints.
+   */
+  data: Prisma.XOR<Prisma.PostalCodeBoundaryPointsUpdateManyMutationInput, Prisma.PostalCodeBoundaryPointsUncheckedUpdateManyInput>
+  /**
+   * Filter which PostalCodeBoundaryPoints to update
+   */
+  where?: Prisma.PostalCodeBoundaryPointsWhereInput
+  /**
+   * Limit how many PostalCodeBoundaryPoints to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PostalCodeBoundaryPointsIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

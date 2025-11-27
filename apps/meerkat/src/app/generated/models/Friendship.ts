@@ -257,7 +257,6 @@ export type FriendshipOrderByWithRelationInput = {
   entry_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.FriendshipOrderByRelevanceInput
 }
 
 export type FriendshipWhereUniqueInput = Prisma.AtLeast<{
@@ -389,12 +388,6 @@ export type FriendshipOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type FriendshipOrderByRelevanceInput = {
-  fields: Prisma.FriendshipOrderByRelevanceFieldEnum | Prisma.FriendshipOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type FriendshipEntry_idAnchorCompoundUniqueInput = {
   entry_id: number
   anchor: string
@@ -511,7 +504,6 @@ export type FriendshipCreateOrConnectWithoutEntryInput = {
 
 export type FriendshipCreateManyEntryInputEnvelope = {
   data: Prisma.FriendshipCreateManyEntryInput | Prisma.FriendshipCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type FriendshipUpsertWithWhereUniqueWithoutEntryInput = {
@@ -597,7 +589,29 @@ export type FriendshipSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["friendship"]>
 
+export type FriendshipSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  anchor?: boolean
+  friends?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["friendship"]>
 
+export type FriendshipSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  anchor?: boolean
+  friends?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["friendship"]>
 
 export type FriendshipSelectScalar = {
   id?: boolean
@@ -612,6 +626,12 @@ export type FriendshipSelectScalar = {
 
 export type FriendshipOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "anchor" | "friends" | "name" | "description" | "obsolete" | "entry_id" | "created_at", ExtArgs["result"]["friendship"]>
 export type FriendshipInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type FriendshipIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type FriendshipIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -747,6 +767,30 @@ export interface FriendshipDelegate<ExtArgs extends runtime.Types.Extensions.Int
   createMany<T extends FriendshipCreateManyArgs>(args?: Prisma.SelectSubset<T, FriendshipCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many Friendships and returns the data saved in the database.
+   * @param {FriendshipCreateManyAndReturnArgs} args - Arguments to create many Friendships.
+   * @example
+   * // Create many Friendships
+   * const friendship = await prisma.friendship.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many Friendships and only return the `id`
+   * const friendshipWithIdOnly = await prisma.friendship.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends FriendshipCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, FriendshipCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FriendshipPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a Friendship.
    * @param {FriendshipDeleteArgs} args - Arguments to delete one Friendship.
    * @example
@@ -809,6 +853,36 @@ export interface FriendshipDelegate<ExtArgs extends runtime.Types.Extensions.Int
    * 
    */
   updateMany<T extends FriendshipUpdateManyArgs>(args: Prisma.SelectSubset<T, FriendshipUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more Friendships and returns the data updated in the database.
+   * @param {FriendshipUpdateManyAndReturnArgs} args - Arguments to update many Friendships.
+   * @example
+   * // Update many Friendships
+   * const friendship = await prisma.friendship.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more Friendships and only return the `id`
+   * const friendshipWithIdOnly = await prisma.friendship.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends FriendshipUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, FriendshipUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FriendshipPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one Friendship.
@@ -1236,7 +1310,28 @@ export type FriendshipCreateManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * The data used to create many Friendships.
    */
   data: Prisma.FriendshipCreateManyInput | Prisma.FriendshipCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * Friendship createManyAndReturn
+ */
+export type FriendshipCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Friendship
+   */
+  select?: Prisma.FriendshipSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the Friendship
+   */
+  omit?: Prisma.FriendshipOmit<ExtArgs> | null
+  /**
+   * The data used to create many Friendships.
+   */
+  data: Prisma.FriendshipCreateManyInput | Prisma.FriendshipCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FriendshipIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1281,6 +1376,36 @@ export type FriendshipUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Limit how many Friendships to update.
    */
   limit?: number
+}
+
+/**
+ * Friendship updateManyAndReturn
+ */
+export type FriendshipUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Friendship
+   */
+  select?: Prisma.FriendshipSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the Friendship
+   */
+  omit?: Prisma.FriendshipOmit<ExtArgs> | null
+  /**
+   * The data used to update Friendships.
+   */
+  data: Prisma.XOR<Prisma.FriendshipUpdateManyMutationInput, Prisma.FriendshipUncheckedUpdateManyInput>
+  /**
+   * Filter which Friendships to update
+   */
+  where?: Prisma.FriendshipWhereInput
+  /**
+   * Limit how many Friendships to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FriendshipIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

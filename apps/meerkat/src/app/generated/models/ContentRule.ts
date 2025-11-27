@@ -284,7 +284,6 @@ export type ContentRuleOrderByWithRelationInput = {
   entry_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.ContentRuleOrderByRelevanceInput
 }
 
 export type ContentRuleWhereUniqueInput = Prisma.AtLeast<{
@@ -446,12 +445,6 @@ export type ContentRuleOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ContentRuleOrderByRelevanceInput = {
-  fields: Prisma.ContentRuleOrderByRelevanceFieldEnum | Prisma.ContentRuleOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type ContentRuleEntry_idStructural_classCompoundUniqueInput = {
   entry_id: number
   structural_class: string
@@ -583,7 +576,6 @@ export type ContentRuleCreateOrConnectWithoutEntryInput = {
 
 export type ContentRuleCreateManyEntryInputEnvelope = {
   data: Prisma.ContentRuleCreateManyEntryInput | Prisma.ContentRuleCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type ContentRuleUpsertWithWhereUniqueWithoutEntryInput = {
@@ -687,7 +679,35 @@ export type ContentRuleSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["contentRule"]>
 
+export type ContentRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  structural_class?: boolean
+  auxiliary_classes?: boolean
+  mandatory_attributes?: boolean
+  optional_attributes?: boolean
+  precluded_attributes?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["contentRule"]>
 
+export type ContentRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  structural_class?: boolean
+  auxiliary_classes?: boolean
+  mandatory_attributes?: boolean
+  optional_attributes?: boolean
+  precluded_attributes?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["contentRule"]>
 
 export type ContentRuleSelectScalar = {
   id?: boolean
@@ -705,6 +725,12 @@ export type ContentRuleSelectScalar = {
 
 export type ContentRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "structural_class" | "auxiliary_classes" | "mandatory_attributes" | "optional_attributes" | "precluded_attributes" | "name" | "description" | "obsolete" | "entry_id" | "created_at", ExtArgs["result"]["contentRule"]>
 export type ContentRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type ContentRuleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type ContentRuleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -843,6 +869,30 @@ export interface ContentRuleDelegate<ExtArgs extends runtime.Types.Extensions.In
   createMany<T extends ContentRuleCreateManyArgs>(args?: Prisma.SelectSubset<T, ContentRuleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many ContentRules and returns the data saved in the database.
+   * @param {ContentRuleCreateManyAndReturnArgs} args - Arguments to create many ContentRules.
+   * @example
+   * // Create many ContentRules
+   * const contentRule = await prisma.contentRule.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many ContentRules and only return the `id`
+   * const contentRuleWithIdOnly = await prisma.contentRule.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends ContentRuleCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, ContentRuleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContentRulePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a ContentRule.
    * @param {ContentRuleDeleteArgs} args - Arguments to delete one ContentRule.
    * @example
@@ -905,6 +955,36 @@ export interface ContentRuleDelegate<ExtArgs extends runtime.Types.Extensions.In
    * 
    */
   updateMany<T extends ContentRuleUpdateManyArgs>(args: Prisma.SelectSubset<T, ContentRuleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more ContentRules and returns the data updated in the database.
+   * @param {ContentRuleUpdateManyAndReturnArgs} args - Arguments to update many ContentRules.
+   * @example
+   * // Update many ContentRules
+   * const contentRule = await prisma.contentRule.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more ContentRules and only return the `id`
+   * const contentRuleWithIdOnly = await prisma.contentRule.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends ContentRuleUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, ContentRuleUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContentRulePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one ContentRule.
@@ -1335,7 +1415,28 @@ export type ContentRuleCreateManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * The data used to create many ContentRules.
    */
   data: Prisma.ContentRuleCreateManyInput | Prisma.ContentRuleCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * ContentRule createManyAndReturn
+ */
+export type ContentRuleCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContentRule
+   */
+  select?: Prisma.ContentRuleSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContentRule
+   */
+  omit?: Prisma.ContentRuleOmit<ExtArgs> | null
+  /**
+   * The data used to create many ContentRules.
+   */
+  data: Prisma.ContentRuleCreateManyInput | Prisma.ContentRuleCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContentRuleIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1380,6 +1481,36 @@ export type ContentRuleUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Limit how many ContentRules to update.
    */
   limit?: number
+}
+
+/**
+ * ContentRule updateManyAndReturn
+ */
+export type ContentRuleUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContentRule
+   */
+  select?: Prisma.ContentRuleSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContentRule
+   */
+  omit?: Prisma.ContentRuleOmit<ExtArgs> | null
+  /**
+   * The data used to update ContentRules.
+   */
+  data: Prisma.XOR<Prisma.ContentRuleUpdateManyMutationInput, Prisma.ContentRuleUncheckedUpdateManyInput>
+  /**
+   * Filter which ContentRules to update
+   */
+  where?: Prisma.ContentRuleWhereInput
+  /**
+   * Limit how many ContentRules to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContentRuleIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

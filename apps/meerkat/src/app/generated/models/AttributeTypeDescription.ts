@@ -365,7 +365,6 @@ export type AttributeTypeDescriptionOrderByWithRelationInput = {
   created_at?: Prisma.SortOrder
   entry_id?: Prisma.SortOrderInput | Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.AttributeTypeDescriptionOrderByRelevanceInput
 }
 
 export type AttributeTypeDescriptionWhereUniqueInput = Prisma.AtLeast<{
@@ -617,12 +616,6 @@ export type AttributeTypeDescriptionOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type AttributeTypeDescriptionOrderByRelevanceInput = {
-  fields: Prisma.AttributeTypeDescriptionOrderByRelevanceFieldEnum | Prisma.AttributeTypeDescriptionOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type AttributeTypeDescriptionEntry_idIdentifierCompoundUniqueInput = {
   entry_id: number
   identifier: string
@@ -803,7 +796,6 @@ export type AttributeTypeDescriptionCreateOrConnectWithoutEntryInput = {
 
 export type AttributeTypeDescriptionCreateManyEntryInputEnvelope = {
   data: Prisma.AttributeTypeDescriptionCreateManyEntryInput | Prisma.AttributeTypeDescriptionCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type AttributeTypeDescriptionUpsertWithWhereUniqueWithoutEntryInput = {
@@ -961,7 +953,53 @@ export type AttributeTypeDescriptionSelect<ExtArgs extends runtime.Types.Extensi
   entry?: boolean | Prisma.AttributeTypeDescription$entryArgs<ExtArgs>
 }, ExtArgs["result"]["attributeTypeDescription"]>
 
+export type AttributeTypeDescriptionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  derivation?: boolean
+  equalityMatch?: boolean
+  orderingMatch?: boolean
+  substringsMatch?: boolean
+  attributeSyntax?: boolean
+  multiValued?: boolean
+  collective?: boolean
+  userModifiable?: boolean
+  application?: boolean
+  ldapSyntax?: boolean
+  ldapNames?: boolean
+  ldapDescription?: boolean
+  dummy?: boolean
+  created_at?: boolean
+  entry_id?: boolean
+  entry?: boolean | Prisma.AttributeTypeDescription$entryArgs<ExtArgs>
+}, ExtArgs["result"]["attributeTypeDescription"]>
 
+export type AttributeTypeDescriptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  derivation?: boolean
+  equalityMatch?: boolean
+  orderingMatch?: boolean
+  substringsMatch?: boolean
+  attributeSyntax?: boolean
+  multiValued?: boolean
+  collective?: boolean
+  userModifiable?: boolean
+  application?: boolean
+  ldapSyntax?: boolean
+  ldapNames?: boolean
+  ldapDescription?: boolean
+  dummy?: boolean
+  created_at?: boolean
+  entry_id?: boolean
+  entry?: boolean | Prisma.AttributeTypeDescription$entryArgs<ExtArgs>
+}, ExtArgs["result"]["attributeTypeDescription"]>
 
 export type AttributeTypeDescriptionSelectScalar = {
   id?: boolean
@@ -988,6 +1026,12 @@ export type AttributeTypeDescriptionSelectScalar = {
 
 export type AttributeTypeDescriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "identifier" | "name" | "description" | "obsolete" | "derivation" | "equalityMatch" | "orderingMatch" | "substringsMatch" | "attributeSyntax" | "multiValued" | "collective" | "userModifiable" | "application" | "ldapSyntax" | "ldapNames" | "ldapDescription" | "dummy" | "created_at" | "entry_id", ExtArgs["result"]["attributeTypeDescription"]>
 export type AttributeTypeDescriptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.AttributeTypeDescription$entryArgs<ExtArgs>
+}
+export type AttributeTypeDescriptionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.AttributeTypeDescription$entryArgs<ExtArgs>
+}
+export type AttributeTypeDescriptionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.AttributeTypeDescription$entryArgs<ExtArgs>
 }
 
@@ -1135,6 +1179,30 @@ export interface AttributeTypeDescriptionDelegate<ExtArgs extends runtime.Types.
   createMany<T extends AttributeTypeDescriptionCreateManyArgs>(args?: Prisma.SelectSubset<T, AttributeTypeDescriptionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many AttributeTypeDescriptions and returns the data saved in the database.
+   * @param {AttributeTypeDescriptionCreateManyAndReturnArgs} args - Arguments to create many AttributeTypeDescriptions.
+   * @example
+   * // Create many AttributeTypeDescriptions
+   * const attributeTypeDescription = await prisma.attributeTypeDescription.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many AttributeTypeDescriptions and only return the `id`
+   * const attributeTypeDescriptionWithIdOnly = await prisma.attributeTypeDescription.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends AttributeTypeDescriptionCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, AttributeTypeDescriptionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttributeTypeDescriptionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a AttributeTypeDescription.
    * @param {AttributeTypeDescriptionDeleteArgs} args - Arguments to delete one AttributeTypeDescription.
    * @example
@@ -1197,6 +1265,36 @@ export interface AttributeTypeDescriptionDelegate<ExtArgs extends runtime.Types.
    * 
    */
   updateMany<T extends AttributeTypeDescriptionUpdateManyArgs>(args: Prisma.SelectSubset<T, AttributeTypeDescriptionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more AttributeTypeDescriptions and returns the data updated in the database.
+   * @param {AttributeTypeDescriptionUpdateManyAndReturnArgs} args - Arguments to update many AttributeTypeDescriptions.
+   * @example
+   * // Update many AttributeTypeDescriptions
+   * const attributeTypeDescription = await prisma.attributeTypeDescription.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more AttributeTypeDescriptions and only return the `id`
+   * const attributeTypeDescriptionWithIdOnly = await prisma.attributeTypeDescription.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends AttributeTypeDescriptionUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, AttributeTypeDescriptionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttributeTypeDescriptionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one AttributeTypeDescription.
@@ -1636,7 +1734,28 @@ export type AttributeTypeDescriptionCreateManyArgs<ExtArgs extends runtime.Types
    * The data used to create many AttributeTypeDescriptions.
    */
   data: Prisma.AttributeTypeDescriptionCreateManyInput | Prisma.AttributeTypeDescriptionCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * AttributeTypeDescription createManyAndReturn
+ */
+export type AttributeTypeDescriptionCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AttributeTypeDescription
+   */
+  select?: Prisma.AttributeTypeDescriptionSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the AttributeTypeDescription
+   */
+  omit?: Prisma.AttributeTypeDescriptionOmit<ExtArgs> | null
+  /**
+   * The data used to create many AttributeTypeDescriptions.
+   */
+  data: Prisma.AttributeTypeDescriptionCreateManyInput | Prisma.AttributeTypeDescriptionCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AttributeTypeDescriptionIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1681,6 +1800,36 @@ export type AttributeTypeDescriptionUpdateManyArgs<ExtArgs extends runtime.Types
    * Limit how many AttributeTypeDescriptions to update.
    */
   limit?: number
+}
+
+/**
+ * AttributeTypeDescription updateManyAndReturn
+ */
+export type AttributeTypeDescriptionUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AttributeTypeDescription
+   */
+  select?: Prisma.AttributeTypeDescriptionSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the AttributeTypeDescription
+   */
+  omit?: Prisma.AttributeTypeDescriptionOmit<ExtArgs> | null
+  /**
+   * The data used to update AttributeTypeDescriptions.
+   */
+  data: Prisma.XOR<Prisma.AttributeTypeDescriptionUpdateManyMutationInput, Prisma.AttributeTypeDescriptionUncheckedUpdateManyInput>
+  /**
+   * Filter which AttributeTypeDescriptions to update
+   */
+  where?: Prisma.AttributeTypeDescriptionWhereInput
+  /**
+   * Limit how many AttributeTypeDescriptions to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AttributeTypeDescriptionIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

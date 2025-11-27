@@ -278,7 +278,6 @@ export type DistinguishedValueOrderByWithRelationInput = {
   normalized_str?: Prisma.SortOrderInput | Prisma.SortOrder
   order_index?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.DistinguishedValueOrderByRelevanceInput
 }
 
 export type DistinguishedValueWhereUniqueInput = Prisma.AtLeast<{
@@ -424,12 +423,6 @@ export type DistinguishedValueOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type DistinguishedValueOrderByRelevanceInput = {
-  fields: Prisma.DistinguishedValueOrderByRelevanceFieldEnum | Prisma.DistinguishedValueOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type DistinguishedValueEntry_idType_oidCompoundUniqueInput = {
   entry_id: number
   type_oid: runtime.Bytes
@@ -572,7 +565,6 @@ export type DistinguishedValueCreateOrConnectWithoutEntryInput = {
 
 export type DistinguishedValueCreateManyEntryInputEnvelope = {
   data: Prisma.DistinguishedValueCreateManyEntryInput | Prisma.DistinguishedValueCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type DistinguishedValueUpsertWithWhereUniqueWithoutEntryInput = {
@@ -665,7 +657,31 @@ export type DistinguishedValueSelect<ExtArgs extends runtime.Types.Extensions.In
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["distinguishedValue"]>
 
+export type DistinguishedValueSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  type_oid?: boolean
+  tag_class?: boolean
+  constructed?: boolean
+  tag_number?: boolean
+  content_octets?: boolean
+  normalized_str?: boolean
+  order_index?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["distinguishedValue"]>
 
+export type DistinguishedValueSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  type_oid?: boolean
+  tag_class?: boolean
+  constructed?: boolean
+  tag_number?: boolean
+  content_octets?: boolean
+  normalized_str?: boolean
+  order_index?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["distinguishedValue"]>
 
 export type DistinguishedValueSelectScalar = {
   id?: boolean
@@ -681,6 +697,12 @@ export type DistinguishedValueSelectScalar = {
 
 export type DistinguishedValueOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "type_oid" | "tag_class" | "constructed" | "tag_number" | "content_octets" | "normalized_str" | "order_index", ExtArgs["result"]["distinguishedValue"]>
 export type DistinguishedValueInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type DistinguishedValueIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type DistinguishedValueIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -817,6 +839,30 @@ export interface DistinguishedValueDelegate<ExtArgs extends runtime.Types.Extens
   createMany<T extends DistinguishedValueCreateManyArgs>(args?: Prisma.SelectSubset<T, DistinguishedValueCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many DistinguishedValues and returns the data saved in the database.
+   * @param {DistinguishedValueCreateManyAndReturnArgs} args - Arguments to create many DistinguishedValues.
+   * @example
+   * // Create many DistinguishedValues
+   * const distinguishedValue = await prisma.distinguishedValue.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many DistinguishedValues and only return the `id`
+   * const distinguishedValueWithIdOnly = await prisma.distinguishedValue.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends DistinguishedValueCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, DistinguishedValueCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DistinguishedValuePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a DistinguishedValue.
    * @param {DistinguishedValueDeleteArgs} args - Arguments to delete one DistinguishedValue.
    * @example
@@ -879,6 +925,36 @@ export interface DistinguishedValueDelegate<ExtArgs extends runtime.Types.Extens
    * 
    */
   updateMany<T extends DistinguishedValueUpdateManyArgs>(args: Prisma.SelectSubset<T, DistinguishedValueUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more DistinguishedValues and returns the data updated in the database.
+   * @param {DistinguishedValueUpdateManyAndReturnArgs} args - Arguments to update many DistinguishedValues.
+   * @example
+   * // Update many DistinguishedValues
+   * const distinguishedValue = await prisma.distinguishedValue.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more DistinguishedValues and only return the `id`
+   * const distinguishedValueWithIdOnly = await prisma.distinguishedValue.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends DistinguishedValueUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, DistinguishedValueUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DistinguishedValuePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one DistinguishedValue.
@@ -1307,7 +1383,28 @@ export type DistinguishedValueCreateManyArgs<ExtArgs extends runtime.Types.Exten
    * The data used to create many DistinguishedValues.
    */
   data: Prisma.DistinguishedValueCreateManyInput | Prisma.DistinguishedValueCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * DistinguishedValue createManyAndReturn
+ */
+export type DistinguishedValueCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DistinguishedValue
+   */
+  select?: Prisma.DistinguishedValueSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the DistinguishedValue
+   */
+  omit?: Prisma.DistinguishedValueOmit<ExtArgs> | null
+  /**
+   * The data used to create many DistinguishedValues.
+   */
+  data: Prisma.DistinguishedValueCreateManyInput | Prisma.DistinguishedValueCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DistinguishedValueIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1352,6 +1449,36 @@ export type DistinguishedValueUpdateManyArgs<ExtArgs extends runtime.Types.Exten
    * Limit how many DistinguishedValues to update.
    */
   limit?: number
+}
+
+/**
+ * DistinguishedValue updateManyAndReturn
+ */
+export type DistinguishedValueUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DistinguishedValue
+   */
+  select?: Prisma.DistinguishedValueSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the DistinguishedValue
+   */
+  omit?: Prisma.DistinguishedValueOmit<ExtArgs> | null
+  /**
+   * The data used to update DistinguishedValues.
+   */
+  data: Prisma.XOR<Prisma.DistinguishedValueUpdateManyMutationInput, Prisma.DistinguishedValueUncheckedUpdateManyInput>
+  /**
+   * Filter which DistinguishedValues to update
+   */
+  where?: Prisma.DistinguishedValueWhereInput
+  /**
+   * Limit how many DistinguishedValues to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DistinguishedValueIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

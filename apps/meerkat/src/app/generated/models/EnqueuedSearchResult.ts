@@ -243,7 +243,6 @@ export type EnqueuedSearchResultOrderByWithRelationInput = {
   entry_id?: Prisma.SortOrderInput | Prisma.SortOrder
   entry_info?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.EnqueuedSearchResultOrderByRelevanceInput
 }
 
 export type EnqueuedSearchResultWhereUniqueInput = Prisma.AtLeast<{
@@ -355,12 +354,6 @@ export type EnqueuedSearchResultOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type EnqueuedSearchResultOrderByRelevanceInput = {
-  fields: Prisma.EnqueuedSearchResultOrderByRelevanceFieldEnum | Prisma.EnqueuedSearchResultOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type EnqueuedSearchResultConnection_uuidQuery_refResult_indexCompoundUniqueInput = {
   connection_uuid: string
   query_ref: string
@@ -470,7 +463,6 @@ export type EnqueuedSearchResultCreateOrConnectWithoutEntryInput = {
 
 export type EnqueuedSearchResultCreateManyEntryInputEnvelope = {
   data: Prisma.EnqueuedSearchResultCreateManyEntryInput | Prisma.EnqueuedSearchResultCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type EnqueuedSearchResultUpsertWithWhereUniqueWithoutEntryInput = {
@@ -544,7 +536,25 @@ export type EnqueuedSearchResultSelect<ExtArgs extends runtime.Types.Extensions.
   entry?: boolean | Prisma.EnqueuedSearchResult$entryArgs<ExtArgs>
 }, ExtArgs["result"]["enqueuedSearchResult"]>
 
+export type EnqueuedSearchResultSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  connection_uuid?: boolean
+  query_ref?: boolean
+  result_index?: boolean
+  entry_id?: boolean
+  entry_info?: boolean
+  entry?: boolean | Prisma.EnqueuedSearchResult$entryArgs<ExtArgs>
+}, ExtArgs["result"]["enqueuedSearchResult"]>
 
+export type EnqueuedSearchResultSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  connection_uuid?: boolean
+  query_ref?: boolean
+  result_index?: boolean
+  entry_id?: boolean
+  entry_info?: boolean
+  entry?: boolean | Prisma.EnqueuedSearchResult$entryArgs<ExtArgs>
+}, ExtArgs["result"]["enqueuedSearchResult"]>
 
 export type EnqueuedSearchResultSelectScalar = {
   id?: boolean
@@ -557,6 +567,12 @@ export type EnqueuedSearchResultSelectScalar = {
 
 export type EnqueuedSearchResultOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "connection_uuid" | "query_ref" | "result_index" | "entry_id" | "entry_info", ExtArgs["result"]["enqueuedSearchResult"]>
 export type EnqueuedSearchResultInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EnqueuedSearchResult$entryArgs<ExtArgs>
+}
+export type EnqueuedSearchResultIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EnqueuedSearchResult$entryArgs<ExtArgs>
+}
+export type EnqueuedSearchResultIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EnqueuedSearchResult$entryArgs<ExtArgs>
 }
 
@@ -690,6 +706,30 @@ export interface EnqueuedSearchResultDelegate<ExtArgs extends runtime.Types.Exte
   createMany<T extends EnqueuedSearchResultCreateManyArgs>(args?: Prisma.SelectSubset<T, EnqueuedSearchResultCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many EnqueuedSearchResults and returns the data saved in the database.
+   * @param {EnqueuedSearchResultCreateManyAndReturnArgs} args - Arguments to create many EnqueuedSearchResults.
+   * @example
+   * // Create many EnqueuedSearchResults
+   * const enqueuedSearchResult = await prisma.enqueuedSearchResult.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many EnqueuedSearchResults and only return the `id`
+   * const enqueuedSearchResultWithIdOnly = await prisma.enqueuedSearchResult.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends EnqueuedSearchResultCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, EnqueuedSearchResultCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EnqueuedSearchResultPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a EnqueuedSearchResult.
    * @param {EnqueuedSearchResultDeleteArgs} args - Arguments to delete one EnqueuedSearchResult.
    * @example
@@ -752,6 +792,36 @@ export interface EnqueuedSearchResultDelegate<ExtArgs extends runtime.Types.Exte
    * 
    */
   updateMany<T extends EnqueuedSearchResultUpdateManyArgs>(args: Prisma.SelectSubset<T, EnqueuedSearchResultUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more EnqueuedSearchResults and returns the data updated in the database.
+   * @param {EnqueuedSearchResultUpdateManyAndReturnArgs} args - Arguments to update many EnqueuedSearchResults.
+   * @example
+   * // Update many EnqueuedSearchResults
+   * const enqueuedSearchResult = await prisma.enqueuedSearchResult.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more EnqueuedSearchResults and only return the `id`
+   * const enqueuedSearchResultWithIdOnly = await prisma.enqueuedSearchResult.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends EnqueuedSearchResultUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, EnqueuedSearchResultUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EnqueuedSearchResultPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one EnqueuedSearchResult.
@@ -1177,7 +1247,28 @@ export type EnqueuedSearchResultCreateManyArgs<ExtArgs extends runtime.Types.Ext
    * The data used to create many EnqueuedSearchResults.
    */
   data: Prisma.EnqueuedSearchResultCreateManyInput | Prisma.EnqueuedSearchResultCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * EnqueuedSearchResult createManyAndReturn
+ */
+export type EnqueuedSearchResultCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EnqueuedSearchResult
+   */
+  select?: Prisma.EnqueuedSearchResultSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the EnqueuedSearchResult
+   */
+  omit?: Prisma.EnqueuedSearchResultOmit<ExtArgs> | null
+  /**
+   * The data used to create many EnqueuedSearchResults.
+   */
+  data: Prisma.EnqueuedSearchResultCreateManyInput | Prisma.EnqueuedSearchResultCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EnqueuedSearchResultIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1222,6 +1313,36 @@ export type EnqueuedSearchResultUpdateManyArgs<ExtArgs extends runtime.Types.Ext
    * Limit how many EnqueuedSearchResults to update.
    */
   limit?: number
+}
+
+/**
+ * EnqueuedSearchResult updateManyAndReturn
+ */
+export type EnqueuedSearchResultUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EnqueuedSearchResult
+   */
+  select?: Prisma.EnqueuedSearchResultSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the EnqueuedSearchResult
+   */
+  omit?: Prisma.EnqueuedSearchResultOmit<ExtArgs> | null
+  /**
+   * The data used to update EnqueuedSearchResults.
+   */
+  data: Prisma.XOR<Prisma.EnqueuedSearchResultUpdateManyMutationInput, Prisma.EnqueuedSearchResultUncheckedUpdateManyInput>
+  /**
+   * Filter which EnqueuedSearchResults to update
+   */
+  where?: Prisma.EnqueuedSearchResultWhereInput
+  /**
+   * Limit how many EnqueuedSearchResults to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EnqueuedSearchResultIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

@@ -1195,6 +1195,9 @@ async function main (): Promise<void> {
     await loadDSARelationships(ctx);
     ctx.log.debug(ctx.i18n.t("log:loaded_dsa_relationships"));
 
+    await ctx.db.$executeRawUnsafe('PRAGMA journal_mode = WAL;');
+    await ctx.db.$executeRawUnsafe('PRAGMA synchronous = NORMAL;');
+
     if (process.env.MEERKAT_INIT_JS) {
         const importPath = (os.platform() === "win32")
             ? (() => {

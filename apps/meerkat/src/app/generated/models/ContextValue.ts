@@ -270,7 +270,6 @@ export type ContextValueOrderByWithRelationInput = {
   jer?: Prisma.SortOrderInput | Prisma.SortOrder
   fallback?: Prisma.SortOrder
   value?: Prisma.AttributeValueOrderByWithRelationInput
-  _relevance?: Prisma.ContextValueOrderByRelevanceInput
 }
 
 export type ContextValueWhereUniqueInput = Prisma.AtLeast<{
@@ -411,12 +410,6 @@ export type ContextValueOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ContextValueOrderByRelevanceInput = {
-  fields: Prisma.ContextValueOrderByRelevanceFieldEnum | Prisma.ContextValueOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type ContextValueCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   value_id?: Prisma.SortOrder
@@ -535,7 +528,6 @@ export type ContextValueCreateOrConnectWithoutValueInput = {
 
 export type ContextValueCreateManyValueInputEnvelope = {
   data: Prisma.ContextValueCreateManyValueInput | Prisma.ContextValueCreateManyValueInput[]
-  skipDuplicates?: boolean
 }
 
 export type ContextValueUpsertWithWhereUniqueWithoutValueInput = {
@@ -627,7 +619,31 @@ export type ContextValueSelect<ExtArgs extends runtime.Types.Extensions.Internal
   value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["contextValue"]>
 
+export type ContextValueSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  value_id?: boolean
+  type?: boolean
+  tag_class?: boolean
+  constructed?: boolean
+  tag_number?: boolean
+  ber?: boolean
+  jer?: boolean
+  fallback?: boolean
+  value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["contextValue"]>
 
+export type ContextValueSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  value_id?: boolean
+  type?: boolean
+  tag_class?: boolean
+  constructed?: boolean
+  tag_number?: boolean
+  ber?: boolean
+  jer?: boolean
+  fallback?: boolean
+  value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["contextValue"]>
 
 export type ContextValueSelectScalar = {
   id?: boolean
@@ -643,6 +659,12 @@ export type ContextValueSelectScalar = {
 
 export type ContextValueOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "value_id" | "type" | "tag_class" | "constructed" | "tag_number" | "ber" | "jer" | "fallback", ExtArgs["result"]["contextValue"]>
 export type ContextValueInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
+}
+export type ContextValueIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
+}
+export type ContextValueIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
 }
 
@@ -779,6 +801,30 @@ export interface ContextValueDelegate<ExtArgs extends runtime.Types.Extensions.I
   createMany<T extends ContextValueCreateManyArgs>(args?: Prisma.SelectSubset<T, ContextValueCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many ContextValues and returns the data saved in the database.
+   * @param {ContextValueCreateManyAndReturnArgs} args - Arguments to create many ContextValues.
+   * @example
+   * // Create many ContextValues
+   * const contextValue = await prisma.contextValue.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many ContextValues and only return the `id`
+   * const contextValueWithIdOnly = await prisma.contextValue.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends ContextValueCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, ContextValueCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContextValuePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a ContextValue.
    * @param {ContextValueDeleteArgs} args - Arguments to delete one ContextValue.
    * @example
@@ -841,6 +887,36 @@ export interface ContextValueDelegate<ExtArgs extends runtime.Types.Extensions.I
    * 
    */
   updateMany<T extends ContextValueUpdateManyArgs>(args: Prisma.SelectSubset<T, ContextValueUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more ContextValues and returns the data updated in the database.
+   * @param {ContextValueUpdateManyAndReturnArgs} args - Arguments to update many ContextValues.
+   * @example
+   * // Update many ContextValues
+   * const contextValue = await prisma.contextValue.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more ContextValues and only return the `id`
+   * const contextValueWithIdOnly = await prisma.contextValue.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends ContextValueUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, ContextValueUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContextValuePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one ContextValue.
@@ -1269,7 +1345,28 @@ export type ContextValueCreateManyArgs<ExtArgs extends runtime.Types.Extensions.
    * The data used to create many ContextValues.
    */
   data: Prisma.ContextValueCreateManyInput | Prisma.ContextValueCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * ContextValue createManyAndReturn
+ */
+export type ContextValueCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContextValue
+   */
+  select?: Prisma.ContextValueSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContextValue
+   */
+  omit?: Prisma.ContextValueOmit<ExtArgs> | null
+  /**
+   * The data used to create many ContextValues.
+   */
+  data: Prisma.ContextValueCreateManyInput | Prisma.ContextValueCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContextValueIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1314,6 +1411,36 @@ export type ContextValueUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Limit how many ContextValues to update.
    */
   limit?: number
+}
+
+/**
+ * ContextValue updateManyAndReturn
+ */
+export type ContextValueUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContextValue
+   */
+  select?: Prisma.ContextValueSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContextValue
+   */
+  omit?: Prisma.ContextValueOmit<ExtArgs> | null
+  /**
+   * The data used to update ContextValues.
+   */
+  data: Prisma.XOR<Prisma.ContextValueUpdateManyMutationInput, Prisma.ContextValueUncheckedUpdateManyInput>
+  /**
+   * Filter which ContextValues to update
+   */
+  where?: Prisma.ContextValueWhereInput
+  /**
+   * Limit how many ContextValues to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContextValueIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

@@ -284,7 +284,6 @@ export type ContextDescriptionOrderByWithRelationInput = {
   defaultValue?: Prisma.SortOrderInput | Prisma.SortOrder
   entry_id?: Prisma.SortOrderInput | Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.ContextDescriptionOrderByRelevanceInput
 }
 
 export type ContextDescriptionWhereUniqueInput = Prisma.AtLeast<{
@@ -446,12 +445,6 @@ export type ContextDescriptionOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ContextDescriptionOrderByRelevanceInput = {
-  fields: Prisma.ContextDescriptionOrderByRelevanceFieldEnum | Prisma.ContextDescriptionOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type ContextDescriptionEntry_idIdentifierCompoundUniqueInput = {
   entry_id: number
   identifier: string
@@ -583,7 +576,6 @@ export type ContextDescriptionCreateOrConnectWithoutEntryInput = {
 
 export type ContextDescriptionCreateManyEntryInputEnvelope = {
   data: Prisma.ContextDescriptionCreateManyEntryInput | Prisma.ContextDescriptionCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type ContextDescriptionUpsertWithWhereUniqueWithoutEntryInput = {
@@ -687,7 +679,35 @@ export type ContextDescriptionSelect<ExtArgs extends runtime.Types.Extensions.In
   entry?: boolean | Prisma.ContextDescription$entryArgs<ExtArgs>
 }, ExtArgs["result"]["contextDescription"]>
 
+export type ContextDescriptionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  syntax?: boolean
+  assertionSyntax?: boolean
+  created_at?: boolean
+  absentMatch?: boolean
+  defaultValue?: boolean
+  entry_id?: boolean
+  entry?: boolean | Prisma.ContextDescription$entryArgs<ExtArgs>
+}, ExtArgs["result"]["contextDescription"]>
 
+export type ContextDescriptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  syntax?: boolean
+  assertionSyntax?: boolean
+  created_at?: boolean
+  absentMatch?: boolean
+  defaultValue?: boolean
+  entry_id?: boolean
+  entry?: boolean | Prisma.ContextDescription$entryArgs<ExtArgs>
+}, ExtArgs["result"]["contextDescription"]>
 
 export type ContextDescriptionSelectScalar = {
   id?: boolean
@@ -705,6 +725,12 @@ export type ContextDescriptionSelectScalar = {
 
 export type ContextDescriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "identifier" | "name" | "description" | "obsolete" | "syntax" | "assertionSyntax" | "created_at" | "absentMatch" | "defaultValue" | "entry_id", ExtArgs["result"]["contextDescription"]>
 export type ContextDescriptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.ContextDescription$entryArgs<ExtArgs>
+}
+export type ContextDescriptionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.ContextDescription$entryArgs<ExtArgs>
+}
+export type ContextDescriptionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.ContextDescription$entryArgs<ExtArgs>
 }
 
@@ -843,6 +869,30 @@ export interface ContextDescriptionDelegate<ExtArgs extends runtime.Types.Extens
   createMany<T extends ContextDescriptionCreateManyArgs>(args?: Prisma.SelectSubset<T, ContextDescriptionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many ContextDescriptions and returns the data saved in the database.
+   * @param {ContextDescriptionCreateManyAndReturnArgs} args - Arguments to create many ContextDescriptions.
+   * @example
+   * // Create many ContextDescriptions
+   * const contextDescription = await prisma.contextDescription.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many ContextDescriptions and only return the `id`
+   * const contextDescriptionWithIdOnly = await prisma.contextDescription.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends ContextDescriptionCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, ContextDescriptionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContextDescriptionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a ContextDescription.
    * @param {ContextDescriptionDeleteArgs} args - Arguments to delete one ContextDescription.
    * @example
@@ -905,6 +955,36 @@ export interface ContextDescriptionDelegate<ExtArgs extends runtime.Types.Extens
    * 
    */
   updateMany<T extends ContextDescriptionUpdateManyArgs>(args: Prisma.SelectSubset<T, ContextDescriptionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more ContextDescriptions and returns the data updated in the database.
+   * @param {ContextDescriptionUpdateManyAndReturnArgs} args - Arguments to update many ContextDescriptions.
+   * @example
+   * // Update many ContextDescriptions
+   * const contextDescription = await prisma.contextDescription.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more ContextDescriptions and only return the `id`
+   * const contextDescriptionWithIdOnly = await prisma.contextDescription.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends ContextDescriptionUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, ContextDescriptionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContextDescriptionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one ContextDescription.
@@ -1335,7 +1415,28 @@ export type ContextDescriptionCreateManyArgs<ExtArgs extends runtime.Types.Exten
    * The data used to create many ContextDescriptions.
    */
   data: Prisma.ContextDescriptionCreateManyInput | Prisma.ContextDescriptionCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * ContextDescription createManyAndReturn
+ */
+export type ContextDescriptionCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContextDescription
+   */
+  select?: Prisma.ContextDescriptionSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContextDescription
+   */
+  omit?: Prisma.ContextDescriptionOmit<ExtArgs> | null
+  /**
+   * The data used to create many ContextDescriptions.
+   */
+  data: Prisma.ContextDescriptionCreateManyInput | Prisma.ContextDescriptionCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContextDescriptionIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1380,6 +1481,36 @@ export type ContextDescriptionUpdateManyArgs<ExtArgs extends runtime.Types.Exten
    * Limit how many ContextDescriptions to update.
    */
   limit?: number
+}
+
+/**
+ * ContextDescription updateManyAndReturn
+ */
+export type ContextDescriptionUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContextDescription
+   */
+  select?: Prisma.ContextDescriptionSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContextDescription
+   */
+  omit?: Prisma.ContextDescriptionOmit<ExtArgs> | null
+  /**
+   * The data used to update ContextDescriptions.
+   */
+  data: Prisma.XOR<Prisma.ContextDescriptionUpdateManyMutationInput, Prisma.ContextDescriptionUncheckedUpdateManyInput>
+  /**
+   * Filter which ContextDescriptions to update
+   */
+  where?: Prisma.ContextDescriptionWhereInput
+  /**
+   * Limit how many ContextDescriptions to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContextDescriptionIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

@@ -146,7 +146,7 @@ const addAttribute: SpecialAttributeBatchDatabaseEditor = async (
             entry_id: vertex.dse.id,
             object_class: oid.toString(),
         })),
-        skipDuplicates: true,
+        // skipDuplicates: true,
     }));
 };
 

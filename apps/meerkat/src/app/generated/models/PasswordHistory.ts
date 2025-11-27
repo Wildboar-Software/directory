@@ -408,7 +408,6 @@ export type PasswordHistoryCreateOrConnectWithoutEntryInput = {
 
 export type PasswordHistoryCreateManyEntryInputEnvelope = {
   data: Prisma.PasswordHistoryCreateManyEntryInput | Prisma.PasswordHistoryCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type PasswordHistoryUpsertWithWhereUniqueWithoutEntryInput = {
@@ -470,7 +469,21 @@ export type PasswordHistorySelect<ExtArgs extends runtime.Types.Extensions.Inter
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["passwordHistory"]>
 
+export type PasswordHistorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  time?: boolean
+  password?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["passwordHistory"]>
 
+export type PasswordHistorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  time?: boolean
+  password?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["passwordHistory"]>
 
 export type PasswordHistorySelectScalar = {
   id?: boolean
@@ -481,6 +494,12 @@ export type PasswordHistorySelectScalar = {
 
 export type PasswordHistoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "time" | "password", ExtArgs["result"]["passwordHistory"]>
 export type PasswordHistoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type PasswordHistoryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type PasswordHistoryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -612,6 +631,30 @@ export interface PasswordHistoryDelegate<ExtArgs extends runtime.Types.Extension
   createMany<T extends PasswordHistoryCreateManyArgs>(args?: Prisma.SelectSubset<T, PasswordHistoryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many PasswordHistories and returns the data saved in the database.
+   * @param {PasswordHistoryCreateManyAndReturnArgs} args - Arguments to create many PasswordHistories.
+   * @example
+   * // Create many PasswordHistories
+   * const passwordHistory = await prisma.passwordHistory.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many PasswordHistories and only return the `id`
+   * const passwordHistoryWithIdOnly = await prisma.passwordHistory.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends PasswordHistoryCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, PasswordHistoryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordHistoryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a PasswordHistory.
    * @param {PasswordHistoryDeleteArgs} args - Arguments to delete one PasswordHistory.
    * @example
@@ -674,6 +717,36 @@ export interface PasswordHistoryDelegate<ExtArgs extends runtime.Types.Extension
    * 
    */
   updateMany<T extends PasswordHistoryUpdateManyArgs>(args: Prisma.SelectSubset<T, PasswordHistoryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more PasswordHistories and returns the data updated in the database.
+   * @param {PasswordHistoryUpdateManyAndReturnArgs} args - Arguments to update many PasswordHistories.
+   * @example
+   * // Update many PasswordHistories
+   * const passwordHistory = await prisma.passwordHistory.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more PasswordHistories and only return the `id`
+   * const passwordHistoryWithIdOnly = await prisma.passwordHistory.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends PasswordHistoryUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, PasswordHistoryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordHistoryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one PasswordHistory.
@@ -1097,7 +1170,28 @@ export type PasswordHistoryCreateManyArgs<ExtArgs extends runtime.Types.Extensio
    * The data used to create many PasswordHistories.
    */
   data: Prisma.PasswordHistoryCreateManyInput | Prisma.PasswordHistoryCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * PasswordHistory createManyAndReturn
+ */
+export type PasswordHistoryCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PasswordHistory
+   */
+  select?: Prisma.PasswordHistorySelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PasswordHistory
+   */
+  omit?: Prisma.PasswordHistoryOmit<ExtArgs> | null
+  /**
+   * The data used to create many PasswordHistories.
+   */
+  data: Prisma.PasswordHistoryCreateManyInput | Prisma.PasswordHistoryCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PasswordHistoryIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1142,6 +1236,36 @@ export type PasswordHistoryUpdateManyArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many PasswordHistories to update.
    */
   limit?: number
+}
+
+/**
+ * PasswordHistory updateManyAndReturn
+ */
+export type PasswordHistoryUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PasswordHistory
+   */
+  select?: Prisma.PasswordHistorySelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the PasswordHistory
+   */
+  omit?: Prisma.PasswordHistoryOmit<ExtArgs> | null
+  /**
+   * The data used to update PasswordHistories.
+   */
+  data: Prisma.XOR<Prisma.PasswordHistoryUpdateManyMutationInput, Prisma.PasswordHistoryUncheckedUpdateManyInput>
+  /**
+   * Filter which PasswordHistories to update
+   */
+  where?: Prisma.PasswordHistoryWhereInput
+  /**
+   * Limit how many PasswordHistories to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PasswordHistoryIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

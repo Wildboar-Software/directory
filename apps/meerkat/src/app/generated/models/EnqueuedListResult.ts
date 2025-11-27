@@ -243,7 +243,6 @@ export type EnqueuedListResultOrderByWithRelationInput = {
   entry_id?: Prisma.SortOrderInput | Prisma.SortOrder
   subordinate_info?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.EnqueuedListResultOrderByRelevanceInput
 }
 
 export type EnqueuedListResultWhereUniqueInput = Prisma.AtLeast<{
@@ -355,12 +354,6 @@ export type EnqueuedListResultOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type EnqueuedListResultOrderByRelevanceInput = {
-  fields: Prisma.EnqueuedListResultOrderByRelevanceFieldEnum | Prisma.EnqueuedListResultOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type EnqueuedListResultConnection_uuidQuery_refResult_indexCompoundUniqueInput = {
   connection_uuid: string
   query_ref: string
@@ -470,7 +463,6 @@ export type EnqueuedListResultCreateOrConnectWithoutEntryInput = {
 
 export type EnqueuedListResultCreateManyEntryInputEnvelope = {
   data: Prisma.EnqueuedListResultCreateManyEntryInput | Prisma.EnqueuedListResultCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type EnqueuedListResultUpsertWithWhereUniqueWithoutEntryInput = {
@@ -544,7 +536,25 @@ export type EnqueuedListResultSelect<ExtArgs extends runtime.Types.Extensions.In
   entry?: boolean | Prisma.EnqueuedListResult$entryArgs<ExtArgs>
 }, ExtArgs["result"]["enqueuedListResult"]>
 
+export type EnqueuedListResultSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  connection_uuid?: boolean
+  query_ref?: boolean
+  result_index?: boolean
+  entry_id?: boolean
+  subordinate_info?: boolean
+  entry?: boolean | Prisma.EnqueuedListResult$entryArgs<ExtArgs>
+}, ExtArgs["result"]["enqueuedListResult"]>
 
+export type EnqueuedListResultSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  connection_uuid?: boolean
+  query_ref?: boolean
+  result_index?: boolean
+  entry_id?: boolean
+  subordinate_info?: boolean
+  entry?: boolean | Prisma.EnqueuedListResult$entryArgs<ExtArgs>
+}, ExtArgs["result"]["enqueuedListResult"]>
 
 export type EnqueuedListResultSelectScalar = {
   id?: boolean
@@ -557,6 +567,12 @@ export type EnqueuedListResultSelectScalar = {
 
 export type EnqueuedListResultOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "connection_uuid" | "query_ref" | "result_index" | "entry_id" | "subordinate_info", ExtArgs["result"]["enqueuedListResult"]>
 export type EnqueuedListResultInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EnqueuedListResult$entryArgs<ExtArgs>
+}
+export type EnqueuedListResultIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EnqueuedListResult$entryArgs<ExtArgs>
+}
+export type EnqueuedListResultIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EnqueuedListResult$entryArgs<ExtArgs>
 }
 
@@ -690,6 +706,30 @@ export interface EnqueuedListResultDelegate<ExtArgs extends runtime.Types.Extens
   createMany<T extends EnqueuedListResultCreateManyArgs>(args?: Prisma.SelectSubset<T, EnqueuedListResultCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many EnqueuedListResults and returns the data saved in the database.
+   * @param {EnqueuedListResultCreateManyAndReturnArgs} args - Arguments to create many EnqueuedListResults.
+   * @example
+   * // Create many EnqueuedListResults
+   * const enqueuedListResult = await prisma.enqueuedListResult.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many EnqueuedListResults and only return the `id`
+   * const enqueuedListResultWithIdOnly = await prisma.enqueuedListResult.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends EnqueuedListResultCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, EnqueuedListResultCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EnqueuedListResultPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a EnqueuedListResult.
    * @param {EnqueuedListResultDeleteArgs} args - Arguments to delete one EnqueuedListResult.
    * @example
@@ -752,6 +792,36 @@ export interface EnqueuedListResultDelegate<ExtArgs extends runtime.Types.Extens
    * 
    */
   updateMany<T extends EnqueuedListResultUpdateManyArgs>(args: Prisma.SelectSubset<T, EnqueuedListResultUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more EnqueuedListResults and returns the data updated in the database.
+   * @param {EnqueuedListResultUpdateManyAndReturnArgs} args - Arguments to update many EnqueuedListResults.
+   * @example
+   * // Update many EnqueuedListResults
+   * const enqueuedListResult = await prisma.enqueuedListResult.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more EnqueuedListResults and only return the `id`
+   * const enqueuedListResultWithIdOnly = await prisma.enqueuedListResult.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends EnqueuedListResultUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, EnqueuedListResultUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EnqueuedListResultPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one EnqueuedListResult.
@@ -1177,7 +1247,28 @@ export type EnqueuedListResultCreateManyArgs<ExtArgs extends runtime.Types.Exten
    * The data used to create many EnqueuedListResults.
    */
   data: Prisma.EnqueuedListResultCreateManyInput | Prisma.EnqueuedListResultCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * EnqueuedListResult createManyAndReturn
+ */
+export type EnqueuedListResultCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EnqueuedListResult
+   */
+  select?: Prisma.EnqueuedListResultSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the EnqueuedListResult
+   */
+  omit?: Prisma.EnqueuedListResultOmit<ExtArgs> | null
+  /**
+   * The data used to create many EnqueuedListResults.
+   */
+  data: Prisma.EnqueuedListResultCreateManyInput | Prisma.EnqueuedListResultCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EnqueuedListResultIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1222,6 +1313,36 @@ export type EnqueuedListResultUpdateManyArgs<ExtArgs extends runtime.Types.Exten
    * Limit how many EnqueuedListResults to update.
    */
   limit?: number
+}
+
+/**
+ * EnqueuedListResult updateManyAndReturn
+ */
+export type EnqueuedListResultUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EnqueuedListResult
+   */
+  select?: Prisma.EnqueuedListResultSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the EnqueuedListResult
+   */
+  omit?: Prisma.EnqueuedListResultOmit<ExtArgs> | null
+  /**
+   * The data used to update EnqueuedListResults.
+   */
+  data: Prisma.XOR<Prisma.EnqueuedListResultUpdateManyMutationInput, Prisma.EnqueuedListResultUncheckedUpdateManyInput>
+  /**
+   * Filter which EnqueuedListResults to update
+   */
+  where?: Prisma.EnqueuedListResultWhereInput
+  /**
+   * Limit how many EnqueuedListResults to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EnqueuedListResultIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

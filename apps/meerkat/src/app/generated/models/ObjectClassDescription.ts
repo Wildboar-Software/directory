@@ -302,7 +302,6 @@ export type ObjectClassDescriptionOrderByWithRelationInput = {
   created_at?: Prisma.SortOrder
   entry_id?: Prisma.SortOrderInput | Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.ObjectClassDescriptionOrderByRelevanceInput
 }
 
 export type ObjectClassDescriptionWhereUniqueInput = Prisma.AtLeast<{
@@ -484,12 +483,6 @@ export type ObjectClassDescriptionOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ObjectClassDescriptionOrderByRelevanceInput = {
-  fields: Prisma.ObjectClassDescriptionOrderByRelevanceFieldEnum | Prisma.ObjectClassDescriptionOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type ObjectClassDescriptionEntry_idIdentifierCompoundUniqueInput = {
   entry_id: number
   identifier: string
@@ -635,7 +628,6 @@ export type ObjectClassDescriptionCreateOrConnectWithoutEntryInput = {
 
 export type ObjectClassDescriptionCreateManyEntryInputEnvelope = {
   data: Prisma.ObjectClassDescriptionCreateManyEntryInput | Prisma.ObjectClassDescriptionCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type ObjectClassDescriptionUpsertWithWhereUniqueWithoutEntryInput = {
@@ -751,7 +743,39 @@ export type ObjectClassDescriptionSelect<ExtArgs extends runtime.Types.Extension
   entry?: boolean | Prisma.ObjectClassDescription$entryArgs<ExtArgs>
 }, ExtArgs["result"]["objectClassDescription"]>
 
+export type ObjectClassDescriptionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  subclassOf?: boolean
+  kind?: boolean
+  mandatories?: boolean
+  optionals?: boolean
+  ldapNames?: boolean
+  ldapDescription?: boolean
+  created_at?: boolean
+  entry_id?: boolean
+  entry?: boolean | Prisma.ObjectClassDescription$entryArgs<ExtArgs>
+}, ExtArgs["result"]["objectClassDescription"]>
 
+export type ObjectClassDescriptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  subclassOf?: boolean
+  kind?: boolean
+  mandatories?: boolean
+  optionals?: boolean
+  ldapNames?: boolean
+  ldapDescription?: boolean
+  created_at?: boolean
+  entry_id?: boolean
+  entry?: boolean | Prisma.ObjectClassDescription$entryArgs<ExtArgs>
+}, ExtArgs["result"]["objectClassDescription"]>
 
 export type ObjectClassDescriptionSelectScalar = {
   id?: boolean
@@ -771,6 +795,12 @@ export type ObjectClassDescriptionSelectScalar = {
 
 export type ObjectClassDescriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "identifier" | "name" | "description" | "obsolete" | "subclassOf" | "kind" | "mandatories" | "optionals" | "ldapNames" | "ldapDescription" | "created_at" | "entry_id", ExtArgs["result"]["objectClassDescription"]>
 export type ObjectClassDescriptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.ObjectClassDescription$entryArgs<ExtArgs>
+}
+export type ObjectClassDescriptionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.ObjectClassDescription$entryArgs<ExtArgs>
+}
+export type ObjectClassDescriptionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.ObjectClassDescription$entryArgs<ExtArgs>
 }
 
@@ -911,6 +941,30 @@ export interface ObjectClassDescriptionDelegate<ExtArgs extends runtime.Types.Ex
   createMany<T extends ObjectClassDescriptionCreateManyArgs>(args?: Prisma.SelectSubset<T, ObjectClassDescriptionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many ObjectClassDescriptions and returns the data saved in the database.
+   * @param {ObjectClassDescriptionCreateManyAndReturnArgs} args - Arguments to create many ObjectClassDescriptions.
+   * @example
+   * // Create many ObjectClassDescriptions
+   * const objectClassDescription = await prisma.objectClassDescription.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many ObjectClassDescriptions and only return the `id`
+   * const objectClassDescriptionWithIdOnly = await prisma.objectClassDescription.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends ObjectClassDescriptionCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, ObjectClassDescriptionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ObjectClassDescriptionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a ObjectClassDescription.
    * @param {ObjectClassDescriptionDeleteArgs} args - Arguments to delete one ObjectClassDescription.
    * @example
@@ -973,6 +1027,36 @@ export interface ObjectClassDescriptionDelegate<ExtArgs extends runtime.Types.Ex
    * 
    */
   updateMany<T extends ObjectClassDescriptionUpdateManyArgs>(args: Prisma.SelectSubset<T, ObjectClassDescriptionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more ObjectClassDescriptions and returns the data updated in the database.
+   * @param {ObjectClassDescriptionUpdateManyAndReturnArgs} args - Arguments to update many ObjectClassDescriptions.
+   * @example
+   * // Update many ObjectClassDescriptions
+   * const objectClassDescription = await prisma.objectClassDescription.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more ObjectClassDescriptions and only return the `id`
+   * const objectClassDescriptionWithIdOnly = await prisma.objectClassDescription.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends ObjectClassDescriptionUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, ObjectClassDescriptionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ObjectClassDescriptionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one ObjectClassDescription.
@@ -1405,7 +1489,28 @@ export type ObjectClassDescriptionCreateManyArgs<ExtArgs extends runtime.Types.E
    * The data used to create many ObjectClassDescriptions.
    */
   data: Prisma.ObjectClassDescriptionCreateManyInput | Prisma.ObjectClassDescriptionCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * ObjectClassDescription createManyAndReturn
+ */
+export type ObjectClassDescriptionCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ObjectClassDescription
+   */
+  select?: Prisma.ObjectClassDescriptionSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ObjectClassDescription
+   */
+  omit?: Prisma.ObjectClassDescriptionOmit<ExtArgs> | null
+  /**
+   * The data used to create many ObjectClassDescriptions.
+   */
+  data: Prisma.ObjectClassDescriptionCreateManyInput | Prisma.ObjectClassDescriptionCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ObjectClassDescriptionIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1450,6 +1555,36 @@ export type ObjectClassDescriptionUpdateManyArgs<ExtArgs extends runtime.Types.E
    * Limit how many ObjectClassDescriptions to update.
    */
   limit?: number
+}
+
+/**
+ * ObjectClassDescription updateManyAndReturn
+ */
+export type ObjectClassDescriptionUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ObjectClassDescription
+   */
+  select?: Prisma.ObjectClassDescriptionSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ObjectClassDescription
+   */
+  omit?: Prisma.ObjectClassDescriptionOmit<ExtArgs> | null
+  /**
+   * The data used to update ObjectClassDescriptions.
+   */
+  data: Prisma.XOR<Prisma.ObjectClassDescriptionUpdateManyMutationInput, Prisma.ObjectClassDescriptionUncheckedUpdateManyInput>
+  /**
+   * Filter which ObjectClassDescriptions to update
+   */
+  where?: Prisma.ObjectClassDescriptionWhereInput
+  /**
+   * Limit how many ObjectClassDescriptions to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ObjectClassDescriptionIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
