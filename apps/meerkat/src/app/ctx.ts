@@ -103,7 +103,7 @@ const adapter = new PrismaMariaDb({
   database: "directory",
   host: "localhost", // TODO: Make configurable
   port: 3306, // TODO: Make configurable
-  connectionLimit: 5 // TODO: Make configurable
+  connectionLimit: 17 // TODO: Make configurable
 });
 const db = new PrismaClient({ adapter });
 
@@ -527,7 +527,7 @@ const config: Configuration = {
             },
             loggers: [
                 { category: ["logtape", "meta"], lowestLevel: "debug", sinks: ["safe"] },
-                { category: [], lowestLevel: "debug", sinks: ["all"] },
+                { category: [], lowestLevel: "warning", sinks: ["all"] },
             ]
         },
     },
