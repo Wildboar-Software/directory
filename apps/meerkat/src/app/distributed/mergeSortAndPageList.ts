@@ -4,7 +4,7 @@ import type {
     ListResultStatistics,
     PartialOutcomeQualifierStatistics,
     IndexableDN,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import {
     ASN1Element,
     DERElement,

@@ -1,7 +1,7 @@
 import type {
     NAME_FORM,
 } from "@wildboar/x500/InformationFramework";
-import type { NameFormInfo } from "@wildboar/meerkat-types";
+import type { NameFormInfo } from "../types/index.js";
 
 /**
  * @summary Convert a `NAME-FORM` information object into `NameFormInfo`.

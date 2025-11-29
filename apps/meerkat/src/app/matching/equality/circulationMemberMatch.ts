@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../../types/index.js";
 import { ASN1Element, ASN1TagClass, ASN1UniversalType } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
 import { getORDescriptorMatcher } from "./oRDescriptorMatch.js";

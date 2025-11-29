@@ -10,7 +10,7 @@
 //     SpecialAttributeCounter,
 //     SpecialAttributeDetector,
 //     SpecialAttributeValueDetector,
-// } from "@wildboar/meerkat-types";
+// } from "../../types/index.js";
 // import { BOOLEAN, TRUE } from "@wildboar/asn1";
 // import { DER } from "@wildboar/asn1/functional";
 // import {

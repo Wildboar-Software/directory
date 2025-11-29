@@ -1,4 +1,4 @@
-import type { Context, ValueNormalizer } from "@wildboar/meerkat-types";
+import type { Context, ValueNormalizer } from "../types/index.js";
 import { type EqualityMatcher } from "@wildboar/x500";
 import type {
     AttributeType,

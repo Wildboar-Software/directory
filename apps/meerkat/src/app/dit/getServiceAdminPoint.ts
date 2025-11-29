@@ -1,4 +1,4 @@
-import type { Vertex } from "@wildboar/meerkat-types";
+import type { Vertex } from "../types/index.js";
 import { ID_AUTONOMOUS, ID_AR_SERVICE } from "../../oidstr.js";
 
 export

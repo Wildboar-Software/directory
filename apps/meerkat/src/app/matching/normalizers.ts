@@ -1,4 +1,4 @@
-import type { Context, ValueNormalizer } from "@wildboar/meerkat-types";
+import type { Context, ValueNormalizer } from "../types/index.js";
 import { ASN1Element, ASN1TagClass, ASN1UniversalType, BERElement } from "@wildboar/asn1";
 import { directoryStringToString, getDateFromTime } from "@wildboar/x500";
 import { prepString } from "@wildboar/x500";

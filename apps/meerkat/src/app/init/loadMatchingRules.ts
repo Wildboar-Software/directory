@@ -3,7 +3,7 @@ import type {
     MatchingRuleInfo,
     SortKeyGetter,
     SortKey,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import type {
     MATCHING_RULE,
 } from "@wildboar/x500/InformationFramework";

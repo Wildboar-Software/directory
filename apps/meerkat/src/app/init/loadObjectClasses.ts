@@ -1,7 +1,7 @@
-import { Context } from "@wildboar/meerkat-types";
+import { Context } from "../types/index.js";
 import objectClassFromInformationObject from "./objectClassFromInformationObject.js";
 import { objectClasses as x500oc } from "@wildboar/x500";
-import { ObjectClassKind as PrismaObjectClassKind } from "@prisma/client";
+import { ObjectClassKind as PrismaObjectClassKind } from "../generated/client.js";
 import {
     ObjectClassKind,
     ObjectClassKind_abstract,

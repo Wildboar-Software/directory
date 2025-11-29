@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
@@ -6,7 +6,7 @@ import { DERElement } from "@wildboar/asn1";
 import {
     _decode_HierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
+import { Knowledge, OperationalBindingInitiator } from "../generated/client.js";
 import removeSubordinate from "./terminate/removeSubordinate.js";
 import {
     id_op_binding_non_specific_hierarchical,

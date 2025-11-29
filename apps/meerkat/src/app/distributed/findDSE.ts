@@ -1,5 +1,5 @@
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
-import { Context, DIT, Vertex, ClientAssociation, MistypedArgumentError } from "@wildboar/meerkat-types";
+import { Context, DIT, Vertex, ClientAssociation, MistypedArgumentError } from "../types/index.js";
 import {
     AccessPointInformation,
     ContinuationReference, OperationProgress,
@@ -41,7 +41,7 @@ import {
 import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { compareRelativeDistinguishedName as compareRDN } from "@wildboar/x500";
 import { TRUE_BIT, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER, BERElement, ASN1Construction } from "@wildboar/asn1";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import {
     ServiceProblem_timeLimitExceeded,
     ServiceProblem_loopDetected,
@@ -135,7 +135,7 @@ import DSPAssociation from "../dsp/DSPConnection.js";
 import { differenceInSeconds } from "date-fns";
 import { removeEntry } from "@wildboar/x500/DirectoryAbstractService";
 import { modifyDN } from "@wildboar/x500/DirectoryAbstractService";
-import { Prisma } from "@prisma/client";
+import type { EntryWhereInput } from "../generated/models/Entry.js";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 import { isModificationOperation } from "@wildboar/x500";
 import { EXT_BIT_USE_ALIAS_ON_UPDATE } from "@wildboar/x500";
@@ -925,7 +925,7 @@ export
                             ...getEntryExistsFilter(),
                         },
                         ...(use_normalized_rdn_search
-                            ? atav_strs.map(([ type_, str ]): Prisma.EntryWhereInput => ({
+                            ? atav_strs.map(([ type_, str ]): EntryWhereInput => ({
                                 RDN: {
                                     some: {
                                         type_oid: type_.toBytes(),

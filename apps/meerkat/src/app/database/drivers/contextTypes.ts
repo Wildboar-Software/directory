@@ -11,7 +11,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
     ContextTypeInfo,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { TRUE, ObjectIdentifier } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import { contextTypes } from "@wildboar/x500/SchemaAdministration";
@@ -23,7 +23,7 @@ import {
 import {
     ContextInformation,
 } from "@wildboar/x500/SchemaAdministration";
-import type { Prisma } from "@prisma/client";
+import type { ContextDescriptionCreateInput } from "../../generated/models/ContextDescription.js";
 import { compareElements } from "@wildboar/x500";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
@@ -126,7 +126,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     const description = decoded.description
         ? directoryStringToString(decoded.description)
         : undefined;
-    const create: Prisma.ContextDescriptionCreateInput = {
+    const create: ContextDescriptionCreateInput = {
         identifier: OID,
         name,
         description,

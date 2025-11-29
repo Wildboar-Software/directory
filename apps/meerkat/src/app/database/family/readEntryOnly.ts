@@ -1,4 +1,4 @@
-import type { Vertex } from "@wildboar/meerkat-types";
+import type { Vertex } from "../../types/index.js";
 
 /**
  * @summary Select the `entryOnly` family grouping from a compound entry

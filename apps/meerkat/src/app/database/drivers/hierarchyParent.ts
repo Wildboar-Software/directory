@@ -11,10 +11,9 @@ import {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
     UpdateError,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import rdnToJson from "../../x500/rdnToJson.js";
-import { Prisma } from "@prisma/client";
 import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import {
@@ -32,6 +31,7 @@ import {
 import dnToVertex from "../../dit/dnToVertex.js";
 import { stringifyDN } from "../../x500/stringifyDN.js";
 import { distinguishedNameMatch as normalizeDN } from "../../matching/normalizers.js";
+import { DbNull } from "../../generated/internal/prismaNamespace.js";
 
 const CHILD: string = id_oc_child.toString();
 const ID_AR_SVC: string = id_ar_serviceSpecificArea.toString();
@@ -277,8 +277,8 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates.entryUpdate.hierarchyParent = {
         disconnect: true,
     };
-    pendingUpdates.entryUpdate.hierarchyParentDN = Prisma.DbNull;
-    pendingUpdates.entryUpdate.hierarchyTopDN = Prisma.DbNull;
+    pendingUpdates.entryUpdate.hierarchyParentDN = DbNull;
+    pendingUpdates.entryUpdate.hierarchyTopDN = DbNull;
     pendingUpdates.entryUpdate.hierarchyPath = null;
     /**
      * ITU Recommendation X.501 (2016), Section 14.10 states that, when a
@@ -313,8 +313,8 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                 id: child.id,
             },
             data: {
-                hierarchyTopDN: Prisma.DbNull,
-                hierarchyParentDN: Prisma.DbNull,
+                hierarchyTopDN: DbNull,
+                hierarchyParentDN: DbNull,
                 hierarchyParent_id: null,
                 hierarchyPath: child.id.toString() + ".",
                 hierarchyLevel: 0,
@@ -350,7 +350,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                             ?.replace(child.hierarchyPath!, `${child.id}.`),
                         hierarchyLevel: (descendant.hierarchyLevel ?? 0) + 1,
                         hierarchyTop_id: child.id,
-                        hierarchyTopDN: Prisma.DbNull,
+                        hierarchyTopDN: DbNull,
                         hierarchyTopStr: null,
                     },
                 })),

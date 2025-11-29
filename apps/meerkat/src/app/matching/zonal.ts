@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import { directoryStringToString } from "@wildboar/x500";
 import type {

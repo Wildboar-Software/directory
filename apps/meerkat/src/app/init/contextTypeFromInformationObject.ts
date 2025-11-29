@@ -1,4 +1,4 @@
-import type { ContextTypeInfo } from "@wildboar/meerkat-types";
+import type { ContextTypeInfo } from "../types/index.js";
 import { ASN1Element, TRUE } from "@wildboar/asn1";
 import { type ContextMatcher } from "@wildboar/x500";
 import type {

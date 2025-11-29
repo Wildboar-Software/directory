@@ -1,7 +1,7 @@
-import { Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationReturn } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { ObjectIdentifier, unpackBits } from "@wildboar/asn1";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import {
     _decode_RemoveEntryArgument,
 } from "@wildboar/x500/DirectoryAbstractService";

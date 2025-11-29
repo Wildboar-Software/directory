@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import rdnFromJson from "../x500/rdnFromJson.js";
 import type {
     DistinguishedName,

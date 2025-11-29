@@ -1,4 +1,4 @@
-import { Context, IndexableOID } from "@wildboar/meerkat-types";
+import type { Context, IndexableOID } from "../types/index.js";
 import { compareElements } from "@wildboar/x500";
 import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { Filter } from "@wildboar/x500/DirectoryAbstractService";

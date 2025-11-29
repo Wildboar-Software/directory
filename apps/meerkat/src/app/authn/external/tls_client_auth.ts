@@ -1,4 +1,4 @@
-import { Context, BindReturn, DirectoryBindError, DSABindError } from "@wildboar/meerkat-types";
+import { Context, BindReturn, DirectoryBindError, DSABindError } from "../../types/index.js";
 import { TLSSocket } from "node:tls";
 import { Socket } from "node:net";
 import { BERElement, EXTERNAL, ObjectIdentifier } from "@wildboar/asn1";

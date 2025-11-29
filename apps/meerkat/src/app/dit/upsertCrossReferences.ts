@@ -1,11 +1,11 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { Context, Vertex } from "../types/index.js";
 import dnToVertex from "./dnToVertex.js";
 import {
     CrossReference,
 } from "@wildboar/x500/DistributedOperations";
 import { createDse } from "../database/createEntry.js";
 import saveAccessPoint from "../database/saveAccessPoint.js";
-import { Knowledge } from "@prisma/client";
+import { Knowledge } from "../generated/client.js";
 
 /**
  * @summary Upsert cross references into the local DSAIT

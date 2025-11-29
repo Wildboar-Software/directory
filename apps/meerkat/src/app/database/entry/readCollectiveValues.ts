@@ -2,7 +2,7 @@ import type {
     Context,
     Vertex,
     Value,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import readCollectiveAttributes from "./readCollectiveAttributes.js";
 import valuesFromAttribute from "../../x500/valuesFromAttribute.js";
 

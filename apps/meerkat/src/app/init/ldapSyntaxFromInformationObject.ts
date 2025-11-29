@@ -1,7 +1,7 @@
 import type {
     SYNTAX_NAME,
 } from "@wildboar/x500/InformationFramework";
-import { LDAPSyntaxInfo } from "@wildboar/meerkat-types";
+import { LDAPSyntaxInfo } from "../types/index.js";
 
 /**
  * @summary Convert a `SYNTAX-NAME` information object into `LDAPSyntaxInfo`.

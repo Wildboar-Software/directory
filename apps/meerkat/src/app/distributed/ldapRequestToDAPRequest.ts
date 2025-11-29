@@ -1,5 +1,5 @@
-import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "../types/index.js";
+import * as errors from "../types/index.js";
 import {
     DERElement,
     ObjectIdentifier,

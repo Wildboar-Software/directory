@@ -9,7 +9,7 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import NOOP from "./NOOP.js";
 import { DER } from "@wildboar/asn1/functional";
 import { namingContexts } from "@wildboar/x500/LdapSystemSchema";

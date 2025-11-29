@@ -1,4 +1,4 @@
-import type { EntryModificationStatistics, ContextStatistics } from "@wildboar/meerkat-types";
+import type { EntryModificationStatistics, ContextStatistics } from "../types/index.js";
 import type { EntryModification } from "@wildboar/x500/DirectoryAbstractService";
 import type { Attribute } from "@wildboar/x500/InformationFramework";
 

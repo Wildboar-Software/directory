@@ -1,6 +1,6 @@
-import { Context, Vertex } from "@wildboar/meerkat-types";
+import { Context, Vertex } from "../types/index.js";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub";
-import { Prisma } from "@prisma/client";
+import type { DistinguishedValueCreateManyInput } from "../generated/models/DistinguishedValue.js";
 import { ASN1Construction, INTEGER } from "@wildboar/asn1";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 
@@ -52,7 +52,7 @@ async function renameEntry (
             },
         }),
         ctx.db.distinguishedValue.createMany({
-            data: newRDN.map((atav, i): Prisma.DistinguishedValueCreateManyInput => ({
+            data: newRDN.map((atav, i): DistinguishedValueCreateManyInput => ({
                 entry_id: target.dse.id,
                 type_oid: atav.type_.toBytes(),
                 tag_class: atav.value.tagClass,

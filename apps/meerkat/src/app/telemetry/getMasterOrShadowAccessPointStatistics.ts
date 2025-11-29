@@ -1,4 +1,4 @@
-import type { MasterOrShadowAccessPointStatistics } from "@wildboar/meerkat-types";
+import type { MasterOrShadowAccessPointStatistics } from "../types/index.js";
 import type {
     MasterOrShadowAccessPoint,
 } from "@wildboar/x500/DistributedOperations";

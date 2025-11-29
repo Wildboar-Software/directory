@@ -7,7 +7,7 @@ import {
     OPCR,
     UnknownOperationError,
     IndexableOID,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import DSPAssociation from "../dsp/DSPConnection.js";
 import type { Request } from "@wildboar/x500";
@@ -30,7 +30,7 @@ import {
     SearchResult,
     _decode_SearchResult,
 } from "@wildboar/x500/DirectoryAbstractService";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import requestValidationProcedure from "./requestValidationProcedure.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import getSoughtObjectFromRequest from "./getSoughtObjectFromRequest.js";

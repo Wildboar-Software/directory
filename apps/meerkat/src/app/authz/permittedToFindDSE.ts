@@ -1,4 +1,4 @@
-import type { ClientAssociation, Context, Vertex } from "@wildboar/meerkat-types";
+import type { ClientAssociation, Context, Vertex } from "../types/index.js";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";

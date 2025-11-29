@@ -1,4 +1,4 @@
-import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
+import type { Context, ClientAssociation } from "../types/index.js";
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";

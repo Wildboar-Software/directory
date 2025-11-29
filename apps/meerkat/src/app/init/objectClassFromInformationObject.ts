@@ -6,7 +6,7 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import type {
     ObjectClassInfo,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 
 /**
  * @summary Convert an `OBJECT-CLASS` information object into `ObjectClassInfo`.

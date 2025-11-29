@@ -1,7 +1,7 @@
-import type { ClientAssociation, OPCR } from "@wildboar/meerkat-types";
+import type { ClientAssociation, OPCR } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { BOOLEAN, TRUE } from "@wildboar/asn1";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import {
     OperationProgress,
 } from "@wildboar/x500/DistributedOperations";

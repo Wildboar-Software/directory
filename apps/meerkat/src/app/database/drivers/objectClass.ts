@@ -11,7 +11,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
     SpecialAttributeBatchDatabaseEditor,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { ObjectIdentifier, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
@@ -146,7 +146,7 @@ const addAttribute: SpecialAttributeBatchDatabaseEditor = async (
             entry_id: vertex.dse.id,
             object_class: oid.toString(),
         })),
-        skipDuplicates: true,
+        // skipDuplicates: true,
     }));
 };
 

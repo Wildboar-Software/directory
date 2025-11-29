@@ -1,4 +1,4 @@
-import type { ClientAssociation } from "@wildboar/meerkat-types";
+import type { ClientAssociation } from "../../types/index.js";
 import type { MeerkatContext } from "../../ctx.js";
 import {
     HierarchicalAgreement,
@@ -10,8 +10,8 @@ import {
     SubordinateToSuperior,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import dnToVertex from "../../dit/dnToVertex.js";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
-import * as errors from "@wildboar/meerkat-types";
+import { Knowledge, OperationalBindingInitiator } from "../../generated/client.js";
+import * as errors from "../../types/index.js";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";

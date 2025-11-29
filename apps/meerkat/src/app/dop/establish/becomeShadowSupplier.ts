@@ -1,10 +1,10 @@
 import type { MeerkatContext } from "../../ctx.js";
-import type { Vertex } from "@wildboar/meerkat-types";
+import type { Vertex } from "../../types/index.js";
 import {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
 import saveAccessPoint from "../../database/saveAccessPoint.js";
-import { Knowledge } from "@prisma/client";
+import { Knowledge } from "../../generated/client.js";
 import {
     SupplierOrConsumer,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";

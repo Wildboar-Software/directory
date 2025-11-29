@@ -1,4 +1,4 @@
-import type { Context, OCSPOptions } from "@wildboar/meerkat-types";
+import type { Context, OCSPOptions } from "../types/index.js";
 import { getOCSPResponse, SignFunction } from "@wildboar/ocsp-client";
 import {
     Certificate,

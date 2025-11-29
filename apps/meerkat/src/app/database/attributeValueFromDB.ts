@@ -1,4 +1,4 @@
-import type { AttributeValue } from "@prisma/client";
+import type { AttributeValue } from "../generated/client.js";
 import { BERElement, ASN1Construction } from "@wildboar/asn1";
 
 export

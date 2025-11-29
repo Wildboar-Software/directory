@@ -3,9 +3,9 @@ import type {
     Vertex,
     Value,
     PendingUpdates,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { ASN1Construction } from "@wildboar/asn1";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "../../generated/client.js";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson.js";
 

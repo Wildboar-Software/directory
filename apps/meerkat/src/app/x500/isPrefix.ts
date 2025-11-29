@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";

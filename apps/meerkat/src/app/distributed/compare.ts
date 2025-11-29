@@ -1,7 +1,7 @@
-import { Vertex, ClientAssociation, OperationReturn, Value } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationReturn, Value } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, TRUE_BIT, unpackBits } from "@wildboar/asn1";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import {
     _decode_CompareArgument,
 } from "@wildboar/x500/DirectoryAbstractService";

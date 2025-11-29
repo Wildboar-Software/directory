@@ -1,5 +1,5 @@
 import type { ASN1Element } from "@wildboar/asn1";
-import type { AttributeInfo } from "@wildboar/meerkat-types";
+import type { AttributeInfo } from "../types/index.js";
 import type {
     ATTRIBUTE,
 } from "@wildboar/x500/InformationFramework";

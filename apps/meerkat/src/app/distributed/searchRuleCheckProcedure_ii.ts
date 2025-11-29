@@ -1,4 +1,4 @@
-import { Context, ClientAssociation, Vertex, ServiceError } from "@wildboar/meerkat-types";
+import { Context, ClientAssociation, Vertex, ServiceError } from "../types/index.js";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import {
     SearchArgumentData,
@@ -24,8 +24,8 @@ import {
 import createSecurityParameters from "../x500/createSecurityParameters.js";
 import printInvokeId from "../utils/printInvokeId.js";
 
-const ID_AUTONOMOUS: Buffer = id_ar_autonomousArea.toBytes();
-const ID_SERVICE: Buffer = id_ar_serviceSpecificArea.toBytes();
+const ID_AUTONOMOUS: Buffer<ArrayBuffer> = id_ar_autonomousArea.toBytes();
+const ID_SERVICE: Buffer<ArrayBuffer> = id_ar_serviceSpecificArea.toBytes();
 
 /**
  * @summary The Search Rule Check Procedure (II) defined in ITU Recommendation X.518.

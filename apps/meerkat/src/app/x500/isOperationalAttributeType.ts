@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     AttributeUsage_userApplications,

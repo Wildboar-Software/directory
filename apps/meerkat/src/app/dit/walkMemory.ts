@@ -1,4 +1,4 @@
-import type { Vertex } from "@wildboar/meerkat-types";
+import type { Vertex } from "../types/index.js";
 
 /**
  * @summary Iterates over all in-memory descendants of a vertex.

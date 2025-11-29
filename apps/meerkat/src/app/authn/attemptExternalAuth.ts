@@ -3,7 +3,7 @@ import type {
     Context,
     DirectoryBindError,
     DSABindError,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import { EXTERNAL } from "@wildboar/asn1";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,

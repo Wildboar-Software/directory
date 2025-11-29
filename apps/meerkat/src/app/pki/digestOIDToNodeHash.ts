@@ -1,4 +1,4 @@
-import type { IndexableOID } from "@wildboar/meerkat-types";
+import type { IndexableOID } from "../types/index.js";
 import {
     id_sha1,
 } from "@wildboar/x500/AlgorithmObjectIdentifiers";

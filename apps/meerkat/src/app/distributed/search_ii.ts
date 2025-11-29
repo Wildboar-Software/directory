@@ -1,5 +1,5 @@
-import type { ClientAssociation, PagedResultsRequestState } from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+import type { ClientAssociation, PagedResultsRequestState } from "../types/index.js";
+import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { TRUE_BIT, TRUE } from "@wildboar/asn1";
 import * as crypto from "crypto";
