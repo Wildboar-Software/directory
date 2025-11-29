@@ -58,7 +58,8 @@ abstract class BindError extends Error {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message);
-        Object.setPrototypeOf(this, BindError.prototype);
+        this.name = "BindError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
 }
@@ -87,6 +88,8 @@ abstract class DirectoryError extends Error {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message);
+        this.name = "DirectoryError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
 }
@@ -107,6 +110,8 @@ abstract class TransportError extends Error {
 
     constructor(message?: string) {
         super(message);
+        this.name = "TransportError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
 }
@@ -135,7 +140,8 @@ class DirectoryBindError extends BindError {
         readonly unbind: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, DirectoryBindError.prototype);
+        this.name = "DirectoryBindError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
 }
@@ -154,7 +160,8 @@ class DSABindError extends BindError {
         readonly unbind: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, DSABindError.prototype);
+        this.name = "DSABindError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
 }
@@ -185,7 +192,8 @@ class AbandonError extends DirectoryError {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, AbandonError.prototype);
+        this.name = "AbandonError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
     /** A function for retrieving the error code */
@@ -221,7 +229,8 @@ class AbandonFailedError extends DirectoryError {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, AbandonFailedError.prototype);
+        this.name = "AbandonFailedError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
     /** A function for retrieving the error code */
@@ -257,7 +266,8 @@ class AttributeError extends DirectoryError {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, AttributeError.prototype);
+        this.name = "AttributeError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
     /** A function for retrieving the error code */
@@ -293,7 +303,8 @@ class NameError extends DirectoryError {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, NameError.prototype);
+        this.name = "NameError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
     /** A function for retrieving the error code */
@@ -329,7 +340,8 @@ class ReferralError extends DirectoryError {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, ReferralError.prototype);
+        this.name = "ReferralError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
     /** A function for retrieving the error code */
@@ -366,7 +378,8 @@ class SecurityError extends DirectoryError {
         readonly unbind: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, SecurityError.prototype);
+        this.name = "SecurityError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
     /** A function for retrieving the error code */
@@ -402,7 +415,8 @@ class ServiceError extends DirectoryError {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, ServiceError.prototype);
+        this.name = "ServiceError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
     /** A function for retrieving the error code */
@@ -438,7 +452,8 @@ class UpdateError extends DirectoryError {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, UpdateError.prototype);
+        this.name = "UpdateError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
     /** A function for retrieving the error code */
@@ -474,7 +489,8 @@ class OperationalBindingError extends DirectoryError {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message, shouldBeSigned);
-        Object.setPrototypeOf(this, OperationalBindingError.prototype);
+        this.name = "OperationalBindingError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
     /** A function for retrieving the error code */
@@ -497,26 +513,27 @@ class OperationalBindingError extends DirectoryError {
  export
  class ShadowError extends DirectoryError {
 
-     /** The error code */
-     public static readonly errcode: Code = id_errcode_shadowError;
+    /** The error code */
+    public static readonly errcode: Code = id_errcode_shadowError;
 
-     /**
-      * @param message The error message
-      * @param data The error parameter
-      */
-     constructor (
-         readonly message: string,
-         readonly data: ShadowErrorData,
-         readonly shouldBeSigned: boolean = false,
-     ) {
-         super(message, shouldBeSigned);
-         Object.setPrototypeOf(this, ShadowError.prototype);
-     }
+    /**
+     * @param message The error message
+     * @param data The error parameter
+     */
+    constructor (
+        readonly message: string,
+        readonly data: ShadowErrorData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
+        this.name = "ShadowError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
 
-     /** A function for retrieving the error code */
-     public getErrCode (): Code {
-         return ShadowError.errcode;
-     }
+    /** A function for retrieving the error code */
+    public getErrCode (): Code {
+        return ShadowError.errcode;
+    }
 
  }
 
@@ -546,7 +563,8 @@ class ChainedError extends Error {
         readonly shouldBeSigned: boolean = false,
     ) {
         super(message);
-        Object.setPrototypeOf(this, ChainedError.prototype);
+        this.name = "ChainedError";
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
 }
@@ -565,17 +583,18 @@ class ChainedError extends Error {
  export
  class ChainedReject extends Error {
 
-      /**
-       * @param invokeId The invokeId of the operation that was rejected
-       * @param reason The reason for the Reject
-       */
-      constructor (
-          readonly invokeId: Extract<InvokeId, { present: INTEGER }>["present"],
-          readonly reason: IdmReject_reason,
-      ) {
-          super();
-          Object.setPrototypeOf(this, ChainedReject.prototype);
-      }
+    /**
+     * @param invokeId The invokeId of the operation that was rejected
+     * @param reason The reason for the Reject
+     */
+    constructor (
+        readonly invokeId: Extract<InvokeId, { present: INTEGER }>["present"],
+        readonly reason: IdmReject_reason,
+    ) {
+        super();
+        this.name = "ChainedReject";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
 
  }
 
@@ -593,15 +612,16 @@ class ChainedError extends Error {
 export
 class ChainedAbort extends Error {
 
-     /**
-      * @param reason The reason for the Abort
-      */
-     constructor (
-         readonly reason: Abort,
-     ) {
-         super();
-         Object.setPrototypeOf(this, ChainedAbort.prototype);
-     }
+    /**
+     * @param reason The reason for the Abort
+     */
+    constructor (
+        readonly reason: Abort,
+    ) {
+        super();
+        this.name = "ChainedAbort";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
 
 }
 
@@ -619,7 +639,13 @@ class ChainedAbort extends Error {
  * @class
  * @augments TransportError
  */
-export class DuplicateInvokeIdError extends TransportError {}
+export class DuplicateInvokeIdError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "MistypedArgumentError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 /**
  * @summary A throwable error indicating an unsupported operation
@@ -632,7 +658,13 @@ export class DuplicateInvokeIdError extends TransportError {}
  * @class
  * @augments TransportError
  */
-export class UnsupportedOperationError extends TransportError {}
+export class UnsupportedOperationError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "UnsupportedOperationError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 /**
  * @summary A throwable error indicating an unknown operation
@@ -645,7 +677,13 @@ export class UnsupportedOperationError extends TransportError {}
  * @class
  * @augments TransportError
  */
-export class UnknownOperationError extends TransportError {}
+export class UnknownOperationError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "UnknownOperationError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 /**
  * @summary A throwable error indicating a mistyped PDU
@@ -658,7 +696,13 @@ export class UnknownOperationError extends TransportError {}
  * @class
  * @augments TransportError
  */
-export class MistypedPDUError extends TransportError {}
+export class MistypedPDUError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "MistypedPDUError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 /**
  * @summary A throwable error indicating a mistyped argument
@@ -671,7 +715,13 @@ export class MistypedPDUError extends TransportError {}
  * @class
  * @augments TransportError
  */
-export class MistypedArgumentError extends TransportError {}
+export class MistypedArgumentError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "MistypedArgumentError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 /**
  * @summary A throwable error indicating a resource limitation
@@ -684,7 +734,13 @@ export class MistypedArgumentError extends TransportError {}
  * @class
  * @augments TransportError
  */
-export class ResourceLimitationError extends TransportError {}
+export class ResourceLimitationError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "ResourceLimitationError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 /**
  * @summary A throwable error indicating an unknown error
@@ -697,7 +753,13 @@ export class ResourceLimitationError extends TransportError {}
  * @class
  * @augments TransportError
  */
-export class UnknownError extends TransportError {}
+export class UnknownError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "UnknownError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 /**
  * @summary A throwable error indicating an unbound request
@@ -710,7 +772,13 @@ export class UnknownError extends TransportError {}
  * @class
  * @augments TransportError
  */
-export class UnboundRequestError extends TransportError {}
+export class UnboundRequestError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "UnboundRequestError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 /**
  * @summary A throwable error indicating an invalid protocol
@@ -723,7 +791,13 @@ export class UnboundRequestError extends TransportError {}
  * @class
  * @augments TransportError
  */
-export class InvalidProtocolError extends TransportError {}
+export class InvalidProtocolError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "InvalidProtocolError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 /**
  * @summary A throwable error that does not specify a reason
@@ -736,6 +810,12 @@ export class InvalidProtocolError extends TransportError {}
  * @class
  * @augments TransportError
  */
-export class ReasonNotSpecifiedError extends TransportError {}
+export class ReasonNotSpecifiedError extends TransportError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "ReasonNotSpecifiedError";
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
 
 // ConnectionFailedError?
