@@ -616,7 +616,6 @@ export type EntryOrderByWithRelationInput = {
   ObjectClassDescription?: Prisma.ObjectClassDescriptionOrderByRelationAggregateInput
   NameForm?: Prisma.NameFormOrderByRelationAggregateInput
   ContextDescription?: Prisma.ContextDescriptionOrderByRelationAggregateInput
-  _relevance?: Prisma.EntryOrderByRelevanceInput
 }
 
 export type EntryWhereUniqueInput = Prisma.AtLeast<{
@@ -1220,12 +1219,6 @@ export type EntryListRelationFilter = {
 
 export type EntryOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type EntryOrderByRelevanceInput = {
-  fields: Prisma.EntryOrderByRelevanceFieldEnum | Prisma.EntryOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
 }
 
 export type EntryCountOrderByAggregateInput = {
@@ -2473,7 +2466,6 @@ export type EntryCreateOrConnectWithoutImmediate_superiorInput = {
 
 export type EntryCreateManyImmediate_superiorInputEnvelope = {
   data: Prisma.EntryCreateManyImmediate_superiorInput | Prisma.EntryCreateManyImmediate_superiorInput[]
-  skipDuplicates?: boolean
 }
 
 export type EntryCreateWithoutHierarchyParentInput = {
@@ -2620,7 +2612,6 @@ export type EntryCreateOrConnectWithoutHierarchyParentInput = {
 
 export type EntryCreateManyHierarchyParentInputEnvelope = {
   data: Prisma.EntryCreateManyHierarchyParentInput | Prisma.EntryCreateManyHierarchyParentInput[]
-  skipDuplicates?: boolean
 }
 
 export type EntryCreateWithoutHierarchyTopInput = {
@@ -2767,7 +2758,6 @@ export type EntryCreateOrConnectWithoutHierarchyTopInput = {
 
 export type EntryCreateManyHierarchyTopInputEnvelope = {
   data: Prisma.EntryCreateManyHierarchyTopInput | Prisma.EntryCreateManyHierarchyTopInput[]
-  skipDuplicates?: boolean
 }
 
 export type EntryUpsertWithoutSubordinatesInput = {
@@ -10385,7 +10375,103 @@ export type EntrySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   _count?: boolean | Prisma.EntryCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["entry"]>
 
+export type EntrySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entryUUID?: boolean
+  dseUUID?: boolean
+  materialized_path?: boolean
+  immediate_superior_id?: boolean
+  glue?: boolean
+  cp?: boolean
+  entry?: boolean
+  alias?: boolean
+  subr?: boolean
+  nssr?: boolean
+  xr?: boolean
+  admPoint?: boolean
+  subentry?: boolean
+  shadow?: boolean
+  immSupr?: boolean
+  rhob?: boolean
+  sa?: boolean
+  dsSubentry?: boolean
+  createTimestamp?: boolean
+  modifyTimestamp?: boolean
+  deleteTimestamp?: boolean
+  creatorsName?: boolean
+  modifiersName?: boolean
+  expiresTimestamp?: boolean
+  modifyNameTimestamp?: boolean
+  previousName?: boolean
+  governingStructureRule?: boolean
+  structuralObjectClass?: boolean
+  subordinate_completeness?: boolean
+  attribute_completeness?: boolean
+  lastShadowUpdate?: boolean
+  keep_children_in_database?: boolean
+  may_add_top_level_dse?: boolean
+  hierarchyParent_id?: boolean
+  hierarchyParentDN?: boolean
+  hierarchyParentStr?: boolean
+  hierarchyTop_id?: boolean
+  hierarchyTopDN?: boolean
+  hierarchyTopStr?: boolean
+  hierarchyPath?: boolean
+  hierarchyLevel?: boolean
+  otherData?: boolean
+  immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
+  hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
+  hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
+}, ExtArgs["result"]["entry"]>
 
+export type EntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entryUUID?: boolean
+  dseUUID?: boolean
+  materialized_path?: boolean
+  immediate_superior_id?: boolean
+  glue?: boolean
+  cp?: boolean
+  entry?: boolean
+  alias?: boolean
+  subr?: boolean
+  nssr?: boolean
+  xr?: boolean
+  admPoint?: boolean
+  subentry?: boolean
+  shadow?: boolean
+  immSupr?: boolean
+  rhob?: boolean
+  sa?: boolean
+  dsSubentry?: boolean
+  createTimestamp?: boolean
+  modifyTimestamp?: boolean
+  deleteTimestamp?: boolean
+  creatorsName?: boolean
+  modifiersName?: boolean
+  expiresTimestamp?: boolean
+  modifyNameTimestamp?: boolean
+  previousName?: boolean
+  governingStructureRule?: boolean
+  structuralObjectClass?: boolean
+  subordinate_completeness?: boolean
+  attribute_completeness?: boolean
+  lastShadowUpdate?: boolean
+  keep_children_in_database?: boolean
+  may_add_top_level_dse?: boolean
+  hierarchyParent_id?: boolean
+  hierarchyParentDN?: boolean
+  hierarchyParentStr?: boolean
+  hierarchyTop_id?: boolean
+  hierarchyTopDN?: boolean
+  hierarchyTopStr?: boolean
+  hierarchyPath?: boolean
+  hierarchyLevel?: boolean
+  otherData?: boolean
+  immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
+  hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
+  hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
+}, ExtArgs["result"]["entry"]>
 
 export type EntrySelectScalar = {
   id?: boolean
@@ -10463,6 +10549,16 @@ export type EntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   NameForm?: boolean | Prisma.Entry$NameFormArgs<ExtArgs>
   ContextDescription?: boolean | Prisma.Entry$ContextDescriptionArgs<ExtArgs>
   _count?: boolean | Prisma.EntryCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type EntryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
+  hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
+  hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
+}
+export type EntryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
+  hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
+  hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
 }
 
 export type $EntryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -10658,6 +10754,30 @@ export interface EntryDelegate<ExtArgs extends runtime.Types.Extensions.Internal
   createMany<T extends EntryCreateManyArgs>(args?: Prisma.SelectSubset<T, EntryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many Entries and returns the data saved in the database.
+   * @param {EntryCreateManyAndReturnArgs} args - Arguments to create many Entries.
+   * @example
+   * // Create many Entries
+   * const entry = await prisma.entry.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many Entries and only return the `id`
+   * const entryWithIdOnly = await prisma.entry.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends EntryCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, EntryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a Entry.
    * @param {EntryDeleteArgs} args - Arguments to delete one Entry.
    * @example
@@ -10720,6 +10840,36 @@ export interface EntryDelegate<ExtArgs extends runtime.Types.Extensions.Internal
    * 
    */
   updateMany<T extends EntryUpdateManyArgs>(args: Prisma.SelectSubset<T, EntryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more Entries and returns the data updated in the database.
+   * @param {EntryUpdateManyAndReturnArgs} args - Arguments to update many Entries.
+   * @example
+   * // Update many Entries
+   * const entry = await prisma.entry.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more Entries and only return the `id`
+   * const entryWithIdOnly = await prisma.entry.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends EntryUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, EntryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one Entry.
@@ -11208,7 +11358,28 @@ export type EntryCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * The data used to create many Entries.
    */
   data: Prisma.EntryCreateManyInput | Prisma.EntryCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * Entry createManyAndReturn
+ */
+export type EntryCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Entry
+   */
+  select?: Prisma.EntrySelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the Entry
+   */
+  omit?: Prisma.EntryOmit<ExtArgs> | null
+  /**
+   * The data used to create many Entries.
+   */
+  data: Prisma.EntryCreateManyInput | Prisma.EntryCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EntryIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -11253,6 +11424,36 @@ export type EntryUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Limit how many Entries to update.
    */
   limit?: number
+}
+
+/**
+ * Entry updateManyAndReturn
+ */
+export type EntryUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Entry
+   */
+  select?: Prisma.EntrySelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the Entry
+   */
+  omit?: Prisma.EntryOmit<ExtArgs> | null
+  /**
+   * The data used to update Entries.
+   */
+  data: Prisma.XOR<Prisma.EntryUpdateManyMutationInput, Prisma.EntryUncheckedUpdateManyInput>
+  /**
+   * Filter which Entries to update
+   */
+  where?: Prisma.EntryWhereInput
+  /**
+   * Limit how many Entries to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EntryIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

@@ -215,7 +215,6 @@ export type InstalledVersionsOrderByWithRelationInput = {
   installedTimestamp?: Prisma.SortOrder
   version?: Prisma.SortOrder
   migration_problems?: Prisma.SortOrderInput | Prisma.SortOrder
-  _relevance?: Prisma.InstalledVersionsOrderByRelevanceInput
 }
 
 export type InstalledVersionsWhereUniqueInput = Prisma.AtLeast<{
@@ -296,12 +295,6 @@ export type InstalledVersionsUncheckedUpdateManyInput = {
   migration_problems?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
-export type InstalledVersionsOrderByRelevanceInput = {
-  fields: Prisma.InstalledVersionsOrderByRelevanceFieldEnum | Prisma.InstalledVersionsOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type InstalledVersionsCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   installedTimestamp?: Prisma.SortOrder
@@ -340,7 +333,19 @@ export type InstalledVersionsSelect<ExtArgs extends runtime.Types.Extensions.Int
   migration_problems?: boolean
 }, ExtArgs["result"]["installedVersions"]>
 
+export type InstalledVersionsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  installedTimestamp?: boolean
+  version?: boolean
+  migration_problems?: boolean
+}, ExtArgs["result"]["installedVersions"]>
 
+export type InstalledVersionsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  installedTimestamp?: boolean
+  version?: boolean
+  migration_problems?: boolean
+}, ExtArgs["result"]["installedVersions"]>
 
 export type InstalledVersionsSelectScalar = {
   id?: boolean
@@ -477,6 +482,30 @@ export interface InstalledVersionsDelegate<ExtArgs extends runtime.Types.Extensi
   createMany<T extends InstalledVersionsCreateManyArgs>(args?: Prisma.SelectSubset<T, InstalledVersionsCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many InstalledVersions and returns the data saved in the database.
+   * @param {InstalledVersionsCreateManyAndReturnArgs} args - Arguments to create many InstalledVersions.
+   * @example
+   * // Create many InstalledVersions
+   * const installedVersions = await prisma.installedVersions.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many InstalledVersions and only return the `id`
+   * const installedVersionsWithIdOnly = await prisma.installedVersions.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends InstalledVersionsCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, InstalledVersionsCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InstalledVersionsPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a InstalledVersions.
    * @param {InstalledVersionsDeleteArgs} args - Arguments to delete one InstalledVersions.
    * @example
@@ -539,6 +568,36 @@ export interface InstalledVersionsDelegate<ExtArgs extends runtime.Types.Extensi
    * 
    */
   updateMany<T extends InstalledVersionsUpdateManyArgs>(args: Prisma.SelectSubset<T, InstalledVersionsUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more InstalledVersions and returns the data updated in the database.
+   * @param {InstalledVersionsUpdateManyAndReturnArgs} args - Arguments to update many InstalledVersions.
+   * @example
+   * // Update many InstalledVersions
+   * const installedVersions = await prisma.installedVersions.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more InstalledVersions and only return the `id`
+   * const installedVersionsWithIdOnly = await prisma.installedVersions.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends InstalledVersionsUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, InstalledVersionsUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InstalledVersionsPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one InstalledVersions.
@@ -937,7 +996,24 @@ export type InstalledVersionsCreateManyArgs<ExtArgs extends runtime.Types.Extens
    * The data used to create many InstalledVersions.
    */
   data: Prisma.InstalledVersionsCreateManyInput | Prisma.InstalledVersionsCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * InstalledVersions createManyAndReturn
+ */
+export type InstalledVersionsCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InstalledVersions
+   */
+  select?: Prisma.InstalledVersionsSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the InstalledVersions
+   */
+  omit?: Prisma.InstalledVersionsOmit<ExtArgs> | null
+  /**
+   * The data used to create many InstalledVersions.
+   */
+  data: Prisma.InstalledVersionsCreateManyInput | Prisma.InstalledVersionsCreateManyInput[]
 }
 
 /**
@@ -966,6 +1042,32 @@ export type InstalledVersionsUpdateArgs<ExtArgs extends runtime.Types.Extensions
  * InstalledVersions updateMany
  */
 export type InstalledVersionsUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * The data used to update InstalledVersions.
+   */
+  data: Prisma.XOR<Prisma.InstalledVersionsUpdateManyMutationInput, Prisma.InstalledVersionsUncheckedUpdateManyInput>
+  /**
+   * Filter which InstalledVersions to update
+   */
+  where?: Prisma.InstalledVersionsWhereInput
+  /**
+   * Limit how many InstalledVersions to update.
+   */
+  limit?: number
+}
+
+/**
+ * InstalledVersions updateManyAndReturn
+ */
+export type InstalledVersionsUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InstalledVersions
+   */
+  select?: Prisma.InstalledVersionsSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the InstalledVersions
+   */
+  omit?: Prisma.InstalledVersionsOmit<ExtArgs> | null
   /**
    * The data used to update InstalledVersions.
    */

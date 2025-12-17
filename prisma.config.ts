@@ -6,6 +6,9 @@ export default defineConfig({
         path: 'apps/meerkat/src/prisma/migrations',
     },
     datasource: {
-        url: 'mysql://root:example@localhost:3306/directory',
+        url: 'file:./dev.db',
     },
+    // datasource: {
+    //     url: 'mysql://root:example@localhost:3306/directory',
+    // },
 });

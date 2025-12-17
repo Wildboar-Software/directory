@@ -270,7 +270,6 @@ export type DITStructureRuleOrderByWithRelationInput = {
   entry_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.DITStructureRuleOrderByRelevanceInput
 }
 
 export type DITStructureRuleWhereUniqueInput = Prisma.AtLeast<{
@@ -412,12 +411,6 @@ export type DITStructureRuleOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type DITStructureRuleOrderByRelevanceInput = {
-  fields: Prisma.DITStructureRuleOrderByRelevanceFieldEnum | Prisma.DITStructureRuleOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type DITStructureRuleEntry_idRuleIdentifierCompoundUniqueInput = {
   entry_id: number
   ruleIdentifier: number
@@ -541,7 +534,6 @@ export type DITStructureRuleCreateOrConnectWithoutEntryInput = {
 
 export type DITStructureRuleCreateManyEntryInputEnvelope = {
   data: Prisma.DITStructureRuleCreateManyEntryInput | Prisma.DITStructureRuleCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type DITStructureRuleUpsertWithWhereUniqueWithoutEntryInput = {
@@ -633,7 +625,31 @@ export type DITStructureRuleSelect<ExtArgs extends runtime.Types.Extensions.Inte
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["dITStructureRule"]>
 
+export type DITStructureRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  ruleIdentifier?: boolean
+  nameForm?: boolean
+  superiorStructureRules?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["dITStructureRule"]>
 
+export type DITStructureRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  ruleIdentifier?: boolean
+  nameForm?: boolean
+  superiorStructureRules?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["dITStructureRule"]>
 
 export type DITStructureRuleSelectScalar = {
   id?: boolean
@@ -649,6 +665,12 @@ export type DITStructureRuleSelectScalar = {
 
 export type DITStructureRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ruleIdentifier" | "nameForm" | "superiorStructureRules" | "name" | "description" | "obsolete" | "entry_id" | "created_at", ExtArgs["result"]["dITStructureRule"]>
 export type DITStructureRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type DITStructureRuleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type DITStructureRuleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -785,6 +807,30 @@ export interface DITStructureRuleDelegate<ExtArgs extends runtime.Types.Extensio
   createMany<T extends DITStructureRuleCreateManyArgs>(args?: Prisma.SelectSubset<T, DITStructureRuleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many DITStructureRules and returns the data saved in the database.
+   * @param {DITStructureRuleCreateManyAndReturnArgs} args - Arguments to create many DITStructureRules.
+   * @example
+   * // Create many DITStructureRules
+   * const dITStructureRule = await prisma.dITStructureRule.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many DITStructureRules and only return the `id`
+   * const dITStructureRuleWithIdOnly = await prisma.dITStructureRule.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends DITStructureRuleCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, DITStructureRuleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DITStructureRulePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a DITStructureRule.
    * @param {DITStructureRuleDeleteArgs} args - Arguments to delete one DITStructureRule.
    * @example
@@ -847,6 +893,36 @@ export interface DITStructureRuleDelegate<ExtArgs extends runtime.Types.Extensio
    * 
    */
   updateMany<T extends DITStructureRuleUpdateManyArgs>(args: Prisma.SelectSubset<T, DITStructureRuleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more DITStructureRules and returns the data updated in the database.
+   * @param {DITStructureRuleUpdateManyAndReturnArgs} args - Arguments to update many DITStructureRules.
+   * @example
+   * // Update many DITStructureRules
+   * const dITStructureRule = await prisma.dITStructureRule.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more DITStructureRules and only return the `id`
+   * const dITStructureRuleWithIdOnly = await prisma.dITStructureRule.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends DITStructureRuleUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, DITStructureRuleUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DITStructureRulePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one DITStructureRule.
@@ -1275,7 +1351,28 @@ export type DITStructureRuleCreateManyArgs<ExtArgs extends runtime.Types.Extensi
    * The data used to create many DITStructureRules.
    */
   data: Prisma.DITStructureRuleCreateManyInput | Prisma.DITStructureRuleCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * DITStructureRule createManyAndReturn
+ */
+export type DITStructureRuleCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DITStructureRule
+   */
+  select?: Prisma.DITStructureRuleSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the DITStructureRule
+   */
+  omit?: Prisma.DITStructureRuleOmit<ExtArgs> | null
+  /**
+   * The data used to create many DITStructureRules.
+   */
+  data: Prisma.DITStructureRuleCreateManyInput | Prisma.DITStructureRuleCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DITStructureRuleIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1320,6 +1417,36 @@ export type DITStructureRuleUpdateManyArgs<ExtArgs extends runtime.Types.Extensi
    * Limit how many DITStructureRules to update.
    */
   limit?: number
+}
+
+/**
+ * DITStructureRule updateManyAndReturn
+ */
+export type DITStructureRuleUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DITStructureRule
+   */
+  select?: Prisma.DITStructureRuleSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the DITStructureRule
+   */
+  omit?: Prisma.DITStructureRuleOmit<ExtArgs> | null
+  /**
+   * The data used to update DITStructureRules.
+   */
+  data: Prisma.XOR<Prisma.DITStructureRuleUpdateManyMutationInput, Prisma.DITStructureRuleUncheckedUpdateManyInput>
+  /**
+   * Filter which DITStructureRules to update
+   */
+  where?: Prisma.DITStructureRuleWhereInput
+  /**
+   * Limit how many DITStructureRules to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DITStructureRuleIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

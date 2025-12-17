@@ -212,7 +212,6 @@ export type EntryAttributeValuesIncompleteOrderByWithRelationInput = {
   entry_id?: Prisma.SortOrder
   attribute_type?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.EntryAttributeValuesIncompleteOrderByRelevanceInput
 }
 
 export type EntryAttributeValuesIncompleteWhereUniqueInput = Prisma.AtLeast<{
@@ -292,12 +291,6 @@ export type EntryAttributeValuesIncompleteListRelationFilter = {
 
 export type EntryAttributeValuesIncompleteOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type EntryAttributeValuesIncompleteOrderByRelevanceInput = {
-  fields: Prisma.EntryAttributeValuesIncompleteOrderByRelevanceFieldEnum | Prisma.EntryAttributeValuesIncompleteOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
 }
 
 export type EntryAttributeValuesIncompleteEntry_idAttribute_typeCompoundUniqueInput = {
@@ -391,7 +384,6 @@ export type EntryAttributeValuesIncompleteCreateOrConnectWithoutEntryInput = {
 
 export type EntryAttributeValuesIncompleteCreateManyEntryInputEnvelope = {
   data: Prisma.EntryAttributeValuesIncompleteCreateManyEntryInput | Prisma.EntryAttributeValuesIncompleteCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type EntryAttributeValuesIncompleteUpsertWithWhereUniqueWithoutEntryInput = {
@@ -447,7 +439,19 @@ export type EntryAttributeValuesIncompleteSelect<ExtArgs extends runtime.Types.E
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["entryAttributeValuesIncomplete"]>
 
+export type EntryAttributeValuesIncompleteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  attribute_type?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["entryAttributeValuesIncomplete"]>
 
+export type EntryAttributeValuesIncompleteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  attribute_type?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["entryAttributeValuesIncomplete"]>
 
 export type EntryAttributeValuesIncompleteSelectScalar = {
   id?: boolean
@@ -457,6 +461,12 @@ export type EntryAttributeValuesIncompleteSelectScalar = {
 
 export type EntryAttributeValuesIncompleteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "attribute_type", ExtArgs["result"]["entryAttributeValuesIncomplete"]>
 export type EntryAttributeValuesIncompleteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type EntryAttributeValuesIncompleteIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type EntryAttributeValuesIncompleteIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -587,6 +597,30 @@ export interface EntryAttributeValuesIncompleteDelegate<ExtArgs extends runtime.
   createMany<T extends EntryAttributeValuesIncompleteCreateManyArgs>(args?: Prisma.SelectSubset<T, EntryAttributeValuesIncompleteCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many EntryAttributeValuesIncompletes and returns the data saved in the database.
+   * @param {EntryAttributeValuesIncompleteCreateManyAndReturnArgs} args - Arguments to create many EntryAttributeValuesIncompletes.
+   * @example
+   * // Create many EntryAttributeValuesIncompletes
+   * const entryAttributeValuesIncomplete = await prisma.entryAttributeValuesIncomplete.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many EntryAttributeValuesIncompletes and only return the `id`
+   * const entryAttributeValuesIncompleteWithIdOnly = await prisma.entryAttributeValuesIncomplete.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends EntryAttributeValuesIncompleteCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, EntryAttributeValuesIncompleteCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryAttributeValuesIncompletePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a EntryAttributeValuesIncomplete.
    * @param {EntryAttributeValuesIncompleteDeleteArgs} args - Arguments to delete one EntryAttributeValuesIncomplete.
    * @example
@@ -649,6 +683,36 @@ export interface EntryAttributeValuesIncompleteDelegate<ExtArgs extends runtime.
    * 
    */
   updateMany<T extends EntryAttributeValuesIncompleteUpdateManyArgs>(args: Prisma.SelectSubset<T, EntryAttributeValuesIncompleteUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more EntryAttributeValuesIncompletes and returns the data updated in the database.
+   * @param {EntryAttributeValuesIncompleteUpdateManyAndReturnArgs} args - Arguments to update many EntryAttributeValuesIncompletes.
+   * @example
+   * // Update many EntryAttributeValuesIncompletes
+   * const entryAttributeValuesIncomplete = await prisma.entryAttributeValuesIncomplete.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more EntryAttributeValuesIncompletes and only return the `id`
+   * const entryAttributeValuesIncompleteWithIdOnly = await prisma.entryAttributeValuesIncomplete.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends EntryAttributeValuesIncompleteUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, EntryAttributeValuesIncompleteUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryAttributeValuesIncompletePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one EntryAttributeValuesIncomplete.
@@ -1071,7 +1135,28 @@ export type EntryAttributeValuesIncompleteCreateManyArgs<ExtArgs extends runtime
    * The data used to create many EntryAttributeValuesIncompletes.
    */
   data: Prisma.EntryAttributeValuesIncompleteCreateManyInput | Prisma.EntryAttributeValuesIncompleteCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * EntryAttributeValuesIncomplete createManyAndReturn
+ */
+export type EntryAttributeValuesIncompleteCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EntryAttributeValuesIncomplete
+   */
+  select?: Prisma.EntryAttributeValuesIncompleteSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the EntryAttributeValuesIncomplete
+   */
+  omit?: Prisma.EntryAttributeValuesIncompleteOmit<ExtArgs> | null
+  /**
+   * The data used to create many EntryAttributeValuesIncompletes.
+   */
+  data: Prisma.EntryAttributeValuesIncompleteCreateManyInput | Prisma.EntryAttributeValuesIncompleteCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EntryAttributeValuesIncompleteIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1116,6 +1201,36 @@ export type EntryAttributeValuesIncompleteUpdateManyArgs<ExtArgs extends runtime
    * Limit how many EntryAttributeValuesIncompletes to update.
    */
   limit?: number
+}
+
+/**
+ * EntryAttributeValuesIncomplete updateManyAndReturn
+ */
+export type EntryAttributeValuesIncompleteUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EntryAttributeValuesIncomplete
+   */
+  select?: Prisma.EntryAttributeValuesIncompleteSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the EntryAttributeValuesIncomplete
+   */
+  omit?: Prisma.EntryAttributeValuesIncompleteOmit<ExtArgs> | null
+  /**
+   * The data used to update EntryAttributeValuesIncompletes.
+   */
+  data: Prisma.XOR<Prisma.EntryAttributeValuesIncompleteUpdateManyMutationInput, Prisma.EntryAttributeValuesIncompleteUncheckedUpdateManyInput>
+  /**
+   * Filter which EntryAttributeValuesIncompletes to update
+   */
+  where?: Prisma.EntryAttributeValuesIncompleteWhereInput
+  /**
+   * Limit how many EntryAttributeValuesIncompletes to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EntryAttributeValuesIncompleteIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

@@ -257,7 +257,6 @@ export type MatchingRuleUseOrderByWithRelationInput = {
   entry_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.MatchingRuleUseOrderByRelevanceInput
 }
 
 export type MatchingRuleUseWhereUniqueInput = Prisma.AtLeast<{
@@ -389,12 +388,6 @@ export type MatchingRuleUseOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type MatchingRuleUseOrderByRelevanceInput = {
-  fields: Prisma.MatchingRuleUseOrderByRelevanceFieldEnum | Prisma.MatchingRuleUseOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type MatchingRuleUseEntry_idIdentifierCompoundUniqueInput = {
   entry_id: number
   identifier: string
@@ -511,7 +504,6 @@ export type MatchingRuleUseCreateOrConnectWithoutEntryInput = {
 
 export type MatchingRuleUseCreateManyEntryInputEnvelope = {
   data: Prisma.MatchingRuleUseCreateManyEntryInput | Prisma.MatchingRuleUseCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type MatchingRuleUseUpsertWithWhereUniqueWithoutEntryInput = {
@@ -597,7 +589,29 @@ export type MatchingRuleUseSelect<ExtArgs extends runtime.Types.Extensions.Inter
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["matchingRuleUse"]>
 
+export type MatchingRuleUseSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  information?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["matchingRuleUse"]>
 
+export type MatchingRuleUseSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  information?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["matchingRuleUse"]>
 
 export type MatchingRuleUseSelectScalar = {
   id?: boolean
@@ -612,6 +626,12 @@ export type MatchingRuleUseSelectScalar = {
 
 export type MatchingRuleUseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "identifier" | "name" | "description" | "obsolete" | "information" | "entry_id" | "created_at", ExtArgs["result"]["matchingRuleUse"]>
 export type MatchingRuleUseInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type MatchingRuleUseIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type MatchingRuleUseIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -747,6 +767,30 @@ export interface MatchingRuleUseDelegate<ExtArgs extends runtime.Types.Extension
   createMany<T extends MatchingRuleUseCreateManyArgs>(args?: Prisma.SelectSubset<T, MatchingRuleUseCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many MatchingRuleUses and returns the data saved in the database.
+   * @param {MatchingRuleUseCreateManyAndReturnArgs} args - Arguments to create many MatchingRuleUses.
+   * @example
+   * // Create many MatchingRuleUses
+   * const matchingRuleUse = await prisma.matchingRuleUse.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many MatchingRuleUses and only return the `id`
+   * const matchingRuleUseWithIdOnly = await prisma.matchingRuleUse.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends MatchingRuleUseCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, MatchingRuleUseCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MatchingRuleUsePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a MatchingRuleUse.
    * @param {MatchingRuleUseDeleteArgs} args - Arguments to delete one MatchingRuleUse.
    * @example
@@ -809,6 +853,36 @@ export interface MatchingRuleUseDelegate<ExtArgs extends runtime.Types.Extension
    * 
    */
   updateMany<T extends MatchingRuleUseUpdateManyArgs>(args: Prisma.SelectSubset<T, MatchingRuleUseUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more MatchingRuleUses and returns the data updated in the database.
+   * @param {MatchingRuleUseUpdateManyAndReturnArgs} args - Arguments to update many MatchingRuleUses.
+   * @example
+   * // Update many MatchingRuleUses
+   * const matchingRuleUse = await prisma.matchingRuleUse.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more MatchingRuleUses and only return the `id`
+   * const matchingRuleUseWithIdOnly = await prisma.matchingRuleUse.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends MatchingRuleUseUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, MatchingRuleUseUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MatchingRuleUsePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one MatchingRuleUse.
@@ -1236,7 +1310,28 @@ export type MatchingRuleUseCreateManyArgs<ExtArgs extends runtime.Types.Extensio
    * The data used to create many MatchingRuleUses.
    */
   data: Prisma.MatchingRuleUseCreateManyInput | Prisma.MatchingRuleUseCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * MatchingRuleUse createManyAndReturn
+ */
+export type MatchingRuleUseCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MatchingRuleUse
+   */
+  select?: Prisma.MatchingRuleUseSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the MatchingRuleUse
+   */
+  omit?: Prisma.MatchingRuleUseOmit<ExtArgs> | null
+  /**
+   * The data used to create many MatchingRuleUses.
+   */
+  data: Prisma.MatchingRuleUseCreateManyInput | Prisma.MatchingRuleUseCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MatchingRuleUseIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1281,6 +1376,36 @@ export type MatchingRuleUseUpdateManyArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many MatchingRuleUses to update.
    */
   limit?: number
+}
+
+/**
+ * MatchingRuleUse updateManyAndReturn
+ */
+export type MatchingRuleUseUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MatchingRuleUse
+   */
+  select?: Prisma.MatchingRuleUseSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the MatchingRuleUse
+   */
+  omit?: Prisma.MatchingRuleUseOmit<ExtArgs> | null
+  /**
+   * The data used to update MatchingRuleUses.
+   */
+  data: Prisma.XOR<Prisma.MatchingRuleUseUpdateManyMutationInput, Prisma.MatchingRuleUseUncheckedUpdateManyInput>
+  /**
+   * Filter which MatchingRuleUses to update
+   */
+  where?: Prisma.MatchingRuleUseWhereInput
+  /**
+   * Limit how many MatchingRuleUses to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MatchingRuleUseIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

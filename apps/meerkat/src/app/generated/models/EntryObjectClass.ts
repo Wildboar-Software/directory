@@ -221,7 +221,6 @@ export type EntryObjectClassOrderByWithRelationInput = {
   object_class?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.EntryObjectClassOrderByRelevanceInput
 }
 
 export type EntryObjectClassWhereUniqueInput = Prisma.AtLeast<{
@@ -314,12 +313,6 @@ export type EntryObjectClassListRelationFilter = {
 
 export type EntryObjectClassOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type EntryObjectClassOrderByRelevanceInput = {
-  fields: Prisma.EntryObjectClassOrderByRelevanceFieldEnum | Prisma.EntryObjectClassOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
 }
 
 export type EntryObjectClassEntry_idObject_classCompoundUniqueInput = {
@@ -419,7 +412,6 @@ export type EntryObjectClassCreateOrConnectWithoutEntryInput = {
 
 export type EntryObjectClassCreateManyEntryInputEnvelope = {
   data: Prisma.EntryObjectClassCreateManyEntryInput | Prisma.EntryObjectClassCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type EntryObjectClassUpsertWithWhereUniqueWithoutEntryInput = {
@@ -482,7 +474,21 @@ export type EntryObjectClassSelect<ExtArgs extends runtime.Types.Extensions.Inte
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["entryObjectClass"]>
 
+export type EntryObjectClassSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  object_class?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["entryObjectClass"]>
 
+export type EntryObjectClassSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  entry_id?: boolean
+  object_class?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["entryObjectClass"]>
 
 export type EntryObjectClassSelectScalar = {
   id?: boolean
@@ -493,6 +499,12 @@ export type EntryObjectClassSelectScalar = {
 
 export type EntryObjectClassOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "object_class" | "created_at", ExtArgs["result"]["entryObjectClass"]>
 export type EntryObjectClassInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type EntryObjectClassIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type EntryObjectClassIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -624,6 +636,30 @@ export interface EntryObjectClassDelegate<ExtArgs extends runtime.Types.Extensio
   createMany<T extends EntryObjectClassCreateManyArgs>(args?: Prisma.SelectSubset<T, EntryObjectClassCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many EntryObjectClasses and returns the data saved in the database.
+   * @param {EntryObjectClassCreateManyAndReturnArgs} args - Arguments to create many EntryObjectClasses.
+   * @example
+   * // Create many EntryObjectClasses
+   * const entryObjectClass = await prisma.entryObjectClass.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many EntryObjectClasses and only return the `id`
+   * const entryObjectClassWithIdOnly = await prisma.entryObjectClass.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends EntryObjectClassCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, EntryObjectClassCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryObjectClassPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a EntryObjectClass.
    * @param {EntryObjectClassDeleteArgs} args - Arguments to delete one EntryObjectClass.
    * @example
@@ -686,6 +722,36 @@ export interface EntryObjectClassDelegate<ExtArgs extends runtime.Types.Extensio
    * 
    */
   updateMany<T extends EntryObjectClassUpdateManyArgs>(args: Prisma.SelectSubset<T, EntryObjectClassUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more EntryObjectClasses and returns the data updated in the database.
+   * @param {EntryObjectClassUpdateManyAndReturnArgs} args - Arguments to update many EntryObjectClasses.
+   * @example
+   * // Update many EntryObjectClasses
+   * const entryObjectClass = await prisma.entryObjectClass.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more EntryObjectClasses and only return the `id`
+   * const entryObjectClassWithIdOnly = await prisma.entryObjectClass.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends EntryObjectClassUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, EntryObjectClassUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryObjectClassPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one EntryObjectClass.
@@ -1109,7 +1175,28 @@ export type EntryObjectClassCreateManyArgs<ExtArgs extends runtime.Types.Extensi
    * The data used to create many EntryObjectClasses.
    */
   data: Prisma.EntryObjectClassCreateManyInput | Prisma.EntryObjectClassCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * EntryObjectClass createManyAndReturn
+ */
+export type EntryObjectClassCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EntryObjectClass
+   */
+  select?: Prisma.EntryObjectClassSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the EntryObjectClass
+   */
+  omit?: Prisma.EntryObjectClassOmit<ExtArgs> | null
+  /**
+   * The data used to create many EntryObjectClasses.
+   */
+  data: Prisma.EntryObjectClassCreateManyInput | Prisma.EntryObjectClassCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EntryObjectClassIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1154,6 +1241,36 @@ export type EntryObjectClassUpdateManyArgs<ExtArgs extends runtime.Types.Extensi
    * Limit how many EntryObjectClasses to update.
    */
   limit?: number
+}
+
+/**
+ * EntryObjectClass updateManyAndReturn
+ */
+export type EntryObjectClassUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EntryObjectClass
+   */
+  select?: Prisma.EntryObjectClassSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the EntryObjectClass
+   */
+  omit?: Prisma.EntryObjectClassOmit<ExtArgs> | null
+  /**
+   * The data used to update EntryObjectClasses.
+   */
+  data: Prisma.XOR<Prisma.EntryObjectClassUpdateManyMutationInput, Prisma.EntryObjectClassUncheckedUpdateManyInput>
+  /**
+   * Filter which EntryObjectClasses to update
+   */
+  where?: Prisma.EntryObjectClassWhereInput
+  /**
+   * Limit how many EntryObjectClasses to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EntryObjectClassIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

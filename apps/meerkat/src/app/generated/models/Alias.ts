@@ -489,7 +489,6 @@ export type AliasCreateOrConnectWithoutAlias_entryInput = {
 
 export type AliasCreateManyAlias_entryInputEnvelope = {
   data: Prisma.AliasCreateManyAlias_entryInput | Prisma.AliasCreateManyAlias_entryInput[]
-  skipDuplicates?: boolean
 }
 
 export type AliasCreateWithoutAliased_entryInput = {
@@ -610,7 +609,27 @@ export type AliasSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   aliased_entry?: boolean | Prisma.Alias$aliased_entryArgs<ExtArgs>
 }, ExtArgs["result"]["alias"]>
 
+export type AliasSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  alias_entry_id?: boolean
+  aliased_entry_id?: boolean
+  aliased_entry_name?: boolean
+  created_at?: boolean
+  updated_at?: boolean
+  alias_entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Alias$aliased_entryArgs<ExtArgs>
+}, ExtArgs["result"]["alias"]>
 
+export type AliasSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  alias_entry_id?: boolean
+  aliased_entry_id?: boolean
+  aliased_entry_name?: boolean
+  created_at?: boolean
+  updated_at?: boolean
+  alias_entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Alias$aliased_entryArgs<ExtArgs>
+}, ExtArgs["result"]["alias"]>
 
 export type AliasSelectScalar = {
   id?: boolean
@@ -623,6 +642,14 @@ export type AliasSelectScalar = {
 
 export type AliasOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "alias_entry_id" | "aliased_entry_id" | "aliased_entry_name" | "created_at" | "updated_at", ExtArgs["result"]["alias"]>
 export type AliasInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  alias_entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Alias$aliased_entryArgs<ExtArgs>
+}
+export type AliasIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  alias_entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Alias$aliased_entryArgs<ExtArgs>
+}
+export type AliasIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   alias_entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
   aliased_entry?: boolean | Prisma.Alias$aliased_entryArgs<ExtArgs>
 }
@@ -758,6 +785,30 @@ export interface AliasDelegate<ExtArgs extends runtime.Types.Extensions.Internal
   createMany<T extends AliasCreateManyArgs>(args?: Prisma.SelectSubset<T, AliasCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many Aliases and returns the data saved in the database.
+   * @param {AliasCreateManyAndReturnArgs} args - Arguments to create many Aliases.
+   * @example
+   * // Create many Aliases
+   * const alias = await prisma.alias.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many Aliases and only return the `id`
+   * const aliasWithIdOnly = await prisma.alias.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends AliasCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, AliasCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AliasPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a Alias.
    * @param {AliasDeleteArgs} args - Arguments to delete one Alias.
    * @example
@@ -820,6 +871,36 @@ export interface AliasDelegate<ExtArgs extends runtime.Types.Extensions.Internal
    * 
    */
   updateMany<T extends AliasUpdateManyArgs>(args: Prisma.SelectSubset<T, AliasUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more Aliases and returns the data updated in the database.
+   * @param {AliasUpdateManyAndReturnArgs} args - Arguments to update many Aliases.
+   * @example
+   * // Update many Aliases
+   * const alias = await prisma.alias.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more Aliases and only return the `id`
+   * const aliasWithIdOnly = await prisma.alias.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends AliasUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, AliasUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AliasPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one Alias.
@@ -1246,7 +1327,28 @@ export type AliasCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * The data used to create many Aliases.
    */
   data: Prisma.AliasCreateManyInput | Prisma.AliasCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * Alias createManyAndReturn
+ */
+export type AliasCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Alias
+   */
+  select?: Prisma.AliasSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the Alias
+   */
+  omit?: Prisma.AliasOmit<ExtArgs> | null
+  /**
+   * The data used to create many Aliases.
+   */
+  data: Prisma.AliasCreateManyInput | Prisma.AliasCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AliasIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1291,6 +1393,36 @@ export type AliasUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Limit how many Aliases to update.
    */
   limit?: number
+}
+
+/**
+ * Alias updateManyAndReturn
+ */
+export type AliasUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Alias
+   */
+  select?: Prisma.AliasSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the Alias
+   */
+  omit?: Prisma.AliasOmit<ExtArgs> | null
+  /**
+   * The data used to update Aliases.
+   */
+  data: Prisma.XOR<Prisma.AliasUpdateManyMutationInput, Prisma.AliasUncheckedUpdateManyInput>
+  /**
+   * Filter which Aliases to update
+   */
+  where?: Prisma.AliasWhereInput
+  /**
+   * Limit how many Aliases to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AliasIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

@@ -266,7 +266,6 @@ export type ContextUseRuleOrderByWithRelationInput = {
   entry_id?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.ContextUseRuleOrderByRelevanceInput
 }
 
 export type ContextUseRuleWhereUniqueInput = Prisma.AtLeast<{
@@ -408,12 +407,6 @@ export type ContextUseRuleOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ContextUseRuleOrderByRelevanceInput = {
-  fields: Prisma.ContextUseRuleOrderByRelevanceFieldEnum | Prisma.ContextUseRuleOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type ContextUseRuleEntry_idAttributeTypeCompoundUniqueInput = {
   entry_id: number
   attributeType: string
@@ -535,7 +528,6 @@ export type ContextUseRuleCreateOrConnectWithoutEntryInput = {
 
 export type ContextUseRuleCreateManyEntryInputEnvelope = {
   data: Prisma.ContextUseRuleCreateManyEntryInput | Prisma.ContextUseRuleCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type ContextUseRuleUpsertWithWhereUniqueWithoutEntryInput = {
@@ -627,7 +619,31 @@ export type ContextUseRuleSelect<ExtArgs extends runtime.Types.Extensions.Intern
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["contextUseRule"]>
 
+export type ContextUseRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  attributeType?: boolean
+  mandatory?: boolean
+  optional?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["contextUseRule"]>
 
+export type ContextUseRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  attributeType?: boolean
+  mandatory?: boolean
+  optional?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  entry_id?: boolean
+  created_at?: boolean
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["contextUseRule"]>
 
 export type ContextUseRuleSelectScalar = {
   id?: boolean
@@ -643,6 +659,12 @@ export type ContextUseRuleSelectScalar = {
 
 export type ContextUseRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "attributeType" | "mandatory" | "optional" | "name" | "description" | "obsolete" | "entry_id" | "created_at", ExtArgs["result"]["contextUseRule"]>
 export type ContextUseRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type ContextUseRuleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
+}
+export type ContextUseRuleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
 
@@ -779,6 +801,30 @@ export interface ContextUseRuleDelegate<ExtArgs extends runtime.Types.Extensions
   createMany<T extends ContextUseRuleCreateManyArgs>(args?: Prisma.SelectSubset<T, ContextUseRuleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many ContextUseRules and returns the data saved in the database.
+   * @param {ContextUseRuleCreateManyAndReturnArgs} args - Arguments to create many ContextUseRules.
+   * @example
+   * // Create many ContextUseRules
+   * const contextUseRule = await prisma.contextUseRule.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many ContextUseRules and only return the `id`
+   * const contextUseRuleWithIdOnly = await prisma.contextUseRule.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends ContextUseRuleCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, ContextUseRuleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContextUseRulePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a ContextUseRule.
    * @param {ContextUseRuleDeleteArgs} args - Arguments to delete one ContextUseRule.
    * @example
@@ -841,6 +887,36 @@ export interface ContextUseRuleDelegate<ExtArgs extends runtime.Types.Extensions
    * 
    */
   updateMany<T extends ContextUseRuleUpdateManyArgs>(args: Prisma.SelectSubset<T, ContextUseRuleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more ContextUseRules and returns the data updated in the database.
+   * @param {ContextUseRuleUpdateManyAndReturnArgs} args - Arguments to update many ContextUseRules.
+   * @example
+   * // Update many ContextUseRules
+   * const contextUseRule = await prisma.contextUseRule.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more ContextUseRules and only return the `id`
+   * const contextUseRuleWithIdOnly = await prisma.contextUseRule.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends ContextUseRuleUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, ContextUseRuleUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContextUseRulePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one ContextUseRule.
@@ -1269,7 +1345,28 @@ export type ContextUseRuleCreateManyArgs<ExtArgs extends runtime.Types.Extension
    * The data used to create many ContextUseRules.
    */
   data: Prisma.ContextUseRuleCreateManyInput | Prisma.ContextUseRuleCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * ContextUseRule createManyAndReturn
+ */
+export type ContextUseRuleCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContextUseRule
+   */
+  select?: Prisma.ContextUseRuleSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContextUseRule
+   */
+  omit?: Prisma.ContextUseRuleOmit<ExtArgs> | null
+  /**
+   * The data used to create many ContextUseRules.
+   */
+  data: Prisma.ContextUseRuleCreateManyInput | Prisma.ContextUseRuleCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContextUseRuleIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1314,6 +1411,36 @@ export type ContextUseRuleUpdateManyArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many ContextUseRules to update.
    */
   limit?: number
+}
+
+/**
+ * ContextUseRule updateManyAndReturn
+ */
+export type ContextUseRuleUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContextUseRule
+   */
+  select?: Prisma.ContextUseRuleSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContextUseRule
+   */
+  omit?: Prisma.ContextUseRuleOmit<ExtArgs> | null
+  /**
+   * The data used to update ContextUseRules.
+   */
+  data: Prisma.XOR<Prisma.ContextUseRuleUpdateManyMutationInput, Prisma.ContextUseRuleUncheckedUpdateManyInput>
+  /**
+   * Filter which ContextUseRules to update
+   */
+  where?: Prisma.ContextUseRuleWhereInput
+  /**
+   * Limit how many ContextUseRules to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContextUseRuleIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

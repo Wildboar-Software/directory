@@ -293,7 +293,6 @@ export type NameFormOrderByWithRelationInput = {
   created_at?: Prisma.SortOrder
   entry_id?: Prisma.SortOrderInput | Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
-  _relevance?: Prisma.NameFormOrderByRelevanceInput
 }
 
 export type NameFormWhereUniqueInput = Prisma.AtLeast<{
@@ -465,12 +464,6 @@ export type NameFormOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type NameFormOrderByRelevanceInput = {
-  fields: Prisma.NameFormOrderByRelevanceFieldEnum | Prisma.NameFormOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type NameFormEntry_idIdentifierCompoundUniqueInput = {
   entry_id: number
   identifier: string
@@ -607,7 +600,6 @@ export type NameFormCreateOrConnectWithoutEntryInput = {
 
 export type NameFormCreateManyEntryInputEnvelope = {
   data: Prisma.NameFormCreateManyEntryInput | Prisma.NameFormCreateManyEntryInput[]
-  skipDuplicates?: boolean
 }
 
 export type NameFormUpsertWithWhereUniqueWithoutEntryInput = {
@@ -717,7 +709,37 @@ export type NameFormSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   entry?: boolean | Prisma.NameForm$entryArgs<ExtArgs>
 }, ExtArgs["result"]["nameForm"]>
 
+export type NameFormSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  namedObjectClass?: boolean
+  mandatoryAttributes?: boolean
+  optionalAttributes?: boolean
+  ldapName?: boolean
+  ldapDesc?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  created_at?: boolean
+  entry_id?: boolean
+  entry?: boolean | Prisma.NameForm$entryArgs<ExtArgs>
+}, ExtArgs["result"]["nameForm"]>
 
+export type NameFormSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  namedObjectClass?: boolean
+  mandatoryAttributes?: boolean
+  optionalAttributes?: boolean
+  ldapName?: boolean
+  ldapDesc?: boolean
+  identifier?: boolean
+  name?: boolean
+  description?: boolean
+  obsolete?: boolean
+  created_at?: boolean
+  entry_id?: boolean
+  entry?: boolean | Prisma.NameForm$entryArgs<ExtArgs>
+}, ExtArgs["result"]["nameForm"]>
 
 export type NameFormSelectScalar = {
   id?: boolean
@@ -736,6 +758,12 @@ export type NameFormSelectScalar = {
 
 export type NameFormOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "namedObjectClass" | "mandatoryAttributes" | "optionalAttributes" | "ldapName" | "ldapDesc" | "identifier" | "name" | "description" | "obsolete" | "created_at" | "entry_id", ExtArgs["result"]["nameForm"]>
 export type NameFormInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.NameForm$entryArgs<ExtArgs>
+}
+export type NameFormIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  entry?: boolean | Prisma.NameForm$entryArgs<ExtArgs>
+}
+export type NameFormIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.NameForm$entryArgs<ExtArgs>
 }
 
@@ -875,6 +903,30 @@ export interface NameFormDelegate<ExtArgs extends runtime.Types.Extensions.Inter
   createMany<T extends NameFormCreateManyArgs>(args?: Prisma.SelectSubset<T, NameFormCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many NameForms and returns the data saved in the database.
+   * @param {NameFormCreateManyAndReturnArgs} args - Arguments to create many NameForms.
+   * @example
+   * // Create many NameForms
+   * const nameForm = await prisma.nameForm.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many NameForms and only return the `id`
+   * const nameFormWithIdOnly = await prisma.nameForm.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends NameFormCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, NameFormCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NameFormPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a NameForm.
    * @param {NameFormDeleteArgs} args - Arguments to delete one NameForm.
    * @example
@@ -937,6 +989,36 @@ export interface NameFormDelegate<ExtArgs extends runtime.Types.Extensions.Inter
    * 
    */
   updateMany<T extends NameFormUpdateManyArgs>(args: Prisma.SelectSubset<T, NameFormUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more NameForms and returns the data updated in the database.
+   * @param {NameFormUpdateManyAndReturnArgs} args - Arguments to update many NameForms.
+   * @example
+   * // Update many NameForms
+   * const nameForm = await prisma.nameForm.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more NameForms and only return the `id`
+   * const nameFormWithIdOnly = await prisma.nameForm.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends NameFormUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, NameFormUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NameFormPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one NameForm.
@@ -1368,7 +1450,28 @@ export type NameFormCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * The data used to create many NameForms.
    */
   data: Prisma.NameFormCreateManyInput | Prisma.NameFormCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * NameForm createManyAndReturn
+ */
+export type NameFormCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NameForm
+   */
+  select?: Prisma.NameFormSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the NameForm
+   */
+  omit?: Prisma.NameFormOmit<ExtArgs> | null
+  /**
+   * The data used to create many NameForms.
+   */
+  data: Prisma.NameFormCreateManyInput | Prisma.NameFormCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NameFormIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1413,6 +1516,36 @@ export type NameFormUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many NameForms to update.
    */
   limit?: number
+}
+
+/**
+ * NameForm updateManyAndReturn
+ */
+export type NameFormUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NameForm
+   */
+  select?: Prisma.NameFormSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the NameForm
+   */
+  omit?: Prisma.NameFormOmit<ExtArgs> | null
+  /**
+   * The data used to update NameForms.
+   */
+  data: Prisma.XOR<Prisma.NameFormUpdateManyMutationInput, Prisma.NameFormUncheckedUpdateManyInput>
+  /**
+   * Filter which NameForms to update
+   */
+  where?: Prisma.NameFormWhereInput
+  /**
+   * Limit how many NameForms to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NameFormIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**

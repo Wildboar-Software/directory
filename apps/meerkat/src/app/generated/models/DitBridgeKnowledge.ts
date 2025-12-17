@@ -206,7 +206,6 @@ export type DitBridgeKnowledgeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   domain_local_id?: Prisma.SortOrderInput | Prisma.SortOrder
   ber?: Prisma.SortOrder
-  _relevance?: Prisma.DitBridgeKnowledgeOrderByRelevanceInput
 }
 
 export type DitBridgeKnowledgeWhereUniqueInput = Prisma.AtLeast<{
@@ -277,12 +276,6 @@ export type DitBridgeKnowledgeUncheckedUpdateManyInput = {
   ber?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
 }
 
-export type DitBridgeKnowledgeOrderByRelevanceInput = {
-  fields: Prisma.DitBridgeKnowledgeOrderByRelevanceFieldEnum | Prisma.DitBridgeKnowledgeOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type DitBridgeKnowledgeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   domain_local_id?: Prisma.SortOrder
@@ -317,7 +310,17 @@ export type DitBridgeKnowledgeSelect<ExtArgs extends runtime.Types.Extensions.In
   ber?: boolean
 }, ExtArgs["result"]["ditBridgeKnowledge"]>
 
+export type DitBridgeKnowledgeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  domain_local_id?: boolean
+  ber?: boolean
+}, ExtArgs["result"]["ditBridgeKnowledge"]>
 
+export type DitBridgeKnowledgeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  domain_local_id?: boolean
+  ber?: boolean
+}, ExtArgs["result"]["ditBridgeKnowledge"]>
 
 export type DitBridgeKnowledgeSelectScalar = {
   id?: boolean
@@ -452,6 +455,30 @@ export interface DitBridgeKnowledgeDelegate<ExtArgs extends runtime.Types.Extens
   createMany<T extends DitBridgeKnowledgeCreateManyArgs>(args?: Prisma.SelectSubset<T, DitBridgeKnowledgeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many DitBridgeKnowledges and returns the data saved in the database.
+   * @param {DitBridgeKnowledgeCreateManyAndReturnArgs} args - Arguments to create many DitBridgeKnowledges.
+   * @example
+   * // Create many DitBridgeKnowledges
+   * const ditBridgeKnowledge = await prisma.ditBridgeKnowledge.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many DitBridgeKnowledges and only return the `id`
+   * const ditBridgeKnowledgeWithIdOnly = await prisma.ditBridgeKnowledge.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends DitBridgeKnowledgeCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, DitBridgeKnowledgeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DitBridgeKnowledgePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a DitBridgeKnowledge.
    * @param {DitBridgeKnowledgeDeleteArgs} args - Arguments to delete one DitBridgeKnowledge.
    * @example
@@ -514,6 +541,36 @@ export interface DitBridgeKnowledgeDelegate<ExtArgs extends runtime.Types.Extens
    * 
    */
   updateMany<T extends DitBridgeKnowledgeUpdateManyArgs>(args: Prisma.SelectSubset<T, DitBridgeKnowledgeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more DitBridgeKnowledges and returns the data updated in the database.
+   * @param {DitBridgeKnowledgeUpdateManyAndReturnArgs} args - Arguments to update many DitBridgeKnowledges.
+   * @example
+   * // Update many DitBridgeKnowledges
+   * const ditBridgeKnowledge = await prisma.ditBridgeKnowledge.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more DitBridgeKnowledges and only return the `id`
+   * const ditBridgeKnowledgeWithIdOnly = await prisma.ditBridgeKnowledge.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends DitBridgeKnowledgeUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, DitBridgeKnowledgeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DitBridgeKnowledgePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one DitBridgeKnowledge.
@@ -911,7 +968,24 @@ export type DitBridgeKnowledgeCreateManyArgs<ExtArgs extends runtime.Types.Exten
    * The data used to create many DitBridgeKnowledges.
    */
   data: Prisma.DitBridgeKnowledgeCreateManyInput | Prisma.DitBridgeKnowledgeCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * DitBridgeKnowledge createManyAndReturn
+ */
+export type DitBridgeKnowledgeCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DitBridgeKnowledge
+   */
+  select?: Prisma.DitBridgeKnowledgeSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the DitBridgeKnowledge
+   */
+  omit?: Prisma.DitBridgeKnowledgeOmit<ExtArgs> | null
+  /**
+   * The data used to create many DitBridgeKnowledges.
+   */
+  data: Prisma.DitBridgeKnowledgeCreateManyInput | Prisma.DitBridgeKnowledgeCreateManyInput[]
 }
 
 /**
@@ -940,6 +1014,32 @@ export type DitBridgeKnowledgeUpdateArgs<ExtArgs extends runtime.Types.Extension
  * DitBridgeKnowledge updateMany
  */
 export type DitBridgeKnowledgeUpdateManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * The data used to update DitBridgeKnowledges.
+   */
+  data: Prisma.XOR<Prisma.DitBridgeKnowledgeUpdateManyMutationInput, Prisma.DitBridgeKnowledgeUncheckedUpdateManyInput>
+  /**
+   * Filter which DitBridgeKnowledges to update
+   */
+  where?: Prisma.DitBridgeKnowledgeWhereInput
+  /**
+   * Limit how many DitBridgeKnowledges to update.
+   */
+  limit?: number
+}
+
+/**
+ * DitBridgeKnowledge updateManyAndReturn
+ */
+export type DitBridgeKnowledgeUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DitBridgeKnowledge
+   */
+  select?: Prisma.DitBridgeKnowledgeSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the DitBridgeKnowledge
+   */
+  omit?: Prisma.DitBridgeKnowledgeOmit<ExtArgs> | null
   /**
    * The data used to update DitBridgeKnowledges.
    */

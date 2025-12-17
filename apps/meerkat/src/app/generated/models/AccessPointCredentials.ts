@@ -289,7 +289,6 @@ export type AccessPointCredentialsOrderByWithRelationInput = {
   strong_pkcs12?: Prisma.SortOrderInput | Prisma.SortOrder
   mtls_client_pkcs12?: Prisma.SortOrderInput | Prisma.SortOrder
   access_point?: Prisma.AccessPointOrderByWithRelationInput
-  _relevance?: Prisma.AccessPointCredentialsOrderByRelevanceInput
 }
 
 export type AccessPointCredentialsWhereUniqueInput = Prisma.AtLeast<{
@@ -460,12 +459,6 @@ export type AccessPointCredentialsOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type AccessPointCredentialsOrderByRelevanceInput = {
-  fields: Prisma.AccessPointCredentialsOrderByRelevanceFieldEnum | Prisma.AccessPointCredentialsOrderByRelevanceFieldEnum[]
-  sort: Prisma.SortOrder
-  search: string
-}
-
 export type AccessPointCredentialsCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   uuid?: Prisma.SortOrder
@@ -595,7 +588,6 @@ export type AccessPointCredentialsCreateOrConnectWithoutAccess_pointInput = {
 
 export type AccessPointCredentialsCreateManyAccess_pointInputEnvelope = {
   data: Prisma.AccessPointCredentialsCreateManyAccess_pointInput | Prisma.AccessPointCredentialsCreateManyAccess_pointInput[]
-  skipDuplicates?: boolean
 }
 
 export type AccessPointCredentialsUpsertWithWhereUniqueWithoutAccess_pointInput = {
@@ -705,7 +697,37 @@ export type AccessPointCredentialsSelect<ExtArgs extends runtime.Types.Extension
   access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["accessPointCredentials"]>
 
+export type AccessPointCredentialsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  uuid?: boolean
+  created_at?: boolean
+  updated_at?: boolean
+  access_point_id?: boolean
+  simple_name?: boolean
+  simple_password_unprotected?: boolean
+  simple_password_hash_value?: boolean
+  simple_password_hash_algorithm_oid?: boolean
+  simple_password_hash_algorithm_parameters?: boolean
+  strong_pkcs12?: boolean
+  mtls_client_pkcs12?: boolean
+  access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["accessPointCredentials"]>
 
+export type AccessPointCredentialsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
+  uuid?: boolean
+  created_at?: boolean
+  updated_at?: boolean
+  access_point_id?: boolean
+  simple_name?: boolean
+  simple_password_unprotected?: boolean
+  simple_password_hash_value?: boolean
+  simple_password_hash_algorithm_oid?: boolean
+  simple_password_hash_algorithm_parameters?: boolean
+  strong_pkcs12?: boolean
+  mtls_client_pkcs12?: boolean
+  access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
+}, ExtArgs["result"]["accessPointCredentials"]>
 
 export type AccessPointCredentialsSelectScalar = {
   id?: boolean
@@ -724,6 +746,12 @@ export type AccessPointCredentialsSelectScalar = {
 
 export type AccessPointCredentialsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "uuid" | "created_at" | "updated_at" | "access_point_id" | "simple_name" | "simple_password_unprotected" | "simple_password_hash_value" | "simple_password_hash_algorithm_oid" | "simple_password_hash_algorithm_parameters" | "strong_pkcs12" | "mtls_client_pkcs12", ExtArgs["result"]["accessPointCredentials"]>
 export type AccessPointCredentialsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
+}
+export type AccessPointCredentialsIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
+}
+export type AccessPointCredentialsIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   access_point?: boolean | Prisma.AccessPointDefaultArgs<ExtArgs>
 }
 
@@ -863,6 +891,30 @@ export interface AccessPointCredentialsDelegate<ExtArgs extends runtime.Types.Ex
   createMany<T extends AccessPointCredentialsCreateManyArgs>(args?: Prisma.SelectSubset<T, AccessPointCredentialsCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
+   * Create many AccessPointCredentials and returns the data saved in the database.
+   * @param {AccessPointCredentialsCreateManyAndReturnArgs} args - Arguments to create many AccessPointCredentials.
+   * @example
+   * // Create many AccessPointCredentials
+   * const accessPointCredentials = await prisma.accessPointCredentials.createManyAndReturn({
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Create many AccessPointCredentials and only return the `id`
+   * const accessPointCredentialsWithIdOnly = await prisma.accessPointCredentials.createManyAndReturn({
+   *   select: { id: true },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  createManyAndReturn<T extends AccessPointCredentialsCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, AccessPointCredentialsCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccessPointCredentialsPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+  /**
    * Delete a AccessPointCredentials.
    * @param {AccessPointCredentialsDeleteArgs} args - Arguments to delete one AccessPointCredentials.
    * @example
@@ -925,6 +977,36 @@ export interface AccessPointCredentialsDelegate<ExtArgs extends runtime.Types.Ex
    * 
    */
   updateMany<T extends AccessPointCredentialsUpdateManyArgs>(args: Prisma.SelectSubset<T, AccessPointCredentialsUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
+
+  /**
+   * Update zero or more AccessPointCredentials and returns the data updated in the database.
+   * @param {AccessPointCredentialsUpdateManyAndReturnArgs} args - Arguments to update many AccessPointCredentials.
+   * @example
+   * // Update many AccessPointCredentials
+   * const accessPointCredentials = await prisma.accessPointCredentials.updateManyAndReturn({
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * 
+   * // Update zero or more AccessPointCredentials and only return the `id`
+   * const accessPointCredentialsWithIdOnly = await prisma.accessPointCredentials.updateManyAndReturn({
+   *   select: { id: true },
+   *   where: {
+   *     // ... provide filter here
+   *   },
+   *   data: [
+   *     // ... provide data here
+   *   ]
+   * })
+   * Note, that providing `undefined` is treated as the value not being there.
+   * Read more here: https://pris.ly/d/null-undefined
+   * 
+   */
+  updateManyAndReturn<T extends AccessPointCredentialsUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, AccessPointCredentialsUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccessPointCredentialsPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one AccessPointCredentials.
@@ -1356,7 +1438,28 @@ export type AccessPointCredentialsCreateManyArgs<ExtArgs extends runtime.Types.E
    * The data used to create many AccessPointCredentials.
    */
   data: Prisma.AccessPointCredentialsCreateManyInput | Prisma.AccessPointCredentialsCreateManyInput[]
-  skipDuplicates?: boolean
+}
+
+/**
+ * AccessPointCredentials createManyAndReturn
+ */
+export type AccessPointCredentialsCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AccessPointCredentials
+   */
+  select?: Prisma.AccessPointCredentialsSelectCreateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the AccessPointCredentials
+   */
+  omit?: Prisma.AccessPointCredentialsOmit<ExtArgs> | null
+  /**
+   * The data used to create many AccessPointCredentials.
+   */
+  data: Prisma.AccessPointCredentialsCreateManyInput | Prisma.AccessPointCredentialsCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AccessPointCredentialsIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1401,6 +1504,36 @@ export type AccessPointCredentialsUpdateManyArgs<ExtArgs extends runtime.Types.E
    * Limit how many AccessPointCredentials to update.
    */
   limit?: number
+}
+
+/**
+ * AccessPointCredentials updateManyAndReturn
+ */
+export type AccessPointCredentialsUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AccessPointCredentials
+   */
+  select?: Prisma.AccessPointCredentialsSelectUpdateManyAndReturn<ExtArgs> | null
+  /**
+   * Omit specific fields from the AccessPointCredentials
+   */
+  omit?: Prisma.AccessPointCredentialsOmit<ExtArgs> | null
+  /**
+   * The data used to update AccessPointCredentials.
+   */
+  data: Prisma.XOR<Prisma.AccessPointCredentialsUpdateManyMutationInput, Prisma.AccessPointCredentialsUncheckedUpdateManyInput>
+  /**
+   * Filter which AccessPointCredentials to update
+   */
+  where?: Prisma.AccessPointCredentialsWhereInput
+  /**
+   * Limit how many AccessPointCredentials to update.
+   */
+  limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AccessPointCredentialsIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
