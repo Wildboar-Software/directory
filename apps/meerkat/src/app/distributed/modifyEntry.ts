@@ -5,8 +5,8 @@ import {
     Value,
     ClientAssociation,
     OperationReturn,
-} from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+} from "../types/index.js";
+import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import {
     _decode_ModifyEntryArgument,
@@ -89,7 +89,8 @@ import {
 } from "@wildboar/x500/DistributedOperations";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import getDistinguishedName from "../x500/getDistinguishedName.js";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "../generated/client.js";
+import type { AttributeValueWhereInput } from "../generated/models/AttributeValue.js";
 import addValues from "../database/entry/addValues.js";
 import removeValues from "../database/entry/removeValues.js";
 import removeAttribute from "../database/entry/removeAttribute.js";
@@ -1706,7 +1707,7 @@ async function executeResetValue (
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
 ): Promise<Prisma.PrismaPromise<any>[]> {
-    const where: Prisma.AttributeValueWhereInput = {
+    const where: AttributeValueWhereInput = {
         entry_id: entry.dse.id,
         type_oid: mod.toBytes(),
         ContextValue: {

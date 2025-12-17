@@ -1,7 +1,7 @@
-import type { Context, DIT } from "@wildboar/meerkat-types";
+import type { Context, DIT } from "../types/index.js";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
 import { randomUUID } from "crypto";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "../generated/client.js";
 
 const ROOT_DSE_NAME: Prisma.InputJsonArray = [];
 

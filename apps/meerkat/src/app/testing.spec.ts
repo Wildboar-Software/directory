@@ -5,7 +5,7 @@ import {
     LogLevel,
     RemoteCRLCheckiness,
     Configuration,
-} from "@wildboar/meerkat-types";
+} from "./types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     AccessPoint,

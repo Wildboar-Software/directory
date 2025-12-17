@@ -1,6 +1,6 @@
-import type { Entry as DatabaseEntry } from "@prisma/client";
+import type { Entry as DatabaseEntry } from "../generated/client.js";
 import { ObjectIdentifier, BERElement, ASN1Construction } from "@wildboar/asn1";
-import type { Context, DSE } from "@wildboar/meerkat-types";
+import type { Context, DSE } from "../types/index.js";
 import rdnFromJson from "../x500/rdnFromJson.js";
 import {
     _decode_AccessPoint,
@@ -19,7 +19,7 @@ import {
 } from "@wildboar/x500/DistributedOperations";
 import attributesFromValues from "../x500/attributesFromValues.js";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute.js";
-import { Knowledge } from "@prisma/client";
+import { Knowledge } from "../generated/client.js";
 import {
     _decode_DitBridgeKnowledge,
 } from "@wildboar/x500/DistributedOperations";
@@ -57,7 +57,7 @@ const SUBENTRY_CA: string = collectiveAttributeSubentry["&id"].toString();
 const SUBENTRY_PWD: string = pwdAdminSubentry["&id"].toString();
 const SUBSCHEMA: string = subschema["&id"].toString();
 
-let collectiveAttributeTypes: Buffer[] = [];
+let collectiveAttributeTypes: Buffer<ArrayBuffer>[] = [];
 
 /**
  * @summary Produce an in-memory DSE from the Prisma `Entry` model
@@ -85,11 +85,11 @@ async function dseFromDatabaseEntry (
             object_class: string;
         }[];
         RDN?: {
-            type_oid: Uint8Array;
+            type_oid: Uint8Array<ArrayBuffer>;
             tag_class: number,
             constructed: boolean,
             tag_number: number,
-            content_octets: Uint8Array,
+            content_octets: Uint8Array<ArrayBuffer>,
         }[];
     }),
 ): Promise<DSE> {

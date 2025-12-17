@@ -1,5 +1,5 @@
 import type DOPAssociation from "../DOPConnection.js";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import type {
     TerminateOperationalBindingArgument,

@@ -1,9 +1,9 @@
-import { ClientAssociation } from "@wildboar/meerkat-types";
+import { ClientAssociation } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import {
     MistypedArgumentError,
     SecurityError,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import {
     DERElement,
     BOOLEAN,

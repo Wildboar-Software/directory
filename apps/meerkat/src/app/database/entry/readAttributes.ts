@@ -1,4 +1,4 @@
-import type { Context, IndexableOID, Vertex } from "@wildboar/meerkat-types";
+import type { Context, IndexableOID, Vertex } from "../../types/index.js";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";

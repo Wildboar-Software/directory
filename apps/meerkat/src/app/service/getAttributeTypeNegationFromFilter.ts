@@ -1,4 +1,4 @@
-import { IndexableOID } from "@wildboar/meerkat-types";
+import { IndexableOID } from "../types/index.js";
 import { Filter } from "@wildboar/x500/DirectoryAbstractService";
 import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { FilterItem } from "@wildboar/x500/DirectoryAbstractService";

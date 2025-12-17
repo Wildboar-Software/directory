@@ -1,6 +1,6 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { Context, Vertex } from "../types/index.js";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
-import type { Prisma } from "@prisma/client";
+import type { EntryWhereInput } from "../generated/models/Entry.js";
 import { MAX_RESULTS } from "../constants.js";
 import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 
@@ -28,7 +28,7 @@ async function readSubordinates (
     take?: number,
     skip?: number,
     cursorId?: number,
-    where?: Partial<Prisma.EntryWhereInput>,
+    where?: Partial<EntryWhereInput>,
 ): Promise<Vertex[]> {
     if (entry.dse.subentry || entry.dse.alias) {
         return []; // These types should never have children. This return is to prevent errors.

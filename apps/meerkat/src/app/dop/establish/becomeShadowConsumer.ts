@@ -1,5 +1,5 @@
 import { MeerkatContext } from "../../ctx.js";
-import type { Vertex } from "@wildboar/meerkat-types";
+import type { Vertex } from "../../types/index.js";
 import {
     ShadowingAgreementInfo,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -8,7 +8,7 @@ import {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
 import saveAccessPoint from "../../database/saveAccessPoint.js";
-import { Knowledge } from "@prisma/client";
+import { Knowledge } from "../../generated/client.js";
 import {
     SupplierInformation,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
@@ -16,7 +16,6 @@ import {
     OperationalBindingID,
 } from "@wildboar/x500/OperationalBindingManagement";
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates.js";
-import type { Prisma } from "@prisma/client";
 import { ASN1Construction } from "@wildboar/asn1";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer.js";
 
@@ -66,7 +65,7 @@ async function becomeShadowConsumer (
                     modifyTimestamp: new Date(),
                     RDN: {
                         createMany: {
-                            data: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
+                            data: rdn.map((atav, i) => ({
                                 type_oid: atav.type_.toBytes(),
                                 tag_class: atav.value.tagClass,
                                 constructed: (atav.value.construction === ASN1Construction.constructed),

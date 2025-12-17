@@ -5,7 +5,7 @@ import {
     LogLevel,
     RemoteCRLCheckiness,
     Configuration,
-} from "@wildboar/meerkat-types";
+} from "./types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     AccessPoint,
@@ -13,7 +13,6 @@ import {
 import {
     PresentationAddress,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import { PrismaClient } from "@prisma/client";
 import { EventEmitter } from "node:events";
 import {
     configure as configureLogging,
@@ -95,6 +94,25 @@ import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { Name } from "@wildboar/x500/InformationFramework";
 import { _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub";
 import { id_tls_client_auth, tls_client_auth } from "./authn/external/tls_client_auth.js";
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaClient } from './generated/client.js';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+
+// const adapter = new PrismaMariaDb({
+//   user: "root",
+//   password: "example",
+//   database: "directory",
+//   host: "localhost", // TODO: Make configurable
+//   port: 3306, // TODO: Make configurable
+//   connectionLimit: 17 // TODO: Make configurable
+// });
+const adapter = new PrismaBetterSqlite3({
+    url: 'file:./dev.db',
+}, {
+    // Recommended choice here: https://www.prisma.io/docs/orm/overview/databases/sqlite#3-configure-timestamp-format-for-backward-compatibility
+    timestampFormat: 'iso8601',
+});
+const db = new PrismaClient({ adapter });
 
 /**
  * Meerkat DSA once used Microsoft Azure's ApplicationInsights.
@@ -516,7 +534,7 @@ const config: Configuration = {
             },
             loggers: [
                 { category: ["logtape", "meta"], lowestLevel: "debug", sinks: ["safe"] },
-                { category: [], lowestLevel: "debug", sinks: ["all"] },
+                { category: [], lowestLevel: "warning", sinks: ["all"] },
             ]
         },
     },
@@ -974,10 +992,7 @@ const ctx: MeerkatContext = {
         root,
     },
     log: getLogger(),
-    db: new PrismaClient({
-        // log: ["query"],
-        // log: ['query', 'info', 'warn', 'error'],
-    }),
+    db,
     telemetry: {
         init: async (): Promise<void> => {},
         trackAvailability: (...args) => {},

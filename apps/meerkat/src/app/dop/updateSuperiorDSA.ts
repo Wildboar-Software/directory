@@ -1,4 +1,4 @@
-import { Vertex, ServiceError, UpdateError } from "@wildboar/meerkat-types";
+import { Vertex, ServiceError, UpdateError } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { BERElement, packBits } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
@@ -71,7 +71,7 @@ import {
 import {
     OpBindingErrorParam_problem_invalidNewID,
 } from "@wildboar/x500/OperationalBindingManagement";
-import { OperationalBindingInitiator } from "@prisma/client";
+import { OperationalBindingInitiator } from "../generated/client.js";
 import {
     _encode_CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";

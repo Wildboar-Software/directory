@@ -1,4 +1,4 @@
-import type { ServiceControlStatistics } from "@wildboar/meerkat-types";
+import type { ServiceControlStatistics } from "../types/index.js";
 import type {
     ServiceControls,
 } from "@wildboar/x500/DirectoryAbstractService";

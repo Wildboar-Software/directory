@@ -2,8 +2,8 @@ import type {
     Context,
     Vertex,
     PendingUpdates,
-} from "@wildboar/meerkat-types";
-import type { Prisma } from "@prisma/client";
+} from "../../types/index.js";
+import type { Prisma } from "../../generated/client.js";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import type { AttributeType } from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson.js";

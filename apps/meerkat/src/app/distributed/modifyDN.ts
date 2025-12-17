@@ -1,8 +1,8 @@
-import { Context, Vertex, Value, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
+import { Context, Vertex, Value, ClientAssociation, OperationReturn, IndexableOID } from "../types/index.js";
 import { OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER, unpackBits, ASN1Construction } from "@wildboar/asn1";
 import type { MeerkatContext } from "../ctx.js";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
-import * as errors from "@wildboar/meerkat-types";
+import * as errors from "../types/index.js";
 import {
     _decode_ModifyDNArgument,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -181,7 +181,7 @@ import type {
 import { printInvokeId } from "../utils/printInvokeId.js";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
-import { Prisma } from "@prisma/client";
+import type { DistinguishedValueCreateManyInput } from "../generated/models/DistinguishedValue.js";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs.js";
 import { SubordinateChanges } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -1977,7 +1977,7 @@ async function modifyDN (
                 },
             }),
             ctx.db.distinguishedValue.createMany({
-                data: newRDN.map((atav, i): Prisma.DistinguishedValueCreateManyInput => ({
+                data: newRDN.map((atav, i): DistinguishedValueCreateManyInput => ({
                     entry_id: target.dse.id,
                     type_oid: atav.type_.toBytes(),
                     tag_class: atav.value.tagClass,

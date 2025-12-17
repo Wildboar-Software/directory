@@ -159,7 +159,6 @@ import {
     _decode_Certificate,
 } from "@wildboar/x500/AuthenticationFramework";
 import { Socket } from "node:net";
-import { IndexableOID } from "@wildboar/meerkat-types";
 import {
     dap_ip,
     dsp_ip,
@@ -793,7 +792,7 @@ function generateUnusedInvokeId (): number {
 }
 
 export
-const protocol_id_to_app_context: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
+const protocol_id_to_app_context: Map<string, OBJECT_IDENTIFIER> = new Map([
     [ dap_ip["&id"]!.toString(), id_ac_directoryAccessAC ],
     [ dsp_ip["&id"]!.toString(), id_ac_directorySystemAC ],
     [ dop_ip["&id"]!.toString(), id_ac_directoryOperationalBindingManagementAC ],
@@ -808,7 +807,7 @@ const protocol_id_to_app_context: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map
 ]);
 
 export
-const app_context_to_protocol_id: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
+const app_context_to_protocol_id: Map<string, OBJECT_IDENTIFIER> = new Map([
     [ dap_ip["&id"]!.toString(), dap_ip["&id"]! ],
     [ dsp_ip["&id"]!.toString(), dsp_ip["&id"]! ],
     [ dop_ip["&id"]!.toString(), dop_ip["&id"]! ],

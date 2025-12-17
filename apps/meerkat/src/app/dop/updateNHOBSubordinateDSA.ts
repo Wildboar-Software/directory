@@ -1,4 +1,4 @@
-import { Vertex } from "@wildboar/meerkat-types";
+import { Vertex } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import type {
     AccessPoint,
@@ -28,7 +28,7 @@ import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { BER, DER } from "@wildboar/asn1/functional";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding.js";
 import stringifyDN from "../x500/stringifyDN.js";
-import { Prisma, OperationalBindingInitiator } from "@prisma/client";
+import { OperationalBindingInitiator } from "../generated/client.js";
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
@@ -187,7 +187,7 @@ async function updateNHOBSubordinateDSA (
         // This is more plausible, but it is still a bug if it happens.
         throw new Error("f323a12d-92e6-49e3-9e10-50302c58639e");
     }
-    const ob_db_data: Prisma.OperationalBindingCreateInput = {
+    const ob_db_data = {
         outbound: true,
         binding_type: id_op_binding_non_specific_hierarchical.toString(),
         binding_identifier: Number(currentBindingID.identifier),

@@ -1,4 +1,4 @@
-import { Context, IndexableOID } from "@wildboar/meerkat-types";
+import { Context, IndexableOID } from "../types/index.js";
 import {
     SearchRule
 } from "@wildboar/x500/ServiceAdministration";

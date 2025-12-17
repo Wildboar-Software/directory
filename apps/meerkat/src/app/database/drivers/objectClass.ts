@@ -11,7 +11,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
     SpecialAttributeBatchDatabaseEditor,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { ObjectIdentifier, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import {
@@ -107,10 +107,18 @@ const addAttribute: SpecialAttributeBatchDatabaseEditor = async (
     attr: Attribute,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
+    const encountered: Set<string> = new Set();
     const oids: OBJECT_IDENTIFIER[] = [
         ...attr.values.map((v) => v.objectIdentifier),
         ...attr.valuesWithContext?.map((vwc) => vwc.value.objectIdentifier) ?? [],
-    ];
+    ].filter((oid) => {
+        const key = oid.toBytes().toString("base64");
+        if (encountered.has(key)) {
+            return false;
+        }
+        encountered.add(key);
+        return true;
+    });
     for (const oid of oids) {
         if (oid.isEqualTo(subentry["&id"])) {
             pendingUpdates.entryUpdate.subentry = true;
@@ -146,7 +154,6 @@ const addAttribute: SpecialAttributeBatchDatabaseEditor = async (
             entry_id: vertex.dse.id,
             object_class: oid.toString(),
         })),
-        skipDuplicates: true,
     }));
 };
 

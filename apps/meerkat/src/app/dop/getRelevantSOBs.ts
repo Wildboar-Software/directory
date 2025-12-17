@@ -1,4 +1,4 @@
-import type { Context, IndexableOID, Value, Vertex } from "@wildboar/meerkat-types";
+import type { Context, IndexableOID, Value, Vertex } from "../types/index.js";
 import {
     id_op_binding_shadow,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";

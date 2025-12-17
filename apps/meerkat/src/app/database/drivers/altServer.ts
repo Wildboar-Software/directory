@@ -10,7 +10,7 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import {
     DER,
     _encodeIA5String,

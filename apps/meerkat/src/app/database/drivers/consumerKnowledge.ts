@@ -10,12 +10,12 @@ import type {
     Context,
     Vertex,
     PendingUpdates,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     consumerKnowledge,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
-import { Knowledge } from "@prisma/client";
+import { Knowledge } from "../../generated/client.js";
 import rdnToJson from "../../x500/rdnToJson.js";
 import { compareDistinguishedName } from "@wildboar/x500";
 import saveAccessPoint from "../saveAccessPoint.js";

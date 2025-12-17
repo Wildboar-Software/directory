@@ -1,5 +1,5 @@
 import { MeerkatContext } from "../../ctx.js";
-import { ShadowError, UnknownError } from "@wildboar/meerkat-types";
+import { ShadowError, UnknownError } from "../../types/index.js";
 import {
     CoordinateShadowUpdateArgument,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -27,7 +27,7 @@ import { _decode_AccessPoint } from "@wildboar/x500/DistributedOperations";
 import stringifyDN from "../../x500/stringifyDN.js";
 import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { UpdateWindow } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { OperationalBindingInitiator } from "@prisma/client";
+import { OperationalBindingInitiator } from "../../generated/client.js";
 
 /**
  * @summary The coordinateShadowUpdate operation defined in ITU Rec. X.525 (2019)

@@ -11,7 +11,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
     AttributeInfo,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { FALSE, ObjectIdentifier } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import { attributeTypes } from "@wildboar/x500/SchemaAdministration";
@@ -29,8 +29,9 @@ import {
     AttributeUsage_distributedOperation,
     AttributeUsage_userApplications,
 } from "@wildboar/x500/InformationFramework";
-import { Prisma, AttributeUsage as PrismaAttributeUsage } from "@prisma/client";
+import { AttributeUsage as PrismaAttributeUsage } from "../../generated/client.js";
 import asn1SyntaxInfo from "../../x500/asn1SyntaxToInfo.js";
+import type { AttributeTypeDescriptionCreateInput } from "../../generated/models/AttributeTypeDescription.js";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 
@@ -157,7 +158,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     const syntax = decoded.information.attributeSyntax
         ? directoryStringToString(decoded.information.attributeSyntax)
         : undefined;
-    const create: Prisma.AttributeTypeDescriptionCreateInput = {
+    const create: AttributeTypeDescriptionCreateInput = {
         identifier: OID,
         name,
         description,

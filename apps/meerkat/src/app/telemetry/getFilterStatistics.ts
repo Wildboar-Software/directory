@@ -4,7 +4,7 @@ import type {
     FilterItemSubstringsStatistics,
     MatchingRuleAssertionStatistics,
     AttributeTypeAssertionStatistics,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
 import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
 import type { FilterItem_substrings } from "@wildboar/x500/DirectoryAbstractService";

@@ -6,7 +6,7 @@ import {
 } from "@wildboar/x400/IPMSInformationObjects";
 import { _encode_ORName } from "@wildboar/x400/MTSAbstractService";
 import { strict as assert } from "node:assert";
-import { Context } from "@wildboar/meerkat-types";
+import { Context } from "../../types/index.js";
 import getORNameMatcher from "./oRNameMatch.js";
 
 // IPMIdentifier ::= [APPLICATION 11]  SET {

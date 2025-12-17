@@ -8,7 +8,7 @@ import {
     _decode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
 import dnToVertex from "../dit/dnToVertex.js";
-import { ShadowUpdateStrategy } from "@prisma/client";
+import { ShadowUpdateStrategy } from "../generated/client.js";
 import { bindForDISP } from "../net/bindToOtherDSA.js";
 import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,

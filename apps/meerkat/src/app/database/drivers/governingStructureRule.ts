@@ -10,7 +10,7 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     governingStructureRule,

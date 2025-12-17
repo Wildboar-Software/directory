@@ -1,4 +1,4 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context } from "../types/index.js";
 import { ObjectIdentifier } from "@wildboar/asn1";
 import { nameForms as x500nf } from "@wildboar/x500";
 import nameFormFromInformationObject from "./nameFormFromInformationObject.js";

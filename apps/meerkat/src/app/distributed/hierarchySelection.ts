@@ -1,4 +1,4 @@
-import type { Vertex, ClientAssociation, Context, IndexableDN } from "@wildboar/meerkat-types";
+import type { Vertex, ClientAssociation, Context, IndexableDN } from "../types/index.js";
 import { OperationDispatcher } from "./OperationDispatcher.js";
 import { ASN1Construction, BERElement, FALSE, FALSE_BIT, TRUE, TRUE_BIT } from "@wildboar/asn1";
 import {
@@ -45,7 +45,7 @@ import { SearchState } from "./search_i.js";
 import { EntryInformation } from "@wildboar/x500/DirectoryAbstractService";
 import { strict as assert } from "node:assert";
 import { MeerkatContext } from "../ctx.js";
-import type { DistinguishedValue } from "@prisma/client";
+import type { DistinguishedValue } from "../generated/client.js";
 import { OperationProgress_nameResolutionPhase_notStarted } from "@wildboar/x500/DistributedOperations";
 import { TraceItem } from "@wildboar/x500/DistributedOperations";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";

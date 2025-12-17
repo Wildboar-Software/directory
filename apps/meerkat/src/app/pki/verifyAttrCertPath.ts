@@ -3,7 +3,7 @@ import {
     Context,
     IndexableOID,
     OfflinePKIConfig,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import {
     PkiPath,
 } from "@wildboar/pki-stub";

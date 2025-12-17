@@ -1,4 +1,4 @@
-import type { Value } from "@wildboar/meerkat-types";
+import type { Value } from "../types/index.js";
 import type {
     Attribute,
 } from "@wildboar/x500/InformationFramework";

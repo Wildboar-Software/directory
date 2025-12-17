@@ -11,7 +11,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
     NameFormInfo,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import { nameForms } from "@wildboar/x500/SchemaAdministration";
 import { subschema } from "@wildboar/x500/SchemaAdministration";
@@ -23,7 +23,7 @@ import {
     NameFormInformation,
 } from "@wildboar/x500/SchemaAdministration";
 import { ObjectIdentifier } from "@wildboar/asn1";
-import type { Prisma } from "@prisma/client";
+import type { NameFormCreateInput } from "../../generated/models/NameForm.js";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 
@@ -114,7 +114,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     const description = decoded.description
         ? directoryStringToString(decoded.description)
         : undefined;
-    const create: Prisma.NameFormCreateInput = {
+    const create: NameFormCreateInput = {
         identifier: OID,
         name,
         description,

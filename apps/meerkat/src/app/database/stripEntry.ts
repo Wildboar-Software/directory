@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
-import { Context, Vertex } from "@wildboar/meerkat-types";
+import { DbNull } from "../generated/internal/prismaNamespace.js";
+import { Context, Vertex } from "../types/index.js";
 
 export
 async function stripEntry (ctx: Context, vertex: Vertex): Promise<void> {
@@ -41,10 +41,10 @@ async function stripEntry (ctx: Context, vertex: Vertex): Promise<void> {
                 dsSubentry: false,
                 entryUUID: null,
                 hierarchyParent_id: null,
-                hierarchyParentDN: Prisma.DbNull,
+                hierarchyParentDN: DbNull,
                 hierarchyParentStr: null,
                 hierarchyTop_id: null,
-                hierarchyTopDN: Prisma.DbNull,
+                hierarchyTopDN: DbNull,
                 hierarchyTopStr: null,
                 hierarchyPath: null,
                 hierarchyLevel: null,

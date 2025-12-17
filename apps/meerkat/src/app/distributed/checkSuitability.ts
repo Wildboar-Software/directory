@@ -4,7 +4,7 @@ import {
     ClientAssociation,
     ServiceError,
     IndexableOID,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import type { ASN1Element, BIT_STRING } from "@wildboar/asn1";
 import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
 import { id_opcode_compare } from "@wildboar/x500/CommonProtocolSpecification";

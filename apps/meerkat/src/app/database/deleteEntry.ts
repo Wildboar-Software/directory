@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { Context, Vertex } from "../types/index.js";
 import {
     id_oc_child,
 } from "@wildboar/x500/InformationFramework";

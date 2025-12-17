@@ -1,4 +1,4 @@
-import { Context, ClientAssociation, Vertex, MistypedArgumentError } from "@wildboar/meerkat-types";
+import { Context, ClientAssociation, Vertex, MistypedArgumentError } from "../types/index.js";
 import {
     UserPwd,
     UserPwd_encrypted,
@@ -6,22 +6,14 @@ import {
 } from "@wildboar/x500/PasswordPolicy";
 import encryptPassword from "../x500/encryptPassword.js";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier.js";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../generated/client.js";
 import anyPasswordsExist from "../authz/anyPasswordsExist.js";
 import { DER, _encodeGeneralizedTime } from "@wildboar/asn1/functional";
 import {
     pwdStartTime,
-} from "@wildboar/x500/PasswordPolicy";
-import {
     userPwdRecentlyExpired,
-} from "@wildboar/x500/PasswordPolicy";
-import {
     pwdGracesUsed,
-} from "@wildboar/x500/PasswordPolicy";
-import {
     pwdExpiryTime,
-} from "@wildboar/x500/PasswordPolicy";
-import {
     pwdEndTime,
 } from "@wildboar/x500/PasswordPolicy";
 import {

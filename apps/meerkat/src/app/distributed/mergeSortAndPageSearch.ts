@@ -4,7 +4,7 @@ import type {
     SearchResultStatistics,
     PartialOutcomeQualifierStatistics,
     IndexableDN,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import { LDAPAssociation } from "../ldap/LDAPConnection.js";
 import {
     ASN1TagClass,

@@ -1,4 +1,4 @@
-import { Context } from "@wildboar/meerkat-types";
+import { Context } from "../types/index.js";
 import { Certificate } from "@wildboar/pki-stub";
 import { GeneralName } from "@wildboar/x500/CertificateExtensions";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";

@@ -10,7 +10,7 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     creatorsName,
@@ -22,7 +22,7 @@ import {
 import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import rdnToJson from "../../x500/rdnToJson.js";
-import { Prisma } from "@prisma/client";
+import { DbNull } from "../../generated/internal/prismaNamespace.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -63,7 +63,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     if (!vertex.dse.shadow) {
         return;
     }
-    pendingUpdates.entryUpdate.creatorsName = Prisma.DbNull;
+    pendingUpdates.entryUpdate.creatorsName = DbNull;
 };
 
 export
@@ -75,7 +75,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     if (!vertex.dse.shadow) {
         return;
     }
-    pendingUpdates.entryUpdate.creatorsName == Prisma.DbNull;
+    pendingUpdates.entryUpdate.creatorsName == DbNull;
 };
 
 export

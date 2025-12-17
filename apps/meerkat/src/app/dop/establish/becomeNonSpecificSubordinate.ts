@@ -1,4 +1,4 @@
-import type { Context, PendingUpdates } from "@wildboar/meerkat-types";
+import type { Context, PendingUpdates } from "../../types/index.js";
 import {
     MasterOrShadowAccessPoint,
 } from "@wildboar/x500/DistributedOperations";
@@ -28,7 +28,7 @@ import {
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import { createContextPrefixEntry } from "./becomeSubordinate.js";
 import saveAccessPoint from "../../database/saveAccessPoint.js";
-import { Knowledge } from "@prisma/client";
+import { Knowledge } from "../../generated/client.js";
 
 /**
  * @summary Create the necessary DSEs to establish a new non-specifi context prefix

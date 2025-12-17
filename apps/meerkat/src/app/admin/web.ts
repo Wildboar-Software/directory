@@ -73,8 +73,8 @@ import {
     DSEType_xr,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { getRDN } from "@wildboar/x500";
-import { Context, Vertex, RemoteCRLCheckiness } from "@wildboar/meerkat-types";
-import type { Entry } from "@prisma/client";
+import { Context, Vertex, RemoteCRLCheckiness } from "../types/index.js";
+import type { Entry } from "../generated/client.js";
 import { DER } from "@wildboar/asn1/functional";
 import { stringifyGN } from "../x500/stringifyGN.js";
 import { getDateFromTime } from "@wildboar/x500";

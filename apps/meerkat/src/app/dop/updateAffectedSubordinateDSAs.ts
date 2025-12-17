@@ -19,7 +19,7 @@ import type {
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { OperationalBindingInitiator } from "@prisma/client";
+import { OperationalBindingInitiator } from "../generated/client.js";
 import { _decode_NonSpecificHierarchicalAgreement } from "@wildboar/x500/HierarchicalOperationalBindings";
 import updateHOBSubordinateDSA from "./updateHOBSubordinateDSA.js";
 

@@ -1,5 +1,5 @@
-import type { ClientAssociation } from "@wildboar/meerkat-types";
-import * as errors from "@wildboar/meerkat-types";
+import type { ClientAssociation } from "../types/index.js";
+import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import {
     SearchArgument,

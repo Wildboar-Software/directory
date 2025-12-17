@@ -9,7 +9,7 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
-} from "@wildboar/meerkat-types";
+} from "../../types/index.js";
 import {
     hierarchyTop,
 } from "@wildboar/x500/InformationFramework";

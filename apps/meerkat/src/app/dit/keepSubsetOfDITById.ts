@@ -2,7 +2,7 @@ import type {
     Vertex,
     DIT,
     IndexableOID,
-} from "@wildboar/meerkat-types";
+} from "../types/index.js";
 import { strict as assert } from "assert";
 
 /**
