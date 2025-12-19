@@ -12,7 +12,7 @@ services:
   #     - .env
   #   environment:
   #     # What appears in this section overrides anything in .env.
-  #     DATABASE_URL: mysql://root:example@db:3306/directory
+  #     DATABASE_URL: file:./dev.db
   #     MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
   #     MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
   #     MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
@@ -34,42 +34,6 @@ services:
   #       source: ./data
   #       target: /data
   #       read_only: true
-
-  db:
-
-    # Some have suggested that this may be the cause of the
-    # "Error starting userland proxy: listen tcp 0.0.0.0:3306: bind: address
-    # already in use" problem I've suffered through for years and years.
-    #
-    # See: https://github.com/moby/moby/issues/25981#issuecomment-448668142
-    #
-    # This makes sense, given the explanation here:
-    # https://github.com/moby/moby/issues/25981#issuecomment-254663996
-    #
-    # Purging docker using `sudo snap remove docker --purge` did not even work.
-    # These were the only steps that worked:
-    #
-    # 1. Stop docker: `sudo systemctl stop docker`.
-    # 2. Delete the networking database: `sudo rm /var/lib/docker/network/files/local-kv.db`.
-    # 3. Start docker: `sudo systemctl start docker`.
-    #
-    # For this reason, this will _stay_ commented out.
-    #
-    # restart: always
-
-    image: mysql
-    # command: --default-authentication-plugin=mysql_native_password --slow-query-log=ON --slow-query-log-file=/var/lib/mysqllog/slow.log --long-query-time=2
-    # This gets rid of the "mbind: Operation not permitted" error message in the MySQL logs.
-    # See: https://thegeekbin.com/mbind-operation-not-permitted-docker-mysql/
-    security_opt:
-      - "seccomp=unconfined"
-    environment:
-      MYSQL_ROOT_PASSWORD: example
-    ports:
-      - '3306:3306/tcp'
-    volumes:
-      - data:/var/lib/mysql
-      # - './data/mysql:/var/lib/mysqllog:rw'
 
 volumes:
   data: {}

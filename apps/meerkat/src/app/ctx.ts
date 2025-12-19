@@ -20,7 +20,10 @@ import {
     getLogger,
     ansiColorFormatter,
     jsonLinesFormatter,
+    LogLevel as LogtapeLogLevel,
 } from "@logtape/logtape";
+import { getRotatingFileSink } from "@logtape/file";
+import { getSyslogSink } from "@logtape/syslog";
 import i18n from "i18next";
 import { uriToNSAP } from "@wildboar/x500";
 import { URL } from "url";
@@ -94,25 +97,39 @@ import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { Name } from "@wildboar/x500/InformationFramework";
 import { _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub";
 import { id_tls_client_auth, tls_client_auth } from "./authn/external/tls_client_auth.js";
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { PrismaClient } from './generated/client.js';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { readFileSync } from "node:fs";
 
-// const adapter = new PrismaMariaDb({
-//   user: "root",
-//   password: "example",
-//   database: "directory",
-//   host: "localhost", // TODO: Make configurable
-//   port: 3306, // TODO: Make configurable
-//   connectionLimit: 17 // TODO: Make configurable
-// });
 const adapter = new PrismaBetterSqlite3({
-    url: 'file:./dev.db',
+    url: process.env.DATABASE_URL,
 }, {
     // Recommended choice here: https://www.prisma.io/docs/orm/overview/databases/sqlite#3-configure-timestamp-format-for-backward-compatibility
     timestampFormat: 'iso8601',
 });
 const db = new PrismaClient({ adapter });
+
+function parseLogLevel(s: string | null | undefined): LogtapeLogLevel {
+    if (!s) {
+        return "info";
+    }
+    return ({
+        trace: "trace",
+        tracing: "trace",
+        debug: "debug",
+        debugging: "debug",
+        dbug: "debug",
+        info: "info",
+        notice: "info",
+        warning: "warning",
+        warn: "warning",
+        error: "error",
+        err: "error",
+        fatal: "fatal",
+        lethal: "fatal",
+        emerg: "fatal",
+    } as const)[s.trim().toLowerCase()] ?? "debug";
+}
 
 /**
  * Meerkat DSA once used Microsoft Azure's ApplicationInsights.
@@ -529,12 +546,69 @@ const config: Configuration = {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
         options: {
             sinks: {
-                safe: getConsoleSink(),
-                all: getConsoleSink({ formatter: jsonLinesFormatter }),
+                ...(process.env.MEERKAT_NO_CONSOLE === "1")
+                    ? {}
+                    : {
+                        safe: getConsoleSink(),
+                        console: getConsoleSink({ formatter: process.env.MEERKAT_LOG_JSON === "1"
+                            ? jsonLinesFormatter
+                            : (((process.env.MEERKAT_NO_COLOR ?? process.env.NO_COLOR) === "1")
+                                ? undefined
+                                : ansiColorFormatter)
+                        })
+                    },
+                ...process.env.MEERKAT_LOG_FILE
+                    ? {
+                        file: getRotatingFileSink(process.env.MEERKAT_LOG_FILE, {
+                            maxFiles: Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_FILES ?? "5", 10),
+                            maxSize: Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_SIZE ?? "1000000", 10),
+                            // Intentionally always JSON
+                            formatter: jsonLinesFormatter,
+                            bufferSize: 8192, // TODO: Make this configurable
+                            flushInterval: 5000, // TODO: Make this configurable
+                        })
+                    }
+                    : {},
+                ...process.env.MEERKAT_LOG_SYSLOG === "1"
+                    ? {
+                        syslog: getSyslogSink({
+                            includeStructuredData: true,
+                            appName: process.env.MEERKAT_LOG_SYSLOG_APP_NAME ?? "meerkat",
+                            hostname: process.env.MEERKAT_LOG_SYSLOG_HOST,
+                            port: process.env.MEERKAT_LOG_SYSLOG_PORT
+                                ? Number.parseInt(process.env.MEERKAT_LOG_SYSLOG_PORT, 10)
+                                : undefined,
+                            protocol: process.env.MEERKAT_LOG_SYSLOG_TCP === "1"
+                                ? "tcp"
+                                : "udp",
+                            timeout: process.env.MEERKAT_LOG_SYSLOG_TIMEOUT
+                                ? Number.parseInt(process.env.MEERKAT_LOG_SYSLOG_TIMEOUT, 10)
+                                : undefined,
+                            secure: process.env.MEERKAT_LOG_SYSLOG_TLS === "1",
+                            tlsOptions: {
+                                rejectUnauthorized: process.env.MEERKAT_LOG_SYSLOG_REJECT_UNAUTH === "1",
+                                ca: process.env.MEERKAT_LOG_SYSLOG_CA
+                                    ? readFileSync(process.env.MEERKAT_LOG_SYSLOG_CA, { encoding: "utf-8" })
+                                    : undefined,
+                            },
+                        }),
+                    }
+                    : {},
             },
             loggers: [
-                { category: ["logtape", "meta"], lowestLevel: "debug", sinks: ["safe"] },
-                { category: [], lowestLevel: "warning", sinks: ["all"] },
+                { category: ["logtape", "meta"], lowestLevel: "warning", sinks: ["safe"] },
+                {
+                    category: ["meerkat"],
+                    lowestLevel: parseLogLevel(process.env.MEERKAT_LOG_LEVEL),
+                    sinks: [
+                        ...(process.env.MEERKAT_NO_CONSOLE === "1")
+                            ? []
+                            : ["console"],
+                        ...process.env.MEERKAT_LOG_FILE
+                            ? ["file"]
+                            : [],
+                    ],
+                },
             ]
         },
     },
@@ -991,17 +1065,17 @@ const ctx: MeerkatContext = {
     dit: {
         root,
     },
-    log: getLogger(),
+    log: getLogger("meerkat"),
     db,
     telemetry: {
         init: async (): Promise<void> => {},
-        trackAvailability: (...args) => {},
-        trackDependency: (...args) => {},
-        trackException: (...args) => {},
-        trackRequest: (...args) => {},
-        trackMetric: (...args) => {},
-        trackEvent: (...args) => {},
-        trackTrace: (...args) => {},
+        trackAvailability: () => {},
+        trackDependency: () => {},
+        trackException: () => {},
+        trackRequest: () => {},
+        trackMetric: () => {},
+        trackEvent: () => {},
+        trackTrace: () => {},
     },
     objectIdentifierToName: new Map(),
     nameToObjectIdentifier: new Map(),

@@ -731,12 +731,6 @@ log file.
 
 This has no effect if the `MEERKAT_LOG_FILE` environment variable is not set.
 
-## MEERKAT_LOG_HTTP
-
-If set to a URL, Meerkat DSA will POST log messages to this URL. This URL may
-contain a username and password, which will make Meerkat DSA use HTTP basic
-authentication.
-
 ## MEERKAT_LOG_JSON
 
 Setting this to `1` will cause log messages to be logged in JSON format instead
@@ -750,12 +744,93 @@ This controls the logging level. Can be one of `debug`, `info`, `warn`, or
 `error`. Log messages at or above the specified level will get logged; all
 others will be silently discarded.
 
-## MEERKAT_LOG_TAILABLE
+## MEERKAT_LOG_SYSLOG
 
-Setting this to `1` will...
-just read this: https://github.com/winstonjs/winston/blob/HEAD/docs/transports.md#file-transport.
+If set to `1`, Meerkat DSA will log to the syslog facility. This does not
+require any further configuration if you are logging to localhost over UDP port
+514. The application name will be `meerkat` by default.
 
-This has no effect if the `MEERKAT_LOG_FILE` environment variable is not set.
+This is not mutually exclusive with console logging or file logging. You can do
+all three.
+
+:::note
+
+Meerkat DSA was only going to support console or file logging since those are
+the universal and standard--if not the preferred--ways to log things in modern
+apps, but support for Syslog required only a tiny additional dependency (with no
+transitive dependencies) to work, so it was an obvious choice. In contrast,
+something like Windows Event Viewer, Sentry, OpenTelemetry, or AWS Cloudwatch
+logging would have required huge dependencies and those can't be tested as
+easily.
+
+:::
+
+## MEERKAT_LOG_SYSLOG_APP_NAME
+
+The application name in Syslog, when Syslog logging is
+[enabled](./env.md#meerkat_log_syslog). By default, this is `meerkat`.
+
+## MEERKAT_LOG_SYSLOG_HOST
+
+The host to which Syslog logs will be sent. This is `localhost` by default.
+This has no effect if Syslog logging is not
+[enabled](./env.md#meerkat_log_syslog).
+
+## MEERKAT_LOG_SYSLOG_PORT
+
+The TCP or UDP port number to which Syslog logs will be sent. This is `514` by
+default. This has no effect if Syslog logging is not
+[enabled](./env.md#meerkat_log_syslog).
+
+## MEERKAT_LOG_SYSLOG_TCP
+
+If set to `1`, your Syslog logs will be transmitted over TCP instead of UDP.
+This has no effect if Syslog logging is not
+[enabled](./env.md#meerkat_log_syslog).
+
+TCP is more reliable, and your logs will arrive in order and without duplicates,
+but it comes at a performance cost.
+
+## MEERKAT_LOG_SYSLOG_TIMEOUT
+
+Decimal number indicating the number of milliseconds before the connection
+times out. This applies to both TCP and UDP.
+
+## MEERKAT_LOG_SYSLOG_TLS
+
+If set to `1`, Syslog will work use Transport Layer Security (TLS). This has
+no effect if Syslog logging is not [enabled](./env.md#meerkat_log_syslog).
+
+:::caution
+
+If you do not use this, your Syslog logs will be transmitted without encryption
+or integrity. Meerkat DSA logs can contain sensitive data, so you might want to
+ensure that this is set unless you are only logging to `localhost`.
+
+:::
+
+## MEERKAT_LOG_SYSLOG_REJECT_UNAUTH
+
+If set to `1`, and if Syslog over TLS is
+[enabled](./env.md#meerkat_log_syslog_tls), Meerkat DSA's Syslog logging will
+**not** verify the logging sink's X.509 public key certificate ("TLS
+certificate").
+
+:::danger
+
+Setting this to `1` means that malicious hosts could impersonate your log sink
+and receive your logs.
+
+:::
+
+## MEERKAT_LOG_SYSLOG_CA
+
+Contains a file path to a file containing one or more concatenated PEM-encoded
+trust anchor X.509 public key certificates.
+
+This has no effect if Syslog logging is not
+[enabled](./env.md#meerkat_log_syslog), or if Syslog over TLS is not
+[enabled](./env.md#meerkat_log_syslog_tls),
 
 ## MEERKAT_LOG_TLS_SECRETS
 
@@ -773,15 +848,9 @@ Do not enable this unless:
 2. You _need_ to debug TLS-encrypted traffic.
 3. The traffic being decrypted is not sensitive at all.
 
-For a more secure alternative, consider
+For a more secure alternative, consider FIXME
 
 :::
-
-## MEERKAT_LOG_ZIP
-
-If set to `1`, Meerkat DSA will compress non-current log files.
-
-This has no effect if the `MEERKAT_LOG_FILE` environment variable is not set.
 
 ## MEERKAT_LOOKUP_UNCERT_STRONG_AUTH
 
@@ -1040,20 +1109,6 @@ If set to `1`, Meerkat DSA will not use colors in log outputs.
 ## MEERKAT_NO_CONSOLE
 
 If set to `1`, Meerkat DSA will not log to the console.
-
-## MEERKAT_NO_TIMESTAMP
-
-If set to `1`, Meerkat DSA will not include the timestamp in log messages.
-
-
-:::warning
-
-Enabling this (thereby turning off timestamps in log messages) can make your
-logs unusable, since you might not know when a particular concerning log event
-was recorded. Unless you record log timestamps in some other manner, it is
-strongly recommended that you do not enable this option.
-
-:::
 
 ## MEERKAT_OB_AUTO_ACCEPT
 

@@ -553,7 +553,7 @@ function addFriends (
  * @description
  *
  * When using a search operation to filter entries, it may be possible to
- * "pre-filter" said entries within the DBMS (MySQL, Postgres, etc.) before
+ * "pre-filter" said entries within the DBMS before
  * performing the more expensive work of loading those entries and evaluating
  * the filter against them in memory. For instance, if the user is filtering for
  * a `surname` of `Wilbur`, we can pre-filter entries that have an
@@ -943,7 +943,7 @@ function convertFilterItemToPrismaSelect (
  * @description
  *
  * When using a search operation to filter entries, it may be possible to
- * "pre-filter" said entries within the DBMS (MySQL, Postgres, etc.) before
+ * "pre-filter" said entries within the DBMS before
  * performing the more expensive work of loading those entries and evaluating
  * the filter against them in memory. For instance, if the user is filtering for
  * a `surname` of `Wilbur`, we can pre-filter entries that have an

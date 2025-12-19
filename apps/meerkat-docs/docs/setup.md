@@ -2,16 +2,17 @@
 
 ## System Requirements
 
-Meerkat DSA requires NodeJS version 17 or higher. With heavy usage, you can
+Meerkat DSA requires NodeJS version 25 or higher. With heavy usage, you can
 expect Meerkat DSA's memory usage to get up to 300MB. It would be wise to
 anticipate the extreme and ensure that Meerkat DSA has at least 500MB of memory.
 
 In addition to this, Meerkat DSA needs a database (as detailed below), which may
-take a lot more memory. You may also wish to set up a reverse HTTP proxy such as
-Nginx, Caddy, or Apache, which will also consume some resources.
+take a lot more memory. You may also wish to set up a reverse HTTP proxy for the
+[web admin interface](./webadmin.md) such as Nginx, Caddy, or Apache, which will
+also consume some resources.
 
 Added together, you should probably have no less than 1 GB of memory free for
-Meerkat DSA, the database, and a reverse proxy (if used).
+Meerkat DSA and a reverse proxy (if used).
 
 Meerkat DSA has only been tested on x86-64 platforms, so no guarantees can be
 made about how it will run on other architectures. Meerkat DSA should run just
@@ -25,79 +26,9 @@ potentially return a lot of data all at once.
 
 ## Installation / Deployment
 
-It is recommended that you install Meerkat DSA in a Kubernetes cluster using
-Helm. However, Meerkat DSA can be installed as a Docker Compose app and can also
-run locally.
-
-### Database
-
-In any case that you deploy Meerkat DSA, you will need to configure a MySQL
-database that will hold the DSA's data. Ideally, you should use a secure
-password and TLS to secure the connection to the database. It is also strongly
-recommended that Meerkat DSA coexist in a physically nearby location to the
-database so that latency is low; if your Meerkat DSA instance has to send its
-queries to a MySQL database on the other side of the planet, it will mean that
-Meerkat DSA will respond slowly to requests!
-
-You will need to manually create a database within your database server that
-Meerkat DSA can use exclusively. Conventionally, this is named `directory`, but
-you can name it anything you want as long as you configure your `DATABASE_URL`
-to use that database.
-
-:::note
-
-The `bitnami/mysql` Helm chart will allow you to define a database to create
-on startup, so you will not need to manually log into this database server to
-create this database. Different container images may also allow you to define
-a database to create on startup as well.
-
-:::
-
-The MySQL database will then need to be seeded with database schema. In
-technical terms, we need to "deploy a migration" to the database. You will need
-a user account that has all permissions to alter database schema. It is fine if
-this is a root / administrator account, since this will only be used once. How
-you actually deploy the migration will depend on how you have deployed Meerkat
-DSA, so this will be described on a case-by-case basis in the sections to
-follow.
-
-After the database migration is complete, you can run Meerkat DSA with a
-database account having just create + read + update + delete permissions for
-the database.
-
-#### Bitnami Helm Chart
-
-One of the easiest ways to get a MySQL instance ready to go in a Kubernetes
-cluster is the
-[Bitnami Helm chart](https://artifacthub.io/packages/helm/bitnami/mysql).
-
-Here is one way to do this:
-
-Run this command to create a secret in Kubernetes:
-
-```bash
-kubectl create secret generic <your secret name> \
-  --from-literal=mysql-root-password=<your root password> \
-  --from-literal=mysql-replication-password=<your rep password> \
-  --from-literal=mysql-password=<your other password> \
-  --namespace=<your namespace>
-```
-
-Add the Bitnami Helm repo via this command:
-
-```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-```
-
-Finally, install MySQL from the Bitnami Helm repo via this command:
-
-```bash
-helm install <your database name> bitnami/mysql \
-  --set auth.existingSecret=<your secret name> \
-  --set auth.database=directory \
-  --atomic \
-  --namespace=<your namespace>
-```
+You can run Meerkat DSA [locally](#local), in [Docker](#docker--docker-compose)
+or in [Kubernetes](#kubernetes), but more ways of deploying it will be available
+soon.
 
 ### Configuration
 
@@ -126,9 +57,8 @@ The web administration console does not support internationalization at all.
 
 ### Local
 
-To do this, you must have Node.js version 17 or higher installed. This will
+To do this, you must have Node.js version 25 or higher installed. This will
 also install Node Package Manager (`npm`). You will also need Git installed.
-You will also need a MySQL database somewhere ofr
 
 You can run Meerkat DSA locally by cloning the
 [source repository for Meerkat DSA](https://github.com/Wildboar-Software/directory)
@@ -149,7 +79,8 @@ other operating system, but you can look at what you need to get it up and
 running on the [Configuration Environment Variables documentation](./env.md).
 
 There is technically only one environment variable that is required, which is
-`DATABASE_URL`. Set this to the URL of your database.
+`DATABASE_URL`. Set this to the URL of your database. Something like
+`file:./meerkat.db` should be fine.
 
 Once you have your environment variables defined to configure Meerkat DSA as
 you'd like, you will need to actually configure the database with the schema
@@ -162,14 +93,14 @@ start up on the console (unless you turned off console logging).
 ### Docker / Docker-Compose
 
 You can define your own Docker-Compose stack that will pull the Meerkat DSA
-image `ghcr.io/wildboar-software/meerkat-dsa` and wire it up to a MySQL
+image `ghcr.io/wildboar-software/meerkat-dsa` and wire it up to a SQLite
 database, but the
 [source repository for Meerkat DSA](https://github.com/Wildboar-Software/directory)
 has a
 [starter template](https://github.com/Wildboar-Software/directory/blob/master/pkg/docker-compose.yaml)
 that you can use.
 
-The starter template will create a MySQL database, deploy the migrations to it,
+The starter template will create a SQLite database, deploy the migrations to it,
 and start Meerkat DSA. Pretty much all you have to do is configure the
 environment variables and mount volumes for your signing key and cert, your
 TLS key and cert, your CA certificates bundle, your CRLs, your init script, and

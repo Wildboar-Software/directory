@@ -68,8 +68,6 @@ import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
 
-// Currently, only MySQL is supported, but this includes more database protocols
-// just for a little future-proofing.
 const DEFAULT_DBMS_PORTS: Record<string, string> = {
     "mysql": "3306",
     "postgresql": "5432",
@@ -160,6 +158,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
             }
         }
 
+        // FIXME: Remove this. It no longer applies.
         /**
          * This section exists to prevent a security vulnerability where this
          * DSA could be tricked into chaining requests to the database. Such
