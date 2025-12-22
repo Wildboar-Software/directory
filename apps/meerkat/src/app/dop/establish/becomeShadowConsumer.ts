@@ -70,7 +70,7 @@ async function becomeShadowConsumer (
                                 tag_class: atav.value.tagClass,
                                 constructed: (atav.value.construction === ASN1Construction.constructed),
                                 tag_number: atav.value.tagNumber,
-                                content_octets: atav.value.value,
+                                content_octets: atav.value.value as Uint8Array<ArrayBuffer>,
                                 order_index: i,
                                 normalized_str: NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value),
                             })),

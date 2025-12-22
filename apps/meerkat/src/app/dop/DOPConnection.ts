@@ -446,6 +446,7 @@ async function handleRequestAndErrors (
                 // idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
+        console.error(e);
         if (typeof e === "object" && e !== null) {
             logInfo.problem = e.data?.problem;
             Object.assign(logInfo, _.omit(e, "data"));

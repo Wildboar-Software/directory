@@ -57,7 +57,7 @@ const SUBENTRY_CA: string = collectiveAttributeSubentry["&id"].toString();
 const SUBENTRY_PWD: string = pwdAdminSubentry["&id"].toString();
 const SUBSCHEMA: string = subschema["&id"].toString();
 
-let collectiveAttributeTypes: Buffer<ArrayBuffer>[] = [];
+let collectiveAttributeTypes: Uint8Array<ArrayBuffer>[] = [];
 
 /**
  * @summary Produce an in-memory DSE from the Prisma `Entry` model
@@ -338,7 +338,7 @@ async function dseFromDatabaseEntry (
         if (ret.objectClass.has(SUBENTRY_CA)) {
             if (collectiveAttributeTypes.length === 0) {
                 collectiveAttributeTypes = Array.from(ctx.collectiveAttributes)
-                    .map((oid) => ObjectIdentifier.fromString(oid).toBytes());
+                    .map((oid) => ObjectIdentifier.fromString(oid).toBytes() as Uint8Array<ArrayBuffer>);
             }
             ret.subentry.collectiveAttributes = attributesFromValues(
                 (await ctx.db.attributeValue.findMany({

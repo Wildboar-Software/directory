@@ -1,22 +1,26 @@
 FROM node:25-alpine
 LABEL author="Wildboar Software"
 LABEL app="meerkat"
-# RUN /usr/local/bin/node -v
-# RUN /usr/local/bin/npm -v
-# RUN /usr/local/bin/npx -v
 WORKDIR /srv/meerkat
-COPY ./dist/apps/meerkat ./
-
-# These used to be needed for installing applicationinsights-native-metrics
-# but this package was removed since it failed to build too much anyway.
-# RUN apk add --no-cache python3
-# RUN apk add --no-cache make
-# RUN apk add --no-cache g++
-
-RUN npm install --only=production --no-audit --no-fund --no-save
-# We save the Prisma CLI at build time so we can perform migrations in this
-# container without worrying about NPM outages.
-RUN npm install --no-save prisma
-RUN npx -q prisma generate
+COPY ./dist/apps/meerkat/package.json ./
+COPY ./dist/apps/meerkat/package-lock.json ./
+COPY .npmrc ./
+RUN npm ci --only=production --no-audit --no-fund --no-save
+RUN npm install --no-package-lock --no-save prisma
+COPY ./dist/apps/meerkat/package.json ./
+COPY ./dist/apps/meerkat/assets ./assets
+COPY ./dist/apps/meerkat/prisma ./prisma
+COPY ./dist/apps/meerkat/prisma/prisma.config.ts ./
+COPY ./dist/apps/meerkat/main.js ./
+# Make a folder for the database
+RUN mkdir db
+# Use this as the SQLite database
+ENV DATABASE_URL=file:./db/meerkat.db
+# Apply database schema to the database
+RUN npx -q prisma migrate deploy --schema ./prisma/schema.prisma --config ./prisma.config.ts
+# The whole folder must be owned by the node user, because SQLite requires the
+# ability to write other files in the folder.
+RUN chown -R node:node ./db
+# Drop from root to the NodeJS user
 USER node
-ENTRYPOINT ["/usr/local/bin/node", "/srv/meerkat/main.js"]
+CMD ["/usr/local/bin/node", "/srv/meerkat/main.js", "start"]

@@ -102,7 +102,7 @@ import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { readFileSync } from "node:fs";
 
 const adapter = new PrismaBetterSqlite3({
-    url: process.env.DATABASE_URL,
+    url: process.env.DATABASE_URL ?? ":memory:",
 }, {
     // Recommended choice here: https://www.prisma.io/docs/orm/overview/databases/sqlite#3-configure-timestamp-format-for-backward-compatibility
     timestampFormat: 'iso8601',

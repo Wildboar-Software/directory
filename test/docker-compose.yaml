@@ -7,16 +7,17 @@ services:
   dsa1:
     build:
       context: ..
-      dockerfile: meerkat.test.dockerfile
+      dockerfile: meerkat.dockerfile
     # env_file:
     #   - .env
     environment:
       NODE_ENV: production
       # MEERKAT_BULK_INSERT_MODE: 1
       # What appears in this section overrides anything in .env.
-      DATABASE_URL: file:./meerkat1.db
+      DATABASE_URL: file:./db/meerkat.db
       # MEERKAT_LOG_LEVEL: info
       MEERKAT_LOG_LEVEL: debug
+      MEERKAT_LOG_JSON: 1
       MEERKAT_IDM_PORT: 4632
       MEERKAT_IDMS_PORT: 44632
       MEERKAT_OPEN_TOP_LEVEL: 1
@@ -72,23 +73,21 @@ services:
         source: ./pki
         target: /pki
         read_only: true
-    depends_on:
-      init1:
-        condition: service_completed_successfully
 
   dsa2:
     build:
       context: ..
-      dockerfile: meerkat.test.dockerfile
+      dockerfile: meerkat.dockerfile
     # env_file:
     #   - .env
     environment:
       NODE_ENV: production
       # MEERKAT_BULK_INSERT_MODE: 1
       # What appears in this section overrides anything in .env.
-      DATABASE_URL: file:./meerkat2.db
+      DATABASE_URL: file:./db/meerkat.db
       # MEERKAT_LOG_LEVEL: info
       MEERKAT_LOG_LEVEL: debug
+      MEERKAT_LOG_JSON: 1
       MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
@@ -138,23 +137,21 @@ services:
         source: ./pki
         target: /pki
         read_only: true
-    depends_on:
-      init2:
-        condition: service_completed_successfully
 
   dsa3:
     build:
       context: ..
-      dockerfile: meerkat.test.dockerfile
+      dockerfile: meerkat.dockerfile
     # env_file:
     #   - .env
     environment:
       NODE_ENV: production
       # MEERKAT_BULK_INSERT_MODE: 1
       # What appears in this section overrides anything in .env.
-      DATABASE_URL: file:./meerkat3.db
+      DATABASE_URL: file:./db/meerkat.db
       # MEERKAT_LOG_LEVEL: info
       MEERKAT_LOG_LEVEL: debug
+      MEERKAT_LOG_JSON: 1
       MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
@@ -204,42 +201,3 @@ services:
         source: ./pki
         target: /pki
         read_only: true
-    depends_on:
-      init3:
-        condition: service_completed_successfully
-
-  init1:
-    build:
-      context: ..
-      dockerfile: meerkat.test.dockerfile
-    environment:
-      DATABASE_URL: file:./meerkat3.db
-    entrypoint: /usr/local/bin/npx
-    command: ["prisma", "migrate", "deploy", "--schema=/srv/meerkat/prisma/schema.prisma"]
-    depends_on:
-      db:
-        condition: service_healthy
-
-  init2:
-    build:
-      context: ..
-      dockerfile: meerkat.test.dockerfile
-    environment:
-      DATABASE_URL: file:./meerkat2.db
-    entrypoint: /usr/local/bin/npx
-    command: ["prisma", "migrate", "deploy", "--schema=/srv/meerkat/prisma/schema.prisma"]
-    depends_on:
-      db:
-        condition: service_healthy
-
-  init3:
-    build:
-      context: ..
-      dockerfile: meerkat.test.dockerfile
-    environment:
-      DATABASE_URL: file:./meerkat3.db
-    entrypoint: /usr/local/bin/npx
-    command: ["prisma", "migrate", "deploy", "--schema=/srv/meerkat/prisma/schema.prisma"]
-    depends_on:
-      db:
-        condition: service_healthy

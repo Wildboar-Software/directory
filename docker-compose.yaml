@@ -4,36 +4,34 @@
 version: '3.7'
 
 services:
-  # meerkat:
-  #   build:
-  #     context: .
-  #     dockerfile: meerkat.dockerfile
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     # What appears in this section overrides anything in .env.
-  #     DATABASE_URL: file:./dev.db
-  #     MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
-  #     MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
-  #     MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
-  #     MEERKAT_SIGNING_KEY_FILE: /data/keypair/key.pem
-  #     MEERKAT_INIT_JS: /data/init.mjs
-  #   depends_on:
-  #     - db
-  #   hostname: 'meerkat'
-  #   labels:
-  #     author: Wildboar Software
-  #     app: meerkat
-  #     version: "1.1.0"
-  #   ports:
-  #     - '1389:389/tcp' # LDAP TCP Port
-  #     - '4632:4632/tcp' # IDM Socket
-  #     - '18080:18080/tcp' # Web administration console
-  #   volumes:
-  #     - type: bind
-  #       source: ./data
-  #       target: /data
-  #       read_only: true
+  meerkat:
+    build:
+      context: .
+      dockerfile: meerkat.dockerfile
+    env_file:
+      - .env
+    environment:
+      # What appears in this section overrides anything in .env.
+      DATABASE_URL: file:./dev.db
+      MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
+      MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
+      MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
+      MEERKAT_SIGNING_KEY_FILE: /data/keypair/key.pem
+      MEERKAT_INIT_JS: /data/init.mjs
+    hostname: 'meerkat'
+    labels:
+      author: Wildboar Software
+      app: meerkat
+      version: "1.1.0"
+    ports:
+      - '1389:389/tcp' # LDAP TCP Port
+      - '4632:4632/tcp' # IDM Socket
+      - '18080:18080/tcp' # Web administration console
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+        read_only: true
 
 volumes:
   data: {}

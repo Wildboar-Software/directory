@@ -1049,9 +1049,9 @@ function verifySignature (
     const pubKey: KeyObject = keyOrSPKI instanceof KeyObject
         ? keyOrSPKI
         : (() => {
-            const spkiBytes: Buffer = ((keyOrSPKI instanceof SubjectPublicKeyInfo)
+            const spkiBytes = ((keyOrSPKI instanceof SubjectPublicKeyInfo)
                 ? _encode_SubjectPublicKeyInfo(keyOrSPKI, DER)
-                : _encode_SubjectAltPublicKeyInfo(keyOrSPKI, DER)).toBytes();
+                : _encode_SubjectAltPublicKeyInfo(keyOrSPKI, DER)).toBytes() as Buffer;
             const issuerPublicKey = createPublicKey({
                 key: spkiBytes,
                 format: "der",

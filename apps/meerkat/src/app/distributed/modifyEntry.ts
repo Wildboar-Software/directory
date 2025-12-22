@@ -3682,7 +3682,7 @@ async function modifyEntry (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.objectIdentifier,
-                    content_octets: autonomousId.value,
+                    content_octets: autonomousId.value as Uint8Array<ArrayBuffer>,
                     jer: id_ar_autonomousArea.toJSON(),
                     normalized_str: id_ar_autonomousArea.toString(),
                 },
