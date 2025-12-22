@@ -198,7 +198,6 @@
     "osi_transport_error": "OSI transport error (ER TPDU) received from {{peer}} (DST-REF {{dst}}) with reason {{reason}}.",
     "osi_session_abort": "OSI session provider abort (AB SPDU) received from {{peer}}.",
     "osi_presentation_abort": "OSI presentation provider abort (ARP PPDU) received from {{peer}} for event ID {{eid}} and with reason code {{reason}}.",
-    "will_not_bind_to_db_port": "This DSA has refused to bind to another network address to fulfill a request initiated by association {{aid}} to {{uri}} because it has the same port as the database.",
     "could_not_convert_naddr_to_url": "Could not convert N-selector (index {{i}}) to a URL for presentation address for {{aet}}.",
     "ocsp_response_invalid": "OCSP response received from {{aet}} was found to be invalid with code: {{code}}.",
     "could_not_create_rose_client": "Could not create ROSE client for connecting to {{url}}.",

@@ -14,18 +14,6 @@ import {
 import {
     id_ac_directoryOperationalBindingManagementAC,
 } from "@wildboar/x500/DirectoryOSIProtocols";
-// import {
-//     id_ac_shadowConsumerInitiatedAC,
-// } from "@wildboar/x500/DirectoryOSIProtocols";
-// import {
-//     id_ac_shadowConsumerInitiatedAsynchronousAC,
-// } from "@wildboar/x500/DirectoryOSIProtocols";
-// import {
-//     id_ac_shadowSupplierInitiatedAC,
-// } from "@wildboar/x500/DirectoryOSIProtocols";
-// import {
-//     id_ac_shadowSupplierInitiatedAsynchronousAC,
-// } from "@wildboar/x500/DirectoryOSIProtocols";
 import {
     DSABindArgument,
 } from "@wildboar/x500/DistributedOperations";
@@ -67,15 +55,6 @@ import { attemptStrongAuth } from "../authn/attemptStrongAuth.js";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
-
-const DEFAULT_DBMS_PORTS: Record<string, string> = {
-    "mysql": "3306",
-    "postgresql": "5432",
-    "postgres": "5432",
-    "mssql": "1433",
-    "sqlserver": "1433",
-    "mongodb": "27017",
-};
 
 /**
  * For connection re-use.
@@ -158,46 +137,6 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
             }
         }
 
-        // FIXME: Remove this. It no longer applies.
-        /**
-         * This section exists to prevent a security vulnerability where this
-         * DSA could be tricked into chaining requests to the database. Such
-         * requests will probably get interpreted by the database as corrupt
-         * packets and thereby have no negative consequences, but the
-         * possibility still must be addressed.
-         *
-         * Furthermore, Meerkat DSA cannot rely on use of network policy by
-         * DSA administrators, because the database must be accessible, so there
-         * is no way at the network-level to prevent chained requests from being
-         * sent to the database.
-         *
-         * Finally, so as to avoid revealing the port of the database, this
-         * implementation simply returns `null`, which will look like a normal
-         * failure to connect to the caller, rather than returning an error
-         * that makes it obvious that the connectivity was rejected. A TCP port
-         * number is not generally a big secret, but if Meerkat DSA supports
-         * multiple DBMSes in the future, the port used could reveal what DBMS
-         * is in use.
-         */
-        if (uriString && process.env.DATABASE_URL) {
-            try {
-                const dbURL = new URL(process.env.DATABASE_URL);
-                const dbPort = dbURL.port || DEFAULT_DBMS_PORTS[dbURL.protocol.replace(":", "").toLowerCase()];
-                if (dbPort === url.port) {
-                    ctx.log.warn(ctx.i18n.t("log:will_not_bind_to_db_port", {
-                        aid: assn?.id ?? "?",
-                        uri: uriString,
-                    }), logInfo);
-                    continue;
-                }
-            } catch {
-                ctx.log.warn(ctx.i18n.t("log:will_not_bind_to_db_port", {
-                    aid: assn?.id ?? "?",
-                    uri: uriString,
-                }), logInfo);
-                continue;
-            }
-        }
         ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
             uri: uriString ?? "<FAILED TO DECODE NETWORK ADDRESS>",
         }), logInfo);
