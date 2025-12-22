@@ -36,12 +36,6 @@ networkPolicyEgressOverride:
     ports:
     - port: 1234
       protocol: TCP
-# Necessary for configuring:
-# 1. Pod affinity to put your Meerkat DSA instance near your DBMS, and
-# 2. Network policy, permitting Meerkat DSA to connect to your DBMS.
-# databaseLabelSelector:
-#   matchLabels:
-#     app: mysql
 
 # This should be a secret of type "tls".
 # See: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
@@ -52,13 +46,6 @@ networkPolicyEgressOverride:
 # See: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
 # This may be the same secret as `signingSecretName`.
 # tlsSecretName: meerkat-tls-secret
-
-# Mandatory: an opaque secret containing a field called `databaseUrl` which
-# contains the database URL as used by a Prisma client.
-# See: https://www.prisma.io/docs/reference/database-reference/connection-urls
-# A secret is needed for this because the URL typically has a username and
-# password in it.
-databaseSecretName: meerkat-database-secret
 
 # Prisma Debugging: https://www.prisma.io/docs/concepts/components/prisma-client/debugging
 # If set, this becomes the value of the `DEBUG` environment variable.

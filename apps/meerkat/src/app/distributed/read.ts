@@ -158,7 +158,7 @@ function createAttributeCertificate (
     attributes: Attribute[],
     single_use: boolean,
     no_assertion: boolean,
-): Buffer<ArrayBuffer> | undefined {
+): Uint8Array<ArrayBuffer> | undefined {
     const key = ctx.config.signing.key;
     const certPath = ctx.config.signing.certPath;
     if (!key || !certPath) {
@@ -724,7 +724,7 @@ async function read (
         const no_assertion: BOOLEAN = ac_els.find((el) => el.tagNumber === 1)?.inner.boolean ?? FALSE;
         const attributes = permittedEntryInfo.information
             .flatMap((info) => ("attribute" in info) ? info.attribute : []);
-        const attrCert: Buffer<ArrayBuffer> | undefined = createAttributeCertificate(
+        const attrCert: Uint8Array<ArrayBuffer> | undefined = createAttributeCertificate(
             ctx,
             targetDN,
             attributes,

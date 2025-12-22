@@ -139,9 +139,7 @@ no way to do this using Meerkat DSA (including the web admin console), currently
 If you allow a user to add an entry via the `addEntry` operation and they are
 authorization to chain operations, they might be able to spam the DSA with
 `targetSystem` values containing LAN IP addresses and make the DSA act as a
-TCP port scanner and scan the local network and submit chained requests. This
-could be an especially bad problem if a reached TCP port will interpret bytes of
-a chained request as a different protocol packet, such as a MySQL packet!
+TCP port scanner and scan the local network and submit chained requests.
 
 :::
 
@@ -159,17 +157,6 @@ configuration options:
 It is also strongly advised to configure network policies that prevent Meerkat
 DSA from reaching other services on its local network that it should not be able
 to reach. This is simple to do on Kubernetes or Docker.
-
-:::info
-
-Meerkat DSA will **NOT** chain to a transport service that has the same port
-number as the DBMS, while this may seem overly restrictive, it is to prevent
-Meerkat DSA from being tricked into sending directory requests to the DBMS,
-which could get interpreted as, for example, MySQL packets. This has to be
-implemented within Meerkat DSA, because you cannot block Meerkat DSA's access
-to the DBMS at the network level.
-
-:::
 
 ## Behavior of Signed DSP Results
 

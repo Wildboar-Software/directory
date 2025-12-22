@@ -86,15 +86,15 @@ async function saveAccessPoint (
 ): Promise<number> {
     const ber: Buffer<ArrayBuffer> = ((): Buffer<ArrayBuffer> => {
         if (ap instanceof AccessPoint) {
-            return _encode_AccessPoint(ap, DER).toBytes();
+            return _encode_AccessPoint(ap, DER).toBytes() as Buffer<ArrayBuffer>;
         } else if (ap instanceof MasterOrShadowAccessPoint) {
-            return _encode_MasterOrShadowAccessPoint(ap, DER).toBytes();
+            return _encode_MasterOrShadowAccessPoint(ap, DER).toBytes() as Buffer<ArrayBuffer>;
         } else if (ap instanceof SupplierOrConsumer) {
-            return _encode_SupplierOrConsumer(ap, DER).toBytes();
+            return _encode_SupplierOrConsumer(ap, DER).toBytes() as Buffer<ArrayBuffer>;
         } else if (ap instanceof SupplierInformation) {
-            return _encode_SupplierInformation(ap, DER).toBytes();
+            return _encode_SupplierInformation(ap, DER).toBytes() as Buffer<ArrayBuffer>;
         } else {
-            return _encode_SupplierAndConsumers(ap, DER).toBytes();
+            return _encode_SupplierAndConsumers(ap, DER).toBytes() as Buffer<ArrayBuffer>;
         }
     })();
     const non_supplying_master_id = (("non_supplying_master" in ap) && ap.non_supplying_master)

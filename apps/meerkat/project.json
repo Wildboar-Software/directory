@@ -27,6 +27,7 @@
                 "tsConfig": "apps/meerkat/tsconfig.app.json",
                 "platform": "node",
                 "format": ["esm"],
+                "generatePackageJson": true,
                 "esbuildOptions": {
                     "banner": {
                         "js": "#!/bin/env node"
@@ -43,6 +44,11 @@
                     },
                     {
                         "glob": "assets/**",
+                        "input": "apps/meerkat/src",
+                        "output": "."
+                    },
+                    {
+                        "glob": "prisma/**",
                         "input": "apps/meerkat/src",
                         "output": "."
                     }

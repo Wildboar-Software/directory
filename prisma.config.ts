@@ -8,7 +8,4 @@ export default defineConfig({
     datasource: {
         url: 'file:./dev.db',
     },
-    // datasource: {
-    //     url: 'mysql://root:example@localhost:3306/directory',
-    // },
 });

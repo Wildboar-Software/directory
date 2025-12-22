@@ -83,7 +83,7 @@ async function checkPasswordQuality (
     const alphabetResult = await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
-            type_oid: pwdAlphabet["&id"].toBytes(),
+            type_oid: pwdAlphabet["&id"].toBytes() as Buffer<ArrayBuffer>,
         },
         select: {
             tag_class: true,

@@ -7,17 +7,17 @@ services:
   dsa1:
     build:
       context: ..
-      dockerfile: meerkat.test.dockerfile
+      dockerfile: meerkat.dockerfile
     # env_file:
     #   - .env
     environment:
       NODE_ENV: production
       # MEERKAT_BULK_INSERT_MODE: 1
       # What appears in this section overrides anything in .env.
-      DATABASE_URL: mysql://user1:asdf1@localhost/directory1?socket=/var/run/mysqld/mysqld.sock
-      # DATABASE_URL: mysql://user1:asdf1@db:3306/directory1
+      DATABASE_URL: file:./db/meerkat.db
       # MEERKAT_LOG_LEVEL: info
       MEERKAT_LOG_LEVEL: debug
+      MEERKAT_LOG_JSON: 1
       MEERKAT_IDM_PORT: 4632
       MEERKAT_IDMS_PORT: 44632
       MEERKAT_OPEN_TOP_LEVEL: 1
@@ -73,27 +73,21 @@ services:
         source: ./pki
         target: /pki
         read_only: true
-      - mysql_socket:/var/run/mysqld
-    depends_on:
-      init1:
-        condition: service_completed_successfully
-      db:
-        condition: service_healthy
 
   dsa2:
     build:
       context: ..
-      dockerfile: meerkat.test.dockerfile
+      dockerfile: meerkat.dockerfile
     # env_file:
     #   - .env
     environment:
       NODE_ENV: production
       # MEERKAT_BULK_INSERT_MODE: 1
       # What appears in this section overrides anything in .env.
-      DATABASE_URL: mysql://user2:asdf2@localhost/directory2?socket=/var/run/mysqld/mysqld.sock
-      # DATABASE_URL: mysql://user2:asdf2@db:3306/directory2
+      DATABASE_URL: file:./db/meerkat.db
       # MEERKAT_LOG_LEVEL: info
       MEERKAT_LOG_LEVEL: debug
+      MEERKAT_LOG_JSON: 1
       MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
@@ -143,27 +137,21 @@ services:
         source: ./pki
         target: /pki
         read_only: true
-      - mysql_socket:/var/run/mysqld
-    depends_on:
-      init2:
-        condition: service_completed_successfully
-      db:
-        condition: service_healthy
 
   dsa3:
     build:
       context: ..
-      dockerfile: meerkat.test.dockerfile
+      dockerfile: meerkat.dockerfile
     # env_file:
     #   - .env
     environment:
       NODE_ENV: production
       # MEERKAT_BULK_INSERT_MODE: 1
       # What appears in this section overrides anything in .env.
-      DATABASE_URL: mysql://user3:asdf3@localhost/directory3?socket=/var/run/mysqld/mysqld.sock
-      # DATABASE_URL: mysql://user3:asdf3@db:3306/directory3
+      DATABASE_URL: file:./db/meerkat.db
       # MEERKAT_LOG_LEVEL: info
       MEERKAT_LOG_LEVEL: debug
+      MEERKAT_LOG_JSON: 1
       MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
@@ -213,83 +201,3 @@ services:
         source: ./pki
         target: /pki
         read_only: true
-      - mysql_socket:/var/run/mysqld
-    depends_on:
-      init3:
-        condition: service_completed_successfully
-      db:
-        condition: service_healthy
-
-  init1:
-    build:
-      context: ..
-      dockerfile: meerkat.test.dockerfile
-    environment:
-      DATABASE_URL: mysql://user1:asdf1@db:3306/directory1
-    entrypoint: /usr/local/bin/npx
-    command: ["prisma", "migrate", "deploy", "--schema=/srv/meerkat/prisma/schema.prisma"]
-    depends_on:
-      db:
-        condition: service_healthy
-
-  init2:
-    build:
-      context: ..
-      dockerfile: meerkat.test.dockerfile
-    environment:
-      DATABASE_URL: mysql://user2:asdf2@db:3306/directory2
-    entrypoint: /usr/local/bin/npx
-    command: ["prisma", "migrate", "deploy", "--schema=/srv/meerkat/prisma/schema.prisma"]
-    depends_on:
-      db:
-        condition: service_healthy
-
-  init3:
-    build:
-      context: ..
-      dockerfile: meerkat.test.dockerfile
-    environment:
-      DATABASE_URL: mysql://user3:asdf3@db:3306/directory3
-    entrypoint: /usr/local/bin/npx
-    command: ["prisma", "migrate", "deploy", "--schema=/srv/meerkat/prisma/schema.prisma"]
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: mysql
-    command: --default-authentication-plugin=mysql_native_password
-    # command: --default-authentication-plugin=mysql_native_password --slow-query-log=ON --slow-query-log-file=/var/lib/mysqllog/slow.log --long-query-time=2
-    # restart: always;
-
-    # The healthcheck causes this error message:
-    # Plugin sha256_password reported: ''sha256_password' is deprecated and will be removed in a future release.
-    # There is no way around this other than to not have a health check.
-    healthcheck:
-      test: mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD
-      start_period: 5s
-      interval: 5s
-      timeout: 5s
-      retries: 55
-    # This gets rid of the "mbind: Operation not permitted" error message in the MySQL logs.
-    # See: https://thegeekbin.com/mbind-operation-not-permitted-docker-mysql/
-    security_opt:
-      - "seccomp=unconfined"
-    environment:
-      MYSQL_ROOT_PASSWORD: example
-    ports:
-      - '3306:3306/tcp'
-    volumes:
-      - mysql_socket:/var/run/mysqld
-      # - data:/var/lib/mysql
-      # - './data/mysql:/var/lib/mysqllog:rw'
-      - './sql:/docker-entrypoint-initdb.d:ro'
-
-volumes:
-  # data: {}
-  mysql_socket: {}
-
-# networks:
-#   default:
-#     external:
-#       name: meerkat-deploy

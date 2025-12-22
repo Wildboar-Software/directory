@@ -133,7 +133,7 @@ Recommendations X.501 and X.520.
 ### Password Dictionaries
 
 You can configure password vocabulary by adding entries to the
-`passwordDictionaryItem` table in the database (usually MySQL), along with a
+`passwordDictionaryItem` table in the SQLite database, along with a
 "bit number" indicating the category in which the vocabulary item appears,
 according to the syntax of the `pwdVocabulary` operational attribute, which is:
 

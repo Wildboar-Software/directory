@@ -89,7 +89,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             tag_class: value.value.tagClass,
             constructed: (value.value.construction === ASN1Construction.constructed),
             tag_number: value.value.tagNumber,
-            content_octets: value.value.value,
+            content_octets: value.value.value as Uint8Array<ArrayBuffer>,
             jer: value.value.toJSON() as Prisma.InputJsonValue,
             normalized_str: value.value.integer.toString(),
         },
@@ -111,7 +111,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         where: {
             entry_id: vertex.dse.id,
             type_oid: TYPE_OID,
-            content_octets: value.value.value,
+            content_octets: value.value.value as Uint8Array<ArrayBuffer>,
         },
     }));
 }
@@ -190,7 +190,7 @@ const hasValue: SpecialAttributeValueDetector = async (
             where: {
                 entry_id: vertex.dse.id,
                 type_oid: TYPE_OID,
-                content_octets: value.value.value,
+                content_octets: value.value.value as Uint8Array<ArrayBuffer>,
             },
             select: {
                 id: true,

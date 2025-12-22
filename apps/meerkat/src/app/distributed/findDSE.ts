@@ -940,7 +940,7 @@ export
                                         tag_class: atav.value.tagClass,
                                         constructed: (atav.value.construction === ASN1Construction.constructed),
                                         tag_number: atav.value.tagNumber,
-                                        content_octets: atav.value.value,
+                                        content_octets: atav.value.value as Uint8Array<ArrayBuffer>,
                                     },
                                 },
                             }))),

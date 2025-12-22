@@ -469,9 +469,9 @@ async function attemptPassword (
             break;
         }
     }
-    const nowElement = _encodeGeneralizedTime(new Date(), DER);
+    const nowElement = _encodeGeneralizedTime(new Date(), DER) as DERElement;
     if (!passwordIsCorrect) {
-        const newFailsEl = _encodeInteger(fails + 1, DER);
+        const newFailsEl = _encodeInteger(fails + 1, DER) as DERElement;
         const new_attrs: AttributeValueUncheckedCreateInput[] = [
             {
                 entry_id: vertex.dse.id,
@@ -604,7 +604,7 @@ async function attemptPassword (
             ),
         };
     }
-    const zeroFailsEl = _encodeInteger(0, DER);
+    const zeroFailsEl = _encodeInteger(0, DER) as DERElement;
     await ctx.db.$transaction([
         ctx.db.attributeValue.deleteMany({
             where: {

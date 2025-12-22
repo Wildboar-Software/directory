@@ -169,7 +169,7 @@ import { check_of_controls_and_hierarchy_selections } from "../service/check_of_
 import { check_of_matching_use } from "../service/check_of_matching_use.js";
 import { acdf } from "../authz/acdf.js";
 
-const SEARCH_RULE_BYTES: Buffer<ArrayBuffer> = searchRules["&id"].toBytes();
+const SEARCH_RULE_BYTES = searchRules["&id"].toBytes() as Buffer<ArrayBuffer>;
 
 export
 interface SearchRuleCheckResult {

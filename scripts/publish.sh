@@ -26,10 +26,6 @@ az account set --subscription "$azure_subscription_name" || true
 # Make sure the Kubernetes namespace exists
 kubectl create ns $namespace || true
 
-# Add the Bitnami Helm repo so we can install the databases
-helm repo add bitnami https://charts.bitnami.com/bitnami || true
-helm repo update
-
 # Uninstall the Helm Chart. We do this at the start of the script because the
 # LoadBalancer must be deleted before we attempt to create a new one.
 for instance in ${instances[@]}; do
@@ -38,41 +34,10 @@ for instance in ${instances[@]}; do
     kubectl delete job meerkat-dsa-$instance-migrate -n $namespace || true
     # Delete the Meerkat DSA instance, if it exists.
     helm uninstall meerkat-dsa-$instance -n $namespace || true
-    # Delete the DSA's database, if it exists.
-    helm uninstall meerkat-db-$instance -n $namespace || true
-    # Delete the secret used for the database, if it exists.
-    kubectl delete secret mysql-db-$instance -n $namespace || true
-    # Delete the secret used for the DSA, if it exists.
-    kubectl delete secret meerkat-$instance-db -n $namespace || true
     # Delete the secret used for digital signature, if it exists.
     kubectl delete secret meerkat-$instance-signing -n $namespace || true
     # Delete the secret used for TLS, if it exists.
     kubectl delete secret meerkat-$instance-tls -n $namespace || true
-    # Delete the persistent volume claim created by the database.
-    # (This is not deleted automatically by Helm.)
-    kubectl delete pvc data-meerkat-db-$instance-mysql-0 -n $namespace || true
-
-    # I was having an issue getting a new instance to start. I think the issue
-    # is that the password settings for a given chart are only applied the first
-    # time it is deployed. When you delete a bitnami/mysql release, it does NOT
-    # delete the PVCs it created, which means that the OLD password will
-    # persist. Since this script deletes and re-installs under the same name
-    # every time, it must necessarily have a deterministic password.
-    # See this GitHub issue: https://github.com/bitnami/charts/issues/9083
-    dbpassword="asdf_$instance"
-
-    # Create the database secrets as required by the bitnami/mysql chart.
-    # See: https://artifacthub.io/packages/helm/bitnami/mysql
-    kubectl create secret generic mysql-db-$instance \
-        --from-literal=mysql-root-password=$dbpassword \
-        --from-literal=mysql-replication-password=$dbpassword \
-        --from-literal=mysql-password=$dbpassword \
-        --namespace=$namespace
-
-    # Create the secrets for the DSA to use to authenticate to the database.
-    kubectl create secret generic meerkat-$instance-db \
-        --from-literal=databaseUrl=mysql://root:$dbpassword@meerkat-db-$instance-mysql.$namespace.svc.cluster.local:3306/directory \
-        --namespace=$namespace
 
     mkdir -p ./tmp
     openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
@@ -87,14 +52,6 @@ for instance in ${instances[@]}; do
     kubectl create secret tls meerkat-$instance-tls \
         --cert=./tmp/$instance.crt \
         --key=./tmp/$instance.key \
-        --namespace=$namespace
-
-    # Create one separate MySQL database for each DSA to be deployed.
-    # See: https://artifacthub.io/packages/helm/bitnami/mysql
-    helm install meerkat-db-$instance bitnami/mysql \
-        --set auth.existingSecret=mysql-db-$instance \
-        --set auth.database=directory \
-        --atomic \
         --namespace=$namespace
 
 done

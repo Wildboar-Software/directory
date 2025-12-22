@@ -156,7 +156,7 @@ async function validateValues(
                         tag_class: value.value.tagClass,
                         constructed: (value.value.construction === ASN1Construction.constructed),
                         tag_number: value.value.tagNumber,
-                        content_octets: value.value.value, // Lol. Sorry.
+                        content_octets: value.value.value as Uint8Array<ArrayBuffer>, // Lol. Sorry.
                     },
                     select: {
                         id: true,
@@ -347,7 +347,7 @@ async function addValues(
                 tag_class: attr.value.tagClass,
                 constructed: (attr.value.construction === ASN1Construction.constructed),
                 tag_number: attr.value.tagNumber,
-                content_octets: attr.value.value,
+                content_octets: attr.value.value as Uint8Array<ArrayBuffer>,
                 jer: (attr.value.construction === ASN1Construction.primitive)
                     ? attr.value.toJSON() as Prisma.InputJsonValue
                     : undefined,
@@ -363,7 +363,7 @@ async function addValues(
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
-                    content_octets: attr.value.value,
+                    content_octets: attr.value.value as Uint8Array<ArrayBuffer>,
                     jer: (attr.value.construction === ASN1Construction.primitive)
                         ? attr.value.toJSON() as Prisma.InputJsonValue
                         : undefined,

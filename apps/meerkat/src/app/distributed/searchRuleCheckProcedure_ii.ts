@@ -24,8 +24,8 @@ import {
 import createSecurityParameters from "../x500/createSecurityParameters.js";
 import printInvokeId from "../utils/printInvokeId.js";
 
-const ID_AUTONOMOUS: Buffer<ArrayBuffer> = id_ar_autonomousArea.toBytes();
-const ID_SERVICE: Buffer<ArrayBuffer> = id_ar_serviceSpecificArea.toBytes();
+const ID_AUTONOMOUS = id_ar_autonomousArea.toBytes() as Buffer<ArrayBuffer>;
+const ID_SERVICE = id_ar_serviceSpecificArea.toBytes() as Buffer<ArrayBuffer>;
 
 /**
  * @summary The Search Rule Check Procedure (II) defined in ITU Recommendation X.518.

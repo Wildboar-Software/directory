@@ -84,16 +84,17 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         vertex.immediateSuperior.dse.objectClass.add(PARENT);
         vertex.immediateSuperior.dse.familyMember = true;
     }
+    const oidstr = value.value.objectIdentifier.toString();
     pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.upsert({
         where: {
             entry_id_object_class: {
                 entry_id: vertex.dse.id,
-                object_class: value.value.objectIdentifier.toString(),
+                object_class: oidstr,
             },
         },
         create: {
             entry_id: vertex.dse.id,
-            object_class: value.value.objectIdentifier.toString(),
+            object_class: oidstr,
         },
         update: {},
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
@@ -112,7 +113,7 @@ const addAttribute: SpecialAttributeBatchDatabaseEditor = async (
         ...attr.values.map((v) => v.objectIdentifier),
         ...attr.valuesWithContext?.map((vwc) => vwc.value.objectIdentifier) ?? [],
     ].filter((oid) => {
-        const key = oid.toBytes().toString("base64");
+        const key = (oid.toBytes() as Buffer).toString("base64");
         if (encountered.has(key)) {
             return false;
         }

@@ -1,10 +1,9 @@
 # Logging and Monitoring
 
 Meerkat DSA supports internationalized logging, and using different formats.
-Under the hood, Meerkat DSA uses
-[winston](https://www.npmjs.com/package/winston) for logging, which means that
-almost any logging format and logging transport may be used. By default,
-Meerkat DSA logs plain text to the console.
+Under the hood, Meerkat DSA uses [LogTape](https://logtape.org/) for logging.
+By default, Meerkat DSA logs plain text to the console with ANSI coloring. JSON
+logging is supported and recommended.
 
 ## Internationalization
 
@@ -32,13 +31,16 @@ applications. Their meanings are described below:
   require administrator attention, such as data corruption, loops, invalid
   schema, database connectivity issues, resource constraints, etc.
 
+In theory, other log levels may be supported later on.
+
 ## Customizing Logging the Simple Way
 
-You can configure logging through environment variables.
+You can configure logging through environment variables. The following may be
+used to configure logging to either the console (the default) or rotated log
+files:
 
-- Setting `MEERKAT_NO_COLOR` to `1` will disable colored logging output.
-- Setting `MEERKAT_NO_TIMESTAMP` to `1` will disable the timestamp from log
-  messages.
+- Setting `MEERKAT_NO_COLOR` or `NO_COLOR` to `1` will disable colored logging
+  output. The latter is a [standard](https://no-color.org/).
 - Setting `MEERKAT_LOG_LEVEL` to a log level will log all messages having a
   severity at that level or higher. It may be set to `debug`, `info`, `warn`,
   or `error`, in order of decreasing verbosity. The default is `info`.
@@ -54,45 +56,51 @@ You can configure logging through environment variables.
   `MEERKAT_LOG_FILE` is not set.
 - `MEERKAT_LOG_FILE_MAX_FILES` controls the maximum number of log files
   before which Meerkat DSA deletes the oldest one.
-- Setting `MEERKAT_LOG_ZIP` to `1` will make Meerkat DSA compress rotated-out
-  log files.
-- Setting `MEERKAT_LOG_TAILABLE` to `1` will... just read this: https://github.com/winstonjs/winston/blob/HEAD/docs/transports.md#file-transport.
-- Setting `MEERKAT_LOG_HTTP` to a URL will cause Meerkat DSA to use HTTP
-  transport for log messages. URL-based usernames and passwords may be used,
-  which will enable the use of HTTP basic authentication.
 
-## Customizing Log Formats and Transports via the Init Script
+## Logging via Syslog
 
-In addition to the above logging configuration via environment variables,
-logging can be customized via the init script. See the example below:
+In addition to the above configuration, you may configure Meerkat DSA to log via
+Syslog using the following environment variables:
 
-```javascript
-import winston from "winston";
+- `MEERKAT_LOG_SYSLOG` - Set this to `1` to enable logging via Syslog. You do
+  not need any further configuration if your logs are going to localhost over
+  UDP port 514 and you don't care about the app name.
+- `MEERKAT_LOG_SYSLOG_APP_NAME` - Set this to change the application name in
+  Syslog logs. By default, this is set to `meerkat`.
+- `MEERKAT_LOG_SYSLOG_HOST` - Set this to the hostname of the Syslog server to
+  which you want your logs sent. This defaults to `localhost`.
+- `MEERKAT_LOG_SYSLOG_PORT` - Set this to the UDP or TCP port number to which
+  you want your logs sent. This defaults to `514`.
+- `MEERKAT_LOG_SYSLOG_TCP` - If set to `1`, Syslog events will be sent over TCP
+  instead of UDP. This gives you reliable and in-order transport at the expense
+  of performance.
+- `MEERKAT_LOG_SYSLOG_TIMEOUT` - The number of milliseconds (in decimal digits)
+  before a connection timeout. This defaults to `5000`.
+- `MEERKAT_LOG_SYSLOG_TLS` - If set to `1`, use Syslog over Transport Layer
+  Security (TLS). If you do not use this, your Syslog events will _not_ be
+  encrypted or tamper-proof.
+- `MEERKAT_LOG_SYSLOG_REJECT_UNAUTH` - If set to `1`, ignore invalid X.509
+  certificates from the Syslog server. This option is insecure, but some TLS is
+  probably better than none.
+- `MEERKAT_LOG_SYSLOG_CA` - File path to a file containing PEM-encoded X.509
+  public key certificates which will serve as trust anchors for verifying the
+  Syslog server.
 
-export async function init (ctx) {
-  ctx.log = winston.createLogger({
-    level: "info",
-    format: winston.format.json(),
-    transports: [
-      new winston.transports.Console(),
-    ],
-  });
-}
+:::note
 
-export default init;
-```
+Meerkat DSA was only going to support console or file logging since those are
+the universal and standard--if not the preferred--ways to log things in modern
+apps, but support for Syslog required only a tiny additional dependency (with no
+transitive dependencies) to work, so it was an obvious choice. In contrast,
+something like Windows Event Viewer, Sentry, OpenTelemetry, or AWS Cloudwatch
+logging would have required huge dependencies and those can't be tested as
+easily.
 
-The example above overwrites the context object's `log` property with your
-own logger, which uses the JSON format.
+:::
 
 ## SNMP Monitoring
 
 Meerkat DSA will support SNMP monitoring in a paid version in the future.
-
-## Webhooks
-
-Meerkat DSA will support custom webhooks in a paid version in the future. These
-webhooks can be used to collect telemetry data.
 
 ## "Why are errors logged at DEBUG level?"
 

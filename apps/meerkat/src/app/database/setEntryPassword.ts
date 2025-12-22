@@ -108,7 +108,7 @@ async function setEntryPassword (
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     });
     const now = new Date();
-    const nowElement = _encodeGeneralizedTime(now, DER);
+    const nowElement = _encodeGeneralizedTime(now, DER) as DERElement;
     const targetDN = getDistinguishedName(vertex);
     const admPoints = getAdministrativePoints(vertex);
     const relevantSubentries: Vertex[] = (await Promise.all(
@@ -186,8 +186,8 @@ async function setEntryPassword (
             ),
         }
         : undefined;
-    const encodedOldPwd: ASN1Element | undefined = oldUserPwd
-        ? _encode_UserPwd(oldUserPwd, DER)
+    const encodedOldPwd: DERElement | undefined = oldUserPwd
+        ? _encode_UserPwd(oldUserPwd, DER) as DERElement
         : undefined;
 
     const encAlg: AlgorithmIdentifier = ("clear" in pwd)
@@ -238,30 +238,30 @@ async function setEntryPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: true,
                     tag_number: ASN1UniversalType.sequence,
-                    content_octets: encoded_enc_alg.value,
+                    content_octets: encoded_enc_alg.value as Buffer<ArrayBuffer>,
                     jer: encoded_enc_alg.toJSON() as object,
                 },
                 ...(exp_time_el
                     ? [{
                         entry_id: vertex.dse.id,
-                        type_oid: pwdExpiryTime["&id"].toBytes(),
+                        type_oid: pwdExpiryTime["&id"].toBytes() as Buffer<ArrayBuffer>,
                         operational: true,
                         tag_class: ASN1TagClass.universal,
                         constructed: false,
                         tag_number: ASN1UniversalType.generalizedTime,
-                        content_octets: exp_time_el.value,
+                        content_octets: exp_time_el.value as Buffer<ArrayBuffer>,
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),
                 ...(end_time_el
                     ? [{
                         entry_id: vertex.dse.id,
-                        type_oid: pwdEndTime["&id"].toBytes(),
+                        type_oid: pwdEndTime["&id"].toBytes() as Buffer<ArrayBuffer>,
                         operational: true,
                         tag_class: ASN1TagClass.universal,
                         constructed: false,
                         tag_number: ASN1UniversalType.generalizedTime,
-                        content_octets: end_time_el.value,
+                        content_octets: end_time_el.value as Buffer<ArrayBuffer>,
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),

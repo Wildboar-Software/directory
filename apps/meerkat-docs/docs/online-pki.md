@@ -39,7 +39,8 @@ study).
 No matter what Meerkat DSA implements, you should always secure your
 network. If you are using Kubernetes, you can (and should) configure network
 policies. Generally speaking, Meerkat DSA does not need to access anything in
-your internal network except for the MySQL database.
+your internal network, unless it is chaining requests or replicating data into
+shadowed areas.
 
 :::
 
