@@ -19,16 +19,16 @@
         "build": {
             "executor": "@nx/esbuild:esbuild",
             "outputs": ["{options.outputPath}"],
-            "defaultConfiguration": "development",
             "options": {
                 "main": "apps/meerkat/src/main.ts",
                 "outputPath": "dist/apps/meerkat",
-                "outputFileName": "main.js",
+                "outputFileName": "main.mjs",
                 "tsConfig": "apps/meerkat/tsconfig.app.json",
                 "platform": "node",
                 "format": ["esm"],
                 "generatePackageJson": true,
                 "esbuildOptions": {
+                    "minify": false,
                     "banner": {
                         "js": "#!/bin/env node"
                     },
@@ -53,14 +53,6 @@
                         "output": "."
                     }
                 ]
-            },
-            "configurations": {
-                "development": {
-                    "minify": false
-                },
-                "production": {
-                    "minify": true
-                }
             }
         },
         "serve": {
