@@ -88,7 +88,7 @@ const config = {
                 },
                 {
                     name: 'copyright',
-                    content: 'Copyright (c) 2021 Jonathan M. Wilbur <jonathan@wilbur.space>.',
+                    content: 'Copyright (c) 2021-2025 Jonathan M. Wilbur <jonathan@wilbur.space>.',
                 },
             ],
             colorMode: {
