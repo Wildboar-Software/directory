@@ -62,7 +62,7 @@ import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/InformationFramework";
 import * as crypto from "crypto";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { ResultOrError } from "@wildboar/x500";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,

@@ -72,7 +72,7 @@ import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/InformationFramework";
 import * as crypto from "crypto";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { ResultOrError } from "@wildboar/x500";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
@@ -183,12 +183,12 @@ import {
 import {
     DITContextUseInformation,
 } from "@wildboar/x500/SchemaAdministration";
-import { country, countryName } from "@wildboar/x500/SelectedObjectClasses";
+import { country } from "@wildboar/x500/SelectedObjectClasses";
 import { residentialPerson } from "@wildboar/x500/SelectedObjectClasses";
 import {
     id_ar_serviceSpecificArea
 } from "@wildboar/x500/InformationFramework";
-import { languageContext } from "@wildboar/x500/SelectedAttributeTypes";
+import { languageContext, countryName } from "@wildboar/x500/SelectedAttributeTypes";
 
 export
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));

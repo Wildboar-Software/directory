@@ -19,7 +19,7 @@ import {
     commonName,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import * as crypto from "crypto";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { ResultOrError } from "@wildboar/x500";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,

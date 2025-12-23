@@ -20,7 +20,7 @@
         "alwaysStrict": true,
         "baseUrl": ".",
         "paths": {
-            "@wildboar/idm": ["libs/idm/src/index.js"],
+            "@wildboar/idm": ["libs/idm/src/index.ts"],
             "@wildboar/ldap-socket": ["libs/ldap-socket/src/index.ts"],
             "@wildboar/ocsp-client": ["libs/ocsp-client/src/index.ts"],
             "@wildboar/osi-net": ["libs/osi-net/src/index.js"],
