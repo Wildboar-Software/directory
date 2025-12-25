@@ -1,0 +1,81 @@
+name: meerkat-dsa
+title: Meerkat DSA
+license: MIT
+type: app
+base: core22
+version: '4.0.0'
+summary: Meerkat X.500 Directory System Agent (DSA) / LDAP Server
+description: |
+  Meerkat DSA is an X.500 Directory System Agent (DSA) that speaks the
+  Directory Access Protocol (DAP) and other protocols described in the
+  International Telecommunications Union's X.500 series of specifications. It
+  also supports Lightweight Directory Access Protocol (LDAP). It is written in
+  TypeScript, runs on NodeJS, and uses SQLite as a backing data store.
+
+  It supports almost every X.500 feature, including shadowing, chaining,
+  request and response signing, service administration, hierarchical groups,
+  compound entries, zonal matching, cross references, contexts, non-specific
+  hierarchical operational bindings, dynamic entries, attribute certificates,
+  all defined access control schemes, and almost all schema defined in the X.500
+  series and in most LDAP servers.
+
+grade: stable
+confinement: strict
+contact:
+  - jonathan@wilbur.space
+source-code: https://github.com/Wildboar-Software/directory
+website: https://wildboar-software.github.io/directory/
+issues: https://github.com/Wildboar-Software/directory/issues
+lint:
+  ignore:
+    - metadata:
+      - donation
+icon: images/Wildboar.png
+# TODO: system-usernames
+apps:
+  meerkat-dsa-app:
+    daemon: simple
+    plugs: [network, network-bind]
+    command: main.mjs
+    start-timeout: 20s
+    stop-timeout: 20s
+    restart-delay: 10s
+    restart-condition: on-failure
+    environment:
+      DATABASE_URL: file:$SNAP_DATA/meerkat.db
+      MEERKAT_IDM_PORT: "1389"
+
+parts:
+  meerkat-dsa:
+    plugin: npm
+    npm-include-node: true
+    npm-node-version: 25.2.1
+    source-type: local
+    source: .
+    build-environment:
+      - CI: "true"
+      - FORCE_COLOR: "0"
+      - NODE_OPTIONS: "--trace-warnings"
+      - NX_DAEMON: "false"
+    override-build: |
+      cp .npmrc /root
+      craftctl default
+      npm ci --include=dev --no-audit --no-fund --no-save
+      npx -q nx --tuiAutoExit=true --outputStyle=static --parallel=1 run meerkat:build:production --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
+      cp .npmrc dist/apps/meerkat
+      cd dist/apps/meerkat
+      npm ci --only=production --no-audit --no-fund --no-save
+      npm install --no-package-lock --no-save prisma
+      export DATABASE_URL=file:$SNAP_DATA/meerkat.db
+      npx -q --verbose prisma migrate deploy --schema ./prisma/schema.prisma --config ./prisma/prisma.config.ts
+      cp main.js $SNAPCRAFT_PART_INSTALL/main.mjs
+      cp -r assets $SNAPCRAFT_PART_INSTALL/assets
+      cp package.json $SNAPCRAFT_PART_INSTALL/
+      chmod a+x $SNAPCRAFT_PART_INSTALL/main.mjs
+    stage-packages:
+      - libatomic1
+      - nodejs
+    stage:
+      - main.mjs
+      - assets
+      - package.json
