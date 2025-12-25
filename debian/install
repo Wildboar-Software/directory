@@ -1,0 +1,5 @@
+dist/apps/meerkat/ usr/lib
+debian/meerkat.service lib/systemd/system
+debian/meerkat.env etc/meerkat
+dist/apps/meerkat/node_modules/ usr/lib/meerkat
+debian/meerkat usr/bin

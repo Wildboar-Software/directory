@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+mkdir -p /var/lib/meerkat /var/log/meerkat /usr/lib/meerkat
+
+if ! id meerkat >/dev/null 2>&1; then
+    adduser --system --group --home /var/lib/meerkat meerkat
+fi
+
+chown -R meerkat:meerkat /var/lib/meerkat /var/log/meerkat
+
+systemctl daemon-reload
+systemctl unmask meerkat || true
+systemctl enable meerkat || true
+
+exit 0

@@ -1,0 +1,11 @@
+#!/bin/sh
+cd /usr/lib/meerkat
+
+# If the migration fails, still carry on: we do not want a failed migration
+# (which is infrequently needed to begin with) to make us unable to start
+# Meerkat DSA
+/usr/bin/npx prisma migrate deploy \
+    --schema /usr/lib/meerkat/prisma/schema.prisma \
+    --config /usr/lib/meerkat/prisma/prisma.config.ts || true
+
+exec /usr/bin/node /usr/lib/meerkat/main.js start "$@"

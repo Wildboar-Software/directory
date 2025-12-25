@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+systemctl stop meerkat-dsa || true
+exit 0
