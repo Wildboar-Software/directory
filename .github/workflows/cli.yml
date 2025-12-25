@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - v4.*
-      - v3.*
-      - v2.*
   # push:
   #   branches:
   #     - main
@@ -27,9 +25,9 @@ jobs:
           - 'x500-cli-config'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '25'
       - name: Install NPM Packages
@@ -37,15 +35,16 @@ jobs:
       - name: Generate Prisma Client
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
       - name: Compile ${{ matrix.library }} Library
-        run: npx nx run ${{ matrix.library }}:build --skip-nx-cache
+        run: npx nx --tuiAutoExit=true --outputStyle=static run ${{ matrix.library }}:build --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
         # We use || true here because the version numbers will usually be the
         # same between pipeline runs, so most attempted publishing will fail due
         # to duplicate version numbers.
       - name: Publish NPM Package
-        uses: JS-DevTools/npm-publish@v1
-        with:
-          package: ./dist/libs/${{ matrix.library }}/package.json
-          token: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --ignore-scripts
+        working-directory: ./dist/libs/${{ matrix.library }}
+        timeout-minutes: 1
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   build_x500_cli:
     name: Build the X.500 CLI
@@ -57,17 +56,18 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '25'
       - name: Install NPM Packages
         run: npm ci
       - name: Compile the X.500 CLI
-        run: npx nx run x500-cli:build:production --skip-nx-cache
+        run: npx nx --tuiAutoExit=true --outputStyle=static run x500-cli:build:production --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
       - name: Publish NPM Package
-        uses: JS-DevTools/npm-publish@v1
-        with:
-          package: ./dist/apps/x500-cli/package.json
-          token: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --ignore-scripts
+        working-directory: ./dist/libs/x500-cli
+        timeout-minutes: 1
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

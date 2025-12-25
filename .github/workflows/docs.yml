@@ -1,14 +1,9 @@
 name: Docs Workflow
 
 on:
-  # push:
-  #   tags:
-  #     - v3.*
-  #     - v2.*
   push:
-    branches:
-      - main
-      - master
+    tags:
+      - v4.*
 
 jobs:
 
@@ -18,15 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '25'
       - name: Install NPM Packages
         run: npm ci
       - name: Compile Documentation
-        run: npx nx run meerkat-docs:build --skip-nx-cache
+        run: npx nx --tuiAutoExit=true --outputStyle=static run meerkat-docs:build --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
 
       # Popular action to deploy to GitHub Pages:
       # Docs: https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-docusaurus

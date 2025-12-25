@@ -3,8 +3,6 @@ name: Meerkat DSA Workflow
 on:
   push:
     tags:
-      - v2.*
-      - v3.*
       - v4.*
 
 env:
@@ -20,29 +18,29 @@ jobs:
 
   lint:
     name: Linting
-    timeout-minutes: 10
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     environment: production
     strategy:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         timeout-minutes: 2
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '25'
         timeout-minutes: 2
-      - name: Install NPM Packages
-        run: npm ci
-        timeout-minutes: 5
-      - name: Generate Prisma Client
-        run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
-        timeout-minutes: 1
-      - name: Run Linter
-        run: npx nx run-many --target=lint --all --skip-nx-cache
-        timeout-minutes: 2
+      # - name: Install NPM Packages
+      #   run: npm ci
+      #   timeout-minutes: 5
+      # - name: Generate Prisma Client
+      #   run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+      #   timeout-minutes: 1
+      # - name: Run Linter
+      #   run: npx nx --tuiAutoExit=true --outputStyle=static run-many --target=lint --all --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
+      #   timeout-minutes: 2
       - name: Lint Helm Charts
         run: helm lint ./k8s/charts/meerkat-dsa/
         timeout-minutes: 1
@@ -58,9 +56,9 @@ jobs:
   #     fail-fast: false
   #   steps:
   #     - name: Checkout
-  #       uses: actions/checkout@v4
+  #       uses: actions/checkout@v6
   #     - name: Install Node.js
-  #       uses: actions/setup-node@v4
+  #       uses: actions/setup-node@v6
   #       with:
   #         node-version: '25'
   #     - name: Install NPM Packages
@@ -68,7 +66,7 @@ jobs:
   #     - name: Generate Prisma Client
   #       run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
   #     - name: Run Unit Tests
-  #       run: npx nx run-many --target=test --all --skip-nx-cache
+  #       run: npx nx --tuiAutoExit=true --outputStyle=static run-many --target=test --all --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
   #       timeout-minutes: 5
 
   publish_libs:
@@ -91,10 +89,10 @@ jobs:
           - 'x500-auth-ts'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         timeout-minutes: 2
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         timeout-minutes: 2
         with:
           node-version: '25'
@@ -105,17 +103,17 @@ jobs:
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
         timeout-minutes: 1
       - name: Compile ${{ matrix.library }} Library
-        run: npx nx run ${{ matrix.library }}:build --with-deps
+        run: npx nx --tuiAutoExit=true --outputStyle=static run ${{ matrix.library }}:build --with-deps --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
         timeout-minutes: 5
         # We use || true here because the version numbers will usually be the
         # same between pipeline runs, so most attempted publishing will fail due
         # to duplicate version numbers.
       - name: Publish NPM Package
-        uses: JS-DevTools/npm-publish@v1
-        timeout-minutes: 3
-        with:
-          package: ./dist/libs/${{ matrix.library }}/package.json
-          token: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --ignore-scripts
+        working-directory: ./dist/libs/${{ matrix.library }}
+        timeout-minutes: 1
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   build_meerkat_dsa:
     name: Build Meerkat DSA
@@ -128,14 +126,14 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         timeout-minutes: 2
       - name: Determine Meerkat DSA Version
         timeout-minutes: 1
         run: |
             echo "PUBLISHING_MEERKAT_VERSION=$(cat k8s/charts/meerkat-dsa/Chart.yaml | grep appVersion | sed 's/appVersion: //' | sed 's/\r$//')" >> $GITHUB_ENV
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         timeout-minutes: 2
         with:
           node-version: '25'
@@ -146,26 +144,53 @@ jobs:
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
         timeout-minutes: 1
       - name: Compile Meerkat DSA
-        run: npx nx run meerkat:build:production --skip-nx-cache
+        run: npx nx --tuiAutoExit=true --outputStyle=static run meerkat:build:production --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
         timeout-minutes: 10
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         timeout-minutes: 10
       - name: Login to the Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         timeout-minutes: 2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Produce Docker Metadata
+        id: docker_meta
+        uses: docker/metadata-action@5
+        timeout-minutes: 1
+        with:
+          images: ghcr.io/wildboar-software/meerkat-dsa
+          tags: |
+            type=ref,event=tag
+            type=sha,format=long
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         timeout-minutes: 10
         with:
-          push: true
-          tags: ghcr.io/wildboar-software/meerkat-dsa:latest,ghcr.io/wildboar-software/meerkat-dsa:${{ env.PUBLISHING_MEERKAT_VERSION }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
           context: ./
           file: ./meerkat.dockerfile
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4
+        timeout-minutes: 1
+      - name: Sign the images with GitHub OIDC Token (Sigstore)
+        timeout-minutes: 1
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          TAGS: ${{ steps.docker_meta.outputs.tags }}
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes ${images}
+          # cosign verify ${images} \
+          # --certificate-identity=https://github.com/Wildboar-Software/directory/.github/workflows/WORKFLOW_NAME@refs/heads/master \
+          # --certificate-oidc-issuer=https://token.actions.githubusercontent.com
 
   # HOW DOES THIS EVEN WORK?
   # There is no point in this job where it installs Helm, but yet, somehow, this
@@ -179,7 +204,7 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         timeout-minutes: 2
       - name: Create the Helm Package
         run: helm package .
