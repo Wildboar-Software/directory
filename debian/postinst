@@ -7,6 +7,10 @@ if ! id meerkat >/dev/null 2>&1; then
     adduser --system --group --home /var/lib/meerkat meerkat
 fi
 
+# I don't know why I have to do this here. Normally, I don't need execute
+# permissions to run a program with `npx`.
+chmod +x /usr/lib/meerkat/node_modules/prisma/build/index.js
+
 # TODO: All files in /usr/lib are owned by root, so I'm not sure this is right.
 chown -R meerkat:meerkat /var/lib/meerkat /var/log/meerkat /usr/lib/meerkat
 
