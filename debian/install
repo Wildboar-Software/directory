@@ -1,4 +1,5 @@
 dist/apps/meerkat/ usr/lib
+dist/apps/meerkat/prisma/prisma.config.ts usr/lib/meerkat
 debian/meerkat.service lib/systemd/system
 debian/meerkat.env etc/meerkat
 dist/apps/meerkat/node_modules/ usr/lib/meerkat

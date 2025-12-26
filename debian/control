@@ -10,7 +10,7 @@ Section: database
 Package: meerkat-dsa
 Architecture: any
 Depends:
- nodejs (>= 21),
+ nodejs (>= 20.19),
  adduser,
  ${misc:Depends}
 Homepage: https://wildboar-software.github.io/directory/

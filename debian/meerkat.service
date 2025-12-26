@@ -7,13 +7,12 @@ Type=simple
 User=meerkat
 Group=meerkat
 ExecStart=/bin/sh /usr/bin/meerkat
-Restart=on-failure
+Restart=no
 WorkingDirectory=/var/lib/meerkat
 Environment=NODE_ENV=production
 Environment=DATABASE_URL=file:/var/lib/meerkat/meerkat.db
 EnvironmentFile=/etc/meerkat/meerkat.env
 NoNewPrivileges=yes
-ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
 
