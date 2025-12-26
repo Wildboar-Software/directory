@@ -744,6 +744,16 @@ This controls the logging level. Can be one of `debug`, `info`, `warn`, or
 `error`. Log messages at or above the specified level will get logged; all
 others will be silently discarded.
 
+## MEERKAT_LOG_TIMESTAMP
+
+If set to `0` disables the timestamp field of the log output, if the logs are
+printed to the console; if set to any other value or unset, timestamps will be
+printed to the console, unless Meerkat DSA believes it is running as a SystemD
+service, in which case, this will need to be explicitly set to `1` to enable
+timestamps. The rationale for this behavior is that Journald keeps its own
+timestamps, so any that Meerkat prints are duplicated.
+
+
 ## MEERKAT_LOG_SYSLOG
 
 If set to `1`, Meerkat DSA will log to the syslog facility. This does not
@@ -831,6 +841,14 @@ trust anchor X.509 public key certificates.
 This has no effect if Syslog logging is not
 [enabled](./env.md#meerkat_log_syslog), or if Syslog over TLS is not
 [enabled](./env.md#meerkat_log_syslog_tls),
+
+## MEERKAT_LOG_SYSTEMD_LEVEL_PREFIX
+
+If set to `1`, Meerkat DSA will use an alternative log message format
+that is suitable for consumption by `journald` (part of `systemd`). This will
+allow `journald` to attribute log levels to logged messages instead of treating
+every log message as `info`-level. This has no effect if Meerkat DSA isn't
+running as a `systemd` service.
 
 ## MEERKAT_LOG_TLS_SECRETS
 
