@@ -12,7 +12,7 @@ fi
 chmod +x /usr/lib/meerkat/node_modules/prisma/build/index.js
 
 # TODO: All files in /usr/lib are owned by root, so I'm not sure this is right.
-chown -R meerkat:meerkat /var/lib/meerkat /var/log/meerkat /usr/lib/meerkat
+chown -R meerkat:meerkat /var/lib/meerkat /var/log/meerkat
 
 systemctl daemon-reload
 systemctl unmask meerkat || true
