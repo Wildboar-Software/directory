@@ -1,0 +1,37 @@
+[Unit]
+Description=Meerkat Directory System Agent
+After=network.target
+
+[Service]
+Type=simple
+User=meerkat
+Group=meerkat
+ExecStart=/bin/sh /usr/bin/meerkat
+Restart=on-failure
+RestartSec=30s
+WorkingDirectory=/var/lib/meerkat
+Environment=NODE_ENV=production
+Environment=DATABASE_URL=file:/var/lib/meerkat/meerkat.db
+Environment=MEERKAT_LOG_SYSTEMD_LEVEL_PREFIX=1
+EnvironmentFile=/etc/meerkat/meerkat.env
+PassEnvironment=LANG NO_COLOR
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=yes
+ProtectProc=invisible
+PrivateTmp=yes
+PrivateDevices=yes
+# PrivateUsers=self
+SecureBits=
+ProtectClock=yes
+ProtectHostname=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+PrivateMounts=yes
+SystemCallFilter=~@cpu-emuation @chown @debug @keyring @module @mount @obsolete @privileged @reboot @resources @setuid @swap
+LogNamespace=meerkat
+
+[Install]
+WantedBy=multi-user.target

@@ -28,3 +28,9 @@ end_of_line = unset
 
 [start-meerkat]
 end_of_line = lf
+
+[debian/**]
+end_of_line = lf
+
+[debian/rules]
+indent_style = tab
