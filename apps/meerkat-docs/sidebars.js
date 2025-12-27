@@ -90,6 +90,7 @@ const sidebars = {
             label: 'For Developers',
             items: [
                 'versioning',
+                'development',
             ],
         },
         {

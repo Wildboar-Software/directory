@@ -60,3 +60,9 @@ data/zonal/gazette.csv
 .github/instructions/nx.instructions.md
 
 vitest.config.*.timestamp*
+
+debian/.debhelper/
+debian/meerkat-dsa/
+debian/debhelper-build-stamp
+debian/meerkat-dsa.postrm.debhelper
+debian/meerkat-dsa.substvars

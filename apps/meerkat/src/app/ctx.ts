@@ -18,9 +18,10 @@ import {
     configure as configureLogging,
     getConsoleSink,
     getLogger,
-    ansiColorFormatter,
     jsonLinesFormatter,
     LogLevel as LogtapeLogLevel,
+    getTextFormatter,
+    getAnsiColorFormatter,
 } from "@logtape/logtape";
 import { getRotatingFileSink } from "@logtape/file";
 import { getSyslogSink } from "@logtape/syslog";
@@ -506,6 +507,30 @@ const bindOverrides: SigningInfo["bindOverrides"] = {
         : undefined,
 };
 
+const isSystemdService: boolean = !!process.env.INVOCATION_ID;
+
+const isSystemdSyslogPrefix: boolean = (
+    isSystemdService
+    && (process.env.MEERKAT_LOG_SYSTEMD_LEVEL_PREFIX === "1")
+);
+
+/* If Meerkat DSA is running in a Systemd service, we do not print the
+timestamp in log messages, because Journald automatically includes its own
+timestamps; otherwise, timestamps defaults to on unless explicitly disabled. */
+const logTimestamp: boolean = isSystemdService
+    ? (process.env.MEERKAT_LOG_TIMESTAMP === "1")
+    : (process.env.MEERKAT_LOG_TIMESTAMP !== "0");
+
+const syslogLevels = new Map([
+    ["T", "<7>"],
+    ["D", "<7>"],
+    ["I", "<6>"],
+    ["W", "<4>"],
+    ["E", "<3>"],
+    ["F", "<1>"],
+]);
+
+
 const config: Configuration = {
     vendorName: process.env.MEERKAT_VENDOR_NAME?.length
         ? process.env.MEERKAT_VENDOR_NAME
@@ -552,9 +577,23 @@ const config: Configuration = {
                         safe: getConsoleSink(),
                         console: getConsoleSink({ formatter: process.env.MEERKAT_LOG_JSON === "1"
                             ? jsonLinesFormatter
-                            : (((process.env.MEERKAT_NO_COLOR ?? process.env.NO_COLOR) === "1")
-                                ? undefined
-                                : ansiColorFormatter)
+                            : ((((process.env.MEERKAT_NO_COLOR ?? process.env.NO_COLOR) === "1") || isSystemdService)
+                                ? getTextFormatter({
+                                    timestamp: logTimestamp ? "rfc3339" : "none",
+                                    level: isSystemdSyslogPrefix ? "L" : undefined,
+                                    format: isSystemdSyslogPrefix
+                                        ? (values) => {
+                                            const syslogLevel = syslogLevels.get(values.level) ?? "<6>";
+                                            return `${syslogLevel}${values.message}`;
+                                        }
+                                        : undefined,
+                                })
+                                : getAnsiColorFormatter({
+                                    // I cannot choose "none" here.
+                                    // Issue reported here: https://github.com/dahlia/logtape/issues/120
+                                    // This should still work.
+                                    timestamp: logTimestamp ? "rfc3339" : "none" as "date",
+                                }))
                         })
                     },
                 ...process.env.MEERKAT_LOG_FILE

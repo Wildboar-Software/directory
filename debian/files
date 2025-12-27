@@ -1,0 +1,3 @@
+meerkat-dsa-dbgsym_4.0.0-1_amd64.deb debug optional automatic=yes
+meerkat-dsa_4.0.0-1_amd64.buildinfo database optional
+meerkat-dsa_4.0.0-1_amd64.deb database optional

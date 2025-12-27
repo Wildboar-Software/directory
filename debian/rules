@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	npm ci --no-audit --no-fund --no-save
+	npx nx --tuiAutoExit=true --outputStyle=static run meerkat:build --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
+	cd dist/apps/meerkat && npm ci --omit=dev --no-audit --no-fund --no-save
+	cd dist/apps/meerkat && npm install --no-package-lock --no-audit --no-save prisma@7.0.1
+
+override_dh_auto_clean:
+	rm -rf node_modules dist .nx demo tmp apps/meerkat-docs/.docusaurus
+	rm -f *.snap *.db *.db-shm *.db-wal k8s/charts/meerkat-dsa/index.yaml data/zonal/*.csv

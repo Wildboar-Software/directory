@@ -1,0 +1,497 @@
+.TH MEERKAT 1 "2025-12-27" "Meerkat DSA" "User Commands"
+.SH NAME
+meerkat \- X.500 Directory System Agent (DSA) and LDAP Server
+.SH SYNOPSIS
+.B meerkat
+.RI [ options ]
+.SH DESCRIPTION
+Meerkat DSA is an X.500 Directory System Agent (DSA) that speaks the
+Directory Access Protocol (DAP) and other protocols described in the
+International Telecommunications Union's X.500 series of specifications. It
+also supports Lightweight Directory Access Protocol (LDAP). It is written in
+TypeScript, runs on NodeJS, and uses SQLite as a backing data store.
+
+It supports almost every X.500 feature, including shadowing, chaining,
+request and response signing, service administration, hierarchical groups,
+compound entries, zonal matching, cross references, contexts, non-specific
+hierarchical operational bindings, dynamic entries, attribute certificates,
+all defined access control schemes, and almost all schema defined in the X.500
+series and in most LDAP servers.
+
+This manual page provides a concise overview of Meerkat DSA, focusing on the
+details that pertain to system administrators, rather than directory users.
+
+.SH SUBCOMMANDS
+.TP
+.B start
+Launch the Meerkat DSA directory service.
+.TP
+.B version
+Display the version number exclusively on one line with no leading "v"
+character. (e.g. "4.0.0" followed by a newline)
+.TP
+.B help
+Show brief help and exit.
+.SH OPTIONS
+.TP
+.B -h, --help
+Show brief help and exit.
+.TP
+.B -v, --version
+Display the version number exclusively on one line with no leading "v"
+character. (e.g. "4.0.0" followed by a newline)
+.SH CONFIGURATION
+Meerkat DSA is configured via over 200 environment variables, most of which
+begin with the prefix \fBMEERKAT_\fR. These can be read from an environment
+variables file called
+.I .env
+in Meerkat DSA's working directory. On a default install on a system with
+systemd, Meerkat DSA will be configured as a systemd service that reads from
+.I /etc/meerkat/meerkat.env
+\&.
+
+The format of this file is key-value pairs, one per each line, with the key and
+value separated by an equals sign ("="). In other words, it looks just like the
+output of
+.B env (1)
+, except that it can contain empty lines and lines starting with the octothorpe
+("#") which will be interpreted as comments.
+
+.SH SETUP
+Meerkat DSA does not listen on any ports by default, because a fresh, empty
+directory is fundamentally insecure, since it has no access control rules.
+Meerkat DSA will be world-writeable without any authentication if you expose it.
+In most use cases, you will want to configure authentication and authorization,
+starting with an administrative user.
+
+First, create a user that will be your administrator. This should probaby be as
+high up in the DIT as possible, such as
+.I cn=Administrator
+\&. Set a password for this user via the
+.I administerPassword
+operation or give the entry the auxiliary object class
+.I pkiCertPath
+and an attribute value of type
+.I pkiPath
+so that strong authentication can be used.
+
+After this, create an administrative point, such as
+.I c=US
+\&. Create access control subentries under this administrative point with
+whatever access control attributes are needed, then add the
+.I id-ar-accessControlSpecificArea
+value to the
+.I administrativeRole
+attribute of the administrative point and set the
+.I accessControlScheme
+attribute for this point to the access control scheme of your choice. The
+ordering of these steps is crucial, because you could lock yourself out of your
+own directory if you permute them.
+
+The risks are high for getting these steps wrong. After setting up, be sure to
+test your directory in the field to ensure that:
+.TP
+-
+The administrative user can do anything, including modifying access control
+rules.
+.TP
+-
+Access controls actually restrict users from doing things they should not be
+allowed to do.
+.TP
+-
+Access controls allow users to do what they are allowed to do.
+.PP
+Either before or after you configure access controls, you may wish to seed your
+DSAIT (DSA-specific Information Tree) with entries. To put entries on the top
+level, such as
+.I c=US
+, set \fBMEERKAT_OPEN_TOP_LEVEL\fR
+to 1, and restart; when you are done, remove this configuration setting, or set
+it to 0, and restart again. This setting is dangerous to leave on.
+
+To seed the directory with a lot of entries (say, more than ten thousand), you
+may wish to set \fBMEERKAT_BULK_INSERT_MODE\fR to \fB1\fR and restart. In bulk
+insert mode, you can only perform write / modification operations, such as
+.I addEntry
+; all other operations will be rejected. This setting skips access controls and
+schema validation, which considerably speeds up insertion of entries. This is
+also dangerous: when you are done seeding your directory, either remove this
+configuration setting or explicitly set it to 0 and restart.
+
+.SH AUTHENTICATION
+
+Passwords are always returned as an empty string, regardless of access controls.
+This is to secure the directory against offline password cracking.
+
+Protected passwords are supported. All password operations and policy attributes
+are supported.
+
+Strong authentication is supported. For strong authentication to succeed, a
+user's asserted signing certificate must be chainable to a trust anchor
+contained in the \fBMEERKAT_SIGNING_CA_FILE\fR. If
+\fBMEERKAT_LOOKUP_UNCERT_STRONG_AUTH\fR is set, the user does not need to
+provide a certification path for strong authentication to work: the directory
+will look for that user and use the value of the
+.I pkiPath
+attribute, if the corresponding entry has an object class of
+.I pkiCertPath
+\&.
+
+External authentication and SPKM authentication are supported, but not
+documented here, since they are unusual.
+
+TLS client certificate authentication (mTLS) is supported: to do this,
+authenticate with using the
+.I externalProcedure
+mechanism with an object identifier
+.I 1.3.6.1.4.1.56490.5.401.1
+and a data value of
+.I NULL
+\&. The client certificate must be chainable to one of the trust anchors found
+in \fBMEERKAT_TLS_CA_FILE\fR.
+
+Some authentication mechanisms are intentionally slow to mitigate timing
+attacks.
+
+.SH AUTHORIZATION
+
+You can unintentionally lock yourself out of your own directory. Consider
+keeping backups of your underlying directory database (usually at
+.I /var/lib/meerkat.db
+), so that you can revert the directory in this situation.
+
+When using rule-based access control, clearances can come from the entry in the
+DSAIT, from an X.509 public key certificate used in authentication, or from an
+X.509 attribute certificate asserted upon authentication. These are controlled
+by \fBMEERKAT_GET_CLEARANCES_FROM_DSAIT\fR,
+\fBMEERKAT_GET_CLEARANCES_FROM_PKC\fR, and
+\fBMEERKAT_GET_CLEARANCES_FROM_ATTR_CERTS\fR respectively.
+
+Authorities for security labels or clearances can be set via
+\fBMEERKAT_LABELLING_AUTHORITIES\fR or
+\fBMEERKAT_CLEARANCE_AUTHORITIES\fR respectively. Both of these files are trust
+anchor lists.
+
+.SH DATABASE
+
+Meerkat DSA uses a SQLite database as a backing data store. On a typical install
+in a Unix-like host, its database will be located at
+.I /var/lib/meerkat/meerkat.db
+\&. Entries in the database are soft-deleted, meaning that, rather than being
+truly deleted from disk, they are simply marked with a deletion timestamp and
+then invisible to end users. This means that, if you accidentally delete an
+entry, you can probably restore it via manually editing the SQLite database.
+
+If you are adding a huge number of entries (in the millions or more), you might
+want to manually insert them in the SQLite database. The schema of this
+database can be seen in the file
+.I migration.sql
+, but subsequent modifications may be made in accordance with
+.I schema.prisma
+\&. Both of these files are present on an installed Meerkat DSA.
+
+.SH LOGGING
+
+Logging is internationalized based on the language you've indicated in the
+\fBLANG\fR environment variable; currently Meerkat DSA only supports English,
+though. English is, and will be, the default.
+
+Meerkat DSA uses debug, info, warn, and error log levels. You can set
+\fBMEERKAT_LOG_LEVEL\fR to one of these to control the verbosity; the default is
+.I info
+\&.
+
+Also:
+.TP
+-
+Setting \fBMEERKAT_NO_COLOR\fR or \fBNO_COLOR\fR to \fB1\fR will disable colored
+logging output. The latter is a standard defined at
+https://no-color.org/.
+
+.TP
+-
+Setting \fBMEERKAT_LOG_JSON\fR to \fB1\fR will cause Meerkat DSA to output logs in
+JSON format.
+
+.TP
+-
+Setting \fBMEERKAT_NO_CONSOLE\fR to \fB1\fR will disable logging to the console.
+Note that if you have no other log transport configured, no logs will be
+collected at all.
+
+.TP
+-
+Setting \fBMEERKAT_LOG_FILE\fR to the file path of a file to write logs will
+cause Meerkat DSA to write logs to that file.
+
+.TP
+-
+\fBMEERKAT_LOG_FILE_MAX_SIZE\fR controls the number of bytes permitted in a
+log file before it is rotated out for a new log file. This has no effect if
+\fBMEERKAT_LOG_FILE\fR is not set.
+
+.TP
+-
+\fBMEERKAT_LOG_FILE_MAX_FILES\fR controls the maximum number of log files
+before which Meerkat DSA deletes the oldest one.
+.PP
+Meerkat DSA also supports logging to syslog, possibly over a network. At
+minimum, you must set \fBMEERKAT_LOG_SYSLOG\fR to \fB1\fR to enable this.
+You do not need any further configuration if your logs are going to localhost
+over UDP port 514 and you don't care about the app name. All other settings
+related to syslog logging start with \fBMEERKAT_LOG_SYSLOG_\fR.
+
+Meerkat DSA maps IP addresses to connection UUIDs as soon as the connection is
+established. This makes it easier to redact logs to obscure who established the
+connection, while still being able to correlate log events with a connection.
+You can find the IP address associated with a connection ID by finding the first
+log event message where that connection ID appears.
+
+Errors users encounter when using the directory are logged at the DEBUG level,
+because they are not usually errors as far as the directory administrator is
+concerned: the directory may be working perfectly fine when it reports that an
+entry does not exist or that schema would be violated by an added entry, for
+example. Exceptions to this are authentication failures, since these could
+indicate malicious behavior the administrator should know about.
+
+Finally, some log messages contain the string \fBCOULD_BAN=\fR, followed by an
+IP address. This is so tools like Fail2Ban can easily extract IP addresses from
+these messages and ban IP addresses associated with illegitimate behavior such
+as hacking or spam.
+
+.SH NETWORKING
+
+Meerkat DSA supports several protocols over several transports:
+.TP
+-
+Internet Directly-Mapped (IDM): a simple framing layer that carries RPC
+operations directly over TCP/IP. Specified in ITU-T Recommendation X.519. This
+is one of the simplest protocol stacks: you probably want to use this for
+interacting with your directory, unless you are using legacy DUAs that do not
+support it.
+.TP
+-
+ISO Transport over TCP (ITOT): the transport layer of the entire OSI
+networking protocol stack, upwards, relayed over a minimal framing layer on top
+of TCP/IP. This is often the only way to interact
+with older directory products. Specified in ITU-T Recommendation X.519.
+.TP
+-
+Lightweight Directory Access Protocol (LDAP): a simplified protocol for
+accessing the directory. Specified in IETF RFC 4511. LDAP is far more widely
+supported than the X.500 protocols, but considerably less feature-rich.
+.PP
+For URLs used in Meerkat DSA, the schemes for these will be \fBidm\fR,
+\fBitot\fR, and \fBldap\fR, respectively. When tunneled through TLS, the schemes
+will be \fBidms\fR, \fBitots\fR, and \fBldaps\fR, respectively. More protocols
+may be supported in the future.
+.PP
+You are advised to configure \fBSRV\fR records using these schemes to indicate
+how your directory can be reached for your domain, but this is not required.
+
+If Meerkat DSA is running on the NodeJS runtime (likely), you can use the
+\fBRES_OPTIONS\fR environment variable to configure some DNS resolution
+settings. You will have to look this variable up elsewhere.
+
+.SH TRANSPORT LAYER SECURITY (TLS)
+
+Almost all TLS-related environment variables start with \fBMEERKAT_TLS_\fR.
+.PP
+Your TLS configuration applies to scenarios where Meerkat DSA operates both as a
+server and a client. The only exceptions to this are:
+.TP
+-
+\fBMEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS\fR
+.TP
+-
+\fBMEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS\fR
+.PP
+Which, as their names imply, operate differently depending on whether Meerkat
+DSA acts as a TLS client or server.
+.PP
+At minimum, TLS can be configured via the following environment variables:
+.TP
+-
+\fBMEERKAT_TLS_CERT_FILE\fR
+.TP
+-
+\fBMEERKAT_TLS_KEY_FILE\fR
+.PP
+Or by including:
+.TP
+-
+\fBMEERKAT_TLS_PFX_FILE\fR
+.PP
+\fBMEERKAT_TLS_CERT_FILE\fR contains a file path to the X.509 certificate to be
+used for TLS. \fBMEERKAT_TLS_KEY_FILE\fR shall contain the file path to the
+private key to be used for TLS. If both of these are present, TLS will be
+enabled. Otherwise, TLS will silently fail.
+.PP
+If either the key file or PFX file are password-protected, these can be
+decrypted by supplying the passphrase in the
+\fBMEERKAT_TLS_KEY_PASSPHRASE\fR environment variable.
+.PP
+You can configure your trust anchors (root certificate authorities) through the
+use of the \fBMEERKAT_TLS_CA_FILE\fR environment variable. The file referred to
+by this variable contains the certificate authorities used to verify TLS peers.
+If unset, this defaults to a bundle of trust anchors that are built-in to the
+NodeJS runtime.
+
+.SH SIGNING
+
+Meerkat DSA supports signed requests, responses, and errors, which provide
+end-to-end security, which is useful when directory operations are chained. The
+configuration options for signing start with \fBMEERKAT_SIGNING_\fR.
+
+Verification of request, result, or error signatures may be disabled by setting
+\fBMEERKAT_SIGNING_DISABLE_VERIFICATION\fR to \fB1\fR.
+\fBMEERKAT_SIGNING_REMOTE_CRL_CHECKINESS\fR and
+\fBMEERKAT_SIGNING_OCSP_CHECKINESS\fR control how inclined to Meerkat DSA will
+be to check remote CRLs or OCSP for the up-to-date validity of a peer's signing
+certificate. Online PKI verification will be slower and more vulnerable to
+compromises of third parties, but will protect against clients using revoked
+certificates. Meerkat DSA caches some remote CRLs.
+
+.SH SCHEMA
+
+Meerkat DSA supports almost all of the standard X.500 schema elements, and the
+majority of all IANA-registered LDAP schema elements, too. You can define more
+schema elements of your own by adding them to subschema subentries using the
+schema-related operational attribute types defined in ITU-T Recommendation
+X.501. You can do this for object classes, name forms, structure rules, context
+uses, matching rule uses, search rules and friendships. You
+.I cannot
+add attribute types, context types, matching rules, or matching restrictions
+dynamically at runtime, because they rely on code--not just data.
+
+Any recognized schema elements are returned in all subschema subentries native
+to your DSA: you don't have to add them to every subchema subentry in your DSA.
+
+.SH DISTRIBUTED OPERATION
+
+You can configure the authentication required for chaining via these
+configuration options:
+
+.TP
+-
+.B MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING
+.TP
+-
+.B MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING
+.TP
+-
+.B MEERKAT_SIGNING_REQUIRED_FOR_CHAINING
+.PP
+The local qualifier points are determined by the version of TLS used, and
+whether mTLS is used.
+.PP
+You can set \fBMEERKAT_REQUEST_CROSS_REFERENCES\fR to \fB1\fR to make your DSA
+request cross references from other DSAs it chains requests to.
+
+.SH OPERATIONAL BINDINGS
+
+A hierarchical operational binding (HOB) can be established by sending an
+.I addEntry
+request to a superior DSA with the
+.I targetSystem
+field set to the access point of the subordinate DSA. If a non-specific
+hierarchical operational binding (NHOB) is desired, the immediate superior entry
+may be modified using `manageDSAIT` and adding values of the
+.InonSpecificKnowledge
+attribute type that point to other DSAs that will serve as non-specific
+subordinates for this naming context. Using
+.I addEntry
+with
+.I targetSystem
+set to one of these access points will establish a new NHOB instead of an HOB.
+
+Since operational bindings are extremely sensitive matters, Meerkat DSA requires
+at least basic authentication combined with Transport Layer Security (TLS) to
+be able to request an operational binding; in other words, you cannot request an
+operational binding without some form of authentication and without encryption
+and integrity.
+
+Operational bindings must be accepted or rejected in the web administration
+console. Meerkat DSA has a non-standard way to relay operational bindings to
+other DSAs so that operational bindings can be established using normal X.500
+protocols; these must be signed with the DSA's signing key, since you are
+claiming to represent the DSA itself.
+
+.SH SHADOWING
+
+Currently, shadowing \fBMUST\fR be initiated via relayed operational bindings.
+Be aware that shadowing agreements can cause infinite loops if
+.I onChange
+update modes are used: DSAs may cyclically update each other forever if one's
+update causes it to initiate an update back to the source of the update. Also,
+shadowing updates could potentially run for long enough that they spill over
+into subsequent update windows. Meerkat DSA has no defense against this.
+
+Entries are not discarded after a shadow operational binding is terminated.
+Shadowed areas may not overlap.
+
+.SH WEB ADMINISTRATION CONSOLE
+
+Meerkat DSA has a web-based administrative console. It uses no Javascript. Use
+of the web-based administrative console is required for accepting or rejecting
+requested operational bindings or triggering hibernation (where Meerkat DSA is
+online, but rejects all operations).
+
+.B The web-based administrative console bypasses all security.
+.B Do not leave it exposed on any network!
+
+All configuration options pertaining to this start with
+\fBMEERKAT_WEB_ADMIN_\fR. You can configure only basic authentication, but you
+can also use TLS. You are advised to keep the web-based administrative console
+behind an HTTP proxy that requires some kind of authentication.
+
+.SH INFORMATION DISCLOSURE
+
+The Application Entity (AE) title of your DSA is derived from the subject field
+of the DSA's signing X.509 public key certificate, if configured. The AE title
+is always discoverable by network peers, and there is no ability to turn this
+off.
+
+.SH DEVIATIONS AND NUANCES
+
+Meerkat DSA deviates from the X.500 standards in a few ways, and has some
+nuances in its operation, sometimes due to defects or ambiguities in the
+standards. More are documented elsewhere, but you should know:
+
+.TP
+-
+Every top-level entry becomes an autonomous administrative point automatically.
+.TP
+-
+The first entry to be given a password in the DSA will have permissions to
+create top-level entries. This is so one entry can still create top-level
+entries before access controls exist to regulate their creation.
+
+.SH FILES
+.TP
+/etc/meerkat/meerkat.env
+The configuration file, which is a list of environment variables. When ran as
+a systemd service, systemd can read this file to inject the environment
+variables into Meerkat DSA. This file uses typical
+.I .env
+file syntax.
+.TP
+/var/lib/meerkat/meerkat.db
+The default database location on a systemd-based install. This can be changed.
+This is a SQLite database. It's schema can be found in
+.I migration.sql
+\&.
+.SH SEE ALSO
+.BR meerkat.env (5)
+.SH AUTHOR
+Jonathan M. Wilbur <jonathan@wilbur.space>
+.SH BUGS
+Report issues at https://github.com/Wildboar-Software/directory/issues.
+.SH ONLINE DOCUMENTATION
+
+The online documentation equivalent for Meerkat DSA can be found here:
+https://wildboar-software.github.io/directory.
+
+The online version is more verbose. This man pages version is more sparse and
+tailored towards system administrators.

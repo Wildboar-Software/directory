@@ -51,6 +51,11 @@
                         "glob": "prisma/**",
                         "input": "apps/meerkat/src",
                         "output": "."
+                    },
+                                        {
+                        "glob": ".npmrc",
+                        "input": "apps/meerkat",
+                        "output": "."
                     }
                 ]
             }

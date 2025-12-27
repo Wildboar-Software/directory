@@ -1,0 +1,24 @@
+Source: meerkat-dsa
+Maintainer: Jonathan M. Wilbur <jonathan.wilbur@wildboarsoftware.com>
+Priority: optional
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Build-Depends: debhelper-compat (= 13)
+Homepage: https://wildboar-software.github.io/directory/
+Section: database
+
+Package: meerkat-dsa
+Architecture: any
+Depends:
+ nodejs (>= 20.19),
+ adduser,
+ ${misc:Depends}
+Homepage: https://wildboar-software.github.io/directory/
+Description: X.500 Directory Server (DSA) and LDAP Server by Wildboar Software.
+ Meerkat DSA is an X.500 Directory System Agent (DSA) created by Wildboar
+ Software, which includes full support for the Directory Access Protocol (DAP),
+ Directory System Protocol (DSP), Directory Operational Binding Management
+ Protocol (DOP), and Lightweight Directory Access Protocol (LDAP). The X.500
+ protocols named above (everything except LDAP) are transported over IDM
+ transport as described in ITU Recommendation X.519. Meerkat DSA also serves
+ a lightweight web administration console for managing your directory.

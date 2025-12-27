@@ -5,8 +5,8 @@ WORKDIR /srv/meerkat
 COPY ./dist/apps/meerkat/package.json ./
 COPY ./dist/apps/meerkat/package-lock.json ./
 COPY .npmrc ./
-RUN npm ci --only=production --no-audit --no-fund --no-save
-RUN npm install --no-package-lock --no-save prisma
+RUN npm ci --omit=dev --no-audit --no-fund --no-save
+RUN npm install --no-package-lock --no-save prisma@7.0.1
 COPY ./dist/apps/meerkat/package.json ./
 COPY ./dist/apps/meerkat/assets ./assets
 COPY ./dist/apps/meerkat/prisma ./prisma

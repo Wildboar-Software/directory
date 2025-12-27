@@ -15,21 +15,30 @@ const __dirname = path.dirname(__filename);
 
 const cmdIndex = process.argv[1]?.endsWith("js") ? 2 : 1;
 
-let nextArgIsConfig: boolean = false;
-let configPath: string = "";
-for (const arg of process.argv.slice(cmdIndex)) {
-    if (nextArgIsConfig) {
-        configPath = arg;
-        nextArgIsConfig = false;
-        continue;
-    }
-    if (arg.toLowerCase() == "--config") {
-        nextArgIsConfig = true;
-        continue;
-    }
+function displayHelp() {
+    console.log("start - Start Meerkat DSA");
+    console.log("version - Display the Meerkat DSA version");
+    console.log("help - Show this help page");
+    console.log("Currently, none of these take any arguments");
 }
 
-const cmd = process.argv[cmdIndex];
+async function displayVersion(): Promise<void> {
+    return import("../package.json")
+        .then((pj) => console.log(pj.default.version))
+        .catch((e) => console.error(e));
+}
+
+let cmd = process.argv[cmdIndex];
+
+for (const arg of process.argv.slice(cmdIndex)) {
+    const larg = arg.toLowerCase();
+    if (larg === "--help" || larg === "-h") {
+        cmd = "help";
+    }
+    if (larg === "--version" || larg === "-v") {
+        cmd = "version";
+    }
+}
 
 switch (cmd) {
     case ("start"):
@@ -61,20 +70,7 @@ switch (cmd) {
                     escapeValue: false,
                 },
             })
-                .then(async () => {
-                    if (configPath) {
-                        const config = await import(configPath);
-                        if (("default" in config) && (typeof config.default === "function")) {
-                            ctx.config = await config.default();
-                        } else {
-                            console.error(i18n.t("log:invalid_config_js"));
-                            process.exit(1);
-                        }
-                    }
-                })
                 .then(main)
-                // .then(async () => await import("./app/main.js").then(({ default: main }) => main()))
-                // .then(({ default: main }) => main())
                 .catch((e) => {
                     console.error(`COULD_NOT_START: ${e}`);
                     console.error(e?.stack ?? "NO STACK");
@@ -82,10 +78,18 @@ switch (cmd) {
                 });
         break;
     }
+    case ("version"): {
+        displayVersion().then();
+        break;
+    }
+    case ("help"): {
+        displayHelp();
+        break;
+    }
     default: {
         console.error(`Command ${cmd} not recognized.`);
         console.error(`Recognized commands are:`);
-        console.error(`start - Starts Meerkat DSA`);
+        displayHelp();
         process.exit(1);
     }
 }
