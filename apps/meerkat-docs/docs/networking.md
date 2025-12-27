@@ -49,9 +49,7 @@ not configuring ports for those services.
 ## Distributed Operation
 
 For distributed operations, Meerkat DSA stores the access points obtained from
-knowledge attributes in the `AccessPoint` table. Currently, Meerkat DSA can only
-make use of IDM-based (and IDMS-based) access points. All other access points
-will be ignored.
+knowledge attributes in the `AccessPoint` table.
 
 You may directly alter the rows in the `AccessPoint` table to add or remove
 access points, but Meerkat DSA may have to be restarted for your changes to

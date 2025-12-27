@@ -6,17 +6,14 @@ Meerkat DSA uses Prisma as an ORM for interacting with the database. If you want
 to change the database schema, you may do so using the normal methods for
 updating Prisma schema and the Prisma client.
 
-## Maximum entries
+## Soft Deletion
 
-There is a maximum of 2.1 billion entries possible in the database. There is
-almost no way any reasonable use case would ever use this many entries, and the
-DIT should be spread across multiple DSAs long before this maximum is reached.
-
-Note that entries are soft-deleted, meaning that they are not truly "deleted"
-from the database, but merely marked as deleted with a deletion timestamp.
+Entries are soft-deleted, meaning that they are not truly "deleted" from the
+database, but merely marked as deleted with a deletion timestamp.
 
 If you run low on storage space, deleting these soft-deleted entries can be
-a good way to reclaim some space.
+a good way to reclaim some space. This has to be done via manual intervention
+with the SQLite database.
 
 ## Bulk Insertion
 
