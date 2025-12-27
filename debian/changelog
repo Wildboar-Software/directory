@@ -1,4 +1,4 @@
-meerkat-dsa (4.0.0) stable; urgency=medium
+meerkat-dsa (4.0.0-1) stable; urgency=medium
 
   * Initial Debian package
 
