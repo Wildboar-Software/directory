@@ -9,6 +9,7 @@ demo/
 *.snap
 k8s/charts/meerkat-dsa/*.tgz
 k8s/charts/meerkat-dsa/index.yaml
+rpmbuild
 
 # compiled output
 /dist
