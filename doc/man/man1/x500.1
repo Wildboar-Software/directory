@@ -1,0 +1,322 @@
+.TH X500 1 "2025-12-29" "X.500 CLI" "User Commands"
+.SH NAME
+x500 \- X.500 Directory User Agent (DUA) Command-Line Interface
+.SH SYNOPSIS
+.B x500 PROTO OPERATION
+.RI [ options ]
+.SH DESCRIPTION
+Perform an X.500 directory operation using protocol
+.I PROTO
+and operation
+.I OPERATION
+\&. As an example,
+.I PROTO
+might be "dap" and
+.I OPERATION
+might be "list"
+to perform an X.500 Directory Access Protocol (DAP)
+.B list
+operation as described in ITU-T Recommendation X.511.
+.PP
+In some cases,
+.I PROTO
+and
+.I OPERATION
+are not really protocols or operations: they are just categorized as such in
+this documentation; these current exceptions are the "protocols"
+.B seed-countries
+and
+.B config
+\&.
+.PP
+.I x500
+is an X.500 Directory User Agent (DUA) that operates on a terminal user
+interface. It prints output only in English, which is not likely to change in
+the future. It assumes the terminal can handle UTF-8 characters, and prints with
+ANSI colors unless the
+.B NO_COLOR
+environment variable is set (to anything).
+.PP
+The printed output MUST NOT be relied upon for fault-intolerant use cases: the
+exact formatting that printed output takes on is subject to change.
+.SH USAGE
+Here is a synopsis of most subcommands:
+.PP
+.RS
+.nf
+x500 dap                                            Directory Access Protocol
+x500 dop                                            Directory Operational Binding Management Protocol
+x500 seed-countries <base>                          seed directory with countries
+x500 seed-org <orgname>                             seed directory with an organization
+x500 config                                         Configuration
+x500 dap add                                        Add an entry
+x500 dap apw <object>                               Administer password
+x500 dap cpw <object>                               Change password
+x500 dap compare <object> <type> <value>            Compare an entry against an assertion
+x500 dap list <object>                              List subordinates of an entry
+x500 dap mod                                        Modify an entry
+x500 dap moddn <src> <dest>                         Move/Rename an entry
+x500 dap read <object>                              Read an entry
+x500 dap remove <object>                            Remove an entry
+x500 dap search <object> <subset>                   Search
+x500 dop become nssr <object> <ae-title>            Make an entry into an NSSR
+x500 dop join nssr <object> <ae-title>              Make an entry 'join' an NHOB by becoming a subordinate to an NSSR
+x500 dop terminate <bndg-type> <bndg-id> <ae-title> Using Meerkat's Relayed DOP feature, terminate an operational binding.
+x500 config init                                    Initialize an X.500 configuration file (directory.yaml) on your system
+x500 config path                                    View the path to the X.500 configuration file (directory.yaml) on your system
+x500 config view                                    View the X.500 configuration file (directory.yaml) on your system
+x500 config current-context                         Display the current-context
+x500 config set-context <name>                      Set the current context in the X.500 directory configuration file
+x500 config add                                     Add something to the X.500 configuration file
+x500 config rm                                      Remove something from the configuration file
+.fi
+.RE
+.PP
+The
+.B add
+and
+.B mod
+subcommands are "strongly-typed" in the sense of being specific to particular
+schema in the X.500 directory. Here are the subcommands for the
+.B add
+operation:
+.PP
+.RS
+.nf
+x500 dap add subentry <object>               Add a subentry
+x500 dap add country <object> <countryName>  Add a country
+x500 dap add locality <object>               Add a locality
+x500 dap add person <object>                 Add a person
+x500 dap add org <object>                    Add an organization
+x500 dap add ou <object>                     Add an organizational unit
+x500 dap add op <object>                     Add an organizational person
+x500 dap add or <object>                     Add an organizational role
+x500 dap add group <object>                  Add a group of (possibly unique) names
+x500 dap add rp <object>                     Add a residential person
+x500 dap add process <object>                Add an application process
+x500 dap add device <object>                 Add a device
+x500 dap add dmd <object>                    Add a DMD
+x500 dap add iop <object>                    Add an inet organizational person
+.fi
+.RE
+.PP
+And here are those for the
+.B mod
+operation:
+.PP
+.RS
+.nf
+x500 dap mod add aci <object> <type> <idtag> <prec> <authlev>   Add an ACIItem to an entry
+x500 dap mod add acs <object> <scheme>                          Add an accessControlScheme to an entry
+x500 dap mod add cr <object> <structuralObjectClass>            Add a content rule to a subschema subentry
+x500 dap mod add cur <object> <identifier>                      Add a context use rule to a subschema subentry
+x500 dap mod add friendship <object> <anchor>                   Add a friendship to a subschema subentry
+x500 dap mod add mru <object> <identifier>                      Add a matching rule use to a subschema subentry
+x500 dap mod add sr <object> <id> <subordinate>                 Add a name form to a subschema subentry
+x500 dap mod add oc <object> <identifier>                       Add a name form to a subschema subentry
+x500 dap mod add sr <object> <ruleid> <nameform>                Add a DIT Structure Rule to a subschema subentry
+x500 dap mod become acsub <object>                              Make a DSE into an access control subentry
+x500 dap mod become admpoint <object>                           Make a DSE an administrative point
+x500 dap mod become collectivesub <object>                      Make a DSE into a collectiveAttributeSubentry
+x500 dap mod become pwdsub <object>                             Make a DSE into a passwordAdminSubentry
+x500 dap mod become subschema <object>                          Make a DSE into a subschema
+x500 dap mod become svcsub <object> <id> <dmdId>                Make a DSE into a serviceAdminSubentry
+.fi
+.RE
+.PP
+You can use the
+.B --help
+flag to obtain information about any one of these subcommands.
+.PP
+These options are almost universal to all subcommands:
+.PP
+.RS
+.nf
+    --version         Show version number
+    --help            Show help
+-D, --bindDN          The distinguished name with which to bind.
+-W, --password        The clear-text password. (Be careful. Your command history may be saved or logged.)
+-Y, --passwordFile    The path to a file containing the clear-text bind password
+-P, --promptPassword  Whether to interactively prompt for the bind password
+-H, --accessPoint     The URL of the access point. (Must start with idm:// or idms://.)
+-Z, --noTLS           If TRUE, fails if TLS URL is used and prevents automatic StartTLS.
+-V, --verbose         Verbose output
+.fi
+.RE
+.SH CONFIGURATION
+.I x500
+uses a configuration file that is based off the format of the Kubernetes
+.I kubeconfig
+file format (and data model). Its primary purpose is to supply
+.I x500
+with the DSA access points and credentials so you don't have to type all of
+that in for every X.500 directory operation; nevertheless, it is still possible
+to use
+.I x500
+without having a configuration file, if you're willing to type this information
+in at every invocation.
+.PP
+.I x500
+searches several locations for this configuration file, in this order, stopping
+at the first one encountered:
+.RS
+.TP
+.B ~/.config/directory.yaml
+.TP
+.B ~/.config/directory.yml
+.TP
+.B ~/.config/directory.json
+.TP
+.B /etc/directory.yaml
+.TP
+.B /etc/directory.yml
+.TP
+.B /etc/directory.json
+.RE
+.PP
+As you might infer from the file names above, the configuration file may
+serialized as either YAML or JSON.
+.PP
+An example of this configuration looks like this, when serialized as YAML, with
+comments added to annotate the meaning of its parts:
+.PP
+.RS
+.nf
+apiVersion: v1.0.0
+kind: X500ClientConfig
+metadata:
+  name: main
+  labels:
+    client: x500-cli
+  annotations:
+    author: Jonathan M. Wilbur
+# The identifier of the current combination of the DSA you are using and the
+# preferences and credentials used to interact with it.
+current-context: localdev
+# Groups of preferences (so these can be re-used in several contexts)
+preference-profiles:
+  - name: main
+    logLevel: debug
+    sizeLimit: 1000
+    timeLimit: 10
+    attributeSizeLimit: 1000
+    readOnly: false
+    disable-start-tls: false
+# X.500 directory system agents (DSAs). Each requires one URL. The category
+# indicates whether it is a Master DSA or a Shadow replica.
+dsas:
+  - name: localdev
+    accessPoints:
+      - urls:
+          - idm://localhost:4632
+        category: master
+  - name: azure
+    accessPoints:
+      - urls:
+          - idm://20.62.238.5:4632
+        category: master
+# Credentials used to authenticate. The type field is a discriminator for the
+# type of credentials used. The name field, if used for your authentication
+# mechanism, displays RDNs such that the RDN closest to root is the first one,
+# which is the opposite of what LDAP DNs do.
+credentials:
+  - name: azure
+    credential:
+      type: simple
+      name: cn=admin
+      password:
+        unprotected: mypassword123
+# Combinations of DSA, credentials, and preferences, and their association with
+# a single alphanumeric identifier.
+contexts:
+  - name: localdev
+    context:
+      dsa: localdev
+      preferences: main
+  - name: azure
+    context:
+      dsa: azure
+      preferences: main
+.fi
+.RE
+.PP
+You can find whatever configuration file you will be using by running
+.B x500 config path
+\&. You can open this in the
+.B nano
+editor by running
+.B nano $(x500 config path)
+in most Unix-like shells. (That trick works for several other text tools, such
+as
+.B nvim
+,
+.B less
+, or
+.B cat
+\&.)
+.PP
+Here are the commands for viewing, modifying, or using the configuration file:
+.PP
+.RS
+.nf
+x500 config init                Initialize an X.500 configuration file (directory.yaml) on your system
+x500 config path                View the path to the X.500 configuration file (directory.yaml) on your system
+x500 config view                View the X.500 configuration file (directory.yaml) on your system
+x500 config current-context     Display the current-context
+x500 config set-context <name>  Set the current context in the X.500 directory configuration file
+x500 config add                 Add something to the X.500 configuration file
+x500 config rm                  Remove something from the configuration file
+.fi
+.RE
+.PP
+You are advised to use the commands instead of modifying the configuration file
+directly, if possible.
+.SH EXAMPLES
+Here are some examples of usage of the
+.I x500
+command-line interface. This one will read a single entry from a DSA that is
+explicitly. The read is performed anonymously and does not use implicit TLS
+(but may use startTLS).
+.PP
+.RS
+.nf
+x500 dap read 'c=US,st=FL,cn=Jonathan M. Wilbur' --accessPoint=idm://dsa01.example.com:4632
+.fi
+.RE
+.PP
+Here is a more complicated example of adding a subentry:
+.PP
+.RS
+.nf
+x500 dap add subentry 'C=US,CN=Test subentry 2' \\
+  --accessPoint=idm://dsa01.example.com:4632 \\
+  --commonName='Test subentry 2' \\
+  -b 'st=CA' \\
+  -n 1 \\
+  -x 5 \\
+  -c 'l=Los Angeles' \\
+  -a 'l=Silicon Valley' \\
+  -r '{ item:2.5.6.7 }'
+.fi
+.RE
+.PP
+You can specialize this subentry further using subcommands that start with
+.B x500 dap mod become
+\&.
+.SH AUTHOR
+Jonathan M. Wilbur <jonathan@wilbur.space>
+.SH BUGS
+Report issues at https://github.com/Wildboar-Software/directory/issues.
+.SH SEE ALSO
+.PP
+File format for the
+.I x500
+configuration:
+https://wildboar-software.github.io/directory/docs/client-config
+.PP
+Meerkat DSA - a modern X.500 Directory System Agent (DSA) - at:
+https://wildboar-software.github.io/directory/
+.PP
+The Kubernetes Kubeconfig file:
+https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
+
