@@ -10,5 +10,5 @@ override_dh_auto_build:
 	cd dist/apps/meerkat && npm install --no-package-lock --no-audit --no-save prisma@7.0.1
 
 override_dh_auto_clean:
-	rm -rf node_modules dist .nx demo tmp apps/meerkat-docs/.docusaurus
+	rm -rf node_modules dist .nx demo tmp apps/meerkat-docs/.docusaurus rpmbuild
 	rm -f *.snap *.db *.db-shm *.db-wal k8s/charts/meerkat-dsa/index.yaml data/zonal/*.csv

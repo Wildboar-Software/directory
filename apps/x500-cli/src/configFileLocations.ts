@@ -8,7 +8,6 @@ const CONFIG_FILE_LOCATIONS: string[] = [
     path.join(os.homedir(), ".config", `${CONFIG_FILE_BASE_NAME}.yaml`),
     path.join(os.homedir(), ".config", `${CONFIG_FILE_BASE_NAME}.yml`),
     path.join(os.homedir(), ".config", `${CONFIG_FILE_BASE_NAME}.json`),
-    path.join(os.homedir(), ".config", `${CONFIG_FILE_BASE_NAME}.yaml`),
 ];
 
 const platform = os.platform();

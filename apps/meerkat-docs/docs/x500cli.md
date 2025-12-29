@@ -49,7 +49,9 @@ x500 <command>
 
 Commands:
   x500 dap                    Directory Access Protocol
+  x500 dop                    Directory Operational Binding Management Protocol
   x500 seed-countries <base>  seed directory with countries
+  x500 seed-org <orgname>     seed directory with an organization
   x500 config                 Configuration
 
 Options:
