@@ -1,4 +1,9 @@
-# Trying to comply with this: https://docs.fedoraproject.org/en-US/packaging-guidelines/Node.js/
+# I tried to comply with the Fedora guidelines for NodeJS apps described here:
+# https://docs.fedoraproject.org/en-US/packaging-guidelines/Node.js/
+# ...but I think those procedures simply aren't applicable, since this package
+# lives in a monorepo and requires a double-install of node_modules. Also,
+# several aspects of those guidelines seemed to be inapplicable when I went to
+# use them.
 %global debug_package %{nil}
 
 Name:           meerkat-dsa
@@ -11,7 +16,6 @@ Source0:        %{name}-%{version}.tar.gz
 Requires:       nodejs >= 21
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  nodejs-devel
-# BuildRequires:  node-gyp
 ExclusiveArch:  %{nodejs_arches}
 
 %description
@@ -37,17 +41,22 @@ npm install --no-package-lock --no-audit --no-save prisma@7.0.1
 rm -rf %{buildroot}
 
 # Application files
-install -d %{buildroot}/usr/lib/meerkat
-cp -a dist package.json %{buildroot}/usr/lib/meerkat/
-install -d %{buildroot}/usr/bin
-install -m 0755 /src/pkg/meerkat %{buildroot}/usr/bin/meerkat
-install -d %{buildroot}/etc/meerkat
-install -m 0640 /src/pkg/meerkat.env %{buildroot}/etc/meerkat/meerkat.env
-install -d %{buildroot}/var/lib/meerkat
-install -d %{buildroot}/var/log/meerkat
-install -d %{buildroot}/usr/lib/systemd/system
+install -d %{buildroot}%{_exec_prefix}/lib/meerkat
+cp -r dist/apps/meerkat %{buildroot}%{_exec_prefix}/lib
+install -m 0755 dist/apps/meerkat/prisma/prisma.config.ts %{buildroot}%{_exec_prefix}/lib/meerkat
+install -d %{buildroot}%{_bindir}
+install -m 0755 /src/pkg/meerkat %{buildroot}%{_bindir}/meerkat
+install -d %{buildroot}%{_sysconfdir}/meerkat
+install -m 0640 /src/pkg/meerkat.env %{buildroot}%{_sysconfdir}/meerkat/meerkat.env
+install -d %{buildroot}%{_sharedstatedir}/meerkat
+install -d %{buildroot}%{_localstatedir}/log/meerkat
+install -d %{buildroot}%{_exec_prefix}/lib/systemd/system
 install -m 0644 /src/pkg/meerkat.service \
-  %{buildroot}/usr/lib/systemd/system/meerkat.service
+  %{buildroot}%{_exec_prefix}/lib/systemd/system/meerkat.service
+install -d %{buildroot}%{_mandir}/man1
+install -d %{buildroot}%{_mandir}/man5
+install -Dp -m 0644 /src/doc/man/man1/meerkat-dsa.1 %{buildroot}%{_mandir}/man1/meerkat-dsa.1
+install -Dp -m 0644 /src/doc/man/man5/meerkat.env.5 %{buildroot}%{_mandir}/man5/meerkat.env.5
 
 %pre
 getent group meerkat >/dev/null || groupadd -r meerkat
@@ -67,18 +76,14 @@ exit 0
 %files
 %license LICENSE.txt
 %doc README.md
-%doc doc/man/man1/meerkat-dsa.1
-%doc doc/man/man5/meerkat.env.5
-
-/usr/bin/meerkat
-/usr/lib/meerkat
-
-%config(noreplace) /etc/meerkat/meerkat.env
-
-/var/lib/meerkat
-/var/log/meerkat
-
-/usr/lib/systemd/system/meerkat.service
+%doc %{_mandir}/man1/meerkat-dsa.1*
+%doc %{_mandir}/man5/meerkat.env.5*
+%config(noreplace) %{_sysconfdir}/meerkat/meerkat.env
+%{_bindir}/meerkat
+%{_exec_prefix}/lib/meerkat
+%{_sharedstatedir}/meerkat
+%dir %{_localstatedir}/log/meerkat
+%config(noreplace) %{_exec_prefix}/lib/systemd/system/meerkat.service
 
 %changelog
 * Sat Dec 27 2025 Jonathan Wilbur <jonathan@wilbur.space> - 4.0.0-1
