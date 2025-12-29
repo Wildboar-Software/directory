@@ -10,6 +10,12 @@ demo/
 k8s/charts/meerkat-dsa/*.tgz
 k8s/charts/meerkat-dsa/index.yaml
 rpmbuild
+debian/files
+debian/.debhelper/
+debian/meerkat-dsa/
+debian/debhelper-build-stamp
+debian/meerkat-dsa.postrm.debhelper
+debian/meerkat-dsa.substvars
 
 # compiled output
 /dist
@@ -61,9 +67,3 @@ data/zonal/gazette.csv
 .github/instructions/nx.instructions.md
 
 vitest.config.*.timestamp*
-
-debian/.debhelper/
-debian/meerkat-dsa/
-debian/debhelper-build-stamp
-debian/meerkat-dsa.postrm.debhelper
-debian/meerkat-dsa.substvars
