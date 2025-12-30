@@ -6,7 +6,7 @@ url="https://github.com/Wildboar-Software/directory"
 maintainer="Jonathan M. Wilbur <jonathan@wilbur.space>"
 arch="all"
 license="MIT"
-depends="nodejs npm"
+depends="nodejs npm dotenv"
 install="meerkat-dsa.post-install"
 # subpackages="$pkgname-doc"
 options="net" # Needed because of NPM module installation
@@ -39,14 +39,18 @@ package() {
     install -d -m755 "$pkgdir/var/log/meerkat"
     install -d -m755 "$pkgdir/var/lib/meerkat"
     cp -a "$builddir/dist/apps/meerkat" "$pkgdir/usr/lib"
-    install -Dm 0644 \
+    install -m 0644 \
         "$builddir/dist/apps/meerkat/prisma/prisma.config.ts" \
-        "$pkgdir/usr/lib/meerkat/prisma.config.ts"
-    install -Dm 0644 "$builddir/pkg/meerkat.env" "$pkgdir/etc/meerkat"
-    install -Dm 0755 "$builddir/pkg/meerkat" "$pkgdir/usr/bin"
-    install -Dm755 \
+        "$pkgdir/usr/lib/meerkat"
+    install -m 0644 "$builddir/pkg/meerkat.env" "$pkgdir/etc/meerkat"
+    install -m 0755 "$builddir/pkg/meerkat" "$pkgdir/usr/bin"
+    install -m755 \
         "$builddir/pkg/apk/initd/meerkat" \
         "$pkgdir/etc/init.d/meerkat"
+    install -d -m755 "$pkgdir/usr/share/man/man1"
+    install -d -m755 "$pkgdir/usr/share/man/man5"
+    install -m 0644 "$builddir/doc/man/man1/meerkat-dsa.1" "$pkgdir/usr/share/man/man1"
+    install -m 0644 "$builddir/doc/man/man1/meerkat-dsa.1" "$pkgdir/usr/share/man/man1"
 }
 
 check() {

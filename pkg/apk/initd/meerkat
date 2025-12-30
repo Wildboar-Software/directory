@@ -1,7 +1,7 @@
 #!/sbin/openrc-run
 
 name="Meerkat DSA"
-command="/usr/bin/meerkat"
+command="/usr/bin/dotenv -f /etc/meerkat/meerkat.env run /usr/bin/meerkat"
 command_args=""
 command_background="yes"
 pidfile="/run/meerkat.pid"
