@@ -187,7 +187,7 @@ function create_nist_pkits_test (
         };
         const result = await verifyCertPath(ctx, args_);
         const expectedResult_: VerifyCertPathResult = getDefaultResult(expectedResult);
-        return expect(result).toEqual(expectedResult_);
+        return expect(JSON.stringify(result)).toEqual(JSON.stringify(expectedResult_));
     }
 }
 describe("NIST PKITS 4.1.1 Cert Path", () => {

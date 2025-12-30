@@ -50,28 +50,20 @@ import {
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
-} from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta';
-import {
     DirectoryBindResult,
     _encode_DirectoryBindResult,
-} from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindResult.ta';
-import {
     directoryBindError, DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1,
-} from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa';
-import {
     ReadArgument,
     ReadArgumentData,
     _decode_ReadArgument,
     _encode_ReadArgument,
-} from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta';
-import {
     ReadResult,
     ReadResultData,
     _decode_ReadResult,
     _encode_ReadResult,
-} from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta';
+    EntryInformation,
+} from '@wildboar/x500/DirectoryAbstractService';
 import { Attribute } from '@wildboar/x500/InformationFramework';
-import { EntryInformation } from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta';
 import { commonName } from '@wildboar/x500/SelectedAttributeTypes';
 import {
     _decode_OsiDirectoryOperation,
@@ -80,7 +72,7 @@ import {
 import { OsiReq } from "@wildboar/x500/OSIProtocolSpecification";
 import { OsiRes } from "@wildboar/x500/OSIProtocolSpecification";
 import { OsiRes_result } from "@wildboar/x500/OSIProtocolSpecification";
-import { id_opcode_read } from '@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-read.va';
+import { id_opcode_read } from '@wildboar/x500/CommonProtocolSpecification';
 import {
     compareCode,
     directoryStringToString,
@@ -95,10 +87,12 @@ import {
 import { _encode_TheOsiBind } from "@wildboar/x500/OSIProtocolSpecification";
 import { _encode_TheOsiBindRes } from "@wildboar/x500/OSIProtocolSpecification";
 import { _encode_TheOsiBindErr } from "@wildboar/x500/OSIProtocolSpecification";
-import { ABRT_source_acse_service_user } from '@wildboar/acse';
-import { ABRT_diagnostic_authentication_required } from '@wildboar/acse';
+import {
+    ABRT_source_acse_service_user,
+    _enum_for_ABRT_diagnostic,
+} from '@wildboar/acse';
 import { randomBytes, randomInt } from 'node:crypto';
-import { AttributeTypeAndValue } from '@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta';
+import { AttributeTypeAndValue } from '@wildboar/pki-stub';
 import { Provider_reason_user_data_not_readable } from '@wildboar/copp';
 
 const id_ber = ObjectIdentifier.fromParts([2, 1, 1]);
@@ -652,7 +646,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
             stack2.acse.outgoingEvents.on('A-ASCind', () => {
                 const abrt: ABRT_apdu = new ABRT_apdu(
                     ABRT_source_acse_service_user,
-                    ABRT_diagnostic_authentication_required,
+                    _enum_for_ABRT_diagnostic.authentication_required,
                     undefined,
                     undefined,
                     [],
@@ -1250,7 +1244,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
             stack2.acse.outgoingEvents.on('A-ASCind', () => {
                 const abrt: ABRT_apdu = new ABRT_apdu(
                     ABRT_source_acse_service_user,
-                    ABRT_diagnostic_authentication_required,
+                    _enum_for_ABRT_diagnostic.authentication_required,
                     undefined,
                     undefined,
                     [

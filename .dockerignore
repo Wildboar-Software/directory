@@ -4,9 +4,7 @@ data/
 doc/
 k8s/
 node_modules/
-pkg/
 scripts/
-snap/
 tmp/
 tools/
 .env

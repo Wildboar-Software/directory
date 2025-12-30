@@ -9,8 +9,10 @@ import {
     OBJECT_IDENTIFIER,
 } from "@wildboar/asn1";
 import { getSubtreeSpecLexer } from "./lexSubtreeSpec.js";
-import * as decoders from "@wildboar/ldap/src/lib/syntaxDecoders";
-import * as encoders from "@wildboar/ldap/src/lib/syntaxEncoders";
+import {
+    syntaxDecoders as decoders,
+    syntaxEncoders as encoders,
+} from "@wildboar/ldap";
 import type {
     SubtreeSpecification,
 } from "@wildboar/x500/InformationFramework";

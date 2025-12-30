@@ -1,0 +1,17 @@
+#!/sbin/openrc-run
+
+name="Meerkat DSA"
+command="/usr/bin/dotenv -f /etc/meerkat/meerkat.env run /usr/bin/meerkat"
+command_args=""
+command_background="yes"
+pidfile="/run/meerkat.pid"
+
+command_user="meerkat:meerkat"
+
+depend() {
+  need net
+}
+
+start_pre() {
+  checkpath -d -o meerkat:meerkat /var/lib/meerkat
+}

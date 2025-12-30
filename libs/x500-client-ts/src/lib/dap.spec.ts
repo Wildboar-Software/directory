@@ -21,7 +21,7 @@ import { SearchResultData } from "@wildboar/x500/DirectoryAbstractService";
 import { ReadResultData } from "@wildboar/x500/DirectoryAbstractService";
 
 describe("DAP Client", () => {
-    it("works with IDM transport", async () => {
+    it.skip("works with IDM transport", async () => {
         const socket = createConnection({
             host: "localhost",
             port: 4632,

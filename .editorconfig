@@ -40,3 +40,6 @@ end_of_line = lf
 
 [pkg/meerkat.spec]
 end_of_line = lf
+
+[pkg/apk/**]
+end_of_line = lf

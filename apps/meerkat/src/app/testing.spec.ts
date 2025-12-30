@@ -903,7 +903,10 @@ const config: Configuration = {
     },
 };
 
-await configureLogging(config.log.options);
+await configureLogging({
+    ...config.log.options,
+    reset: true, // Needed just for the tests to work.
+});
 
 const ctx: MeerkatContext = {
     alreadyAssertedAttributeCertificates: new Set(),

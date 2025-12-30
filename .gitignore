@@ -3,6 +3,8 @@
 *.db
 *.db-shm
 *.db-wal
+*.gz
+*.apk
 
 demo/
 
