@@ -44,7 +44,7 @@ package() {
         "$pkgdir/usr/lib/meerkat"
     install -m 0644 "$builddir/pkg/meerkat.env" "$pkgdir/etc/meerkat"
     install -m 0755 "$builddir/pkg/meerkat" "$pkgdir/usr/bin"
-    install -m755 \
+    install -Dm755 \
         "$builddir/pkg/apk/initd/meerkat" \
         "$pkgdir/etc/init.d/meerkat"
     install -d -m755 "$pkgdir/usr/share/man/man1"

@@ -1,5 +1,5 @@
 FROM alpine:latest
-RUN apk add --no-cache alpine-sdk nano nodejs npm
+RUN apk add --no-cache alpine-sdk nano nodejs npm dotenv
 RUN adduser -G abuild -D builder
 USER builder
 WORKDIR /home/builder
