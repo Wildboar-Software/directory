@@ -30,7 +30,6 @@ build() {
 	npm install --no-package-lock --no-fund --no-audit --no-save prisma@7.0.1
 }
 
-# FIXME: Add man pages
 package() {
     mkdir -p "$pkgdir/etc"
     mkdir -p "$pkgdir/usr/lib"
