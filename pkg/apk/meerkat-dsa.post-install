@@ -1,0 +1,3 @@
+#!/bin/sh
+
+adduser -D -H -s /sbin/nologin -G meerkat meerkat 2>/dev/null || true
