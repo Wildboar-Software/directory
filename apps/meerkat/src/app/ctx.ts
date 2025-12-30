@@ -99,10 +99,10 @@ import { Name } from "@wildboar/x500/InformationFramework";
 import { _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub";
 import { id_tls_client_auth, tls_client_auth } from "./authn/external/tls_client_auth.js";
 import { PrismaClient } from './generated/client.js';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaLibSql } from '@prisma/adapter-libsql';
 import { readFileSync } from "node:fs";
 
-const adapter = new PrismaBetterSqlite3({
+const adapter = new PrismaLibSql({
     url: process.env.DATABASE_URL ?? ":memory:",
 }, {
     // Recommended choice here: https://www.prisma.io/docs/orm/overview/databases/sqlite#3-configure-timestamp-format-for-backward-compatibility
