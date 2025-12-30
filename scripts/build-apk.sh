@@ -10,3 +10,12 @@ git archive \
 # which seems to be absent by default on some RPM distros.
 CTRCLI=$(which docker || which podman || echo "docker")
 $CTRCLI run --rm -it -v "$PWD/meerkat-dsa-4.0.0.tar.gz:/meerkat-dsa-4.0.0.tar.gz:ro" apkbuilder /bin/sh
+
+# Run:
+# abuild checksum
+# abuild
+# apk add --allow-untrusted packages/home/x86_64/meerkat-dsa-4.0.0-r0.apk
+
+# apk add --allow-untrusted /src/meerkat-dsa-4.0.0-r0.apk
+# rc-service meerkat start
+# podman cp 1b2d5ba142be:/home/builder/packages/home/x86_64/meerkat-dsa-4.0.0-r0.apk .

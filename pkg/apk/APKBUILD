@@ -8,7 +8,7 @@ arch="all"
 license="MIT"
 depends="nodejs npm"
 install="meerkat-dsa.post-install"
-subpackages="$pkgname-doc"
+# subpackages="$pkgname-doc"
 options="net" # Needed because of NPM module installation
 source="/$pkgname-$pkgver.tar.gz"
 
@@ -22,10 +22,12 @@ build() {
         --skipRemoteCache \
         --skip-nx-cache \
         --verbose
+    cd dist/apps/meerkat
     npm ci --omit=dev --no-audit --no-fund --no-save
 	npm install --no-package-lock --no-fund --no-audit --no-save prisma@7.0.1
 }
 
+# FIXME: Add man pages
 package() {
     mkdir -p "$pkgdir/etc"
     mkdir -p "$pkgdir/usr/lib"
@@ -48,16 +50,17 @@ package() {
 }
 
 check() {
-    # npx nx \
-    #     --tuiAutoExit=true \
-    #     --outputStyle=static \
-    #     run-many \
-    #     --target=test \
-    #     --all \
-    #     --skipNxCache \
-    #     --skipRemoteCache \
-    #     --skip-nx-cache \
-    #     --verbose \
-    #     --exclude x500-functional-tests
+    # default_check
+    npx nx \
+        --tuiAutoExit=true \
+        --outputStyle=static \
+        run-many \
+        --target=test \
+        --all \
+        --skipNxCache \
+        --skipRemoteCache \
+        --skip-nx-cache \
+        --verbose \
+        --exclude x500-functional-tests
     # TODO: Could you run the integration tests here?
 }
