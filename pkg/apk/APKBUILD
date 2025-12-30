@@ -8,7 +8,10 @@ arch="all"
 license="MIT"
 depends="nodejs npm dotenv"
 install="meerkat-dsa.post-install"
-# subpackages="$pkgname-doc"
+subpackages="
+    $pkgname-doc
+    $pkgname-openrc
+"
 options="net" # Needed because of NPM module installation
 source="/$pkgname-$pkgver.tar.gz"
 
