@@ -78,14 +78,14 @@ openrc() {
 
 doc() {
     pkgdesc="$pkgdesc (documentation)"
-    install -d -m755 "$pkgdir/usr/share/man/man1"
-    install -d -m755 "$pkgdir/usr/share/man/man5"
+    install -d -m755 "$subpkgdir/usr/share/man/man1"
+    install -d -m755 "$subpkgdir/usr/share/man/man5"
     install -m 0644 \
         "$builddir/doc/man/man1/meerkat-dsa.1" \
-        "$pkgdir/usr/share/man/man1"
+        "$subpkgdir/usr/share/man/man1"
     install -m 0644 \
         "$builddir/doc/man/man5/meerkat.env.5" \
-        "$pkgdir/usr/share/man/man5"
+        "$subpkgdir/usr/share/man/man5"
     gzip -9 "$subpkgdir/usr/share/man/man1/meerkat-dsa.1"
     gzip -9 "$subpkgdir/usr/share/man/man5/meerkat.env.5"
 }

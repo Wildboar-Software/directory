@@ -18,5 +18,7 @@ $CTRCLI run --rm -it -v "$PWD/meerkat-dsa-4.0.0.tar.gz:/meerkat-dsa-4.0.0.tar.gz
 
 # apk add --allow-untrusted /src/meerkat-dsa-4.0.0-r0.apk
 # rc-service meerkat start
-# podman cp 6962ff904a75:/home/builder/packages/home/x86_64/meerkat-dsa-4.0.0-r0.apk .
+# podman cp 8fc263119b67:/home/builder/packages/home/x86_64/meerkat-dsa-4.0.0-r0.apk .
+# podman cp 8fc263119b67:/home/builder/packages/home/x86_64/meerkat-dsa-doc-4.0.0-r0.apk .
+# podman cp 8fc263119b67:/home/builder/packages/home/x86_64/meerkat-dsa-openrc-4.0.0-r0.apk .
 # podman run --rm -it -v "$PWD:/src" alpine /bin/sh
