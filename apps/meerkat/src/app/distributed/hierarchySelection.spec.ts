@@ -3,13 +3,11 @@ import { FamilyEntry } from "@wildboar/x500/DirectoryAbstractService";
 import { FamilyEntries } from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeTypeAndValue,
-} from "@wildboar/x500/InformationFramework";
-import {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { commonName } from "@wildboar/x500/src/lib/collections/attributes";
+import { commonName } from "@wildboar/x500/SelectedAttributeTypes";
+import { organization } from "@wildboar/x500/SelectedObjectClasses";
 import { DER } from "@wildboar/asn1/functional";
-import { organization } from "@wildboar/x500/src/lib/collections/objectClasses";
 import { getMockCtx } from "../testing.spec.js";
 import { IndexableDN } from "../types/index.js";
 import { strict as assert } from "node:assert";

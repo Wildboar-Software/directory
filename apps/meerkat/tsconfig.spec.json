@@ -2,6 +2,9 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "outDir": "../../dist/out-tsc",
+        "target": "es2022",
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
         "types": [
             "vitest/globals",
             "vitest/importMeta",
