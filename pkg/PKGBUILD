@@ -80,5 +80,4 @@ package_meerkat-dsa-docs() {
     # gzip -9 "$pkgdir/usr/share/man/man5/meerkat.env.5"
 }
 
-# TODO: Use post_upgrade to do migrations?
-# TODO: Review: https://wiki.archlinux.org/title/Arch_package_guidelines
+# Reviewed: https://wiki.archlinux.org/title/Arch_package_guidelines
