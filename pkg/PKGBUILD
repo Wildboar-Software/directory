@@ -1,21 +1,19 @@
-pkgname=meerkat-dsa
+pkgbase="meerkat-dsa"
+pkgname=("meerkat-dsa" "meerkat-dsa-docs")
 pkgver=4.0.0
 pkgrel=0
 pkgdesc="Meerkat X.500 Directory System Agent (DSA) / LDAP Server"
 url="https://github.com/Wildboar-Software/directory"
 maintainer="Jonathan M. Wilbur <jonathan@wilbur.space>"
-arch="all"
-license="MIT"
-depends="nodejs npm dotenv"
+arch=("x86_64" "aarch64" "armv7h" "ppc64le" "s390x" "riscv64" "ia32")
+license=("MIT")
+makedepends=("gcc") # Needed to compile the Node-API native module
+depends=("nodejs" "npm")
 install="meerkat-dsa.post-install"
-subpackages="
-    $pkgname-doc
-    $pkgname-openrc
-"
-options="net" # Needed because of NPM module installation
-source="$pkgname-$pkgver.tar.gz"
+source=("$pkgname-$pkgver.tar.gz")
 
 build() {
+    cd "$pkgname-$pkgver"
 	npm ci --no-audit --no-fund --no-save
 	npx nx \
         --tuiAutoExit=true \
@@ -30,30 +28,29 @@ build() {
 	npm install --no-package-lock --no-fund --no-audit --no-save prisma@7.0.1
 }
 
-package() {
+package_meerkat-dsa() {
+    cd "$pkgname-$pkgver"
     mkdir -p "$pkgdir/etc"
     mkdir -p "$pkgdir/usr/lib"
     mkdir -p "$pkgdir/usr/bin"
     mkdir -p "$pkgdir/var/log"
     mkdir -p "$pkgdir/var/lib"
+    mkdir -p "$pkgdir/usr/lib/systemd/system"
     install -d -m755 "$pkgdir/etc/meerkat"
     install -d -m755 "$pkgdir/usr/lib/meerkat"
     install -d -m755 "$pkgdir/var/log/meerkat"
     install -d -m755 "$pkgdir/var/lib/meerkat"
-    cp -a "$builddir/dist/apps/meerkat" "$pkgdir/usr/lib"
+    cp -a dist/apps/meerkat/* "$pkgdir/usr/lib/meerkat"
     install -m 0644 \
-        "$builddir/dist/apps/meerkat/prisma/prisma.config.ts" \
+        "dist/apps/meerkat/prisma/prisma.config.ts" \
         "$pkgdir/usr/lib/meerkat"
-    install -m 0644 "$builddir/pkg/meerkat.env" "$pkgdir/etc/meerkat"
-    install -m 0755 "$builddir/pkg/meerkat" "$pkgdir/usr/bin"
-    install -Dm755 \
-        "$builddir/pkg/apk/initd/meerkat" \
-        "$pkgdir/etc/init.d/meerkat"
-
+    install -m 0644 "pkg/meerkat.env" "$pkgdir/etc/meerkat"
+    install -m 0755 "pkg/meerkat" "$pkgdir/usr/bin"
+    install -m755 pkg/meerkat.service "$pkgdir/usr/lib/systemd/system"
 }
 
 check() {
-    # default_check
+    cd "$pkgname-$pkgver"
     npx nx \
         --tuiAutoExit=true \
         --outputStyle=static \
@@ -68,23 +65,20 @@ check() {
     # TODO: Could you run the integration tests here?
 }
 
-openrc() {
-    pkgdesc="$pkgdesc (OpenRC init scripts)"
-    install -Dm755 \
-        "$builddir/pkg/apk/initd/meerkat" \
-        "$subpkgdir/etc/init.d/meerkat"
+package_meerkat-dsa-docs() {
+    cd "$pkgbase-$pkgver"
+    pkgdesc="$pkgdesc (documentation)"
+    install -d -m755 "$pkgdir/usr/share/man/man1"
+    install -d -m755 "$pkgdir/usr/share/man/man5"
+    install -m 0644 \
+        "doc/man/man1/meerkat-dsa.1" \
+        "$pkgdir/usr/share/man/man1"
+    install -m 0644 \
+        "doc/man/man5/meerkat.env.5" \
+        "$pkgdir/usr/share/man/man5"
+    # gzip -9 "$pkgdir/usr/share/man/man1/meerkat-dsa.1"
+    # gzip -9 "$pkgdir/usr/share/man/man5/meerkat.env.5"
 }
 
-doc() {
-    pkgdesc="$pkgdesc (documentation)"
-    install -d -m755 "$subpkgdir/usr/share/man/man1"
-    install -d -m755 "$subpkgdir/usr/share/man/man5"
-    install -m 0644 \
-        "$builddir/doc/man/man1/meerkat-dsa.1" \
-        "$subpkgdir/usr/share/man/man1"
-    install -m 0644 \
-        "$builddir/doc/man/man5/meerkat.env.5" \
-        "$subpkgdir/usr/share/man/man5"
-    gzip -9 "$subpkgdir/usr/share/man/man1/meerkat-dsa.1"
-    gzip -9 "$subpkgdir/usr/share/man/man5/meerkat.env.5"
-}
+# TODO: Use post_upgrade to do migrations?
+# TODO: Review: https://wiki.archlinux.org/title/Arch_package_guidelines

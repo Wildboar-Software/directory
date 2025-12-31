@@ -7,6 +7,11 @@ documentation in `docs`.
 
 ## Building
 
+Very soon, Meerkat DSA will build these packages in CI/CD. A lot of these
+approaches are messy just because I had to build in one of each different
+distro's container images and install in said images so I can smoke-test
+installation into a real system. Eventually this will be cleaned up.
+
 ### Debian Package
 
 Run `./scripts/build-debian.sh`, then run `dpkg-buildpackage -us -uc`, both in
@@ -41,3 +46,44 @@ Note that the `fedora` container image has a file `/etc/dnf/dnf.conf` that, by
 default excludes the installation of documentation from RPMs. You will need to
 modify the `tsflags` option to remove `nodocs` if you want to see your man pages
 show up. This took me _days_ to figure out.
+
+### Alpine APK Package
+
+You have to run the script twice. Exit out when it brings you into the
+container shell for the first time.
+
+```bash
+./scripts/build-apk.sh
+podman build -t apkbuilder -f pkg/apkbuilder.dockerfile .
+./scripts/build-apk.sh
+abuild checksum # automatically applies the checksum to APKBUILD
+abuild # actually build it all
+# Your packages end up here
+apk add --allow-untrusted packages/home/x86_64/meerkat-dsa-4.0.0-r0.apk
+```
+
+### Arch Package
+
+As with so many other containerized distros, it seems that the `archlinux` image
+also refuses to install `man` pages by default. Check `/etc/pacman.conf` and
+you'll see a `NoExtract` line with the `man` pages directory in it. You will
+want to remove this if you plan to install the docs and verify that they work.
+
+You have to run the script twice. Exit out when it brings you into the
+container shell for the first time.
+
+```bash
+./scripts/build-arch.sh
+podman build -t archbuilder -f pkg/archbuilder.dockerfile .
+./scripts/build-arch.sh
+```
+
+In the shell of that container, run `makepkg -g >> PKGBUILD` to generate a
+signature over the source and append it to `PKGBUILD`. Then run `makepkg -si`
+to build the packages. From memory, I think this step might be interactive.
+
+Install `devtools` and run `makerepropkg meerkat-dsa-4.0.0-0-x86_64.pkg.tar.zst`
+to check if the package is reproducible. I got a 503 and
+`failed to retrieve meerkat-dsa-docs-4.0.0-0-x86_64`, so I think I won't be able
+to check this until its actually published. Not sure. I eventually want to make
+this reproducible.
