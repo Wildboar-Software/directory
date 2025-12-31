@@ -43,3 +43,6 @@ end_of_line = lf
 
 [pkg/apk/**]
 end_of_line = lf
+
+[pkg/PKGBUILD]
+end_of_line = lf
