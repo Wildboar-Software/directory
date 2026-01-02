@@ -96,7 +96,8 @@ class MeerkatDsa < Formula
     environment_variables NODE_ENV:                         "production",
                           DOTENV_CONFIG_PATH:               etc/"meerkat/meerkat.env",
                           MEERKAT_LOG_SYSTEMD_LEVEL_PREFIX: "1",
-                          DATABASE_URL:                     "file:#{var}/meerkat/meerkat.db"
+                          DATABASE_URL:                     "file:#{var}/meerkat/meerkat.db",
+                          PRISMA_HIDE_UPDATE_MESSAGE:       "1"
   end
 
   test do
