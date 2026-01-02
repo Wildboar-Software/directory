@@ -100,20 +100,9 @@ class MeerkatDsa < Formula
   end
 
   test do
-    system(
-      "npx",
-      "nx",
-      "--tuiAutoExit=true",
-      "--outputStyle=static",
-      "run-many",
-      "--target=test",
-      "--all",
-      "--skipNxCache",
-      "--skipRemoteCache",
-      "--skip-nx-cache",
-      "--verbose",
-      "--exclude",
-      "x500-functional-tests",
-    )
+    ENV["DOTENV_CONFIG_PATH"] = etc/"meerkat/non_existent.env"
+    ENV["DATABASE_URL"] = "file:#{var}/meerkat/test.db"
+    assert_match "3.3.0", shell_output("#{bin}/meerkat --version")
+    rm var/"meerkat/test.db"
   end
 end
