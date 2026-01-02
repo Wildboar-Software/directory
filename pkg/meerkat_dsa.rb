@@ -64,7 +64,28 @@ class MeerkatDsa < Formula
       # Replace the current process with the node execution.
       exec node ./main.js start "$@"
     SCRIPT
-    opt_bin.install (buildpath/"meerkat")
+    bin.install (buildpath/"meerkat")
+  end
+
+  def caveats
+    <<~EOS
+      This has not been tested on MacOS. It has only been tested on Xubuntu
+      20.04.
+
+      Database schema migrations occur automatically on startup. Please keep a
+      backup of your data found in
+      #{var}/meerkat/meerkat.db
+      (or elsewhere, if you changed DATABASE_URL).
+
+      Note that the default configuration does not listen on any port at all.
+      You presumably do not want an unreachable, unusable X.500 directory. If
+      so, configure your DSA in
+      #{etc}/meerkat/meerkat.env
+      and restart.
+
+      Documentation: https://wildboar-software.github.io/directory/
+      Report Issues: https://github.com/Wildboar-Software/directory/issues
+    EOS
   end
 
   service do
