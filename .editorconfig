@@ -46,3 +46,8 @@ end_of_line = lf
 
 [pkg/PKGBUILD]
 end_of_line = lf
+
+[*.rb]
+end_of_line = lf
+indent_size = 2
+indent_style = space

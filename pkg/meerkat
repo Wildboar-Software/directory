@@ -7,7 +7,7 @@ cd /usr/lib/meerkat
 #
 # NOTE: Prisma seems to search for migrations relative to the config file, not
 # the current directory.
-/usr/bin/npx prisma migrate deploy \
+PRISMA_HIDE_UPDATE_MESSAGE=1 /usr/bin/npx prisma migrate deploy \
     --schema /usr/lib/meerkat/prisma/schema.prisma \
     --config /usr/lib/meerkat/prisma.config.ts || true
 
