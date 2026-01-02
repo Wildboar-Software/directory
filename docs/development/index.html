@@ -12,7 +12,7 @@
 <link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
 <link rel="manifest" href="/directory/manifest.json">
 <meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.1ef47c0e.css">
-<script src="/directory/assets/js/runtime~main.99a97fe1.js" defer="defer"></script>
+<script src="/directory/assets/js/runtime~main.dbc56747.js" defer="defer"></script>
 <script src="/directory/assets/js/main.b9bfe8ee.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -66,6 +66,33 @@ to build the packages. From memory, I think this step might be interactive.</p>
 to check if the package is reproducible. I got a 503 and
 <code>failed to retrieve meerkat-dsa-docs-4.0.0-0-x86_64</code>, so I think I won&#x27;t be able
 to check this until its actually published. Not sure. I eventually want to make
-this reproducible.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/development.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/versioning"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Versioning</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/support"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Support / Help</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#documentation" class="table-of-contents__link toc-highlight">Documentation</a></li><li><a href="#building" class="table-of-contents__link toc-highlight">Building</a><ul><li><a href="#debian-package" class="table-of-contents__link toc-highlight">Debian Package</a></li><li><a href="#rpm-package" class="table-of-contents__link toc-highlight">RPM Package</a></li><li><a href="#alpine-apk-package" class="table-of-contents__link toc-highlight">Alpine APK Package</a></li><li><a href="#arch-package" class="table-of-contents__link toc-highlight">Arch Package</a></li></ul></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
+this reproducible.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="brew-formula">Brew Formula<a href="#brew-formula" class="hash-link" aria-label="Direct link to Brew Formula" title="Direct link to Brew Formula">​</a></h3>
+<p>To build and install the Brew formula, you&#x27;ll have to be either on a Mac OS
+desktop device or on a systemd-using Linux distro, such as Ubuntu or Linux Mint.</p>
+<p>For all the following commands, replace <code>&lt;anyname&gt;</code> with your choice of value:</p>
+<ol>
+<li>Run <code>brew tap-new &lt;anyname&gt;/meerkat</code> to create a new local tap</li>
+<li>Run <code>cp pkg/meerkat_dsa.rb /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/&lt;anyname&gt;/homebrew-meerkat/Formula</code>
+to manually copy the formula into it.</li>
+<li>Run <code>brew install -vd &lt;anyname&gt;/meerkat/meerkat_dsa</code></li>
+</ol>
+<p>To make sure it&#x27;s still acceptable, run
+<code>brew audit --new &lt;anyname&gt;/meerkat/meerkat_dsa</code> and fix any errors you see
+(except the one about <code>std_npm_args</code>; I don&#x27;t really think that is a valid
+requirement in my case).</p>
+<p>Run <code>brew services start &lt;anyname&gt;/meerkat/meerkat_dsa</code> to start the DSA
+locally. Run <code>journalctl --user -e</code> and make sure the DSA starts up correctly.</p>
+<p>Run <code>brew uninstall meerkat_dsa</code> to uninstall it from your system.</p>
+<p>Run <code>brew test -d meerkat_dsa</code> to run tests after it is installed.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="ci">CI<a href="#ci" class="hash-link" aria-label="Direct link to CI" title="Direct link to CI">​</a></h2>
+<p><a href="https://github.com/actions/runner-images" target="_blank" rel="noopener noreferrer">Here</a> are the different runners
+GitHub supports. Unfortunately, it looks like you get Windows, MacOS, and
+Ubuntu. So my ability to test the creation of software packages in CI will be a
+bit limited, unless I tap into containers. GitHub natively supports running
+workflows in containers instead. It will be virtually impossible to test this on
+the BSDs except manually.</p>
+<p>Note that there are no Docker images that even emulate MacOS, as described
+<a href="https://apple.stackexchange.com/questions/465642/base-macos-docker-images" target="_blank" rel="noopener noreferrer">here</a>.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/development.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/versioning"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Versioning</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/support"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Support / Help</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#documentation" class="table-of-contents__link toc-highlight">Documentation</a></li><li><a href="#building" class="table-of-contents__link toc-highlight">Building</a><ul><li><a href="#debian-package" class="table-of-contents__link toc-highlight">Debian Package</a></li><li><a href="#rpm-package" class="table-of-contents__link toc-highlight">RPM Package</a></li><li><a href="#alpine-apk-package" class="table-of-contents__link toc-highlight">Alpine APK Package</a></li><li><a href="#arch-package" class="table-of-contents__link toc-highlight">Arch Package</a></li><li><a href="#brew-formula" class="table-of-contents__link toc-highlight">Brew Formula</a></li></ul></li><li><a href="#ci" class="table-of-contents__link toc-highlight">CI</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
 </body>
 </html>
