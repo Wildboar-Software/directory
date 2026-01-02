@@ -87,3 +87,39 @@ to check if the package is reproducible. I got a 503 and
 `failed to retrieve meerkat-dsa-docs-4.0.0-0-x86_64`, so I think I won't be able
 to check this until its actually published. Not sure. I eventually want to make
 this reproducible.
+
+### Brew Formula
+
+To build and install the Brew formula, you'll have to be either on a Mac OS
+desktop device or on a systemd-using Linux distro, such as Ubuntu or Linux Mint.
+
+For all the following commands, replace `<anyname>` with your choice of value:
+
+1. Run `brew tap-new <anyname>/meerkat` to create a new local tap
+2. Run `cp pkg/meerkat_dsa.rb /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/<anyname>/homebrew-meerkat/Formula`
+   to manually copy the formula into it.
+3. Run `brew install -vd <anyname>/meerkat/meerkat_dsa`
+
+To make sure it's still acceptable, run
+`brew audit --new <anyname>/meerkat/meerkat_dsa` and fix any errors you see
+(except the one about `std_npm_args`; I don't really think that is a valid
+requirement in my case).
+
+Run `brew services start <anyname>/meerkat/meerkat_dsa` to start the DSA
+locally. Run `journalctl --user -e` and make sure the DSA starts up correctly.
+
+Run `brew uninstall meerkat_dsa` to uninstall it from your system.
+
+Run `brew test -d meerkat_dsa` to run tests after it is installed.
+
+## CI
+
+[Here](https://github.com/actions/runner-images) are the different runners
+GitHub supports. Unfortunately, it looks like you get Windows, MacOS, and
+Ubuntu. So my ability to test the creation of software packages in CI will be a
+bit limited, unless I tap into containers. GitHub natively supports running
+workflows in containers instead. It will be virtually impossible to test this on
+the BSDs except manually.
+
+Note that there are no Docker images that even emulate MacOS, as described
+[here](https://apple.stackexchange.com/questions/465642/base-macos-docker-images).
