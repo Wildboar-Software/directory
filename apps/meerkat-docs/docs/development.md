@@ -25,6 +25,18 @@ NodeJS installations nowadays use NVM to version NodeJS. Run `which node` to
 see if you're using it. You might need to run `nvm use 20.19.1` (or something
 like that) _before_ you even build the package. Then run it.
 
+### Snapcraft Snap
+
+Build with `snapcraft pack -v`.
+
+Install with `snap install ./meerkat-dsa_4.0.0_amd64.snap --dangerous`.
+
+It seems like it automatically starts running on installation. Run
+`journalctl -xe` to see logs for it.
+
+Run a shell with `snap run --shell meerkat-dsa.meerkat-dsa-app` and you can
+peek around in the VM to identify build issues.
+
 ### RPM Package
 
 Run

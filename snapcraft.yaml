@@ -36,14 +36,16 @@ apps:
   meerkat-dsa-app:
     daemon: simple
     plugs: [network, network-bind]
-    command: main.mjs
+    command: meerkat_in_snap.sh
     start-timeout: 20s
     stop-timeout: 20s
-    restart-delay: 10s
+    restart-delay: 30s
     restart-condition: on-failure
     environment:
       DATABASE_URL: file:$SNAP_DATA/meerkat.db
       MEERKAT_IDM_PORT: "1389"
+      DOTENV_CONFIG_PATH: ""
+      PRISMA_SCHEMA_ENGINE_BINARY: $SNAP/node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x
 
 parts:
   meerkat-dsa:
@@ -63,19 +65,29 @@ parts:
       npm ci --include=dev --no-audit --no-fund --no-save
       npx -q nx --tuiAutoExit=true --outputStyle=static --parallel=1 run meerkat:build:production --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
       cp .npmrc dist/apps/meerkat
+      cp pkg/meerkat_in_snap.sh $SNAPCRAFT_PART_INSTALL
+      chmod a+x $SNAPCRAFT_PART_INSTALL/meerkat_in_snap.sh
       cd dist/apps/meerkat
       npm ci --only=production --no-audit --no-fund --no-save
       npm install --no-package-lock --no-save prisma
       export DATABASE_URL=file:$SNAP_DATA/meerkat.db
       npx -q --verbose prisma migrate deploy --schema ./prisma/schema.prisma --config ./prisma/prisma.config.ts
       cp main.js $SNAPCRAFT_PART_INSTALL/main.mjs
-      cp -r assets $SNAPCRAFT_PART_INSTALL/assets
       cp package.json $SNAPCRAFT_PART_INSTALL/
+      cp -r assets $SNAPCRAFT_PART_INSTALL/assets
+      cp -r prisma $SNAPCRAFT_PART_INSTALL/prisma
+      cp ./prisma/prisma.config.ts $SNAPCRAFT_PART_INSTALL/prisma.config.ts
+      cp -r node_modules $SNAPCRAFT_PART_INSTALL/node_modules
       chmod a+x $SNAPCRAFT_PART_INSTALL/main.mjs
     stage-packages:
       - libatomic1
-      - nodejs
-    stage:
-      - main.mjs
-      - assets
-      - package.json
+    #   - nodejs
+    # stage:
+    #   - lib
+    #   - bin/node
+    #   - bin/npm
+    #   - bin/npx
+    #   - main.mjs
+    #   - assets
+    #   - package.json
+    #   - node_modules
