@@ -2,7 +2,8 @@ name: meerkat-dsa
 title: Meerkat DSA
 license: MIT
 type: app
-base: core22
+# WARNING: https://github.com/AS207960/certbot/blob/dc68dd6520730a9408993b8e35270fd26cdefe22/snap/snapcraft.yaml#L24
+base: core24
 version: '4.0.0'
 summary: Meerkat X.500 Directory System Agent (DSA) / LDAP Server
 description: |
@@ -42,9 +43,30 @@ apps:
     restart-delay: 30s
     restart-condition: on-failure
     environment:
+      NODE_ENV: production
       DATABASE_URL: file:$SNAP_DATA/meerkat.db
       MEERKAT_IDM_PORT: "1389"
+      # We do NOT want Meerkat DSA to find a .env file. We want the user to
+      # configure the Snap using the snap CLI.
       DOTENV_CONFIG_PATH: ""
+      # I had to add this environment variable to get Prisma to find the
+      # "schema engine" binary. Apparently, that still uses a binary, even
+      # though the client uses the WASM query compiler.
+      #
+      # The problem was that, during the build,
+      # node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x would
+      # get downloaded, since the build and execution environment use OpenSSL
+      # version 3.0.2. But for some reason, when it came time to execute,
+      # the Prisma CLI would look for a binary at
+      # node_modules/@prisma/engines/schema-engine-debian-openssl-1.1.x.
+      # From a few searches online, there seems to be some evidence that this
+      # is a default value if the version cannot be determined. I don't know how
+      # the OpenSSL version is determined.
+      #
+      # Reported here: https://github.com/prisma/prisma/issues/28902
+      #
+      # Fortunately, this can still be manually set with this environment
+      # variable. I am not sure if this will break in the future.
       PRISMA_SCHEMA_ENGINE_BINARY: $SNAP/node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x
 
 parts:
@@ -60,13 +82,12 @@ parts:
       - NODE_OPTIONS: "--trace-warnings"
       - NX_DAEMON: "false"
     override-build: |
-      cp .npmrc /root
-      craftctl default
-      npm ci --include=dev --no-audit --no-fund --no-save
-      npx -q nx --tuiAutoExit=true --outputStyle=static --parallel=1 run meerkat:build:production --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
-      cp .npmrc dist/apps/meerkat
       cp pkg/meerkat_in_snap.sh $SNAPCRAFT_PART_INSTALL
       chmod a+x $SNAPCRAFT_PART_INSTALL/meerkat_in_snap.sh
+      # This next step runs npm install
+      craftctl default
+      npx -q nx --tuiAutoExit=true --outputStyle=static --parallel=1 run meerkat:build:production --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
+      cp .npmrc dist/apps/meerkat
       cd dist/apps/meerkat
       npm ci --only=production --no-audit --no-fund --no-save
       npm install --no-package-lock --no-save prisma
@@ -81,13 +102,3 @@ parts:
       chmod a+x $SNAPCRAFT_PART_INSTALL/main.mjs
     stage-packages:
       - libatomic1
-    #   - nodejs
-    # stage:
-    #   - lib
-    #   - bin/node
-    #   - bin/npm
-    #   - bin/npx
-    #   - main.mjs
-    #   - assets
-    #   - package.json
-    #   - node_modules

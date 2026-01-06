@@ -7,7 +7,7 @@ cd $SNAP
 #
 # NOTE: Prisma seems to search for migrations relative to the config file, not
 # the current directory.
-PRISMA_SCHEMA_ENGINE_BINARY=$SNAP/node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x $SNAP/bin/npx prisma migrate deploy \
+$SNAP/bin/npx prisma migrate deploy \
     --schema prisma/schema.prisma \
     --config prisma.config.ts || true
 
