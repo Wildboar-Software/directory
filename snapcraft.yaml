@@ -1,0 +1,111 @@
+name: meerkat-dsa
+title: Meerkat DSA
+license: MIT
+type: app
+# WARNING: https://github.com/AS207960/certbot/blob/dc68dd6520730a9408993b8e35270fd26cdefe22/snap/snapcraft.yaml#L24
+base: core24
+version: '4.0.0'
+summary: Meerkat X.500 Directory System Agent (DSA) / LDAP Server
+description: |
+  Meerkat DSA is an X.500 Directory System Agent (DSA) that speaks the
+  Directory Access Protocol (DAP) and other protocols described in the
+  International Telecommunications Union's X.500 series of specifications. It
+  also supports Lightweight Directory Access Protocol (LDAP). It is written in
+  TypeScript, runs on NodeJS, and uses SQLite as a backing data store.
+
+  It supports almost every X.500 feature, including shadowing, chaining,
+  request and response signing, service administration, hierarchical groups,
+  compound entries, zonal matching, cross references, contexts, non-specific
+  hierarchical operational bindings, dynamic entries, attribute certificates,
+  all defined access control schemes, and almost all schema defined in the X.500
+  series and in most LDAP servers.
+
+grade: stable
+confinement: strict
+contact:
+  - jonathan@wilbur.space
+source-code: https://github.com/Wildboar-Software/directory
+website: https://wildboar-software.github.io/directory/
+issues: https://github.com/Wildboar-Software/directory/issues
+lint:
+  ignore:
+    - metadata:
+      - donation
+icon: images/Wildboar.png
+apps:
+  meerkat-dsa-app:
+    daemon: simple
+    plugs: [network, network-bind]
+    command: meerkat_in_snap.sh
+    start-timeout: 20s
+    stop-timeout: 20s
+    restart-delay: 30s
+    restart-condition: on-failure
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:$SNAP_DATA/meerkat.db
+      # We do NOT want Meerkat DSA to find a .env file. We want the user to
+      # configure the Snap using the snap CLI.
+      DOTENV_CONFIG_PATH: ""
+      # I had to add this environment variable to get Prisma to find the
+      # "schema engine" binary. Apparently, that still uses a binary, even
+      # though the client uses the WASM query compiler.
+      #
+      # The problem was that, during the build,
+      # node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x would
+      # get downloaded, since the build and execution environment use OpenSSL
+      # version 3.0.2. But for some reason, when it came time to execute,
+      # the Prisma CLI would look for a binary at
+      # node_modules/@prisma/engines/schema-engine-debian-openssl-1.1.x.
+      # From a few searches online, there seems to be some evidence that this
+      # is a default value if the version cannot be determined. I don't know how
+      # the OpenSSL version is determined.
+      #
+      # Reported here: https://github.com/prisma/prisma/issues/28902
+      #
+      # Fortunately, this can still be manually set with this environment
+      # variable. I am not sure if this will break in the future.
+      PRISMA_SCHEMA_ENGINE_BINARY: $SNAP/node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x
+      # Make Meerkat DSA use the journald log level prefix
+      MEERKAT_LOG_SYSTEMD_LEVEL_PREFIX: "1"
+
+parts:
+  meerkat-dsa:
+    plugin: npm
+    npm-include-node: true
+    npm-node-version: 25.2.1
+    source-type: local
+    source: .
+    build-environment:
+      - CI: "true"
+      - FORCE_COLOR: "0"
+      - NODE_OPTIONS: "--trace-warnings"
+      - NX_DAEMON: "false"
+    override-build: |
+      cp .npmrc /root
+      cp pkg/meerkat_in_snap.sh $SNAPCRAFT_PART_INSTALL
+      chmod a+x $SNAPCRAFT_PART_INSTALL/meerkat_in_snap.sh
+      # This next step runs npm install
+      craftctl default
+      npx -q nx --tuiAutoExit=true --outputStyle=static --parallel=1 run meerkat:build:production --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
+      cp .npmrc dist/apps/meerkat
+      cd dist/apps/meerkat
+      npm ci --only=production --no-audit --no-fund --no-save
+      npm install --no-package-lock --no-save prisma
+      export DATABASE_URL=file:$SNAP_DATA/meerkat.db
+      npx -q --verbose prisma migrate deploy --schema ./prisma/schema.prisma --config ./prisma/prisma.config.ts
+      cp main.js $SNAPCRAFT_PART_INSTALL/main.mjs
+      cp package.json $SNAPCRAFT_PART_INSTALL/
+      cp -r assets $SNAPCRAFT_PART_INSTALL/assets
+      cp -r prisma $SNAPCRAFT_PART_INSTALL/prisma
+      cp ./prisma/prisma.config.ts $SNAPCRAFT_PART_INSTALL/prisma.config.ts
+      cp -r node_modules $SNAPCRAFT_PART_INSTALL/node_modules
+      chmod a+x $SNAPCRAFT_PART_INSTALL/main.mjs
+    stage-packages:
+      - libatomic1
+
+  configure-hook:
+    plugin: dump
+    source: pkg/snap/hooks
+    organize:
+      configure.sh: snap/hooks/configure
