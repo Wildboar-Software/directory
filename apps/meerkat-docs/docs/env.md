@@ -68,6 +68,76 @@ bind operation for a given protocol.
 
 :::
 
+## Special Instructions for Configuring Snapcraft Snap
+
+To configure the Snapcraft Snap for Meerkat DSA, you MUST use the standard
+Snapcraft approach to configuration: using the `snap` command. In this approach,
+all configuration options have exactly the same name as the corresponding
+environment variables documented below, except that the leading `MEERKAT_` is
+removed, and any remaining underscores are replaced with hyphens. For example,
+the environment variable `MEERKAT_TLS_CIPHERS` would become `tls-ciphers`. There
+is no hierarchical organization to these configuration options (using the
+dot-delimited notation); it is a flat namespace of configuration keys.
+
+Below is an example of setting a configuration value. These values persist
+between boots of your system.
+
+```bash
+snap set meerkat-dsa idm-port=4632
+```
+
+You can unset values like so:
+
+```bash
+snap set meerkat-dsa idm-port!
+```
+
+:::note
+
+Meerkat DSA will NOT reboot after you change a configuration setting. It will
+not apply until you reboot it. To reboot it in the snap, run
+`sudo snap restart meerkat-dsa`. This behavior is intentional: it is so you can
+set multiple values before restarting.
+
+:::
+
+Logging options are restricted only to `log-level` and `log-bound-dn`. Snap
+assumes a Systemd environment, so Meerkat DSA in the Snap comes pre-configured
+to log to journald perfectly.
+
+Other configuration options that involve pointing to a file use a hard-coded
+file path, and you simply inject the file into the snap at pre-designated paths.
+If the file is found where it is expected, the environment variable
+automatically gets set by the snap. These are:
+
+| Environment Variable                | File Path                                 |
+|-------------------------------------|-------------------------------------------|
+| `MEERKAT_ATTR_CERT_CHAIN_FILE`      | `$SNAP_COMMON/attr-cert-chain.pem`        |
+| `MEERKAT_CLEARANCE_AUTHORITIES`     | `$SNAP_COMMON/clearance-authorities.pem`  |
+| `MEERKAT_SIGNING_CA_FILE`           | `$SNAP_COMMON/signing-ca.pem`             |
+| `MEERKAT_SIGNING_CERTS_CHAIN_FILE`  | `$SNAP_COMMON/signing-cert-chain.pem`     |
+| `MEERKAT_SIGNING_CRL_FILE`          | `$SNAP_COMMON/signing-crl.pem`            |
+| `MEERKAT_SIGNING_KEY_FILE`          | `$SNAP_COMMON/signing-key.pem`            |
+| `MEERKAT_SSLKEYLOG_FILE`            | `$SNAP_COMMON/sslkeylog.txt`              |
+| `MEERKAT_TRUST_ANCHORS_FILE`        | `$SNAP_COMMON/signing-trust-anchors.pem`  |
+| `MEERKAT_TLS_CRL_FILE`              | `$SNAP_COMMON/tls-crl.pem`                |
+| `MEERKAT_TLS_DH_PARAM_FILE`         | `$SNAP_COMMON/tls-dh-param.pem`           |
+| `MEERKAT_TLS_KEY_FILE`              | `$SNAP_COMMON/tls-key.pem`                |
+| `MEERKAT_TLS_CA_FILE`               | `$SNAP_COMMON/tls-ca.pem`                 |
+| `MEERKAT_TLS_CERT_FILE`             | `$SNAP_COMMON/tls-cert-chain.pem`         |
+| `MEERKAT_TLS_PFX_FILE`              | `$SNAP_COMMON/tls-secret.pfx`             |
+| `MEERKAT_LABELLING_AUTHORITIES`     | `$SNAP_COMMON/labeling-authorities.pem`   |
+| `MEERKAT_INIT_JS`                   | `$SNAP_COMMON/init.mjs`                   |
+
+To mount files into the snap, you can just copy them right in like so:
+
+```bash
+cp ca.pem /var/snap/meerkat-dsa/common/tls-ca.pem
+```
+
+In this case, `/var/snap/meerkat-dsa/common` is `$SNAP_COMMON`, as referenced
+above. It likely will be the same on your system.
+
 ## DATABASE_URL
 
 A database URL indicating the SQLite database to which Meerkat DSA must

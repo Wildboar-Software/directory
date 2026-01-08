@@ -68,6 +68,7 @@ apps:
       # Fortunately, this can still be manually set with this environment
       # variable. I am not sure if this will break in the future.
       PRISMA_SCHEMA_ENGINE_BINARY: $SNAP/node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x
+      MEERKAT_LOG_SYSTEMD_LEVEL_PREFIX: "1"
 
 parts:
   meerkat-dsa:
@@ -82,6 +83,7 @@ parts:
       - NODE_OPTIONS: "--trace-warnings"
       - NX_DAEMON: "false"
     override-build: |
+      cp .npmrc /root
       cp pkg/meerkat_in_snap.sh $SNAPCRAFT_PART_INSTALL
       chmod a+x $SNAPCRAFT_PART_INSTALL/meerkat_in_snap.sh
       # This next step runs npm install
@@ -102,3 +104,9 @@ parts:
       chmod a+x $SNAPCRAFT_PART_INSTALL/main.mjs
     stage-packages:
       - libatomic1
+
+  configure-hook:
+    plugin: dump
+    source: pkg/snap/hooks
+    organize:
+      configure.sh: snap/hooks/configure
