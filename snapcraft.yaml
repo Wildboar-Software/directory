@@ -32,7 +32,6 @@ lint:
     - metadata:
       - donation
 icon: images/Wildboar.png
-# TODO: system-usernames
 apps:
   meerkat-dsa-app:
     daemon: simple
@@ -45,7 +44,6 @@ apps:
     environment:
       NODE_ENV: production
       DATABASE_URL: file:$SNAP_DATA/meerkat.db
-      MEERKAT_IDM_PORT: "1389"
       # We do NOT want Meerkat DSA to find a .env file. We want the user to
       # configure the Snap using the snap CLI.
       DOTENV_CONFIG_PATH: ""
@@ -68,6 +66,7 @@ apps:
       # Fortunately, this can still be manually set with this environment
       # variable. I am not sure if this will break in the future.
       PRISMA_SCHEMA_ENGINE_BINARY: $SNAP/node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x
+      # Make Meerkat DSA use the journald log level prefix
       MEERKAT_LOG_SYSTEMD_LEVEL_PREFIX: "1"
 
 parts:
