@@ -1,22 +1,27 @@
 FROM gentoo/stage3:latest
 
-# ---- Base system ----
-ENV ACCEPT_KEYWORDS="~amd64"
+# # ---- Base system ----
+# ENV ACCEPT_KEYWORDS="~amd64"
 
-# Faster Portage
-RUN mkdir -p /etc/portage && \
-    echo 'FEATURES="buildpkg binpkg-request-signature"' >> /etc/portage/make.conf && \
-    echo 'BINPKG_FORMAT="gpkg"' >> /etc/portage/make.conf
+# # Faster Portage
+# RUN mkdir -p /etc/portage && \
+#     echo 'FEATURES="buildpkg binpkg-request-signature"' >> /etc/portage/make.conf && \
+#     echo 'BINPKG_FORMAT="gpkg"' >> /etc/portage/make.conf
 
 # ---- Sync tree ----
-RUN emerge-webrsync && emerge --sync
+RUN emerge-webrsync && emerge --sync && emerge -vuDN @world
 
 RUN eselect profile list
 
 # ---- Core build deps ----
 RUN emerge --ask=n \
+    app-portage/eselect-repository \
     dev-vcs/git \
-    python
+    net-libs/nodejs \
+    sys-devel/gcc \
+    sys-devel/make \
+    python \
+    npm
 
 # ---- Local overlay ----
 RUN eselect repository create meerkat || true
