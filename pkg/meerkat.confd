@@ -1,0 +1,2 @@
+NODE_ENV=production
+DOTENV_CONFIG_PATH=/etc/meerkat/meerkat.env

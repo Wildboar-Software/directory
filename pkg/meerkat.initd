@@ -1,0 +1,11 @@
+#!/sbin/openrc-run
+
+name="Meerkat DSA"
+command="/usr/bin/meerkat"
+command_user="meerkat:meerkat"
+command_background=true
+pidfile="/run/meerkat-dsa.pid"
+
+depend() {
+	need net
+}
