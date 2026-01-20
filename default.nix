@@ -9,6 +9,12 @@ let
     pname = "meerkat-dsa-build";
     version = "4.0.0";
     src = ./.;
+    # src = fetchFromGitHub {
+    #   owner = "Wildboar-Software";
+    #   repo = "directory";
+    #   rev = "v4.0.0";
+    #   hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    # };
     npmDepsHash = "sha256-V7td2VSpJD/3n+j9X8LhvSBMvqaE/o1gCSruQfNa/ME=";
     makeCacheWritable = true;
     npmFlags = [ "--no-audit" "--no-fund" "--no-save" "--ignore-scripts" "--verbose" "--legacy-peer-deps" ];
