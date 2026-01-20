@@ -24,6 +24,8 @@ let
     '';
     installPhase = ''
       cp -r dist/apps/meerkat $out
+      cp doc/man/man1/meerkat-dsa.1 $out
+      cp doc/man/man5/meerkat.env.5 $out
     '';
   };
 
@@ -58,6 +60,10 @@ let
       EOF
       substituteInPlace $out/bin/meerkat --replace "@APP_DIR@" "$out"
       chmod +x $out/bin/meerkat
+      mkdir -p $out/share/man/man1
+      mkdir -p $out/share/man/man5
+      install -m 644 meerkat-dsa.1 $out/share/man/man1/meerkat-dsa.1
+      install -m 644 meerkat.env.5 $out/share/man/man5/meerkat.env.5
     '';
     meta = with lib; {
       description = "Meerkat X.500 Directory System Agent (DSA) and LDAP Server";
