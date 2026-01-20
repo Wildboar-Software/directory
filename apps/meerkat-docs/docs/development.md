@@ -151,6 +151,14 @@ Then you can do a little more validation like so:
 nix-instantiate '<nixpkgs/nixos>' -A config.systemd.services.meerkat-dsa -I nixos-config=./pkg/meerkat-dsa.nix
 ```
 
+If you see
+
+```
+error: attribute 'meerkat-dsa' in selection path 'config.systemd.services.meerkat-dsa' not found
+```
+
+try removing `lib.mkIf cfg.enable` from `meerkat-dsa.nix`.
+
 ## CI
 
 [Here](https://github.com/actions/runner-images) are the different runners
