@@ -1,11 +1,8 @@
-# This has not been tested.
 { config, lib, pkgs, ... }:
 
 let
   cfg = config.services.meerkat-dsa;
 in {
-  system.stateVersion = "19.03"; # No touchy!
-
   options.services.meerkat-dsa = {
     enable = lib.mkEnableOption "Meerkat X.500 Directory System Agent (DSA) and LDAP Server";
     dataDir = lib.mkOption {
@@ -22,6 +19,8 @@ in {
 
   config = lib.mkIf cfg.enable {
 
+    system.stateVersion = "26.05";
+
     users.users.meerkat = {
       isSystemUser = true;
       group = "meerkat";
@@ -35,6 +34,10 @@ in {
       description = "Meerkat DSA";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
+      # This seems to be required even though undocumented.
+      startLimitBurst = 10;
+      # This seems to be required even though undocumented.
+      startLimitIntervalSec = 5;
       serviceConfig = {
         Type = "simple";
         User = "meerkat";
