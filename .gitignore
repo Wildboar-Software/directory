@@ -8,6 +8,7 @@
 *.zst
 
 demo/
+result/
 
 *.snap
 k8s/charts/meerkat-dsa/*.tgz

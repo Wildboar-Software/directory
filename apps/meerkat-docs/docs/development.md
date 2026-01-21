@@ -124,6 +124,41 @@ Run `brew uninstall meerkat_dsa` to uninstall it from your system.
 
 Run `brew test -d meerkat_dsa` to run tests after it is installed.
 
+### Nix Package
+
+First, ensure that `pkg/default.nix` is moved to the root of this repository:
+in other words, it should be in the same folder as `nx.json`. Then run:
+
+```bash
+nix-build -E '(import <nixpkgs> {}).callPackage ./default.nix {}'
+```
+
+I don't really know why that is needed. Why doesn't it "just work"(tm)?
+
+Then, your build outputs will be symlinked to `./result`. Just poke around in
+there: you'll get it.
+
+To test the Systemd service (which is a separate package), it seems like you
+have to have NixOS. However, you can do a little pre-validation on it like so:
+
+```bash
+nix-instantiate --parse pkg/meerkat-dsa.nix
+```
+
+Then you can do a little more validation like so:
+
+```bash
+nix-instantiate '<nixpkgs/nixos>' -A config.systemd.services.meerkat-dsa -I nixos-config=./pkg/meerkat-dsa.nix
+```
+
+If you see
+
+```
+error: attribute 'meerkat-dsa' in selection path 'config.systemd.services.meerkat-dsa' not found
+```
+
+try removing `lib.mkIf cfg.enable` from `meerkat-dsa.nix`.
+
 ## CI
 
 [Here](https://github.com/actions/runner-images) are the different runners
