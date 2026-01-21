@@ -2,8 +2,8 @@
 <html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-user-guide-to-x500" data-has-hydrated="false">
 <head>
 <meta charset="UTF-8">
-<meta name="generator" content="Docusaurus v3.7.0">
-<title data-rh="true">User&#x27;s Deep Dive | Meerkat DSA</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://wildboar-software.github.io/directory/docs/user-guide-to-x500"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="keywords" content="directory, x500, x.500, ldap, database, meerkat, dsa, distributed"><meta data-rh="true" name="copyright" content="Copyright (c) 2021-2025 Jonathan M. Wilbur &lt;jonathan@wilbur.space&gt;."><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="User&#x27;s Deep Dive | Meerkat DSA"><meta data-rh="true" name="description" content="The X.500 specifications are so rich in features that it can seem difficult to"><meta data-rh="true" property="og:description" content="The X.500 specifications are so rich in features that it can seem difficult to"><link data-rh="true" rel="icon" href="/directory/img/boar-head-rune-circle.svg"><link data-rh="true" rel="canonical" href="https://wildboar-software.github.io/directory/docs/user-guide-to-x500"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/user-guide-to-x500" hreflang="en"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/user-guide-to-x500" hreflang="x-default"><link rel="preconnect" href="https://www.google-analytics.com">
+<meta name="generator" content="Docusaurus v3.9.2">
+<title data-rh="true">User&#x27;s Deep Dive | Meerkat DSA</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://wildboar-software.github.io/directory/docs/user-guide-to-x500"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="keywords" content="directory, x500, x.500, ldap, database, meerkat, dsa, distributed"><meta data-rh="true" name="copyright" content="Copyright (c) 2021-2025 Jonathan M. Wilbur &lt;jonathan@wilbur.space&gt;."><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="User&#x27;s Deep Dive | Meerkat DSA"><meta data-rh="true" name="description" content="The X.500 specifications are so rich in features that it can seem difficult to"><meta data-rh="true" property="og:description" content="The X.500 specifications are so rich in features that it can seem difficult to"><link data-rh="true" rel="icon" href="/directory/img/boar-head-rune-circle.svg"><link data-rh="true" rel="canonical" href="https://wildboar-software.github.io/directory/docs/user-guide-to-x500"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/user-guide-to-x500" hreflang="en"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/user-guide-to-x500" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"User's Deep Dive","item":"https://wildboar-software.github.io/directory/docs/user-guide-to-x500"}]}</script><link rel="preconnect" href="https://www.google-analytics.com">
 <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-177382419-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview")</script>
 <script async src="https://www.google-analytics.com/analytics.js"></script>
 
@@ -11,16 +11,19 @@
 
 <link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
 <link rel="manifest" href="/directory/manifest.json">
-<meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.1ef47c0e.css">
-<script src="/directory/assets/js/runtime~main.5df6953f.js" defer="defer"></script>
-<script src="/directory/assets/js/main.b9bfe8ee.js" defer="defer"></script>
+<meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.3a3d7962.css">
+<script src="/directory/assets/js/runtime~main.7d85a640.js" defer="defer"></script>
+<script src="/directory/assets/js/main.b6a6187a.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
-<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();t(null!==e?e:"dark")}(),function(){try{const n=new URLSearchParams(window.location.search).entries();for(var[t,e]of n)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_G6ar" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/directory/"><div class="navbar__logo"><img src="/directory/img/boar-head-rune-circle-black.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--light_DIHH"><img src="/directory/img/boar-head-rune-circle.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--dark_Bv2M"></div><b class="navbar__title text--truncate">Meerkat DSA</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/setup">Get Started</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/docs">Documentation</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/specs">X.500 Specifications</a><a class="navbar__item navbar__link" href="/directory/docs/demo">Demo</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Wildboar-Software/directory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_awgD"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_OLSw colorModeToggle_Hg9V"><button class="clean-btn toggleButton_wYmb toggleButtonDisabled_vaDU" type="button" disabled="" title="Switch between dark and light mode (currently dark mode)" aria-label="Switch between dark and light mode (currently dark mode)" aria-live="polite" aria-pressed="true"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_Sxwe"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_Yem1"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_bmvg"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_UyTV"><div class="docsWrapper_XLvK"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_z1FD" type="button"></button><div class="docRoot_HciC"><aside class="theme-doc-sidebar-container docSidebarContainer_e5ai"><div class="sidebarViewport_N8x0"><div class="sidebar_vJCc"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_qiME"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/docs">How to use this documentation</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/directory/docs/intro">X.500</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/intro">Introduction to X.500 Directory Systems</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/executive-summary">Executive Summary</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/uses">Uses</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/directory/docs/user-guide-to-x500">User&#x27;s Deep Dive</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/admin-guide-to-x500">Administrator&#x27;s Deep Dive</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/why-not-ldap">Why Not LDAP?</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/setup">Meerkat DSA</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/x500cli">Clients and Libraries</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/tutorial01">Tutorials</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/asn1">Reference</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/changelog-meerkat">Change Logs</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/versioning">For Developers</a></div></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/support">Support / Help</a></li></ul></nav></div></div></aside><main class="docMainContainer_namt"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_YAwJ"><div class="docItemContainer_Rv5Z"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_zCmv" aria-label="Breadcrumbs"><ul class="breadcrumbs" itemscope="" itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/directory/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_JFrk"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><span class="breadcrumbs__link">X.500</span><meta itemprop="position" content="1"></li><li itemscope="" itemprop="itemListElement" itemtype="https://schema.org/ListItem" class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link" itemprop="name">User&#x27;s Deep Dive</span><meta itemprop="position" content="2"></li></ul></nav><div class="tocCollapsible_O_Qc theme-doc-toc-mobile tocMobile_tjDr"><button type="button" class="clean-btn tocCollapsibleButton_htYj">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>User&#x27;s Deep Dive</h1></header>
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||"dark"),document.documentElement.setAttribute("data-theme-choice",t||"dark")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><link rel="preload" as="image" href="/directory/img/boar-head-rune-circle-black.svg"><link rel="preload" as="image" href="/directory/img/boar-head-rune-circle.svg"><div role="region" aria-label="Skip to main content"><a class="skipToContent_G6ar" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/directory/"><div class="navbar__logo"><img src="/directory/img/boar-head-rune-circle-black.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--light_DIHH"><img src="/directory/img/boar-head-rune-circle.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--dark_Bv2M"></div><b class="navbar__title text--truncate">Meerkat DSA</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/setup">Get Started</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/docs">Documentation</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/specs">X.500 Specifications</a><a class="navbar__item navbar__link" href="/directory/docs/demo">Demo</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/Wildboar-Software/directory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_awgD"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_OLSw colorModeToggle_Hg9V"><button class="clean-btn toggleButton_wYmb toggleButtonDisabled_vaDU" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_KEbZ lightToggleIcon_Sxwe"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_KEbZ darkToggleIcon_Yem1"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_KEbZ systemToggleIcon_txm5"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_bmvg"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_UyTV"><div class="docsWrapper_XLvK"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_z1FD" type="button"></button><div class="docRoot_HciC"><aside class="theme-doc-sidebar-container docSidebarContainer_e5ai"><div class="sidebarViewport_N8x0"><div class="sidebar_vJCc"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_qiME"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/docs"><span title="How to use this documentation" class="linkLabel_PuAu">How to use this documentation</span></a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="categoryLink_d9ci menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/directory/docs/intro"><span title="X.500" class="categoryLinkLabel_Oe72">X.500</span></a></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/intro"><span title="Introduction to X.500 Directory Systems" class="linkLabel_PuAu">Introduction to X.500 Directory Systems</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/executive-summary"><span title="Executive Summary" class="linkLabel_PuAu">Executive Summary</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/uses"><span title="Uses" class="linkLabel_PuAu">Uses</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/directory/docs/user-guide-to-x500"><span title="User&#x27;s Deep Dive" class="linkLabel_PuAu">User&#x27;s Deep Dive</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/admin-guide-to-x500"><span title="Administrator&#x27;s Deep Dive" class="linkLabel_PuAu">Administrator&#x27;s Deep Dive</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/why-not-ldap"><span title="Why Not LDAP?" class="linkLabel_PuAu">Why Not LDAP?</span></a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_d9ci menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/setup"><span title="Meerkat DSA" class="categoryLinkLabel_Oe72">Meerkat DSA</span></a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_d9ci menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/x500cli"><span title="Clients and Libraries" class="categoryLinkLabel_Oe72">Clients and Libraries</span></a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_d9ci menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/tutorial01"><span title="Tutorials" class="categoryLinkLabel_Oe72">Tutorials</span></a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_d9ci menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/asn1"><span title="Reference" class="categoryLinkLabel_Oe72">Reference</span></a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_d9ci menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/changelog-meerkat"><span title="Change Logs" class="categoryLinkLabel_Oe72">Change Logs</span></a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_d9ci menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/versioning"><span title="For Developers" class="categoryLinkLabel_Oe72">For Developers</span></a></div></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/support"><span title="Support / Help" class="linkLabel_PuAu">Support / Help</span></a></li></ul></nav></div></div></aside><main class="docMainContainer_namt"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_YAwJ"><div class="docItemContainer_Rv5Z"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_zCmv" aria-label="Breadcrumbs"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/directory/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_JFrk"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><span class="breadcrumbs__link">X.500</span></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">User&#x27;s Deep Dive</span></li></ul></nav><div class="tocCollapsible_O_Qc theme-doc-toc-mobile tocMobile_tjDr"><button type="button" class="clean-btn tocCollapsibleButton_htYj">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>User&#x27;s Deep Dive</h1></header>
 <p>The X.500 specifications are so rich in features that it can seem difficult to
 break into it. This is a brief explanation of X.500 concepts for a user to
 meaningfully use an X.500 directory.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="object-identifiers">Object Identifiers<a href="#object-identifiers" class="hash-link" aria-label="Direct link to Object Identifiers" title="Direct link to Object Identifiers">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="object-identifiers">Object Identifiers<a href="#object-identifiers" class="hash-link" aria-label="Direct link to Object Identifiers" title="Direct link to Object Identifiers" translate="no">​</a></h2>
 <p>X.500 directories use object identifiers to identify almost everything, so
 understanding what they are is important. If you finish reading this section
 understanding nothing else, understand that <em>object identifiers are
@@ -46,8 +49,8 @@ Wildboar Software is <code>56490</code>, meaning that the object identifier is
 object identifiers that start with <code>1.3.6.1.4.1.56490</code>.</p>
 <p>With this out of the way, we can go over how an X.500 directory presents its
 information.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="information-model">Information Model<a href="#information-model" class="hash-link" aria-label="Direct link to Information Model" title="Direct link to Information Model">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="entries-and-attributes">Entries and Attributes<a href="#entries-and-attributes" class="hash-link" aria-label="Direct link to Entries and Attributes" title="Direct link to Entries and Attributes">​</a></h3>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="information-model">Information Model<a href="#information-model" class="hash-link" aria-label="Direct link to Information Model" title="Direct link to Information Model" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="entries-and-attributes">Entries and Attributes<a href="#entries-and-attributes" class="hash-link" aria-label="Direct link to Entries and Attributes" title="Direct link to Entries and Attributes" translate="no">​</a></h3>
 <p>Directories represent information as <em>entries</em>. Entries represent real-world
 objects, such as a person, organization, device, etc. Entries are represented
 like documents in a document-oriented database, or a row in a relational
@@ -64,7 +67,7 @@ not need to know or memorize these identifiers: it is expected that whatever
 tool you use to browse the X.500 directory will translate these object
 identifiers into human-friendly names, such as &quot;First Name&quot; or &quot;Serial Number.&quot;
 Object identifiers that are unrecognized by your tooling can be searched for on
-websites like <a href="http://www.oid-info.com/" target="_blank" rel="noopener noreferrer">this</a> if your tooling does not already
+websites like <a href="http://www.oid-info.com/" target="_blank" rel="noopener noreferrer" class="">this</a> if your tooling does not already
 do this for you.</p>
 <p>Attributes contain one or more <em>values</em>, reflecting that some attributes of
 real world attributes may have multiple values. A person may have multiple email
@@ -129,7 +132,7 @@ but its <em>structural object class</em> would be <code>organizationalPerson</co
 has an object identifier of <code>2.5.4.0</code>. This is technically defined as a user
 attribute for historical reasons, but it still functions like an operational
 attribute.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="matching-rules">Matching Rules<a href="#matching-rules" class="hash-link" aria-label="Direct link to Matching Rules" title="Direct link to Matching Rules">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="matching-rules">Matching Rules<a href="#matching-rules" class="hash-link" aria-label="Direct link to Matching Rules" title="Direct link to Matching Rules" translate="no">​</a></h3>
 <p>X.500 directories use &quot;matching rules&quot; to define the logic of how two values are
 to be compared, sorted, and searched, which are called equality matching rules,
 ordering matching rules, and substring matching rules, respectively. The
@@ -177,16 +180,16 @@ may define procedures for converting a value of a different syntax into the
 assertion syntax. If no assertion syntax is defined for a matching rule, the
 assertion syntax is the same as the syntax of the attribute on which the
 matching rule is used.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="context-types">Context Types<a href="#context-types" class="hash-link" aria-label="Direct link to Context Types" title="Direct link to Context Types">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="context-types">Context Types<a href="#context-types" class="hash-link" aria-label="Direct link to Context Types" title="Direct link to Context Types" translate="no">​</a></h3>
 <p>Attribute values can be tagged with a sort of &quot;metadata&quot; called <em>contexts</em>.
 Contexts are more general-purpose annotations for attribute values that are used
 like so:</p>
 <ul>
-<li>To annotate strings with the language. For instance, if an organization has a
+<li class="">To annotate strings with the language. For instance, if an organization has a
 <code>description</code> attribute value in English and another value in German, the
 English value can be tagged with a <code>languageContext</code> with a value that
 identifies it as English, and likewise for the German description.</li>
-<li>To indicate the time in which a value was/is true: by using a
+<li class="">To indicate the time in which a value was/is true: by using a
 <code>temporalContext</code>, a directory entry can indicate that Mrs. Jane Smith&#x27;s last
 name was Doe up until July 25th, 2023, when she got married. This would be
 done by having a <code>surname</code> attribute value of <code>Doe</code> using a <code>temporalContext</code>
@@ -195,19 +198,19 @@ another value of <code>Smith</code> with no contexts. Instead of deleting old in
 in the directory, it can be annotated with the &quot;validity time&quot; so that the
 directory can be queried across time. This means that a directory can
 function like a time-series database.</li>
-<li>To indicate the applicable locale of a numeric unit, such as a currency.</li>
-<li>To indicate a level of certainty associated with a value whose validity is
+<li class="">To indicate the applicable locale of a numeric unit, such as a currency.</li>
+<li class="">To indicate a level of certainty associated with a value whose validity is
 uncertain.</li>
-<li>To annotate a value with a source of its information. For instance, if an
+<li class="">To annotate a value with a source of its information. For instance, if an
 attribute value was sourced from a person&#x27;s birth certificate, this could be
 indicated.</li>
-<li>To annotate a value with a digital signature, providing data integrity at
+<li class="">To annotate a value with a digital signature, providing data integrity at
 rest.</li>
 </ul>
 <p>The type of context is identified by an object identifier. An attribute value
 may have zero, one, or more contexts of a given type, and may have multiple
 context types as well.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="the-directory-information-tree">The Directory Information Tree<a href="#the-directory-information-tree" class="hash-link" aria-label="Direct link to The Directory Information Tree" title="Direct link to The Directory Information Tree">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="the-directory-information-tree">The Directory Information Tree<a href="#the-directory-information-tree" class="hash-link" aria-label="Direct link to The Directory Information Tree" title="Direct link to The Directory Information Tree" translate="no">​</a></h3>
 <p>The entries in a directory are arranged in a hierarchical structure, referred to
 as the Directory Information Tree (DIT). In computer science, a &quot;tree&quot; is
 conventionally thought of and spoken of as being upside-down. The &quot;root&quot; of the
@@ -221,7 +224,7 @@ directory server, and used to provide information about the directory server.</p
 or &quot;first level.&quot; The first level contains real entries, which usually represent
 countries, international organizations, or top-level domains. These have entries
 beneath them, and those entries may have entries beneath them, recursively.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="names">Names<a href="#names" class="hash-link" aria-label="Direct link to Names" title="Direct link to Names">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="names">Names<a href="#names" class="hash-link" aria-label="Direct link to Names" title="Direct link to Names" translate="no">​</a></h3>
 <p>Directory entries are named using a selection of attribute values that are
 called &quot;distinguished values,&quot; each of which are presented as an attribute type
 object identifier and a value. This group of one or more distinguished values is
@@ -233,18 +236,18 @@ are actually present in the entry: entries cannot &quot;distinguish&quot; values
 do not have.</p>
 <p>The following attribute types are commonly used for naming:</p>
 <ul>
-<li><code>countryName</code>, often abbreviated as <code>c</code></li>
-<li><code>stateOrProvinceName</code>, often abbreviated as <code>st</code></li>
-<li><code>localityName</code>, often abbreviated as <code>l</code></li>
-<li><code>organizationName</code>, often abbreviated as <code>o</code></li>
-<li><code>organizationalUnitName</code>, often abbreviated as <code>ou</code></li>
-<li><code>commonName</code>, often abbreviated as <code>cn</code></li>
-<li><code>givenName</code>, often abbreviated as <code>gn</code></li>
-<li><code>surname</code>, often abbreviated as <code>sn</code></li>
-<li><code>domainComponent</code>, often abbreviated as <code>dc</code></li>
-<li><code>uid</code></li>
-<li><code>title</code></li>
-<li><code>dnQualifier</code></li>
+<li class=""><code>countryName</code>, often abbreviated as <code>c</code></li>
+<li class=""><code>stateOrProvinceName</code>, often abbreviated as <code>st</code></li>
+<li class=""><code>localityName</code>, often abbreviated as <code>l</code></li>
+<li class=""><code>organizationName</code>, often abbreviated as <code>o</code></li>
+<li class=""><code>organizationalUnitName</code>, often abbreviated as <code>ou</code></li>
+<li class=""><code>commonName</code>, often abbreviated as <code>cn</code></li>
+<li class=""><code>givenName</code>, often abbreviated as <code>gn</code></li>
+<li class=""><code>surname</code>, often abbreviated as <code>sn</code></li>
+<li class=""><code>domainComponent</code>, often abbreviated as <code>dc</code></li>
+<li class=""><code>uid</code></li>
+<li class=""><code>title</code></li>
+<li class=""><code>dnQualifier</code></li>
 </ul>
 <p>For the purposes of displaying to humans, attribute types and values are often
 represented as type-equals-value pairs (e.g. <code>cn=Jonathan Wilbur</code>). When
@@ -269,7 +272,7 @@ class, and there can be multiple name forms defined for a given structural
 object class. Name forms are not expected to apply uniformly throughout the
 Directory Information Tree; some regions of the tree can enforce different
 naming conventions from others.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="aliases">Aliases<a href="#aliases" class="hash-link" aria-label="Direct link to Aliases" title="Direct link to Aliases">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="aliases">Aliases<a href="#aliases" class="hash-link" aria-label="Direct link to Aliases" title="Direct link to Aliases" translate="no">​</a></h3>
 <p>Sometimes the names of directory entries need to be changed. For instance, when
 people get married, it is common for the wife to change her last name to the
 husband&#x27;s last name. Hence, an entry representing a person may need to be
@@ -294,7 +297,7 @@ directory name <code>o=PwC</code> could be used as an alias for
 not the entry sought by a user. For instance, if a directory user tries to read
 an entry <code>c=US,st=Florida,cn=Jonathan Wilbur</code>, the directory can resolve the
 alias <code>st=Florida</code> to <code>st=FL</code> to obtain <code>c=US,st=FL,cn=Jonathan Wilbur</code>.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="schema">Schema<a href="#schema" class="hash-link" aria-label="Direct link to Schema" title="Direct link to Schema">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="schema">Schema<a href="#schema" class="hash-link" aria-label="Direct link to Schema" title="Direct link to Schema" translate="no">​</a></h3>
 <p>In addition to the X.500 schema constructs mentioned above, further constructs
 can constrain where entries can appear and what object classes, attributes, and
 contexts they can have.</p>
@@ -319,7 +322,7 @@ attribute is used in a search filter, its friends will be evaluated for matches.
 If the anchor attribute is to be returned in response from the directory, the
 friend attributes will be returned automatically as well. Both of these cases
 can be disabled via service controls.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="compound-entries">Compound Entries<a href="#compound-entries" class="hash-link" aria-label="Direct link to Compound Entries" title="Direct link to Compound Entries">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="compound-entries">Compound Entries<a href="#compound-entries" class="hash-link" aria-label="Direct link to Compound Entries" title="Direct link to Compound Entries" translate="no">​</a></h3>
 <p>In many document-oriented databases, such as MongoDB, ElasticSearch, or CouchDB,
 documents themselves can contain &quot;nested documents,&quot; and the directory is no
 different in this regard: except these are called &quot;child entries&quot; and the
@@ -336,7 +339,7 @@ a person that resides in Florida <strong>and</strong> has a certain model of dev
 can use the &quot;family grouping&quot; feature of a search to obtain only these results,
 rather than performing two separate searches for people and devices and
 performing an inner join on the client-side.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="hierarchical-groups">Hierarchical Groups<a href="#hierarchical-groups" class="hash-link" aria-label="Direct link to Hierarchical Groups" title="Direct link to Hierarchical Groups">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="hierarchical-groups">Hierarchical Groups<a href="#hierarchical-groups" class="hash-link" aria-label="Direct link to Hierarchical Groups" title="Direct link to Hierarchical Groups" translate="no">​</a></h3>
 <p>Entries in the directory are arranged into a hierarchy, as established already.
 However, sometimes there is a need for some other hierarchy that is independent
 of the underlying directory structure. X.500 directories allow this via
@@ -347,17 +350,17 @@ an attribute <code>hierarchicalParent</code> that points to its superior in this
 hierarchy. There are other attributes that are supposed to be managed by the
 directory automatically:</p>
 <ul>
-<li><code>hierarchyBelow</code> is a <code>BOOLEAN</code> that indicates whether a hierarchical group
+<li class=""><code>hierarchyBelow</code> is a <code>BOOLEAN</code> that indicates whether a hierarchical group
 member has subordinates in the virtual hierarchy.</li>
-<li><code>hierarchyTop</code> points to the most superior entry in the virtual hierarchy.</li>
-<li><code>hierarchyLevel</code> indicates how deep within the virtual hierarchy an entry
+<li class=""><code>hierarchyTop</code> points to the most superior entry in the virtual hierarchy.</li>
+<li class=""><code>hierarchyLevel</code> indicates how deep within the virtual hierarchy an entry
 resides.</li>
 </ul>
 <p>These are only used in searches to provide relational capabilities across this
 virtual hierarchy. For example, if the virtual hierarchy reflects the managerial
 structure of an organization, you can query the directory for all managers of
 employees that have poor performance reviews.</p>
-<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="collective-attributes">Collective Attributes<a href="#collective-attributes" class="hash-link" aria-label="Direct link to Collective Attributes" title="Direct link to Collective Attributes">​</a></h3>
+<h3 class="anchor anchorTargetStickyNavbar_SAay" id="collective-attributes">Collective Attributes<a href="#collective-attributes" class="hash-link" aria-label="Direct link to Collective Attributes" title="Direct link to Collective Attributes" translate="no">​</a></h3>
 <p>As the directory grows, there might be a need to place the same attribute values
 within entries over and over again, thereby wasting data storage space. For
 example, in a small city that falls entirely within a single postal code, every
@@ -379,7 +382,7 @@ entries to be marked as one-off exceptions via the <code>collectiveExclusions</c
 attribute. If 99,999 of our denizens live in a postal code, but a single person
 lives in a different one, we can mark them as excluded from the applicability of
 this collective attribute.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="operations">Operations<a href="#operations" class="hash-link" aria-label="Direct link to Operations" title="Direct link to Operations">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="operations">Operations<a href="#operations" class="hash-link" aria-label="Direct link to Operations" title="Direct link to Operations" translate="no">​</a></h2>
 <p>Interactions with the directory use a request-response model. The types of
 requests and responses supported by the directory are defined as &quot;operations.&quot;
 As a simple example, &quot;operations&quot; for a padlock might be &quot;lock&quot; and &quot;unlock.&quot;
@@ -395,7 +398,7 @@ the entry if it exists and if the user is authorized. If the entry does not
 exist, the user is not authorized, or some other issue makes it impossible or
 undesirable to fulfill the request, an error may be returned, indicating the
 nature of the problem.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="rose-protocols-and-transport">ROSE Protocols and Transport<a href="#rose-protocols-and-transport" class="hash-link" aria-label="Direct link to ROSE Protocols and Transport" title="Direct link to ROSE Protocols and Transport">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="rose-protocols-and-transport">ROSE Protocols and Transport<a href="#rose-protocols-and-transport" class="hash-link" aria-label="Direct link to ROSE Protocols and Transport" title="Direct link to ROSE Protocols and Transport" translate="no">​</a></h2>
 <p>In the same way that a protocol stack such as TCP/IP encapsulates messages used
 by the application layer and provides services such as in-order delivery, the
 Remote Operation Service element (ROSE) is an abstract service that &quot;frames&quot;
@@ -411,7 +414,7 @@ Recommendations, but it can also be provided over the &quot;Internet Directly-Ma
 the directory, which runs over TCP/IP. There may be more implementations I do
 not know about: it is defined as an abstract service so it can be provided in
 many ways.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="binding-and-unbinding">Binding and Unbinding<a href="#binding-and-unbinding" class="hash-link" aria-label="Direct link to Binding and Unbinding" title="Direct link to Binding and Unbinding">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="binding-and-unbinding">Binding and Unbinding<a href="#binding-and-unbinding" class="hash-link" aria-label="Direct link to Binding and Unbinding" title="Direct link to Binding and Unbinding" translate="no">​</a></h2>
 <p>Before a Remote Operation Service Element (ROSE) can provide the Remote
 Operations Service (ROS), the &quot;initiator&quot; between two correspondent endpoints
 must &quot;bind.&quot; A bind is a special operation that performs any initial setup for
@@ -426,34 +429,34 @@ unrecoverable error.&quot;</p>
 complete. However, the underlying transport may remain open, if desired; in
 concrete terms, the TCP socket may still be kept alive and re-used for a
 subsequent bind, perhaps to authenticate as a different user.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="authentication">Authentication<a href="#authentication" class="hash-link" aria-label="Direct link to Authentication" title="Direct link to Authentication">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="authentication">Authentication<a href="#authentication" class="hash-link" aria-label="Direct link to Authentication" title="Direct link to Authentication" translate="no">​</a></h2>
 <p>As we have established, authentication information is carried in the bind
 operation.</p>
 <p>There are five forms of authentication defined in the directory specifications:</p>
 <ul>
-<li><code>simple</code>: Authentication via a distinguished name (username) and password</li>
-<li><code>strong</code>: Authentication via a cryptographic signature proving you possess a key</li>
-<li><code>externalProcedure</code>: An authentication procedure identified by an object identifier</li>
-<li><code>spkm</code>: Simple Public-Key GSS-API Mechanism (SPKM) described in IETF RFC 2025</li>
-<li><code>sasl</code>: Simple Authentication and Security Layer (SASL), which is itself a
+<li class=""><code>simple</code>: Authentication via a distinguished name (username) and password</li>
+<li class=""><code>strong</code>: Authentication via a cryptographic signature proving you possess a key</li>
+<li class=""><code>externalProcedure</code>: An authentication procedure identified by an object identifier</li>
+<li class=""><code>spkm</code>: Simple Public-Key GSS-API Mechanism (SPKM) described in IETF RFC 2025</li>
+<li class=""><code>sasl</code>: Simple Authentication and Security Layer (SASL), which is itself a
 flexible encapsulation mechanism for many more authentication
 exchanges.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="the-dap-operations">The DAP Operations<a href="#the-dap-operations" class="hash-link" aria-label="Direct link to The DAP Operations" title="Direct link to The DAP Operations">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="the-dap-operations">The DAP Operations<a href="#the-dap-operations" class="hash-link" aria-label="Direct link to The DAP Operations" title="Direct link to The DAP Operations" translate="no">​</a></h2>
 <p>The directory service is provided to users via the Directory Access Protocol
 (DAP), which is a suite of 11 operations briefly described as such:</p>
 <ul>
-<li><code>read</code>: Read a single entry</li>
-<li><code>compare</code>: Evaluate an assertion against an entry, returning whether it matches</li>
-<li><code>abandon</code>: Abandon an ongoing operation</li>
-<li><code>list</code>: List the entries immediately subordinate to an entry in the DIT</li>
-<li><code>search</code>: Search for entries using a filter</li>
-<li><code>addEntry</code>: Create a new entry</li>
-<li><code>removeEntry</code>: Delete an entry</li>
-<li><code>modifyEntry</code>: Modify an entry, such as by adding attributes</li>
-<li><code>modifyDN</code>: Rename an entry, or move it and its descendants entirely</li>
-<li><code>administerPassword</code>: Reset a password of an entry</li>
-<li><code>changePassword</code>: Change a password of an entry</li>
+<li class=""><code>read</code>: Read a single entry</li>
+<li class=""><code>compare</code>: Evaluate an assertion against an entry, returning whether it matches</li>
+<li class=""><code>abandon</code>: Abandon an ongoing operation</li>
+<li class=""><code>list</code>: List the entries immediately subordinate to an entry in the DIT</li>
+<li class=""><code>search</code>: Search for entries using a filter</li>
+<li class=""><code>addEntry</code>: Create a new entry</li>
+<li class=""><code>removeEntry</code>: Delete an entry</li>
+<li class=""><code>modifyEntry</code>: Modify an entry, such as by adding attributes</li>
+<li class=""><code>modifyDN</code>: Rename an entry, or move it and its descendants entirely</li>
+<li class=""><code>administerPassword</code>: Reset a password of an entry</li>
+<li class=""><code>changePassword</code>: Change a password of an entry</li>
 </ul>
 <p>Almost all of these operations share some parameters in their arguments (called
 &quot;the common arguments&quot;), and likewise, their results also share some parameters,
@@ -469,7 +472,7 @@ assertions, or how compound entries are to be evaluated for matches in searches.
 <p>The common results may include the name of the server that fulfilled the
 request, a flag indicating whether an alias was dereferenced, or attributes used
 to provide notifications, warnings, or other information to the directory user.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="chaining">Chaining<a href="#chaining" class="hash-link" aria-label="Direct link to Chaining" title="Direct link to Chaining">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="chaining">Chaining<a href="#chaining" class="hash-link" aria-label="Direct link to Chaining" title="Direct link to Chaining" translate="no">​</a></h2>
 <p>The entire directory service can be (and is likely to be) split up among a
 multitude of servers cooperating with each other. The individual servers
 providing the directory service are called Directory System Agents (DSAs), and
@@ -496,7 +499,7 @@ chaining entirely. They can also indicate that replicas of entries are
 satisfactory--that master copies are not needed--and hence, the directory
 should not chain requests to servers hosting the master copy if they themselves
 have a non-master copy. (What an excellent segue to our next topic!)</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="shadowing">Shadowing<a href="#shadowing" class="hash-link" aria-label="Direct link to Shadowing" title="Direct link to Shadowing">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="shadowing">Shadowing<a href="#shadowing" class="hash-link" aria-label="Direct link to Shadowing" title="Direct link to Shadowing" translate="no">​</a></h2>
 <p>The directory supports the replication of entries as read-only copies into
 other directories for performance purposes (arguably security as well). This
 replication is called &quot;shadowing.&quot; Directory servers that store read-only copies
@@ -517,7 +520,7 @@ are often less authoritative than shadows, since they may contain stale or
 out-of-date information, depending on how frequently updates to the master are
 propagated to the shadows, but using copies is likely to speed up directory
 operations.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="relaxation-or-tightening">Relaxation or Tightening<a href="#relaxation-or-tightening" class="hash-link" aria-label="Direct link to Relaxation or Tightening" title="Direct link to Relaxation or Tightening">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="relaxation-or-tightening">Relaxation or Tightening<a href="#relaxation-or-tightening" class="hash-link" aria-label="Direct link to Relaxation or Tightening" title="Direct link to Relaxation or Tightening" translate="no">​</a></h2>
 <p>Sometimes when you perform a search, you start with an idea of how many entries
 you&#x27;d like to receive. The directory has a mechanism for altering search
 criteria on the fly to target the requested number of entries. This is done via
@@ -539,7 +542,7 @@ the city and those neighboring them. In this sense, the directory would use its
 geographic knowledge to search a broader area for matching entries.</p>
 <p>In fact, the directory also allows users to control <em>how much broader</em> each
 subsequent retry of the search is via an &quot;extended area&quot; parameter.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="signing">Signing<a href="#signing" class="hash-link" aria-label="Direct link to Signing" title="Direct link to Signing">​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_SAay" id="signing">Signing<a href="#signing" class="hash-link" aria-label="Direct link to Signing" title="Direct link to Signing" translate="no">​</a></h2>
 <p>Directory requests, results, and errors may be cryptographically-signed to
 provide non-repudiation and integrity. Transport Layer Security (TLS) provides
 confidentiality and integrity in point-to-point traffic between a client and
@@ -547,6 +550,6 @@ server, but it does not protect a message that is passed along a chain of
 servers. One of the servers in the chain could alter the message along the way
 unless it is signed to prove its authenticity!</p>
 <p>Even if a user does not sign his requests, he can still request that the DSA
-sign its responses, including errors.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/user-guide-to-x500.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/uses"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Uses</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/admin-guide-to-x500"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Administrator&#x27;s Deep Dive</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#object-identifiers" class="table-of-contents__link toc-highlight">Object Identifiers</a></li><li><a href="#information-model" class="table-of-contents__link toc-highlight">Information Model</a><ul><li><a href="#entries-and-attributes" class="table-of-contents__link toc-highlight">Entries and Attributes</a></li><li><a href="#matching-rules" class="table-of-contents__link toc-highlight">Matching Rules</a></li><li><a href="#context-types" class="table-of-contents__link toc-highlight">Context Types</a></li><li><a href="#the-directory-information-tree" class="table-of-contents__link toc-highlight">The Directory Information Tree</a></li><li><a href="#names" class="table-of-contents__link toc-highlight">Names</a></li><li><a href="#aliases" class="table-of-contents__link toc-highlight">Aliases</a></li><li><a href="#schema" class="table-of-contents__link toc-highlight">Schema</a></li><li><a href="#compound-entries" class="table-of-contents__link toc-highlight">Compound Entries</a></li><li><a href="#hierarchical-groups" class="table-of-contents__link toc-highlight">Hierarchical Groups</a></li><li><a href="#collective-attributes" class="table-of-contents__link toc-highlight">Collective Attributes</a></li></ul></li><li><a href="#operations" class="table-of-contents__link toc-highlight">Operations</a></li><li><a href="#rose-protocols-and-transport" class="table-of-contents__link toc-highlight">ROSE Protocols and Transport</a></li><li><a href="#binding-and-unbinding" class="table-of-contents__link toc-highlight">Binding and Unbinding</a></li><li><a href="#authentication" class="table-of-contents__link toc-highlight">Authentication</a></li><li><a href="#the-dap-operations" class="table-of-contents__link toc-highlight">The DAP Operations</a></li><li><a href="#chaining" class="table-of-contents__link toc-highlight">Chaining</a></li><li><a href="#shadowing" class="table-of-contents__link toc-highlight">Shadowing</a></li><li><a href="#relaxation-or-tightening" class="table-of-contents__link toc-highlight">Relaxation or Tightening</a></li><li><a href="#signing" class="table-of-contents__link toc-highlight">Signing</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
+sign its responses, including errors.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_HJkF"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/user-guide-to-x500.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/uses"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Uses</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/admin-guide-to-x500"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Administrator&#x27;s Deep Dive</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#object-identifiers" class="table-of-contents__link toc-highlight">Object Identifiers</a></li><li><a href="#information-model" class="table-of-contents__link toc-highlight">Information Model</a><ul><li><a href="#entries-and-attributes" class="table-of-contents__link toc-highlight">Entries and Attributes</a></li><li><a href="#matching-rules" class="table-of-contents__link toc-highlight">Matching Rules</a></li><li><a href="#context-types" class="table-of-contents__link toc-highlight">Context Types</a></li><li><a href="#the-directory-information-tree" class="table-of-contents__link toc-highlight">The Directory Information Tree</a></li><li><a href="#names" class="table-of-contents__link toc-highlight">Names</a></li><li><a href="#aliases" class="table-of-contents__link toc-highlight">Aliases</a></li><li><a href="#schema" class="table-of-contents__link toc-highlight">Schema</a></li><li><a href="#compound-entries" class="table-of-contents__link toc-highlight">Compound Entries</a></li><li><a href="#hierarchical-groups" class="table-of-contents__link toc-highlight">Hierarchical Groups</a></li><li><a href="#collective-attributes" class="table-of-contents__link toc-highlight">Collective Attributes</a></li></ul></li><li><a href="#operations" class="table-of-contents__link toc-highlight">Operations</a></li><li><a href="#rose-protocols-and-transport" class="table-of-contents__link toc-highlight">ROSE Protocols and Transport</a></li><li><a href="#binding-and-unbinding" class="table-of-contents__link toc-highlight">Binding and Unbinding</a></li><li><a href="#authentication" class="table-of-contents__link toc-highlight">Authentication</a></li><li><a href="#the-dap-operations" class="table-of-contents__link toc-highlight">The DAP Operations</a></li><li><a href="#chaining" class="table-of-contents__link toc-highlight">Chaining</a></li><li><a href="#shadowing" class="table-of-contents__link toc-highlight">Shadowing</a></li><li><a href="#relaxation-or-tightening" class="table-of-contents__link toc-highlight">Relaxation or Tightening</a></li><li><a href="#signing" class="table-of-contents__link toc-highlight">Signing</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
 </body>
 </html>
