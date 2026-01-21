@@ -10,10 +10,14 @@ const config = {
     url: 'https://wildboar-software.github.io/',
     baseUrl: '/directory/',
     onBrokenLinks: 'throw',
-    onBrokenMarkdownLinks: 'warn',
     favicon: 'img/boar-head-rune-circle.svg',
     organizationName: 'Wildboar-Software', // Usually your GitHub org/user name.
     projectName: 'directory', // Usually your repo name.
+    markdown: {
+        hooks: {
+            onBrokenMarkdownLinks: 'warn',
+        },
+    },
     presets: [
         [
             'classic',
