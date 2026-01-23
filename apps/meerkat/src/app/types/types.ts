@@ -2101,7 +2101,7 @@ interface Configuration {
          * Your DSA is INSECURE if this is enabled. This should ONLY be enabled
          * for testing purposes.
          */
-        autoAccept: boolean;
+        autoAccept: OBAutoAcceptSetting;
 
     };
 
@@ -3732,3 +3732,67 @@ interface AttributeTypeDatabaseDriver {
     readonly hasValue: SpecialAttributeValueDetector;
 
 }
+
+/**
+ * @summary Type of the `MEERKAT_OB_AUTO_ACCEPT` setting.
+ * @type
+ */
+export type OBAutoAcceptSetting = number;
+
+/**
+ * @summary Require manual approval for all received operational binding requests.
+ * @constant
+ */
+export const OB_AUTO_ACCEPT_NONE: OBAutoAcceptSetting = 0;
+
+/**
+ * @summary Never require manual approval for any received operational binding request.
+ * @constant
+ */
+export const OB_AUTO_ACCEPT_ALL: OBAutoAcceptSetting = 1;
+
+/**
+ * @summary Never require manual approval for operational binding request signed by self
+ * @description
+ *
+ * Automatically accept operational binding requests that are signed with the
+ * same private key (and which present the same certificate) as this DSA.
+ *
+ * @constant
+ */
+export const OB_AUTO_ACCEPT_SELF: OBAutoAcceptSetting = 2;
+
+/**
+ * @summary Never require manual approval for operational binding request signed by co-subjects
+ * @description
+ *
+ * Automatically accept operational binding requests that are signed with
+ * an end-entity private key that is authenticated with a certificate that is
+ * signed by this issuer of this DSA's signing certificate.
+ *
+ * In other words, if the issuer for this DSA's signing certificate is
+ * `c=US,st=FL,o=Wildboar`, all other subjects whose certificates are issued by
+ * `c=US,st=FL,o=Wildboar` will be able to submit operational binding requests
+ * that are automatically accepted.
+ *
+ * @constant
+ */
+export const OB_AUTO_ACCEPT_MYISSUER: OBAutoAcceptSetting = 3;
+
+/**
+ * @summary Never require manual approval for operational binding request signed (transitively) by the same root CA
+ * @description
+ *
+ * Automatically accept operational binding requests that are signed with
+ * an end-entity private key that is authenticated with a certificate that
+ * chains all the way up to the same root certificate authority (CA) as this
+ * DSA's.
+ *
+ * In other words, if the root certificate authority for this DSA's signing
+ * certificate is `c=US,st=FL,o=Symantec`, all other subjects whose certificates
+ * are issued by `c=US,st=FL,o=Symantec` will be able to submit operational
+ * binding requests that are automatically accepted.
+ *
+ * @constant
+ */
+export const OB_AUTO_ACCEPT_MYROOTCA: OBAutoAcceptSetting = 4;

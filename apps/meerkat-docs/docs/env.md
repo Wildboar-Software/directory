@@ -1199,7 +1199,33 @@ If set to `1`, Meerkat DSA will not log to the console.
 
 ## MEERKAT_OB_AUTO_ACCEPT
 
-If set to `1`, Meerkat DSA shall accept ALL requested operational bindings.
+This option controls how Meerkat DSA automatically accepts proposed operational
+bindings submitted by other DSAs.
+
+This can take on several values:
+
+- If set to `1` or `all`, Meerkat DSA will accept ALL requested operational
+  bindings.
+- If set to `self`, Meerkat DSA will accept ALL requested operational bindings
+  submitted that are signed using its own signing private key.
+  - This is particularly useful in a closed off cluster of DSAs whose
+    relationship is shadowing: the involved DSAs can all use the same private
+    key for signing so that shadowing operational bindings can be established
+    between them without manual intervention.
+- If set to `myissuer`, Meerkat DSA will accept ALL requested operational
+  bindings submitted that are signed by another DSA whose signing certificate
+  was issued by the same issuer for this DSA's signing certificate.
+- If set to `myrootca`, Meerkat DSA will accept ALL requested operational
+  bindings submitted that are signed by another DSA whose signing certificate
+  was issued by the same root certificate authority for this DSA's signing
+  certificate.
+
+All of the usual authentication, signing, and request validation still applies,
+regardless of the value of this setting. This setting does not enable other DSAs
+to bypass authentication, produce invalid signatures, submit malformed requests,
+etc. All this setting does is determine on which cases a valid, properly
+authenticated operational binding request gets automatically approved without
+administrator intervention.
 
 :::danger
 
