@@ -136,6 +136,7 @@ import { becomeShadowConsumer } from "../establish/becomeShadowConsumer.js";
 import { becomeShadowSupplier } from "../establish/becomeShadowSupplier.js";
 import dnToVertex from "../../dit/dnToVertex.js";
 import { clearSafeTimeout } from "@wildboar/safe-timers";
+import isAutoApproved from "../isAutoApproved.js";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -603,7 +604,12 @@ async function modifyOperationalBinding (
             obid: data.bindingID.identifier.toString(),
             uuid,
         };
-        if (ctx.config.ob.autoAccept) {
+        if (isAutoApproved(
+            ctx.config.ob.autoAccept,
+            sp?.certification_path,
+            ctx.config.signing.certPath,
+            NAMING_MATCHER,
+        )) {
             ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
                 type: data.bindingType.toString(),
                 obid: data.bindingID.identifier.toString(),

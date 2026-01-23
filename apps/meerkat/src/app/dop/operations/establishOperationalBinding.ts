@@ -167,6 +167,7 @@ import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates.js";
 import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { cacheNamingContexts } from "../../dit/cacheNamingContexts.js";
 import { clearSafeTimeout } from "@wildboar/safe-timers";
+import isAutoApproved from "../isAutoApproved.js";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -1492,7 +1493,12 @@ async function establishOperationalBinding (
             obid: bindingID.identifier.toString(),
             uuid,
         };
-        if (ctx.config.ob.autoAccept) {
+        if (isAutoApproved(
+            ctx.config.ob.autoAccept,
+            sp?.certification_path,
+            ctx.config.signing.certPath,
+            NAMING_MATCHER,
+        )) {
             ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
                 type: data.bindingType.toString(),
                 obid: bindingID.identifier.toString(),

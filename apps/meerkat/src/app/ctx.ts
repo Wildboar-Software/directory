@@ -5,6 +5,12 @@ import {
     LogLevel,
     RemoteCRLCheckiness,
     Configuration,
+    OBAutoAcceptSetting,
+    OB_AUTO_ACCEPT_ALL,
+    OB_AUTO_ACCEPT_NONE,
+    OB_AUTO_ACCEPT_MYISSUER,
+    OB_AUTO_ACCEPT_MYROOTCA,
+    OB_AUTO_ACCEPT_SELF,
 } from "./types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
@@ -530,6 +536,22 @@ const syslogLevels = new Map([
     ["F", "<1>"],
 ]);
 
+function parseOBAutoAccept(env_var?: string): OBAutoAcceptSetting {
+    const normalized = env_var?.trim().toLowerCase() ?? "0";
+    const ret = ({
+        [0]: OB_AUTO_ACCEPT_NONE,
+        [1]: OB_AUTO_ACCEPT_ALL,
+        "none": OB_AUTO_ACCEPT_NONE,
+        "all": OB_AUTO_ACCEPT_ALL,
+        "self": OB_AUTO_ACCEPT_SELF,
+        "myissuer": OB_AUTO_ACCEPT_MYISSUER,
+        "myrootca": OB_AUTO_ACCEPT_MYROOTCA
+    })[normalized] ?? -1;
+    if (ret === -1) {
+        throw new Error(`Invalid setting for MEERKAT_OB_AUTO_ACCEPT: ${env_var}`);
+    }
+    return ret;
+}
 
 const config: Configuration = {
     vendorName: process.env.MEERKAT_VENDOR_NAME?.length
@@ -1012,7 +1034,7 @@ const config: Configuration = {
             process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB ?? "128",
             process.env.MEERKAT_SIGNING_REQUIRED_FOR_OB,
         ),
-        autoAccept: (process.env.MEERKAT_OB_AUTO_ACCEPT === "1"),
+        autoAccept: parseOBAutoAccept(process.env.MEERKAT_OB_AUTO_ACCEPT),
     },
     shadowing: {
         minAuthRequired: parseAuthLevel(
