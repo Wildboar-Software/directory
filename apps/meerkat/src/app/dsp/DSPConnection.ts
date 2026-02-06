@@ -102,6 +102,7 @@ import {
     changePassword,
 } from "@wildboar/x500/DirectoryAbstractService";
 import _ from "lodash";
+import * as util from "node:util";
 
 /**
  * @summary The handles a request, but not errors
@@ -263,6 +264,9 @@ async function handleRequestAndErrors (
             },
         });
     } catch (e) {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
         !isSensitiveOperation && ctx.telemetry.trackRequest({
             name: codeToString(request.code),
             url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
@@ -600,6 +604,9 @@ class DSPAssociation extends ClientAssociation {
         try {
             outcome = await doBind(ctx, this.rose.socket!, arg_, signErrors);
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             const logInfo = {
                 remoteFamily: this.socket.remoteFamily,
                 remoteAddress: this.socket.remoteAddress,
