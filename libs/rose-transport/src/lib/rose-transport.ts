@@ -11,6 +11,7 @@ import type {
 import type {
     Code,
 } from "@wildboar/x500/CommonProtocolSpecification";
+import type { Name } from "@wildboar/x500/InformationFramework";
 
 export
 enum AbortReason {
@@ -30,6 +31,27 @@ enum AbortReason {
     authentication_required,
     // From Me
     other,
+}
+
+const abortReasonToStringMap = new Map([
+    [ AbortReason.mistyped_pdu, "mistyped-pdu" ],
+    [ AbortReason.unbound_request, "unbound-request" ],
+    [ AbortReason.invalid_pdu, "invalid-pdu" ],
+    [ AbortReason.resource_limitation, "resource-limitation" ],
+    [ AbortReason.connection_failed, "connection-failed" ],
+    [ AbortReason.invalid_protocol, "invalid-protocol" ],
+    [ AbortReason.reason_not_specified, "reason-not-specified" ],
+    [ AbortReason.protocol_error, "protocol-error" ],
+    [ AbortReason.authentication_mechanism_name_not_recognized, "authentication-mechanism-name-not-recognized" ],
+    [ AbortReason.authentication_mechanism_name_required, "authentication-mechanism-name-required" ],
+    [ AbortReason.authentication_failure, "authentication-failure" ],
+    [ AbortReason.authentication_required, "authentication-required" ],
+    [ AbortReason.other, "other" ],
+]);
+
+export
+function abortReasonToString(reason: AbortReason): string {
+    return abortReasonToStringMap.get(reason) ?? "other";
 }
 
 export
@@ -52,6 +74,32 @@ enum RejectReason {
     badly_structured_pdu,
     release_in_progress,
     other,
+}
+
+const rejectReasonToStringMap = new Map([
+    [ RejectReason.mistyped_pdu, "mistyped-pdu" ],
+    [ RejectReason.duplicate_invoke_id_request, "duplicate-invoke-id-request" ],
+    [ RejectReason.unsupported_operation_request, "unsupported-operation-request" ],
+    [ RejectReason.unknown_operation_request, "unknown-operation-request" ],
+    [ RejectReason.mistyped_argument_request, "mistyped-argument-request" ],
+    [ RejectReason.resource_limitation_request, "resource-limitation-request" ],
+    [ RejectReason.unknown_invoke_id_result, "unknown-invoke-id-result" ],
+    [ RejectReason.mistyped_result_request, "mistyped-result-request" ],
+    [ RejectReason.unknown_invoke_id_error, "unknown-invoke-id-error" ],
+    [ RejectReason.unknown_error, "unknown-error" ],
+    [ RejectReason.mistyped_parameter_error, "mistyped-parameter-error" ],
+    [ RejectReason.unsupported_idm_version, "unsupported-idm-version" ],
+    [ RejectReason.unsuitable_idm_version, "unsuitable-idm-version" ],
+    [ RejectReason.invalid_idm_version, "invalid-idm-version" ],
+    [ RejectReason.unrecognized_pdu, "unrecognized-pdu" ],
+    [ RejectReason.badly_structured_pdu, "badly-structured-pdu" ],
+    [ RejectReason.release_in_progress, "release-in-progress" ],
+    [ RejectReason.other, "other" ],
+]);
+
+export
+function rejectReasonToString(reason: RejectReason): string {
+    return rejectReasonToStringMap.get(reason) ?? "other";
 }
 
 export
@@ -243,6 +291,7 @@ interface AsyncROSEClient <BindArgumentType = ASN1Element, BindResultType = ASN1
     request: (params: RequestParameters) => Promise<OperationOutcome>;
     unbind: (param?: UnbindParameters) => Promise<UnbindOutcome>;
     startTLS?: (params?: StartTLSParameters) => Promise<StartTLSOutcome>;
+    peer_ae_title?: Name;
 }
 
 export
