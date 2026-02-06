@@ -7,6 +7,7 @@ import { addSeconds, differenceInMilliseconds } from "date-fns";
 import { setSafeTimeout } from "@wildboar/safe-timers";
 import request_a_shadow_update from "./requestAShadowUpdate.js";
 import _ from "lodash";
+import * as util from "node:util";
 
 /**
  * @summary Schedule periodic shadow updates
@@ -69,6 +70,9 @@ function scheduleShadowUpdates (
             const update = () => {
                 updateShadowConsumer(ctx, ob_db_id)
                     .catch((e) => {
+                        if (process.env.MEERKAT_LOG_JSON !== "1") {
+                            ctx.log.error(util.inspect(e));
+                        }
                         const extraLogData =  (typeof e === "object" && e !== null)
                             ? {
                                 problem: e.data?.problem,
@@ -76,10 +80,12 @@ function scheduleShadowUpdates (
                                 obid: ob_id.toString(),
                             }
                             : {
-                                ...e,
                                 obid: ob_id.toString(),
                             };
-                        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", extraLogData), extraLogData);
+                        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", {
+                            e,
+                            ...extraLogData,
+                        }), extraLogData);
                     });
             };
             update();

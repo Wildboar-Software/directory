@@ -28,6 +28,7 @@ import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboa
 import { addSeconds } from "date-fns";
 import { UpdateWindow } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { OperationalBindingInitiator } from "../../generated/client.js";
+import * as util from "node:util";
 
 /**
  * @summary The requestShadowUpdate operation defined in ITU Rec. X.525 (2019)
@@ -346,6 +347,9 @@ async function requestShadowUpdate (
         updateShadowConsumer(ctx, ob.id)
             .then()
             .catch((e) => {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 ctx.log.error(ctx.i18n.t("err:shadow_update_failure", {
                     e,
                     obid: ob.id.toString(),
