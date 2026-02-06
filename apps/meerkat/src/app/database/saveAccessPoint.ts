@@ -145,7 +145,7 @@ async function saveAccessPoint (
     });
     if (("consumers" in ap) && ap.consumers) {
         await Promise.all(
-            ap.consumers.map((consumer) => saveAccessPoint(ctx, consumer, Knowledge.CONSUMER, undefined, created.id)),
+            ap.consumers.map((consumer) => saveAccessPoint(ctx, consumer, Knowledge.SECONDARY_CONSUMER, undefined, created.id)),
         );
     }
     return created.id;
