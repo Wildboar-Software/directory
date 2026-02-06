@@ -92,6 +92,12 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
         ? timeLimit
         : addMilliseconds(startTime, Math.max(timeLimit ?? DEFAULT_CONNECTION_TIMEOUT_IN_MS, 500));
     let timeRemaining: number = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
+    if (accessPoint.address.nAddresses.length === 0) {
+        const aet = stringifyDN(ctx, accessPoint.ae_title.rdnSequence);
+        const logInfo = { aet };
+        ctx.log.error(ctx.i18n.t("log:no_naddrs", logInfo), logInfo);
+        return null;
+    }
     for (let i = 0; i < accessPoint.address.nAddresses.length; i++) {
         const naddr = accessPoint.address.nAddresses[i];
         if (op?.abandonTime) {

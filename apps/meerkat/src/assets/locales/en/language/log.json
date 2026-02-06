@@ -443,5 +443,6 @@
     "repl_everything_within_ss_but_no_ss": "Meerkat DSA is currently configured to replicate everything within a Kubernetes StatefulSet, but given its hostname, it does not appear that it is a member in a StatefulSet.",
     "repl_everything_within_ss_i_am_master": "Meerkat DSA is currently configured to replicate everything within a Kubernetes StatefulSet, and this instance appears to be the master (hostname ending with '-0').",
     "repl_everything_url_changed": "URL to replicate everything from changed, or corruption in the database. Establishing or modifying shadowing operational bindings accordingly.",
-    "repl_everything_url_unchanged": "URL to replicate everything has not changed. No changes to operational bindings needed."
+    "repl_everything_url_unchanged": "URL to replicate everything has not changed. No changes to operational bindings needed.",
+    "no_naddrs": "Attempted to bind to a DSA with no network addresses in its presentation address. It's AE title was {{aet}}."
 }
