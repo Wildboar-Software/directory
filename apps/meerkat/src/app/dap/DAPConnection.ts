@@ -670,6 +670,12 @@ class DAPAssociation extends ClientAssociation {
                 this.rose.write_bind_error({
                     protocol_id: dap_ip["&id"]!, // FIXME:
                     parameter: error,
+                    responding_ae_title: ctx.dsa.accessPoint.ae_title.rdnSequence.length
+                        ? {
+                            directoryName: ctx.dsa.accessPoint.ae_title,
+                        }
+                        : undefined,
+                    responding_ap_invocation_identifier: process.pid,
                 });
                 if (e.unbind) {
                     // For DAP over both IDM and OSI, only the initiator may unbind.
@@ -774,6 +780,12 @@ class DAPAssociation extends ClientAssociation {
         this.rose.write_bind_result({
             protocol_id: dap_ip["&id"]!,
             parameter: _encode_DirectoryBindResult(bindResult, BER),
+            responding_ae_title: ctx.dsa.accessPoint.ae_title.rdnSequence.length
+                ? {
+                    directoryName: ctx.dsa.accessPoint.ae_title,
+                }
+                : undefined,
+            responding_ap_invocation_identifier: process.pid,
         });
         this.rose.events.removeAllListeners("request");
         this.rose.events.on("request", this.handleRequest.bind(this));

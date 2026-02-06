@@ -678,6 +678,12 @@ class DOPAssociation extends ClientAssociation {
                 this.rose.write_bind_error({
                     protocol_id: dop_ip["&id"]!, // FIXME:
                     parameter: error,
+                    responding_ae_title: ctx.dsa.accessPoint.ae_title.rdnSequence.length
+                        ? {
+                            directoryName: ctx.dsa.accessPoint.ae_title,
+                        }
+                        : undefined,
+                    responding_ap_invocation_identifier: process.pid,
                 });
                 if (e.unbind) {
                     this.rose.write_unbind();
@@ -779,6 +785,12 @@ class DOPAssociation extends ClientAssociation {
         this.rose.write_bind_result({
             protocol_id: dop_ip["&id"]!,
             parameter: _encode_DSABindResult(bindResult, DER),
+            responding_ae_title: ctx.dsa.accessPoint.ae_title.rdnSequence.length
+                ? {
+                    directoryName: ctx.dsa.accessPoint.ae_title,
+                }
+                : undefined,
+            responding_ap_invocation_identifier: process.pid,
         });
         this.rose.events.removeAllListeners("request");
         this.rose.events.on("request", this.handleRequest.bind(this));
