@@ -34,6 +34,7 @@ import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { PresentationAddress } from "@wildboar/pki-stub";
 import {
     AbandonedData,
+    SimpleCredentials,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
@@ -53,6 +54,7 @@ import { createWriteStream } from "node:fs";
 import attemptSPKMAuth from "../authn/attemptSPKMAuth.js";
 import { attemptStrongAuth } from "../authn/attemptStrongAuth.js";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
+import { randomBytes } from "node:crypto";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
 
@@ -342,7 +344,49 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
         );
 
         const c: ClientType = client_getter(rose);
-        const strongCredData = createStrongCredentials(ctx, accessPoint.ae_title.rdnSequence);
+
+        // TODO: Refactor this into a separate function
+        // Copied elsewhere. Search for b6c76b30-80d6-4925-a50d-07553ac49b6e.
+        // Attempt to discover the AE-title if none was present.
+        let ae_title = accessPoint.ae_title.rdnSequence;
+        if (ae_title.length === 0) {
+            const bind_outcome = await c.bind({
+                protocol_id,
+                parameter: new DSABindArgument(
+                    { // Intentional random password so auth fails.
+                        simple: new SimpleCredentials(
+                            [],
+                            undefined,
+                            {
+                                unprotected: randomBytes(16),
+                            },
+                        ),
+                    },
+                    versions,
+                ),
+                calling_ae_title: {
+                    directoryName: ctx.dsa.accessPoint.ae_title,
+                },
+                calling_ap_invocation_identifier: process.pid,
+                implementation_information: "Meerkat DSA",
+                timeout: timeRemaining,
+            });
+            if ("result" in bind_outcome) {
+                const result = bind_outcome.result;
+                if (result.responding_ae_title && "directoryName" in result.responding_ae_title) {
+                    ae_title = result.responding_ae_title.directoryName.rdnSequence;
+                }
+                const _ = await c.unbind();
+            } else if ("error" in bind_outcome) {
+                const error = bind_outcome.error;
+                if (error.responding_ae_title && "directoryName" in error.responding_ae_title) {
+                    ae_title = error.responding_ae_title.directoryName.rdnSequence;
+                }
+            }
+        }
+        c.peer_ae_title = { rdnSequence: ae_title };
+
+        const strongCredData = createStrongCredentials(ctx, ae_title);
         if (!strongCredData) {
             ctx.log.warn(ctx.i18n.t("log:could_not_create_strong_creds", { url: uriString }), logInfo);
         }
@@ -395,7 +439,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                         bind_response.result.responding_ae_title
                         && !compareGeneralName(
                             bind_response.result.responding_ae_title,
-                            { directoryName: accessPoint.ae_title },
+                            { directoryName: { rdnSequence: ae_title } },
                             namingMatcher
                         )
                     ) {
@@ -442,7 +486,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                         }
                         const bound_name_matches_ae_title: boolean = compareDistinguishedName(
                             reverse_bind_outcome.boundNameAndUID.dn,
-                            accessPoint.ae_title.rdnSequence,
+                            ae_title,
                             namingMatcher,
                         );
                         if (!bound_name_matches_ae_title) {
@@ -520,7 +564,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
         });
         return c;
     }
-    return null;
+    return null; // exhausted all network addresses: none could connect.
 }
 
 export
