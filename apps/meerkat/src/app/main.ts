@@ -91,6 +91,7 @@ import { cacheNamingContexts } from "./dit/cacheNamingContexts.js";
 import * as routes from "./admin/web.js";
 import { fileURLToPath } from "node:url";
 import _ from "lodash";
+import { replicateEverythingFrom } from "./disp/replicateEverything.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1089,7 +1090,6 @@ function attachUnboundEventListenersToITOTConnection (
     };
 }
 
-
 /**
  * @summary The entry point of the server
  * @description
@@ -1551,5 +1551,11 @@ async function main (): Promise<void> {
             || ((sob.initiator === OperationalBindingInitiator.ROLE_B) && (!sob.outbound))
         );
         scheduleShadowUpdates(ctx, agreement, sob.id, sob.binding_identifier, ob_time, iAmSupplier);
+    }
+
+    if (ctx.config.shadowing.replicateEverythingFrom) {
+        replicateEverythingFrom(ctx)
+            .then(() => {})
+            .catch((e) => console.error(e)); // Proper logging
     }
 }

@@ -23,6 +23,29 @@ via the use of
 Shadow operational bindings proposed by third parties may be agreed to via the
 [Web Administration Console](./webadmin.md).
 
+### "Replicate-Everything" Shadowing
+
+An easier-to-setup alternative was designed for Meerkat DSA whereby you can set
+an environment variable,
+[`MEERKAT_REPLICATE_EVERYTHING_FROM`](./env.md#meerkat_replicate_everything_from),
+to the URL of the master DSA, and the shadowing DSA, upon start up, will
+establish a shadowing operational binding with the pointed-to master DSA and
+replicate _everything_ from the master DSA. This is a coarse and sloppy
+approach, but it is easy to set up.
+
+To start, merely set
+[`MEERKAT_REPLICATE_EVERYTHING_FROM`](./env.md#meerkat_replicate_everything_from)
+in the shadowing DSA to the URL of the master DSA and start or restart your
+shadowing DSA. Upon startup, it should establish a new shadow operational
+binding automatically. This URL can be specially configured for working in a
+Kubernetes StatefulSet.
+
+You may also want to set the value of
+[`MEERKAT_REPLICATE_EVERYTHING_FROM_AE_TITLE`](./env.md#meerkat_replicate_everything_from_ae_title).
+If this is unset, Meerkat DSA will submit intentionally invalid credentials to
+the "replicate everything from" DSA in an attempt to discover its AE title from
+the bind error. The AE title is ultimately required to establish replication.
+
 ## Update Behavior
 
 If Meerkat DSA is acting as a shadow supplier, upon first establishing a
