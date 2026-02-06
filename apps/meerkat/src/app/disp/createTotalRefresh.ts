@@ -286,11 +286,11 @@ async function createTotalRefresh (
         obid,
         [],
     ));
-    if (!baseRefresh) {
-        return undefined;
+    if (!baseRefresh || base.dse.root) {
+        return baseRefresh;
     }
     const baseSubtree = new Subtree(
-        getRDN(base_dn)!,
+        getRDN(base_dn)!, // Defined, because we're not at the root.
         baseRefresh.sDSE,
         baseRefresh.subtree,
     );
