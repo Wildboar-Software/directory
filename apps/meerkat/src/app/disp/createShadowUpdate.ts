@@ -38,6 +38,7 @@ import stringifyDN from "../x500/stringifyDN.js";
 import printCode from "../utils/printCode.js";
 import { differenceInMilliseconds } from "date-fns";
 import _ from "lodash";
+import * as util from "node:util";
 
 /**
  * @summary Update a shadow consumer
@@ -459,6 +460,10 @@ async function _updateShadowConsumer (
             }));
         }
     } catch (e) {
+        // TODO: Do this in a lot of other places. It would really help to have the stacktrace.
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
         const extraLogData =  (typeof e === "object" && e !== null)
             ? {
                 problem: e.data?.problem,
@@ -466,10 +471,12 @@ async function _updateShadowConsumer (
                 obid: ob.binding_identifier.toString(),
             }
             : {
-                ...e,
                 obid: ob.binding_identifier.toString(),
             };
-        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", extraLogData), extraLogData);
+        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", {
+            e,
+            ...extraLogData,
+        }), extraLogData);
     } finally {
         try {
             await disp_client?.unbind(); // INTENTIONAL_NO_AWAIT

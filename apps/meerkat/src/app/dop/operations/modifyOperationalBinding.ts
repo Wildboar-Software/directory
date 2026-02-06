@@ -620,7 +620,7 @@ async function modifyOperationalBinding (
         ctx.log.warn(ctx.i18n.t("log:awaiting_ob_approval", { uuid }));
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                ctx.log.warn(ctx.i18n.t("log:ob_proposal_timed_out"), { uuid }, logInfo);
+                ctx.log.warn(ctx.i18n.t("log:ob_proposal_timed_out", { uuid }), logInfo);
                 resolve(undefined);
             }, 300_000);
             new Promise<boolean>((resolve2) => {
