@@ -96,6 +96,7 @@ import {
 import { _encode_ShadowErrorData } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { shadowError } from "@wildboar/x500/DirectoryShadowAbstractService";
 import _ from "lodash";
+import * as util from "node:util";
 
 // id-opcode-requestShadowUpdate     Code ::= local:1
 // id-opcode-updateShadow            Code ::= local:2
@@ -331,6 +332,9 @@ async function handleRequestAndErrors (
             },
         });
     } catch (e) {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
         ctx.telemetry.trackRequest({
             name: codeToString(request.code),
             url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
@@ -554,6 +558,9 @@ class DISPAssociation extends ClientAssociation {
         try {
             outcome = await doBind(ctx, this.socket, arg_, signErrors);
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             const logInfo = {
                 remoteFamily: this.socket.remoteFamily,
                 remoteAddress: this.socket.remoteAddress,
