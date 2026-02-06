@@ -190,6 +190,7 @@ async function dseFromDatabaseEntry (
     }
 
     if (dbe.cp) {
+        // TODO: Do these in parallel
         const supplierRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
