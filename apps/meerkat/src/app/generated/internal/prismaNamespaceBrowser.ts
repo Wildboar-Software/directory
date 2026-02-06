@@ -442,6 +442,7 @@ export const OperationalBindingScalarFieldEnum = {
   othertimes: 'othertimes',
   master_access_point_id: 'master_access_point_id',
   secondary_shadows: 'secondary_shadows',
+  is_the_replicate_everything_ob: 'is_the_replicate_everything_ob',
   source_ip: 'source_ip',
   source_tcp_port: 'source_tcp_port',
   source_ae_title: 'source_ae_title',

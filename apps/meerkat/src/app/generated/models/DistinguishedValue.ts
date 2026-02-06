@@ -35,7 +35,7 @@ export type DistinguishedValueAvgAggregateOutputType = {
 }
 
 export type DistinguishedValueSumAggregateOutputType = {
-  id: bigint | null
+  id: number | null
   entry_id: number | null
   tag_class: number | null
   tag_number: number | null
@@ -43,7 +43,7 @@ export type DistinguishedValueSumAggregateOutputType = {
 }
 
 export type DistinguishedValueMinAggregateOutputType = {
-  id: bigint | null
+  id: number | null
   entry_id: number | null
   type_oid: runtime.Bytes | null
   tag_class: number | null
@@ -55,7 +55,7 @@ export type DistinguishedValueMinAggregateOutputType = {
 }
 
 export type DistinguishedValueMaxAggregateOutputType = {
-  id: bigint | null
+  id: number | null
   entry_id: number | null
   type_oid: runtime.Bytes | null
   tag_class: number | null
@@ -220,7 +220,7 @@ export type DistinguishedValueGroupByArgs<ExtArgs extends runtime.Types.Extensio
 }
 
 export type DistinguishedValueGroupByOutputType = {
-  id: bigint
+  id: number
   entry_id: number
   type_oid: runtime.Bytes
   tag_class: number
@@ -255,7 +255,7 @@ export type DistinguishedValueWhereInput = {
   AND?: Prisma.DistinguishedValueWhereInput | Prisma.DistinguishedValueWhereInput[]
   OR?: Prisma.DistinguishedValueWhereInput[]
   NOT?: Prisma.DistinguishedValueWhereInput | Prisma.DistinguishedValueWhereInput[]
-  id?: Prisma.BigIntFilter<"DistinguishedValue"> | bigint | number
+  id?: Prisma.IntFilter<"DistinguishedValue"> | number
   entry_id?: Prisma.IntFilter<"DistinguishedValue"> | number
   type_oid?: Prisma.BytesFilter<"DistinguishedValue"> | runtime.Bytes
   tag_class?: Prisma.IntFilter<"DistinguishedValue"> | number
@@ -281,7 +281,7 @@ export type DistinguishedValueOrderByWithRelationInput = {
 }
 
 export type DistinguishedValueWhereUniqueInput = Prisma.AtLeast<{
-  id?: bigint | number
+  id?: number
   entry_id_type_oid?: Prisma.DistinguishedValueEntry_idType_oidCompoundUniqueInput
   type_oid_normalized_str_entry_id?: Prisma.DistinguishedValueType_oidNormalized_strEntry_idCompoundUniqueInput
   AND?: Prisma.DistinguishedValueWhereInput | Prisma.DistinguishedValueWhereInput[]
@@ -319,7 +319,7 @@ export type DistinguishedValueScalarWhereWithAggregatesInput = {
   AND?: Prisma.DistinguishedValueScalarWhereWithAggregatesInput | Prisma.DistinguishedValueScalarWhereWithAggregatesInput[]
   OR?: Prisma.DistinguishedValueScalarWhereWithAggregatesInput[]
   NOT?: Prisma.DistinguishedValueScalarWhereWithAggregatesInput | Prisma.DistinguishedValueScalarWhereWithAggregatesInput[]
-  id?: Prisma.BigIntWithAggregatesFilter<"DistinguishedValue"> | bigint | number
+  id?: Prisma.IntWithAggregatesFilter<"DistinguishedValue"> | number
   entry_id?: Prisma.IntWithAggregatesFilter<"DistinguishedValue"> | number
   type_oid?: Prisma.BytesWithAggregatesFilter<"DistinguishedValue"> | runtime.Bytes
   tag_class?: Prisma.IntWithAggregatesFilter<"DistinguishedValue"> | number
@@ -331,7 +331,6 @@ export type DistinguishedValueScalarWhereWithAggregatesInput = {
 }
 
 export type DistinguishedValueCreateInput = {
-  id?: bigint | number
   type_oid: runtime.Bytes
   tag_class: number
   constructed: boolean
@@ -343,7 +342,7 @@ export type DistinguishedValueCreateInput = {
 }
 
 export type DistinguishedValueUncheckedCreateInput = {
-  id?: bigint | number
+  id?: number
   entry_id: number
   type_oid: runtime.Bytes
   tag_class: number
@@ -355,7 +354,6 @@ export type DistinguishedValueUncheckedCreateInput = {
 }
 
 export type DistinguishedValueUpdateInput = {
-  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   type_oid?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
   tag_class?: Prisma.IntFieldUpdateOperationsInput | number
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -367,7 +365,7 @@ export type DistinguishedValueUpdateInput = {
 }
 
 export type DistinguishedValueUncheckedUpdateInput = {
-  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  id?: Prisma.IntFieldUpdateOperationsInput | number
   entry_id?: Prisma.IntFieldUpdateOperationsInput | number
   type_oid?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
   tag_class?: Prisma.IntFieldUpdateOperationsInput | number
@@ -379,7 +377,7 @@ export type DistinguishedValueUncheckedUpdateInput = {
 }
 
 export type DistinguishedValueCreateManyInput = {
-  id?: bigint | number
+  id?: number
   entry_id: number
   type_oid: runtime.Bytes
   tag_class: number
@@ -391,7 +389,6 @@ export type DistinguishedValueCreateManyInput = {
 }
 
 export type DistinguishedValueUpdateManyMutationInput = {
-  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   type_oid?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
   tag_class?: Prisma.IntFieldUpdateOperationsInput | number
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -402,7 +399,7 @@ export type DistinguishedValueUpdateManyMutationInput = {
 }
 
 export type DistinguishedValueUncheckedUpdateManyInput = {
-  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  id?: Prisma.IntFieldUpdateOperationsInput | number
   entry_id?: Prisma.IntFieldUpdateOperationsInput | number
   type_oid?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
   tag_class?: Prisma.IntFieldUpdateOperationsInput | number
@@ -528,16 +525,7 @@ export type DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput = {
   deleteMany?: Prisma.DistinguishedValueScalarWhereInput | Prisma.DistinguishedValueScalarWhereInput[]
 }
 
-export type BigIntFieldUpdateOperationsInput = {
-  set?: bigint | number
-  increment?: bigint | number
-  decrement?: bigint | number
-  multiply?: bigint | number
-  divide?: bigint | number
-}
-
 export type DistinguishedValueCreateWithoutEntryInput = {
-  id?: bigint | number
   type_oid: runtime.Bytes
   tag_class: number
   constructed: boolean
@@ -548,7 +536,7 @@ export type DistinguishedValueCreateWithoutEntryInput = {
 }
 
 export type DistinguishedValueUncheckedCreateWithoutEntryInput = {
-  id?: bigint | number
+  id?: number
   type_oid: runtime.Bytes
   tag_class: number
   constructed: boolean
@@ -587,7 +575,7 @@ export type DistinguishedValueScalarWhereInput = {
   AND?: Prisma.DistinguishedValueScalarWhereInput | Prisma.DistinguishedValueScalarWhereInput[]
   OR?: Prisma.DistinguishedValueScalarWhereInput[]
   NOT?: Prisma.DistinguishedValueScalarWhereInput | Prisma.DistinguishedValueScalarWhereInput[]
-  id?: Prisma.BigIntFilter<"DistinguishedValue"> | bigint | number
+  id?: Prisma.IntFilter<"DistinguishedValue"> | number
   entry_id?: Prisma.IntFilter<"DistinguishedValue"> | number
   type_oid?: Prisma.BytesFilter<"DistinguishedValue"> | runtime.Bytes
   tag_class?: Prisma.IntFilter<"DistinguishedValue"> | number
@@ -599,7 +587,7 @@ export type DistinguishedValueScalarWhereInput = {
 }
 
 export type DistinguishedValueCreateManyEntryInput = {
-  id?: bigint | number
+  id?: number
   type_oid: runtime.Bytes
   tag_class: number
   constructed: boolean
@@ -610,7 +598,6 @@ export type DistinguishedValueCreateManyEntryInput = {
 }
 
 export type DistinguishedValueUpdateWithoutEntryInput = {
-  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   type_oid?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
   tag_class?: Prisma.IntFieldUpdateOperationsInput | number
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -621,7 +608,7 @@ export type DistinguishedValueUpdateWithoutEntryInput = {
 }
 
 export type DistinguishedValueUncheckedUpdateWithoutEntryInput = {
-  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  id?: Prisma.IntFieldUpdateOperationsInput | number
   type_oid?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
   tag_class?: Prisma.IntFieldUpdateOperationsInput | number
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -632,7 +619,7 @@ export type DistinguishedValueUncheckedUpdateWithoutEntryInput = {
 }
 
 export type DistinguishedValueUncheckedUpdateManyWithoutEntryInput = {
-  id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  id?: Prisma.IntFieldUpdateOperationsInput | number
   type_oid?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
   tag_class?: Prisma.IntFieldUpdateOperationsInput | number
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -712,7 +699,7 @@ export type $DistinguishedValuePayload<ExtArgs extends runtime.Types.Extensions.
     entry: Prisma.$EntryPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: bigint
+    id: number
     entry_id: number
     type_oid: runtime.Bytes
     tag_class: number
@@ -1145,7 +1132,7 @@ export interface Prisma__DistinguishedValueClient<T, Null = never, ExtArgs exten
  * Fields of the DistinguishedValue model
  */
 export interface DistinguishedValueFieldRefs {
-  readonly id: Prisma.FieldRef<"DistinguishedValue", 'BigInt'>
+  readonly id: Prisma.FieldRef<"DistinguishedValue", 'Int'>
   readonly entry_id: Prisma.FieldRef<"DistinguishedValue", 'Int'>
   readonly type_oid: Prisma.FieldRef<"DistinguishedValue", 'Bytes'>
   readonly tag_class: Prisma.FieldRef<"DistinguishedValue", 'Int'>
