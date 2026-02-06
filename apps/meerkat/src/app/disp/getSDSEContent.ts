@@ -24,6 +24,7 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa.js";
 import { AttributeType } from "@wildboar/x500/InformationFramework";
 import { Knowledge_knowledgeType, Knowledge_knowledgeType_both, Knowledge_knowledgeType_master, Knowledge_knowledgeType_shadow } from "@wildboar/x500/DirectoryShadowAbstractService";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType.js";
 
 /**
  * Indexable attribute types that are required to be replicated in a shadowing
@@ -338,7 +339,9 @@ async function getSDSEContent (
                 },
             undefined,
             {
-                select: Array.from(inclusions).map(ObjectIdentifier.fromString),
+                select: Array.from(inclusions)
+                    .map(ObjectIdentifier.fromString)
+                    .filter((oid) => isOperationalAttributeType(ctx, oid)),
             },
             agreement.shadowSubject.contextSelection,
             TRUE,
