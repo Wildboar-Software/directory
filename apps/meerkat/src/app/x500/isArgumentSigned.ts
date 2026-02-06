@@ -1,5 +1,6 @@
 import {
     ASN1Element,
+    ASN1TagClass,
     ASN1UniversalType,
 } from "@wildboar/asn1";
 import {
@@ -7,9 +8,9 @@ import {
 } from "@wildboar/x500/CommonProtocolSpecification";
 
 const signedAltTagNumberByOpCode: Map<number, number> = new Map([
-    [1, ASN1UniversalType.sequence], // read
-    [2, ASN1UniversalType.sequence], // compare
-    [3, 0], // abandon
+    [1, ASN1UniversalType.sequence], // read / requestShadowUpdate
+    [2, ASN1UniversalType.sequence], // compare / updateShadow
+    [3, 0], // abandon (WARNING: This conflicts with coordinateShadowUpdate, handled below)
     [4, ASN1UniversalType.sequence], // list
     [5, ASN1UniversalType.sequence], // search
     [6, ASN1UniversalType.sequence], // addEntry
@@ -44,9 +45,19 @@ export
     function isArgumentSigned(
         opCode: Code,
         arg: ASN1Element,
+        is_disp?: boolean,
 ): boolean | undefined {
     if (!("local" in opCode)) {
         return undefined;
+    }
+    /* This is a special case that MUST be handled: abandon and
+    coordinateShadowUpdate both have the same op-code, but one uses
+    OPTIONALLY-PROTECTED and the other uses OPTIONALLY-PROTECTED-SEQ. */
+    if (is_disp && Number(opCode.local) === 3) {
+        return (
+            arg.tagClass === ASN1TagClass.universal // This really should be checked for all cases...
+            && arg.tagNumber === ASN1UniversalType.sequence
+        );
     }
     const tagNumberOfSigned = signedAltTagNumberByOpCode.get(Number(opCode.local));
     return (arg.tagNumber === tagNumberOfSigned);
