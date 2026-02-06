@@ -273,7 +273,7 @@ async function handleRequestAndErrors (
                 new AuthenticationLevel_basicLevels(
                     assn.authLevel.basicLevels.level,
                     assn.authLevel.basicLevels.localQualifier,
-                    isArgumentSigned(request.code, request.parameter),
+                    isArgumentSigned(request.code, request.parameter, true),
                 ),
             )
         ) {
@@ -281,12 +281,12 @@ async function handleRequestAndErrors (
                 ? authLevelToDiagnosticString(new AuthenticationLevel_basicLevels(
                     assn.authLevel.basicLevels.level,
                     assn.authLevel.basicLevels.localQualifier,
-                    isArgumentSigned(request.code, request.parameter),
+                    isArgumentSigned(request.code, request.parameter, true),
                 ))
                 : "EXTERNAL";
             throw new SecurityError(
-                ctx.i18n.t("err:not_authorized_ob", {
-                    required: authLevelToDiagnosticString(ctx.config.ob.minAuthRequired),
+                ctx.i18n.t("err:not_authorized_disp", {
+                    required: authLevelToDiagnosticString(ctx.config.shadowing.minAuthRequired),
                     had,
                 }),
                 new SecurityErrorData(
