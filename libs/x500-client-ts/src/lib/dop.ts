@@ -96,6 +96,9 @@ interface TerminateOBOptions extends TerminateOperationalBindingArgumentData, DO
 export
 interface CommonEstablishOptions <AgreementType = ASN1Element, InitType = ASN1Element> extends DOPOperationOptions {
     bindingID?: EstablishOperationalBindingArgumentData["bindingID"];
+    /**
+     * The access point of the initiator for subsequent interactions.
+     */
     accessPoint: EstablishOperationalBindingArgumentData["accessPoint"];
     initiator: InitType;
     agreement: AgreementType;
@@ -106,9 +109,12 @@ interface CommonEstablishOptions <AgreementType = ASN1Element, InitType = ASN1El
 export
 interface CommonModifyOptions <AgreementType = ASN1Element, InitType = ASN1Element> extends DOPOperationOptions {
     bindingID: ModifyOperationalBindingArgumentData["bindingID"];
+    /**
+     * The access point of the initiator for subsequent interactions.
+     */
     accessPoint?: ModifyOperationalBindingArgumentData["accessPoint"];
     initiator: InitType;
-    newAgreement: AgreementType;
+    newAgreement?: AgreementType;
     valid?: ModifyOperationalBindingArgumentData["valid"];
     securityParameters?: ModifyOperationalBindingArgumentData["securityParameters"];
 }
@@ -311,7 +317,9 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         });
     };
     const modify_hob_with_superior = async (params: CommonModifyOptions<HierarchicalAgreement, SubordinateToSuperior>): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> => {
-        const newAgreement = _encode_HierarchicalAgreement(params.newAgreement, DER);
+        const newAgreement = params.newAgreement
+            ? _encode_HierarchicalAgreement(params.newAgreement, DER)
+            : undefined;
         const initiator: EstablishOperationalBindingArgumentData_initiator = {
             roleB_initiates: _encode_SubordinateToSuperior(params.initiator, DER),
         };
@@ -329,7 +337,9 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         });
     };
     const modify_hob_with_subordinate = async (params: CommonModifyOptions<HierarchicalAgreement, SuperiorToSubordinate>): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> => {
-        const newAgreement = _encode_HierarchicalAgreement(params.newAgreement, DER);
+        const newAgreement = params.newAgreement
+            ? _encode_HierarchicalAgreement(params.newAgreement, DER)
+            : undefined;
         const initiator: EstablishOperationalBindingArgumentData_initiator = {
             roleA_initiates: _encode_SuperiorToSubordinate(params.initiator, DER),
         };
@@ -375,7 +385,9 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         });
     };
     const modify_nhob_with_superior = async (params: CommonModifyOptions<NonSpecificHierarchicalAgreement, NHOBSubordinateToSuperior>): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> => {
-        const newAgreement = _encode_NonSpecificHierarchicalAgreement(params.newAgreement, DER);
+        const newAgreement = params.newAgreement
+            ? _encode_NonSpecificHierarchicalAgreement(params.newAgreement, DER)
+            : undefined;
         const initiator: ModifyOperationalBindingArgumentData_initiator = {
             roleB_initiates: _encode_NHOBSubordinateToSuperior(params.initiator, DER),
         };
@@ -393,7 +405,9 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         });
     };
     const modify_nhob_with_subordinate = async (params: CommonModifyOptions<NonSpecificHierarchicalAgreement, NHOBSuperiorToSubordinate>): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> => {
-        const newAgreement = _encode_NonSpecificHierarchicalAgreement(params.newAgreement, DER);
+        const newAgreement = params.newAgreement
+            ? _encode_NonSpecificHierarchicalAgreement(params.newAgreement, DER)
+            : undefined;
         const initiator: ModifyOperationalBindingArgumentData_initiator = {
             roleA_initiates: _encode_NHOBSuperiorToSubordinate(params.initiator, DER),
         };
@@ -437,7 +451,9 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         });
     };
     const modify_sob_with_supplier = async (params: CommonModifyOptions<ShadowingAgreementInfo, ModificationParameter>): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> => {
-        const newAgreement = _encode_ShadowingAgreementInfo(params.newAgreement, DER);
+        const newAgreement = params.newAgreement
+            ? _encode_ShadowingAgreementInfo(params.newAgreement, DER)
+            : undefined;
         return modifyOperationalBinding_({
             ...params,
             bindingType: id_op_binding_shadow,
@@ -454,7 +470,9 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         });
     };
     const modify_sob_with_consumer = async (params: CommonModifyOptions<ShadowingAgreementInfo, undefined>): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> => {
-        const newAgreement = _encode_ShadowingAgreementInfo(params.newAgreement, DER);
+        const newAgreement = params.newAgreement
+            ? _encode_ShadowingAgreementInfo(params.newAgreement, DER)
+            : undefined;
         return modifyOperationalBinding_({
             ...params,
             bindingType: id_op_binding_shadow,
