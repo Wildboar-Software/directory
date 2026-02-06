@@ -1,17 +1,26 @@
-FROM node:25-alpine
+FROM node:25
+LABEL author="Wildboar Software"
+LABEL app="meerkat"
+WORKDIR /build
+COPY --exclude=node_modules --exclude=dist --exclude=.nx . ./
+# RUN apk add gcc make
+RUN npm ci --no-audit --no-fund --no-save
+RUN npx nx --tuiAutoExit=true --outputStyle=static run meerkat:build --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
+
+FROM node:25
 LABEL author="Wildboar Software"
 LABEL app="meerkat"
 WORKDIR /srv/meerkat
-COPY ./dist/apps/meerkat/package.json ./
-COPY ./dist/apps/meerkat/package-lock.json ./
-COPY .npmrc ./
+COPY --from=0 /build/dist/apps/meerkat/package.json ./
+COPY --from=0 /build/dist/apps/meerkat/package-lock.json ./
+COPY --from=0 /build/.npmrc ./
 RUN npm ci --omit=dev --no-audit --no-fund --no-save
 RUN npm install --no-package-lock --no-save prisma@7.0.1
-COPY ./dist/apps/meerkat/package.json ./
-COPY ./dist/apps/meerkat/assets ./assets
-COPY ./dist/apps/meerkat/prisma ./prisma
-COPY ./dist/apps/meerkat/prisma/prisma.config.ts ./
-COPY ./dist/apps/meerkat/main.js ./
+COPY --from=0 /build/dist/apps/meerkat/package.json ./
+COPY --from=0 /build/dist/apps/meerkat/assets ./assets
+COPY --from=0 /build/dist/apps/meerkat/prisma ./prisma
+COPY --from=0 /build/dist/apps/meerkat/prisma/prisma.config.ts ./
+COPY --from=0 /build/dist/apps/meerkat/main.js ./
 # Make a folder for the database
 RUN mkdir db
 # Use this as the SQLite database
