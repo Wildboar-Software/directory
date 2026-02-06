@@ -2117,6 +2117,26 @@ interface Configuration {
          */
         minAuthRequired: AuthenticationLevel_basicLevels;
 
+        /**
+         * The URL of the NSAP from which to replicate _everything_. If this is
+         * set, Meerkat DSA will, at startup, check if it has a shadowing
+         * operational binding with the DSA at this NSAP and attempt to
+         * establish it if not. This SOB will establish the replication of all
+         * data from the DSA this points to, from the root down, including all
+         * attributes, contexts, and knowledge references.
+         *
+         * `null` means failure to parse
+         */
+        replicateEverythingFrom?: URL | null;
+
+        /**
+         * The user-supplied AE-title for the DSA from which to replicate
+         * everything. If unset, Meerkat DSA will attempt to discover this by
+         * submitting intentionally invalid credentials to this DSA to give it
+         * a change to respond with its AE-title in the bind error.
+         */
+        replicateEverythingFromAETitle?: Name;
+
     };
 
     /**

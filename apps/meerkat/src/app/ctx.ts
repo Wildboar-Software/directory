@@ -2,7 +2,6 @@ import {
     Context,
     SigningInfo,
     Vertex,
-    LogLevel,
     RemoteCRLCheckiness,
     Configuration,
     OBAutoAcceptSetting,
@@ -107,6 +106,7 @@ import { id_tls_client_auth, tls_client_auth } from "./authn/external/tls_client
 import { PrismaClient } from './generated/client.js';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import { readFileSync } from "node:fs";
+import decodeLDAPDN from "./ldap/decodeLDAPDN.js";
 
 const adapter = new PrismaLibSql({
     url: process.env.DATABASE_URL ?? ":memory:",
@@ -1042,6 +1042,10 @@ const config: Configuration = {
             process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_DISP ?? "128",
             process.env.MEERKAT_SIGNING_REQUIRED_FOR_DISP,
         ),
+        replicateEverythingFrom: process.env.MEERKAT_REPLICATE_EVERYTHING_FROM
+            ? URL.parse(process.env.MEERKAT_REPLICATE_EVERYTHING_FROM)
+            : undefined,
+        replicateEverythingFromAETitle: undefined,
     },
     sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
     administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
@@ -1243,6 +1247,12 @@ for (const la of labellingAuthorities) {
             publicKey,
         });
     }
+}
+
+if (process.env.MEERKAT_REPLICATE_EVERYTHING_FROM_AE_TITLE) {
+    ctx.config.shadowing.replicateEverythingFromAETitle = {
+        rdnSequence: decodeLDAPDN(ctx, process.env.MEERKAT_REPLICATE_EVERYTHING_FROM_AE_TITLE).reverse(),
+    };
 }
 
 export default ctx;

@@ -1342,6 +1342,38 @@ resource strain, you may want to leave this feature disabled.
 
 :::
 
+## MEERKAT_REPLICATE_EVERYTHING_FROM
+
+A URL of an Network Service Access Point (NSAP) for a DSA that you want this DSA
+to establish a shadowing operational binding with and replicate everything. This
+was implemented as a simpler--yet crude--way to configure shadowing.
+
+The URL might look something like `idms://dsa01.example.com:4632`.
+
+There is a special scheme value that can be used in a Kubernetes stateful set to
+set up Meerkat DSA to replicate all data from the pod with index 0 (e.g. to use
+the pod with index 0 as the master DSA). In this scheme, you simply prefix the
+normal protocol you expect to use with `statefulset+`. Then the hostname should
+be the DNS name of the headless service you are using for your StatefulSet. For
+example, your URL might look like:
+`statefulset+idm://meerkat-dsa.default.svc:4632`, assuming the headless service
+is named `meerkat-dsa` and it is deployed in the `default` namespace.
+
+No promises are made for the details of the "replicate everything" agreement,
+but at the time of writing, replication happens once every hour.
+
+## MEERKAT_REPLICATE_EVERYTHING_FROM_AE_TITLE
+
+The AE-title of the DSA from which to replicate everything. This takes the form
+of a distinguished name. If this is left absent, Meerkat DSA will still attempt
+to discover the AE-title of the supplier DSA by making an intentionally failing
+bind request.
+
+The distinguished name MUST appear in X.500 order, not LDAP order: in other
+words, the highest up RDNs must appear first.
+
+Example: `MEERKAT_REPLICATE_EVERYTHING_FROM_AE_TITLE=c=US,st=FL,cn=DSA 01`.
+
 ## MEERKAT_REQUEST_CROSS_REFERENCES
 
 If set to `1`, Meerkat DSA will request cross references from other DSAs, and,
