@@ -24,6 +24,7 @@ interface AsyncROSEClient <BindArgumentType = ASN1Element, BindResultType = ASN1
     request: (params: RequestParameters) => Promise<OperationOutcome>;
     unbind: (param?: UnbindParameters) => Promise<UnbindOutcome>;
     startTLS?: (params?: StartTLSParameters) => Promise<StartTLSOutcome>;
+    peer_ae_title?: Name;
 }
 
 export
