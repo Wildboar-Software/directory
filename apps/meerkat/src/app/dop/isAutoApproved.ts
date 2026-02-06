@@ -33,15 +33,27 @@ function isAutoApproved(
             autoAcceptSetting === types.OB_AUTO_ACCEPT_SELF
             && yourcert
             && mycert
-            && yourcert.signature === mycert.signature
-            && yourcert.toBeSigned.serialNumber == mycert.toBeSigned.serialNumber
+            && !Buffer.compare(
+                Buffer.from(yourcert.signature),
+                Buffer.from(mycert.signature),
+            )
+            && !Buffer.compare(
+                Buffer.from(yourcert.toBeSigned.serialNumber),
+                Buffer.from(mycert.toBeSigned.serialNumber),
+            )
         )
         || (
             autoAcceptSetting === types.OB_AUTO_ACCEPT_MYISSUER
             && yourissuer
             && myissuer
-            && yourissuer.signature === myissuer.signature
-            && yourissuer.toBeSigned.serialNumber == myissuer.toBeSigned.serialNumber
+            && !Buffer.compare(
+                Buffer.from(yourissuer.signature),
+                Buffer.from(myissuer.signature),
+            )
+            && !Buffer.compare(
+                Buffer.from(yourissuer.toBeSigned.serialNumber),
+                Buffer.from(myissuer.toBeSigned.serialNumber),
+            )
         )
         || (
             autoAcceptSetting === types.OB_AUTO_ACCEPT_MYROOTCA
