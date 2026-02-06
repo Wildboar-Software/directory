@@ -94,6 +94,7 @@ export type OperationalBindingMinAggregateOutputType = {
   othertimes: boolean | null
   master_access_point_id: number | null
   secondary_shadows: boolean | null
+  is_the_replicate_everything_ob: boolean | null
   source_ip: string | null
   source_tcp_port: number | null
   source_credentials_type: number | null
@@ -145,6 +146,7 @@ export type OperationalBindingMaxAggregateOutputType = {
   othertimes: boolean | null
   master_access_point_id: number | null
   secondary_shadows: boolean | null
+  is_the_replicate_everything_ob: boolean | null
   source_ip: string | null
   source_tcp_port: number | null
   source_credentials_type: number | null
@@ -200,6 +202,7 @@ export type OperationalBindingCountAggregateOutputType = {
   othertimes: number
   master_access_point_id: number
   secondary_shadows: number
+  is_the_replicate_everything_ob: number
   source_ip: number
   source_tcp_port: number
   source_ae_title: number
@@ -291,6 +294,7 @@ export type OperationalBindingMinAggregateInputType = {
   othertimes?: true
   master_access_point_id?: true
   secondary_shadows?: true
+  is_the_replicate_everything_ob?: true
   source_ip?: true
   source_tcp_port?: true
   source_credentials_type?: true
@@ -342,6 +346,7 @@ export type OperationalBindingMaxAggregateInputType = {
   othertimes?: true
   master_access_point_id?: true
   secondary_shadows?: true
+  is_the_replicate_everything_ob?: true
   source_ip?: true
   source_tcp_port?: true
   source_credentials_type?: true
@@ -397,6 +402,7 @@ export type OperationalBindingCountAggregateInputType = {
   othertimes?: true
   master_access_point_id?: true
   secondary_shadows?: true
+  is_the_replicate_everything_ob?: true
   source_ip?: true
   source_tcp_port?: true
   source_ae_title?: true
@@ -541,6 +547,7 @@ export type OperationalBindingGroupByOutputType = {
   othertimes: boolean | null
   master_access_point_id: number | null
   secondary_shadows: boolean | null
+  is_the_replicate_everything_ob: boolean
   source_ip: string | null
   source_tcp_port: number | null
   source_ae_title: runtime.JsonValue | null
@@ -621,6 +628,7 @@ export type OperationalBindingWhereInput = {
   othertimes?: Prisma.BoolNullableFilter<"OperationalBinding"> | boolean | null
   master_access_point_id?: Prisma.IntNullableFilter<"OperationalBinding"> | number | null
   secondary_shadows?: Prisma.BoolNullableFilter<"OperationalBinding"> | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFilter<"OperationalBinding"> | boolean
   source_ip?: Prisma.StringNullableFilter<"OperationalBinding"> | string | null
   source_tcp_port?: Prisma.IntNullableFilter<"OperationalBinding"> | number | null
   source_ae_title?: Prisma.JsonNullableFilter<"OperationalBinding">
@@ -683,6 +691,7 @@ export type OperationalBindingOrderByWithRelationInput = {
   othertimes?: Prisma.SortOrderInput | Prisma.SortOrder
   master_access_point_id?: Prisma.SortOrderInput | Prisma.SortOrder
   secondary_shadows?: Prisma.SortOrderInput | Prisma.SortOrder
+  is_the_replicate_everything_ob?: Prisma.SortOrder
   source_ip?: Prisma.SortOrderInput | Prisma.SortOrder
   source_tcp_port?: Prisma.SortOrderInput | Prisma.SortOrder
   source_ae_title?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -748,6 +757,7 @@ export type OperationalBindingWhereUniqueInput = Prisma.AtLeast<{
   othertimes?: Prisma.BoolNullableFilter<"OperationalBinding"> | boolean | null
   master_access_point_id?: Prisma.IntNullableFilter<"OperationalBinding"> | number | null
   secondary_shadows?: Prisma.BoolNullableFilter<"OperationalBinding"> | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFilter<"OperationalBinding"> | boolean
   source_ip?: Prisma.StringNullableFilter<"OperationalBinding"> | string | null
   source_tcp_port?: Prisma.IntNullableFilter<"OperationalBinding"> | number | null
   source_ae_title?: Prisma.JsonNullableFilter<"OperationalBinding">
@@ -810,6 +820,7 @@ export type OperationalBindingOrderByWithAggregationInput = {
   othertimes?: Prisma.SortOrderInput | Prisma.SortOrder
   master_access_point_id?: Prisma.SortOrderInput | Prisma.SortOrder
   secondary_shadows?: Prisma.SortOrderInput | Prisma.SortOrder
+  is_the_replicate_everything_ob?: Prisma.SortOrder
   source_ip?: Prisma.SortOrderInput | Prisma.SortOrder
   source_tcp_port?: Prisma.SortOrderInput | Prisma.SortOrder
   source_ae_title?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -875,6 +886,7 @@ export type OperationalBindingScalarWhereWithAggregatesInput = {
   othertimes?: Prisma.BoolNullableWithAggregatesFilter<"OperationalBinding"> | boolean | null
   master_access_point_id?: Prisma.IntNullableWithAggregatesFilter<"OperationalBinding"> | number | null
   secondary_shadows?: Prisma.BoolNullableWithAggregatesFilter<"OperationalBinding"> | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolWithAggregatesFilter<"OperationalBinding"> | boolean
   source_ip?: Prisma.StringNullableWithAggregatesFilter<"OperationalBinding"> | string | null
   source_tcp_port?: Prisma.IntNullableWithAggregatesFilter<"OperationalBinding"> | number | null
   source_ae_title?: Prisma.JsonNullableWithAggregatesFilter<"OperationalBinding">
@@ -927,6 +939,7 @@ export type OperationalBindingCreateInput = {
   periodic_updateInterval?: number | null
   othertimes?: boolean | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -989,6 +1002,7 @@ export type OperationalBindingUncheckedCreateInput = {
   othertimes?: boolean | null
   master_access_point_id?: number | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1042,6 +1056,7 @@ export type OperationalBindingUpdateInput = {
   periodic_updateInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1104,6 +1119,7 @@ export type OperationalBindingUncheckedUpdateInput = {
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   master_access_point_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1162,6 +1178,7 @@ export type OperationalBindingCreateManyInput = {
   othertimes?: boolean | null
   master_access_point_id?: number | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1214,6 +1231,7 @@ export type OperationalBindingUpdateManyMutationInput = {
   periodic_updateInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1271,6 +1289,7 @@ export type OperationalBindingUncheckedUpdateManyInput = {
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   master_access_point_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1343,6 +1362,7 @@ export type OperationalBindingCountOrderByAggregateInput = {
   othertimes?: Prisma.SortOrder
   master_access_point_id?: Prisma.SortOrder
   secondary_shadows?: Prisma.SortOrder
+  is_the_replicate_everything_ob?: Prisma.SortOrder
   source_ip?: Prisma.SortOrder
   source_tcp_port?: Prisma.SortOrder
   source_ae_title?: Prisma.SortOrder
@@ -1414,6 +1434,7 @@ export type OperationalBindingMaxOrderByAggregateInput = {
   othertimes?: Prisma.SortOrder
   master_access_point_id?: Prisma.SortOrder
   secondary_shadows?: Prisma.SortOrder
+  is_the_replicate_everything_ob?: Prisma.SortOrder
   source_ip?: Prisma.SortOrder
   source_tcp_port?: Prisma.SortOrder
   source_credentials_type?: Prisma.SortOrder
@@ -1465,6 +1486,7 @@ export type OperationalBindingMinOrderByAggregateInput = {
   othertimes?: Prisma.SortOrder
   master_access_point_id?: Prisma.SortOrder
   secondary_shadows?: Prisma.SortOrder
+  is_the_replicate_everything_ob?: Prisma.SortOrder
   source_ip?: Prisma.SortOrder
   source_tcp_port?: Prisma.SortOrder
   source_credentials_type?: Prisma.SortOrder
@@ -1729,6 +1751,7 @@ export type OperationalBindingCreateWithoutEntryInput = {
   periodic_updateInterval?: number | null
   othertimes?: boolean | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1789,6 +1812,7 @@ export type OperationalBindingUncheckedCreateWithoutEntryInput = {
   othertimes?: boolean | null
   master_access_point_id?: number | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1875,6 +1899,7 @@ export type OperationalBindingScalarWhereInput = {
   othertimes?: Prisma.BoolNullableFilter<"OperationalBinding"> | boolean | null
   master_access_point_id?: Prisma.IntNullableFilter<"OperationalBinding"> | number | null
   secondary_shadows?: Prisma.BoolNullableFilter<"OperationalBinding"> | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFilter<"OperationalBinding"> | boolean
   source_ip?: Prisma.StringNullableFilter<"OperationalBinding"> | string | null
   source_tcp_port?: Prisma.IntNullableFilter<"OperationalBinding"> | number | null
   source_ae_title?: Prisma.JsonNullableFilter<"OperationalBinding">
@@ -1927,6 +1952,7 @@ export type OperationalBindingCreateWithoutAccess_pointInput = {
   periodic_updateInterval?: number | null
   othertimes?: boolean | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1987,6 +2013,7 @@ export type OperationalBindingUncheckedCreateWithoutAccess_pointInput = {
   othertimes?: boolean | null
   master_access_point_id?: number | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2049,6 +2076,7 @@ export type OperationalBindingCreateWithoutMaster_access_pointInput = {
   periodic_updateInterval?: number | null
   othertimes?: boolean | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2109,6 +2137,7 @@ export type OperationalBindingUncheckedCreateWithoutMaster_access_pointInput = {
   periodic_updateInterval?: number | null
   othertimes?: boolean | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2203,6 +2232,7 @@ export type OperationalBindingCreateWithoutNext_versionInput = {
   periodic_updateInterval?: number | null
   othertimes?: boolean | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2264,6 +2294,7 @@ export type OperationalBindingUncheckedCreateWithoutNext_versionInput = {
   othertimes?: boolean | null
   master_access_point_id?: number | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2321,6 +2352,7 @@ export type OperationalBindingCreateWithoutPreviousInput = {
   periodic_updateInterval?: number | null
   othertimes?: boolean | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2381,6 +2413,7 @@ export type OperationalBindingUncheckedCreateWithoutPreviousInput = {
   othertimes?: boolean | null
   master_access_point_id?: number | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2454,6 +2487,7 @@ export type OperationalBindingUpdateWithoutNext_versionInput = {
   periodic_updateInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2515,6 +2549,7 @@ export type OperationalBindingUncheckedUpdateWithoutNext_versionInput = {
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   master_access_point_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2587,6 +2622,7 @@ export type OperationalBindingCreateManyEntryInput = {
   othertimes?: boolean | null
   master_access_point_id?: number | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2639,6 +2675,7 @@ export type OperationalBindingUpdateWithoutEntryInput = {
   periodic_updateInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2699,6 +2736,7 @@ export type OperationalBindingUncheckedUpdateWithoutEntryInput = {
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   master_access_point_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2756,6 +2794,7 @@ export type OperationalBindingUncheckedUpdateManyWithoutEntryInput = {
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   master_access_point_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2812,6 +2851,7 @@ export type OperationalBindingCreateManyAccess_pointInput = {
   othertimes?: boolean | null
   master_access_point_id?: number | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2868,6 +2908,7 @@ export type OperationalBindingCreateManyMaster_access_pointInput = {
   periodic_updateInterval?: number | null
   othertimes?: boolean | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2920,6 +2961,7 @@ export type OperationalBindingUpdateWithoutAccess_pointInput = {
   periodic_updateInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -2980,6 +3022,7 @@ export type OperationalBindingUncheckedUpdateWithoutAccess_pointInput = {
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   master_access_point_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -3037,6 +3080,7 @@ export type OperationalBindingUncheckedUpdateManyWithoutAccess_pointInput = {
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   master_access_point_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -3089,6 +3133,7 @@ export type OperationalBindingUpdateWithoutMaster_access_pointInput = {
   periodic_updateInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -3149,6 +3194,7 @@ export type OperationalBindingUncheckedUpdateWithoutMaster_access_pointInput = {
   periodic_updateInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -3206,6 +3252,7 @@ export type OperationalBindingUncheckedUpdateManyWithoutMaster_access_pointInput
   periodic_updateInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -3262,6 +3309,7 @@ export type OperationalBindingCreateManyPreviousInput = {
   othertimes?: boolean | null
   master_access_point_id?: number | null
   secondary_shadows?: boolean | null
+  is_the_replicate_everything_ob?: boolean
   source_ip?: string | null
   source_tcp_port?: number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -3314,6 +3362,7 @@ export type OperationalBindingUpdateWithoutPreviousInput = {
   periodic_updateInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -3374,6 +3423,7 @@ export type OperationalBindingUncheckedUpdateWithoutPreviousInput = {
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   master_access_point_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -3431,6 +3481,7 @@ export type OperationalBindingUncheckedUpdateManyWithoutPreviousInput = {
   othertimes?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   master_access_point_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   secondary_shadows?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  is_the_replicate_everything_ob?: Prisma.BoolFieldUpdateOperationsInput | boolean
   source_ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   source_tcp_port?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   source_ae_title?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -3519,6 +3570,7 @@ export type OperationalBindingSelect<ExtArgs extends runtime.Types.Extensions.In
   othertimes?: boolean
   master_access_point_id?: boolean
   secondary_shadows?: boolean
+  is_the_replicate_everything_ob?: boolean
   source_ip?: boolean
   source_tcp_port?: boolean
   source_ae_title?: boolean
@@ -3582,6 +3634,7 @@ export type OperationalBindingSelectCreateManyAndReturn<ExtArgs extends runtime.
   othertimes?: boolean
   master_access_point_id?: boolean
   secondary_shadows?: boolean
+  is_the_replicate_everything_ob?: boolean
   source_ip?: boolean
   source_tcp_port?: boolean
   source_ae_title?: boolean
@@ -3643,6 +3696,7 @@ export type OperationalBindingSelectUpdateManyAndReturn<ExtArgs extends runtime.
   othertimes?: boolean
   master_access_point_id?: boolean
   secondary_shadows?: boolean
+  is_the_replicate_everything_ob?: boolean
   source_ip?: boolean
   source_tcp_port?: boolean
   source_ae_title?: boolean
@@ -3704,6 +3758,7 @@ export type OperationalBindingSelectScalar = {
   othertimes?: boolean
   master_access_point_id?: boolean
   secondary_shadows?: boolean
+  is_the_replicate_everything_ob?: boolean
   source_ip?: boolean
   source_tcp_port?: boolean
   source_ae_title?: boolean
@@ -3725,7 +3780,7 @@ export type OperationalBindingSelectScalar = {
   requested_strategy_external_ber?: boolean
 }
 
-export type OperationalBindingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "previous_id" | "outbound" | "uuid" | "binding_type" | "binding_identifier" | "binding_version" | "agreement_ber" | "access_point_id" | "initiator" | "initiator_ber" | "validity_start" | "validity_end" | "security_certification_path" | "security_name" | "security_time" | "security_random" | "security_target" | "security_operationCode" | "security_errorProtection" | "security_errorCode" | "new_context_prefix_rdn" | "immediate_superior" | "shadowed_context_prefix" | "knowledge_type" | "subordinates" | "supply_contexts" | "supplier_initiated" | "periodic_beginTime" | "periodic_windowSize" | "periodic_updateInterval" | "othertimes" | "master_access_point_id" | "secondary_shadows" | "source_ip" | "source_tcp_port" | "source_ae_title" | "source_credentials_type" | "source_certificate_path" | "source_bind_token" | "source_strong_name" | "source_attr_cert_path" | "requested_time" | "responded_time" | "terminated_time" | "accepted" | "last_update" | "last_ob_problem" | "last_shadow_problem" | "local_last_update" | "remote_last_update" | "requested_strategy" | "requested_strategy_external_ber", ExtArgs["result"]["operationalBinding"]>
+export type OperationalBindingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "previous_id" | "outbound" | "uuid" | "binding_type" | "binding_identifier" | "binding_version" | "agreement_ber" | "access_point_id" | "initiator" | "initiator_ber" | "validity_start" | "validity_end" | "security_certification_path" | "security_name" | "security_time" | "security_random" | "security_target" | "security_operationCode" | "security_errorProtection" | "security_errorCode" | "new_context_prefix_rdn" | "immediate_superior" | "shadowed_context_prefix" | "knowledge_type" | "subordinates" | "supply_contexts" | "supplier_initiated" | "periodic_beginTime" | "periodic_windowSize" | "periodic_updateInterval" | "othertimes" | "master_access_point_id" | "secondary_shadows" | "is_the_replicate_everything_ob" | "source_ip" | "source_tcp_port" | "source_ae_title" | "source_credentials_type" | "source_certificate_path" | "source_bind_token" | "source_strong_name" | "source_attr_cert_path" | "requested_time" | "responded_time" | "terminated_time" | "accepted" | "last_update" | "last_ob_problem" | "last_shadow_problem" | "local_last_update" | "remote_last_update" | "requested_strategy" | "requested_strategy_external_ber", ExtArgs["result"]["operationalBinding"]>
 export type OperationalBindingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.OperationalBinding$entryArgs<ExtArgs>
   previous?: boolean | Prisma.OperationalBinding$previousArgs<ExtArgs>
@@ -3792,6 +3847,7 @@ export type $OperationalBindingPayload<ExtArgs extends runtime.Types.Extensions.
     othertimes: boolean | null
     master_access_point_id: number | null
     secondary_shadows: boolean | null
+    is_the_replicate_everything_ob: boolean
     source_ip: string | null
     source_tcp_port: number | null
     source_ae_title: runtime.JsonValue | null
@@ -4274,6 +4330,7 @@ export interface OperationalBindingFieldRefs {
   readonly othertimes: Prisma.FieldRef<"OperationalBinding", 'Boolean'>
   readonly master_access_point_id: Prisma.FieldRef<"OperationalBinding", 'Int'>
   readonly secondary_shadows: Prisma.FieldRef<"OperationalBinding", 'Boolean'>
+  readonly is_the_replicate_everything_ob: Prisma.FieldRef<"OperationalBinding", 'Boolean'>
   readonly source_ip: Prisma.FieldRef<"OperationalBinding", 'String'>
   readonly source_tcp_port: Prisma.FieldRef<"OperationalBinding", 'Int'>
   readonly source_ae_title: Prisma.FieldRef<"OperationalBinding", 'Json'>

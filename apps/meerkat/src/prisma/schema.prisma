@@ -621,6 +621,10 @@ model OperationalBinding {
   master_access_point     AccessPoint?           @relation("ob_master", fields: [master_access_point_id], references: [id])
   secondary_shadows       Boolean?
 
+  // Whether this was the OB established due to MEERKAT_REPLICATE_EVERYTHING_TO
+  // being set.
+  is_the_replicate_everything_ob Boolean @default(false)
+
   // Source information
   // This should be separate from the access point, because the IP used to
   // send the request or proxy the request could differ from the access point
