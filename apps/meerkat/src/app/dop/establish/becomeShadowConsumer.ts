@@ -30,7 +30,7 @@ import getEqualityNormalizer from "../../x500/getEqualityNormalizer.js";
  *
  * @param ctx The context object
  * @param agreement The shadowing agreement
- * @param initiator The correspondent access point
+ * @param peerAccessPoint The correspondent access point
  * @param obid The shadowing operational binding identifier
  * @param ob_db_id The database ID of the operational binding
  * @param ob_time The start time of the operational binding
@@ -43,7 +43,7 @@ export
 async function becomeShadowConsumer (
     ctx: MeerkatContext,
     agreement: ShadowingAgreementInfo,
-    initiator: AccessPoint,
+    peerAccessPoint: AccessPoint,
     obid: OperationalBindingID,
     ob_db_id: number,
     ob_time: Date,
@@ -135,9 +135,9 @@ async function becomeShadowConsumer (
     // DEVIATION: If agreement.master is set, we assume the supplier is not master.
     const supplier_is_master: boolean = !agreement.master;
     const supplier = new SupplierInformation(
-        initiator.ae_title,
-        initiator.address,
-        initiator.protocolInformation,
+        peerAccessPoint.ae_title,
+        peerAccessPoint.address,
+        peerAccessPoint.protocolInformation,
         obid,
         supplier_is_master,
         agreement.master,

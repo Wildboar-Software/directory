@@ -270,7 +270,7 @@ async function establishReplicateEverythingAgreement(
         const _ = await becomeShadowConsumer(
             ctx,
             agreement,
-            myAccessPoint,
+            yourAccessPoint,
             bindingID,
             createdOB.id,
             now,
@@ -489,7 +489,7 @@ async function modifyReplicateEverythingAgreement(
         const _ = await becomeShadowConsumer(
             ctx,
             agreement,
-            myAccessPoint,
+            yourAccessPoint,
             bindingID,
             createdOB.id,
             now,
@@ -709,53 +709,6 @@ async function replicateEverythingFrom(
             yourAccessPoint._unrecognizedExtensionsList,
         );
     }
-
-    // Copied from elsewhere. Search for b6c76b30-80d6-4925-a50d-07553ac49b6e.
-    // Determine the shadow supplier's AE-title if it is not known.
-    // if (yourAccessPoint.ae_title.rdnSequence.length === 0) {
-    //     const bind_outcome = await assn.bind({
-    //         protocol_id: id_ac_directoryOperationalBindingManagementAC,
-    //         parameter: new DSABindArgument(
-    //             { // Intentional random password so auth fails.
-    //                 simple: new SimpleCredentials(
-    //                     [],
-    //                     undefined,
-    //                     {
-    //                         unprotected: randomBytes(16),
-    //                     },
-    //                 ),
-    //             },
-    //         ),
-    //         calling_ae_title: {
-    //             directoryName: ctx.dsa.accessPoint.ae_title,
-    //         },
-    //         calling_ap_invocation_identifier: process.pid,
-    //         implementation_information: "Meerkat DSA",
-    //         timeout: 15000,
-    //     });
-    //     if ("result" in bind_outcome) {
-    //         const result = bind_outcome.result;
-    //         if (result.responding_ae_title && "directoryName" in result.responding_ae_title) {
-    //             yourAccessPoint = new AccessPoint(
-    //                 result.responding_ae_title.directoryName,
-    //                 yourAccessPoint.address,
-    //                 yourAccessPoint.protocolInformation,
-    //                 yourAccessPoint._unrecognizedExtensionsList,
-    //             );
-    //         }
-    //         const _ = await assn.unbind();
-    //     } else if ("error" in bind_outcome) {
-    //         const error = bind_outcome.error;
-    //         if (error.responding_ae_title && "directoryName" in error.responding_ae_title) {
-    //             yourAccessPoint = new AccessPoint(
-    //                 error.responding_ae_title.directoryName,
-    //                 yourAccessPoint.address,
-    //                 yourAccessPoint.protocolInformation,
-    //                 yourAccessPoint._unrecognizedExtensionsList,
-    //             );
-    //         }
-    //     }
-    // }
 
     const agreement = createReplicateEverythingAgreement();
     if (status === ReplicateEverythingSOBStatus.Establish) {
