@@ -560,16 +560,28 @@ async function applyTotalRefresh (
     }
 
     if (!refresh.sDSE && !refresh.subtree?.length) {
-        await deleteEntry(ctx, vertex, true);
+        if (vertex.dse.shadow) {
+            await deleteEntry(ctx, vertex, true);
+        }
         return;
     }
     const refinement = agreement.shadowSubject.area.replicationArea.specificationFilter;
     if (creatingRDN && refresh.sDSE) {
+        const shadowingStartsAtRoot: boolean = ((cp_length + base.length) === 0);
+        const creatingTopLevelDSE: boolean = depth === 1;
         const dse_type = sdse_type_to_dse_type(refresh.sDSE.sDSEType);
         checkPermittedAttributeTypes(ctx, assn, agreement, refresh.sDSE.attributes, signErrors, Number(obid.identifier));
         const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
         const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
-        const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
+        const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT)
+            /* This is to protect against an odd scenario: if replicating the
+            whole directory starting from the root, we don't want the root DSE
+            to be the context prefix (which is an illegal combination of DSE
+            types per X.501 Annex O), we want the top-level DSEs to be the
+            context prefixes. This should make the assertion that you'll find
+            when searching this codebase for
+            8eeed982-b97a-4951-86c3-c972cb472351 succeed. */
+            || (shadowingStartsAtRoot && creatingTopLevelDSE);
         const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
         const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
         const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
@@ -692,7 +704,10 @@ async function applyTotalRefresh (
         // TODO: Check if there is no conflict. If not, just add values.
         // This alone results in support for overlapping shadowed areas.
         const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
-        if (!refinement || objectClassesWithinRefinement(objectClasses, refinement)) {
+        const selectedByRefinement: boolean = !refinement || objectClassesWithinRefinement(objectClasses, refinement);
+        if (selectedByRefinement && !vertex.dse.root) { // No modifications to root!
+            const shadowingStartsAtRoot: boolean = ((cp_length + base.length) === 0);
+            const creatingTopLevelDSE: boolean = depth === 1;
             /* Only if the entry falls within the refinement do we modify it. */
             const dse_type = sdse_type_to_dse_type(refresh.sDSE.sDSEType);
             const isFamily: boolean = dse_type[DSEType_familyMember] === TRUE_BIT;
@@ -706,7 +721,15 @@ async function applyTotalRefresh (
             ], undefined, false, signErrors);
             const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
             const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
-            const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
+            const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT)
+                /* This is to protect against an odd scenario: if replicating the
+                whole directory starting from the root, we don't want the root DSE
+                to be the context prefix (which is an illegal combination of DSE
+                types per X.501 Annex O), we want the top-level DSEs to be the
+                context prefixes. This should make the assertion that you'll find
+                when searching this codebase for
+                8eeed982-b97a-4951-86c3-c972cb472351 succeed. */
+                || (shadowingStartsAtRoot && creatingTopLevelDSE);
             const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
             const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
             const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
@@ -1405,10 +1428,20 @@ async function applyIncrementalRefreshStep (
                     ? objectClassesWithinRefinement(object_classes, refinement)
                     : true;
                 if (withinRefinement) {
+                    const shadowingStartsAtRoot: boolean = ((cp_length + base.length) === 0);
+                    const creatingTopLevelDSE: boolean = depth === 1;
                     const dse_type = sdse_type_to_dse_type(change.sDSEType);
                     const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
                     const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
-                    const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
+                    const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT)
+                        /* This is to protect against an odd scenario: if replicating the
+                        whole directory starting from the root, we don't want the root DSE
+                        to be the context prefix (which is an illegal combination of DSE
+                        types per X.501 Annex O), we want the top-level DSEs to be the
+                        context prefixes. This should make the assertion that you'll find
+                        when searching this codebase for
+                        8eeed982-b97a-4951-86c3-c972cb472351 succeed. */
+                        || (shadowingStartsAtRoot && creatingTopLevelDSE);
                     const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
                     const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
                     const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
@@ -1876,6 +1909,7 @@ async function updateShadow (
     }
     else if ("total" in data.updatedInfo) {
         const refresh = data.updatedInfo.total;
+        // FIXME: Validate that the root SDSE is empty. This is required in X.525, Section 7.2.2.1.c.
         await applyTotalRefresh(
             ctx,
             assn,
@@ -1892,6 +1926,7 @@ async function updateShadow (
     }
     else if ("incremental" in data.updatedInfo) {
         const refresh = data.updatedInfo.incremental;
+        // FIXME: Validate that the root SDSE is empty. This is required in X.525, Section 7.2.2.1.c.
         ctx.log.debug(ctx.i18n.t("log:shadow_incremental_steps_count", {
             obid: data.agreementID.identifier.toString(),
             steps: refresh.length,

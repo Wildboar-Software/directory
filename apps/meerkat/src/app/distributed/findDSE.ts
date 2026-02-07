@@ -790,6 +790,11 @@ export
                     m,
                 ),
             });
+            /* This failed in the case where replication starts from the root
+            DSE (e.g. "replicate everything"). The root DSE was the CP, but it
+            was not a shadow entry itself. I added code to make the top level
+            entries CPs in this case, instead. You can find this code by
+            searching for 8eeed982-b97a-4951-86c3-c972cb472351. */
             assert(lastCP);
             const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
             const cr = makeContinuationRefFromSupplierKnowledge(

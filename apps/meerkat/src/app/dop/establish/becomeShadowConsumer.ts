@@ -102,20 +102,25 @@ async function becomeShadowConsumer (
 
     // Make the last DSE in the context prefix a cp and shadow.
     // The specifications are not clear at all what this DSE should be.
-    await ctx.db.entry.update({
-        where: {
-            id: currentRoot.dse.id,
-        },
-        data: {
-            glue: false,
-            cp: true,
-            // shadow: true,
-        },
-        select: {
-            id: true,
-        },
-    });
-    currentRoot.dse.glue = false;
+    // However, the root DSE cannot be a CP, per ITU-T Rec. X.501, Annex O.
+    // There is code elsewhere to make the top-level DSEs CPs in this case.
+    // Search for 8eeed982-b97a-4951-86c3-c972cb472351 to find it.
+    if (!currentRoot.dse.root) {
+        await ctx.db.entry.update({
+            where: {
+                id: currentRoot.dse.id,
+            },
+            data: {
+                glue: false,
+                cp: true,
+                // shadow: true,
+            },
+            select: {
+                id: true,
+            },
+        });
+        currentRoot.dse.glue = false;
+    }
 
     // By updating the OB here, you avoid a race condition where the DISP request
     // is sent before the OB is "complete."
@@ -142,16 +147,21 @@ async function becomeShadowConsumer (
         supplier_is_master,
         agreement.master,
     );
+    /* If we are doing "replicate-everything" shadowing, the access points will
+    be stored in the Root DSE (which is not exactly correct). This will be used
+    elsewhere. Search for eb6f0820-ed25-4a17-8288-90381908ae91. */
     await saveAccessPoint(ctx, supplier, Knowledge.SUPPLIER, currentRoot.dse.id);
 
-    if (currentRoot.dse.cp) {
-        if (!currentRoot.dse.cp.supplierKnowledge) {
-            currentRoot.dse.cp.supplierKnowledge = [];
+    if (!currentRoot.dse.root) {
+        if (currentRoot.dse.cp) {
+            if (!currentRoot.dse.cp.supplierKnowledge) {
+                currentRoot.dse.cp.supplierKnowledge = [];
+            }
+            currentRoot.dse.cp.supplierKnowledge.push(supplier);
+        } else {
+            currentRoot.dse.cp = {};
+            currentRoot.dse.cp.supplierKnowledge = [ supplier ];
         }
-        currentRoot.dse.cp.supplierKnowledge.push(supplier);
-    } else {
-        currentRoot.dse.cp = {};
-        currentRoot.dse.cp.supplierKnowledge = [ supplier ];
     }
     scheduleShadowUpdates(ctx, agreement, ob_db_id, Number(obid.identifier), ob_time, false);
     // Already saved before this is function is called.

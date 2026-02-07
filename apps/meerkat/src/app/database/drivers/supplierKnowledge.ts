@@ -20,12 +20,39 @@ import rdnToJson from "../../x500/rdnToJson.js";
 import saveAccessPoint from "../saveAccessPoint.js";
 import { compareRDNSequence } from "@wildboar/x500";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import { BERElement } from "@wildboar/asn1";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<Value[]> => {
+    /* When using replicate everything shadowing, we store the supplier
+    knowledge in the Root DSE. eb6f0820-ed25-4a17-8288-90381908ae91 */
+    if (
+        ctx.config.shadowing.replicateEverythingFrom
+        && vertex.immediateSuperior?.dse.root
+    ) {
+        const supplierRows = await ctx.db.accessPoint.findMany({
+            where: {
+                entry_id: vertex.immediateSuperior.dse.id,
+                knowledge_type: Knowledge.SUPPLIER,
+                active: true,
+            },
+            select: {
+                ber: true,
+            },
+        });
+        return supplierRows
+            .map((s) => {
+                const el = new BERElement();
+                el.fromBytes(s.ber);
+                return {
+                    type: supplierKnowledge["&id"],
+                    value: el,
+                };
+            });
+    }
     return vertex.dse.cp?.supplierKnowledge?.map((k) => ({
         type: supplierKnowledge["&id"],
         value: supplierKnowledge.encoderFor["&Type"]!(k, DER),
