@@ -7,8 +7,9 @@ on:
   #     - v2.*
   push:
     branches:
-      - main
-      - master
+      - never
+      # - main
+      # - master
 
 jobs:
 
