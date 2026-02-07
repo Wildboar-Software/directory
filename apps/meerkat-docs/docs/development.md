@@ -124,6 +124,64 @@ Run `brew uninstall meerkat_dsa` to uninstall it from your system.
 
 Run `brew test -d meerkat_dsa` to run tests after it is installed.
 
+### Helm Chart
+
+My philosophy towards Helm charts is: they should prefer simplicity over
+flexibility. The reason is that, if a user wants an extremely customizable
+configuration, they could just define all of their own Kubernetes resources in
+YAML. At some point, turning your Kubernetes YAML into template spaghetti makes
+it more complicated to understand and deploy. The Helm chart should be designed
+for the use cases that work for the most boring 90% of users.
+
+#### Testing
+
+Build the Docker image:
+
+```bash
+podman build -t meerkat:4.0.0 -f ./meerkat.dockerfile .
+```
+
+Pipe the image into K3s:
+
+```bash
+podman save meerkat:4.0.0 | sudo k3s ctr images import -
+```
+
+Confirm that your image is there:
+
+```bash
+sudo k3s ctr images ls | grep meerkat
+```
+
+Use the right Kubeconfig file:
+
+```bash
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+```
+
+Then deploy:
+
+```bash
+helm upgrade --install meerkat ./ --namespace meerkat --create-namespace --set image.repository=localhost/meerkat
+```
+
+To uninstall:
+
+```bash
+helm uninstall meerkat --namespace meerkat
+kubectl delete pvc data-meerkat-meerkat-dsa-0 -n meerkat
+kubectl delete pvc data-meerkat-meerkat-dsa-1 -n meerkat
+kubectl delete pvc data-meerkat-meerkat-dsa-2 -n meerkat
+```
+
+You can access particular pods like so:
+
+```bash
+kubectl port-forward pod/meerkat-meerkat-dsa-0 4633:4632 -n meerkat
+```
+
+The above will expose the pod's IDM service at port 4633 on your local machine.
+
 ## CI
 
 [Here](https://github.com/actions/runner-images) are the different runners
@@ -135,3 +193,10 @@ the BSDs except manually.
 
 Note that there are no Docker images that even emulate MacOS, as described
 [here](https://apple.stackexchange.com/questions/465642/base-macos-docker-images).
+
+## Logging {}
+
+Why does the log message `{}` appear in the logs? I believe this is a bug or
+oddity with using `logtape` where you pass in an `undefined` value into one of
+the log messages. In other words, if you call `ctx.log.error(undefined)` you
+will see `{}` appear in your logs.
