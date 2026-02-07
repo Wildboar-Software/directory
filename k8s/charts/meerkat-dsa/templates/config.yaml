@@ -79,9 +79,6 @@ data:
   log_tls_secrets: {{ .Values.log_tls_secrets | ternary 1 0 | quote }}
   log_zip: {{ .Values.log_zip | ternary 1 0 | quote }}
   {{- end }}
-  {{- if .Values.log_http }}
-  log_http: {{ .Values.log_http | ternary 1 0 | quote }}
-  {{- end }}
   log_json: {{ .Values.log_json | ternary 1 0 | quote }}
   log_level: {{ .Values.log_level | default "debug" }}
   lookup_uncert_strong_auth: {{ .Values.lookup_uncert_strong_auth | ternary 1 0 | quote }}
@@ -108,7 +105,24 @@ data:
   no_color: {{ .Values.no_color | ternary 1 0 | quote }}
   no_console: {{ .Values.no_console | ternary 1 0 | quote }}
   no_timestamp: {{ .Values.no_timestamp | ternary 1 0 | quote }}
-  ob_auto_accept: {{ .Values.ob_auto_accept | ternary 1 0 | quote }}
+  {{- if empty .Values.ob_auto_accept }}
+  # All pods in the stateful set use the same private key. This setting being
+  # "self" means that they will automatically accept each other's operational
+  # binding proposals. This is necessary for replicate_everything_to to be used
+  # in StatefulSets with more than one replica: this means that shadowing is
+  # used, and hence, a shadowing operational binding agreement must be
+  # established between the involved DSAs.
+  {{- if .Values.replicate_everything_from }}
+  replicate_everything_from: {{ .Values.replicate_everything_from | quote }}
+  ob_auto_accept: "self"
+  {{- else if gt .Values.replicas 1 }}
+  ob_auto_accept: "self"
+  {{- else }}
+  ob_auto_accept: "none"
+  {{- end }}
+  {{- else }}
+  ob_auto_accept: {{ .Values.ob_auto_accept | quote }}
+  {{- end }}
   open_top_level: {{ .Values.open_top_level | ternary 1 0 | quote }}
   principled_service_admin: {{ .Values.principled_service_admin | ternary 1 0 | quote }}
   {{- if .Values.private_key_engine }}

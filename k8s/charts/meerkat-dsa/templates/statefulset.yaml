@@ -1,28 +1,67 @@
-{{- if empty .Values.databaseSecretName }}
-  {{ fail "The value databaseSecretName MUST be set." }}
-{{- end }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "meerkat-dsa.fullname" . }}
   labels:
     {{- include "meerkat-dsa.labels" . | nindent 4 }}
 spec:
-  # Meerkat DSA can't handle multiple replicas, sorry!
-  replicas: 1
+  serviceName: "{{ include "meerkat-dsa.fullname" . }}-directory-headless"
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       {{- include "meerkat-dsa.selectorLabels" . | nindent 6 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        # ReadWriteOncePod is not used, because there is a legitimate use case
+        # in using another pod containing a SQLite CLI to inspect your database
+        # or even seed it with data.
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size | quote }}
+        # Uses the default storageclass otherwise
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: {{ .Values.persistence.storageClass }}
+        {{- end }}
   template:
     metadata:
       labels:
         {{- include "meerkat-dsa.selectorLabels" . | nindent 8 }}
     spec:
+      initContainers:
+        - name: {{ .Chart.Name }}-init
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DATABASE_URL
+              value: file:/var/lib/meerkat/meerkat.db
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/meerkat
+              {{- if .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath }}
+              {{- end }}
+          command:
+          - npx
+          - prisma
+          - migrate
+          {{- if .Values.resetDatabase  }}
+          - reset
+          - --force
+          - --skip-generate
+          {{- else }}
+          - deploy
+          {{- end }}
+          - --schema=/srv/meerkat/prisma/schema.prisma
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: DATABASE_URL
+              value: file:/var/lib/meerkat/meerkat.db
             {{- if .Values.prismaDebug }}
             - name: DEBUG
               value: {{ .Values.prismaDebug }}
@@ -66,12 +105,6 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: locale
                   optional: true
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.databaseSecretName }}
-                  key: databaseUrl
-                  optional: false
             {{- if .Values.init }}
             - name: MEERKAT_INIT_JS
               valueFrom:
@@ -387,30 +420,6 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: log_bound_dn
                   optional: true
-            - name: MEERKAT_LOG_FILE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log_file
-                  optional: true
-            - name: MEERKAT_LOG_FILE_MAX_FILES
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log_file_max_files
-                  optional: true
-            - name: MEERKAT_LOG_FILE_MAX_SIZE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log_file_max_size
-                  optional: true
-            - name: MEERKAT_LOG_HTTP
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log_http
-                  optional: true
             - name: MEERKAT_LOG_JSON
               valueFrom:
                 configMapKeyRef:
@@ -423,23 +432,11 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: log_level
                   optional: true
-            - name: MEERKAT_LOG_TAILABLE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log_tailable
-                  optional: true
             - name: MEERKAT_LOG_TLS_SECRETS
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: log_tls_secrets
-                  optional: true
-            - name: MEERKAT_LOG_ZIP
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: log_zip
                   optional: true
             - name: MEERKAT_LOOKUP_UNCERT_STRONG_AUTH
               valueFrom:
@@ -597,6 +594,17 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: remote_pwd_time_limit
                   optional: true
+            {{- if gt (int .Values.replicas) 1 }}
+            - name: MEERKAT_REPLICATE_EVERYTHING_FROM
+              value: statefulset+idm://{{ include "meerkat-dsa.fullname" . }}-directory-headless.{{ .Release.Namespace }}.svc:4632
+            {{- else }}
+            - name: MEERKAT_REPLICATE_EVERYTHING_FROM
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: replicate_everything_from
+                  optional: true
+            {{- end }}
             - name: MEERKAT_REQUEST_CROSS_REFERENCES
               valueFrom:
                 configMapKeyRef:
@@ -826,6 +834,9 @@ spec:
                   key: signing_bind_tolerate_unavailable_remote_crl
                   optional: true
             {{- if .Values.signingCaConfigName }}
+            - name: MEERKAT_SIGNING_CA_FILE
+              value: "/data/pki/signing/ca/ca.pem"
+            {{- else if and (gt .Values.replicas 1) (empty .Values.signingCaConfigName) }}
             - name: MEERKAT_SIGNING_CA_FILE
               value: "/data/pki/signing/ca/ca.pem"
             {{- end }}
@@ -1212,14 +1223,12 @@ spec:
                   key: web_admin_use_tls
                   optional: true
           ports:
-            {{- if .Values.dap_enabled }}
             - name: idm
               containerPort: 4632
               protocol: TCP
             - name: idms
               containerPort: 44632
               protocol: TCP
-            {{- end }}
             {{- if .Values.ldap_port }}
             - name: ldap
               containerPort: 1389
@@ -1236,10 +1245,19 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
+            - name: data
+              mountPath: /var/lib/meerkat
+              {{- if .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath }}
+              {{- end }}
             - name: signing-volume
               mountPath: "/data/pki/signing"
               readOnly: true
             {{- if .Values.signingCaConfigName }}
+            - name: signing-ca-volume
+              mountPath: "/data/pki/signing/ca"
+              readOnly: true
+            {{- else if and (gt .Values.replicas 1) (empty .Values.signingCaConfigName) }}
             - name: signing-ca-volume
               mountPath: "/data/pki/signing/ca"
               readOnly: true
@@ -1285,10 +1303,29 @@ spec:
               readOnly: true
             {{- end }}
       volumes:
+        {{- if not .Values.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- else if .Values.persistence.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ tpl .Values.persistence.existingClaim . }}
+        {{- end }}
+        # - name: data
+        #   persistentVolumeClaim:
+        #     claimName: {{ if .Values.persistence.existingClaim }}
+        #       {{ .Values.persistence.existingClaim }}
+        #     {{ else }}
+        #       {{ include "meerkat-dsa.fullname" . }}-data
+        #     {{ end }}
         {{- if .Values.signingCaConfigName }}
         - name: signing-ca-volume
           configMap:
             name: {{ .Values.signingCaConfigName | quote }}
+        {{- else if and (gt .Values.replicas 1) (empty .Values.signingCaConfigName) }}
+        - name: signing-ca-volume
+          configMap:
+            name: {{ include "meerkat-dsa.fullname" . }}-signing-ca
         {{- end }}
         {{- if .Values.signingTrustAnchorListConfigName }}
         - name: signing-tal-volume
