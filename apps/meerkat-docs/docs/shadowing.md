@@ -25,6 +25,20 @@ Shadow operational bindings proposed by third parties may be agreed to via the
 
 ### "Replicate-Everything" Shadowing
 
+:::caution
+
+Replicate-Everything shadowing is kind of a half-baked feature, because, as I
+found out after implementing it, it seems that the X.500 directory
+specifications implicitly (perhaps even accidentally) forbid shadowing the
+entire DIT. Annex O of ITU-T Rec. X.501 forbids a Root DSE from also being a
+context prefix, and Section 24.2.1.5 requires that `supplierKnowledge` appears
+in a DSE of type `cp`.
+
+I had to implement a lot of exceptional codepaths for this feature to work, so
+I would not be surprised if it were buggy.
+
+:::
+
 An easier-to-setup alternative was designed for Meerkat DSA whereby you can set
 an environment variable,
 [`MEERKAT_REPLICATE_EVERYTHING_FROM`](./env.md#meerkat_replicate_everything_from),
@@ -38,13 +52,19 @@ To start, merely set
 in the shadowing DSA to the URL of the master DSA and start or restart your
 shadowing DSA. Upon startup, it should establish a new shadow operational
 binding automatically. This URL can be specially configured for working in a
-Kubernetes StatefulSet.
+Kubernetes StatefulSet with more than one pod.
 
 You may also want to set the value of
 [`MEERKAT_REPLICATE_EVERYTHING_FROM_AE_TITLE`](./env.md#meerkat_replicate_everything_from_ae_title).
 If this is unset, Meerkat DSA will submit intentionally invalid credentials to
 the "replicate everything from" DSA in an attempt to discover its AE title from
 the bind error. The AE title is ultimately required to establish replication.
+
+Note that if you are configuring replication within a Kubernetes StatefulSet,
+you will either want to configure valid TLS PKI for your hosts or set
+`chaining_tls_optional` to `false` in the Helm Chart. If using replication
+within a Kubernetes StatefulSet, the replication traffic stays within the pod,
+so TLS is arguably not necessary.
 
 ## Update Behavior
 
