@@ -4,6 +4,14 @@ image:
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+replicas: 1
+# TODO: Detect if you're in a Kubernetes cluster to prevent SSRF to internal hosts
+persistence:
+  enabled: true
+  existingClaim: "" # if set, chart will NOT create a PVC
+  size: 10Gi
+  storageClass: ""
+  subPath: ""
 service:
   type: ClusterIP
   # A value of "local" for `externalTrafficPolicy` will maintain the client's IP
@@ -21,21 +29,21 @@ affinity: {}
 resetDatabase: false
 dangerouslyExposeWebAdmin: false
 networkPolicyEnabled: false
-networkPolicyIngressOverride:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: whatever
-    ports:
-    - port: 1234
-      protocol: TCP
-networkPolicyEgressOverride:
-  - to:
-    - ipBlock:
-        cidr: x.x.x.x/32
-    ports:
-    - port: 1234
-      protocol: TCP
+# networkPolicyIngressOverride:
+#   - from:
+#     - podSelector:
+#         matchLabels:
+#           app: whatever
+#     ports:
+#     - port: 1234
+#       protocol: TCP
+# networkPolicyEgressOverride:
+#   - to:
+#     - ipBlock:
+#         cidr: x.x.x.x/32
+#     ports:
+#     - port: 1234
+#       protocol: TCP
 
 # This should be a secret of type "tls".
 # See: https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
@@ -144,12 +152,9 @@ log_bound_dn: false
 # log_file: /var/log/meerkat.log
 # log_file_max_files: 100
 # log_file_max_size: "1000000"
-log_http: false
 log_json: false
-log_level: info
-log_tailable: false
+log_level: debug
 log_tls_secrets: false
-log_zip: true
 lookup_uncert_strong_auth: false
 max_concurrent_operations_per_connection: 100
 max_connections: 250
@@ -171,12 +176,13 @@ mru_vertex_ttl: 500
 no_color: false
 no_console: false
 no_timestamp: false
-ob_auto_accept: false
+# ob_auto_accept: "none"
 open_top_level: false
 principled_service_admin: false
 # private_key_engine: pkcs11
 prohibit_chaining: false
 remote_pwd_time_limit: 0
+# replicate_everything_from: idm://meerkat-dsa-0.meerkat-dsa-headless.default.svc:4632
 request_cross_references: false
 return_cross_references: false
 reveal_user_pwd: false

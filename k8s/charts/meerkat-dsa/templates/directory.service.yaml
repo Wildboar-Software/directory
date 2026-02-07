@@ -1,8 +1,117 @@
+# A headless service so other pods can reach the directory from within the
+# cluster via names like:
+# `meerkat-dsa-0.meerkat-dsa-headless.default.svc` for the master, or
+# `meerkat-dsa-1.meerkat-dsa-headless.default.svc` for a read-only replica.
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "meerkat-dsa.fullname" . }}-directory-headless"
+  labels:
+    {{- include "meerkat-dsa.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "meerkat-dsa.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- if or .Values.idm_port (gt (int .Values.replicas) 1) }}
+    - name: idm
+      protocol: TCP
+      port: {{ .Values.idm_port | default 4632 | int }}
+      targetPort: 4632
+    {{- if .Values.tlsSecretName }}
+    - name: idms
+      protocol: TCP
+      port: {{ .Values.idms_port | default 44632 | int }}
+      targetPort: 44632
+    {{- end }}
+    {{- end }}
+    {{- if .Values.itot_port }}
+    - name: itot
+      protocol: TCP
+      port: {{ .Values.itot_port | default 1102 | int }}
+      targetPort: 1102
+    {{- end }}
+    {{- if .Values.itots_port }}
+    - name: itots
+      protocol: TCP
+      port: {{ .Values.itots_port | default 11102 | int }}
+      targetPort: 11102
+    {{- end }}
+    {{- if .Values.ldap_port }}
+    - name: ldap
+      protocol: TCP
+      port: {{ .Values.ldap_port | default 389 | int }}
+      targetPort: 1389 # We use 1389 instead of 389 because ports under 1000 are privileged.
+    {{- if .Values.tlsSecretName }}
+    - name: ldaps
+      protocol: TCP
+      port: {{ .Values.ldaps_port | default 636 | int }}
+      targetPort: 1636 # We use 1636 instead of 636 because ports under 1000 are privileged.
+    {{- end }}
+    {{- end }}
+---
+# Read-write service
 apiVersion: v1
 kind: Service
 metadata:
   name: "{{ include "meerkat-dsa.fullname" . }}-directory"
   labels:
+    {{- include "meerkat-dsa.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "meerkat-dsa.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- if .Values.idm_port }}
+    - name: idm
+      protocol: TCP
+      port: {{ .Values.idm_port | default 4632 | int }}
+      targetPort: 4632
+    {{- if .Values.tlsSecretName }}
+    - name: idms
+      protocol: TCP
+      port: {{ .Values.idms_port | default 44632 | int }}
+      targetPort: 44632
+    {{- end }}
+    {{- end }}
+    {{- if .Values.itot_port }}
+    - name: itot
+      protocol: TCP
+      port: {{ .Values.itot_port | default 1102 | int }}
+      targetPort: 1102
+    {{- end }}
+    {{- if .Values.itots_port }}
+    - name: itots
+      protocol: TCP
+      port: {{ .Values.itots_port | default 11102 | int }}
+      targetPort: 11102
+    {{- end }}
+    {{- if .Values.ldap_port }}
+    - name: ldap
+      protocol: TCP
+      port: {{ .Values.ldap_port | default 389 | int }}
+      targetPort: 1389 # We use 1389 instead of 389 because ports under 1000 are privileged.
+    {{- if .Values.tlsSecretName }}
+    - name: ldaps
+      protocol: TCP
+      port: {{ .Values.ldaps_port | default 636 | int }}
+      targetPort: 1636 # We use 1636 instead of 636 because ports under 1000 are privileged.
+    {{- end }}
+    {{- end }}
+  {{- if eq (.Values.service.type | lower) "loadbalancer" }}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy | default "Local" }}
+  {{- end }}
+---
+# Master-only service
+# This only differs from the above by a label
+# apps.kubernetes.io/pod-index is a label injected by Kubernetes into
+# StatefulSets. This chart uses the pod with index 0 as the master.
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "meerkat-dsa.fullname" . }}-directory-master"
+  labels:
+    apps.kubernetes.io/pod-index: "0"
     {{- include "meerkat-dsa.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
