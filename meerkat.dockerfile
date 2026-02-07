@@ -2,9 +2,11 @@ FROM node:25
 LABEL author="Wildboar Software"
 LABEL app="meerkat"
 WORKDIR /build
-COPY --exclude=node_modules --exclude=dist --exclude=.nx . ./
+COPY package.json .
+COPY package-lock.json .
 # RUN apk add gcc make
 RUN npm ci --no-audit --no-fund --no-save
+COPY --exclude=node_modules --exclude=dist --exclude=.nx . ./
 RUN npx nx --tuiAutoExit=true --outputStyle=static run meerkat:build --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
 
 FROM node:25
