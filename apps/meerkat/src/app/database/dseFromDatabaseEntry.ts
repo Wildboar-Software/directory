@@ -201,6 +201,21 @@ async function dseFromDatabaseEntry (
                 ber: true,
             },
         });
+        /* When using replicate everything shadowing, we store the supplier
+        knowledge in the Root DSE. eb6f0820-ed25-4a17-8288-90381908ae91 */
+        if (dbe.immediate_superior_id === ctx.dit.root.dse.id) {
+            const supplierRows2 = await ctx.db.accessPoint.findMany({
+                where: {
+                    entry_id: dbe.immediate_superior_id,
+                    knowledge_type: Knowledge.SUPPLIER,
+                    active: true,
+                },
+                select: {
+                    ber: true,
+                },
+            });
+            supplierRows.push(...supplierRows2);
+        }
         const consumerRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
