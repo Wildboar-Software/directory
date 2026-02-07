@@ -1344,6 +1344,20 @@ resource strain, you may want to leave this feature disabled.
 
 ## MEERKAT_REPLICATE_EVERYTHING_FROM
 
+:::caution
+
+Replicate-Everything shadowing is kind of a half-baked feature, because, as I
+found out after implementing it, it seems that the X.500 directory
+specifications implicitly (perhaps even accidentally) forbid shadowing the
+entire DIT. Annex O of ITU-T Rec. X.501 forbids a Root DSE from also being a
+context prefix, and Section 24.2.1.5 requires that `supplierKnowledge` appears
+in a DSE of type `cp`.
+
+I had to implement a lot of exceptional codepaths for this feature to work, so
+I would not be surprised if it were buggy.
+
+:::
+
 A URL of an Network Service Access Point (NSAP) for a DSA that you want this DSA
 to establish a shadowing operational binding with and replicate everything. This
 was implemented as a simpler--yet crude--way to configure shadowing.
@@ -1357,7 +1371,8 @@ normal protocol you expect to use with `statefulset+`. Then the hostname should
 be the DNS name of the headless service you are using for your StatefulSet. For
 example, your URL might look like:
 `statefulset+idm://meerkat-dsa.default.svc:4632`, assuming the headless service
-is named `meerkat-dsa` and it is deployed in the `default` namespace.
+is named `meerkat-dsa` and it is deployed in the `default` namespace. This URL
+scheme should have no effect if the stateful set only has one pod.
 
 No promises are made for the details of the "replicate everything" agreement,
 but at the time of writing, replication happens once every hour.
