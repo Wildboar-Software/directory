@@ -239,7 +239,20 @@ async function apinfoProcedure (
                 req.chaining.operationProgress ?? ChainingArguments._default_value_for_operationProgress,
             ),
         ];
-        if (loopDetected(tenativeTrace)) {
+        const isInStatefulSet: boolean = ctx
+            .config
+            .shadowing
+            .replicateEverythingFrom
+            ?.protocol
+            .toLowerCase()
+            .startsWith("statefulset+") ?? false;
+        const nextHopIsMe: boolean = compareDistinguishedName(
+            ap.ae_title.rdnSequence,
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            namingMatcher,
+        );
+        const ignoreLoopCheck: boolean = (isInStatefulSet && nextHopIsMe);
+        if (!ignoreLoopCheck && loopDetected(tenativeTrace)) {
             throw new errors.ServiceError(
                 ctx.i18n.t("err:loop_detected"),
                 new ServiceErrorData(
