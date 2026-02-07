@@ -81,8 +81,8 @@ function createReplicateEverythingAgreement(): ShadowingAgreementInfo {
                 scheduled: new SchedulingParameters(
                     new PeriodicStrategy(
                         undefined,
-                        120, // FIXME: Change these back before commit
-                        300,
+                        1800,
+                        3600,
                         undefined,
                     ),
                     true,
