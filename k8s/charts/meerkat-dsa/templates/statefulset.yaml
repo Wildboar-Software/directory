@@ -1257,7 +1257,7 @@ spec:
             - name: signing-ca-volume
               mountPath: "/data/pki/signing/ca"
               readOnly: true
-            {{- else if and (gt .Values.replicas 1) (empty .Values.signingCaConfigName) }}
+            {{- else if gt .Values.replicas 1 }}
             - name: signing-ca-volume
               mountPath: "/data/pki/signing/ca"
               readOnly: true
@@ -1311,18 +1311,11 @@ spec:
           persistentVolumeClaim:
             claimName: {{ tpl .Values.persistence.existingClaim . }}
         {{- end }}
-        # - name: data
-        #   persistentVolumeClaim:
-        #     claimName: {{ if .Values.persistence.existingClaim }}
-        #       {{ .Values.persistence.existingClaim }}
-        #     {{ else }}
-        #       {{ include "meerkat-dsa.fullname" . }}-data
-        #     {{ end }}
         {{- if .Values.signingCaConfigName }}
         - name: signing-ca-volume
           configMap:
             name: {{ .Values.signingCaConfigName | quote }}
-        {{- else if and (gt .Values.replicas 1) (empty .Values.signingCaConfigName) }}
+        {{- else if gt .Values.replicas 1 }}
         - name: signing-ca-volume
           configMap:
             name: {{ include "meerkat-dsa.fullname" . }}-signing-ca
