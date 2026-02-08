@@ -560,7 +560,7 @@ async function applyTotalRefresh (
     }
 
     if (!refresh.sDSE && !refresh.subtree?.length) {
-        if (vertex.dse.shadow) {
+        if (vertex.dse.shadow || vertex.dse.glue) {
             await deleteEntry(ctx, vertex, true);
         }
         return;
@@ -1122,7 +1122,9 @@ async function applyContentChange (
         const namingMatcher = getNamingMatcherGetter(ctx);
         if (!dnWithinSubtreeSpecification(newDN, objectClasses, subtree, cp, namingMatcher)) {
             // If the entry falls out of the shadowed subtree, just delete it.
-            await deleteEntry(ctx, vertex);
+            if (vertex.dse.shadow || vertex.dse.glue) {
+                await deleteEntry(ctx, vertex);
+            }
             return;
         }
         const new_superior = await dnToVertex(ctx, ctx.dit.root, newDN.slice(0, -1));
@@ -1503,7 +1505,9 @@ async function applyIncrementalRefreshStep (
         else if ("remove" in refresh.sDSEChanges) {
             const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
             if (!refinement || !objectClassesWithinRefinement(objectClasses, refinement)) {
-                await deleteEntry(ctx, vertex, true);
+                if (vertex.dse.shadow || vertex.dse.glue) {
+                    await deleteEntry(ctx, vertex, true);
+                }
                 return; // If the SDSE is removed, there cannot be any subordinates!
             }
         }
