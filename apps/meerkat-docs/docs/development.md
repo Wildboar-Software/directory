@@ -159,6 +159,22 @@ error: attribute 'meerkat-dsa' in selection path 'config.systemd.services.meerka
 
 try removing `lib.mkIf cfg.enable` from `meerkat-dsa.nix`.
 
+### UPDATE ON NIX
+
+Creating the Nix package wasn't too hard. Actually, it was one of the easiest
+packagings I have done so far! But using a Flake on NixOS, wiring up the
+Systemd service, etc. is from Hell. I had to write so much Nix "code" to still
+have problem after problem. One remaining problem I have is `pkgs.meerkat-dsa`
+not being defined. I can try to get this working with an overlay, but that is
+not how this would really be used once a proper Nix package is published; doing
+so would make this whole thing a lot simpler.
+
+So I have decided on this: I am going to release Meerkat DSA 4.0.0 without a
+Nix package. Then, once I have the commit hash, I am going to submit a PR to
+get a Nix package published for Meerkat DSA. Once that's out, then I will work
+on the OS module, flake, whatever. If that doesn't work out, or if I never get
+to it, too bad: stop being so damn difficult.
+
 ## CI
 
 [Here](https://github.com/actions/runner-images) are the different runners
