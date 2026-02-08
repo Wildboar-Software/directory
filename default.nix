@@ -2,20 +2,20 @@
 , stdenv
 , nodejs_24
 , buildNpmPackage
+, fetchFromGitHub
 }:
 
 let
   buildStage = buildNpmPackage {
     pname = "meerkat-dsa-build";
     version = "4.0.0";
-    src = ./.;
-    # src = fetchFromGitHub {
-    #   owner = "Wildboar-Software";
-    #   repo = "directory";
-    #   rev = "v4.0.0";
-    #   hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-    # };
-    npmDepsHash = "sha256-V7td2VSpJD/3n+j9X8LhvSBMvqaE/o1gCSruQfNa/ME=";
+    src = fetchFromGitHub {
+      owner = "Wildboar-Software";
+      repo = "directory";
+      rev = "v4.0.0-rc1";
+      hash = "sha256-n26A/OtmRuMcnrihSl1b+YFKd23EIg2gsXKRC+AZsq8=";
+    };
+    npmDepsHash = "sha256-eih0APtkKpYzJenDP+xNHkfmQ6ynbO57fXRemaFzEHo=";
     makeCacheWritable = true;
     npmFlags = [ "--no-audit" "--no-fund" "--no-save" "--ignore-scripts" "--verbose" "--legacy-peer-deps" ];
     buildPhase = ''
@@ -39,7 +39,7 @@ let
     pname = "meerkat-dsa";
     version = "4.0.0";
     src = buildStage;
-    npmDepsHash = "sha256-xHMniJesi213HX4zbR8hFE9XsdU+2QhWzWMQ6KC1Jvs=";
+    npmDepsHash = "sha256-uP0+7G8ujB9aG62za4+3t+X6EWaxoGFf/xZZhf/47jw=";
     npmFlags = [ "--no-audit" "--no-fund" "--no-save" "--ignore-scripts" "--verbose" ];
     dontNpmBuild = true;
     installPhase = ''
