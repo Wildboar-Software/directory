@@ -1,6 +1,5 @@
+# First image to build the monorepo projects and discard the dev dependencies
 FROM node:25
-LABEL author="Wildboar Software"
-LABEL app="meerkat"
 WORKDIR /build
 COPY package.json .
 COPY package-lock.json .
@@ -9,16 +8,20 @@ RUN npm ci --no-audit --no-fund --no-save
 COPY --exclude=node_modules --exclude=dist --exclude=.nx . ./
 RUN npx nx --tuiAutoExit=true --outputStyle=static run meerkat:build --skipNxCache --skipRemoteCache --skip-nx-cache --verbose
 
+# Non-slim needed to build native add-ons
 FROM node:25
-LABEL author="Wildboar Software"
-LABEL app="meerkat"
 WORKDIR /srv/meerkat
 COPY --from=0 /build/dist/apps/meerkat/package.json ./
 COPY --from=0 /build/dist/apps/meerkat/package-lock.json ./
 COPY --from=0 /build/.npmrc ./
 RUN npm ci --omit=dev --no-audit --no-fund --no-save
-RUN npm install --no-package-lock --no-save prisma@7.0.1
-COPY --from=0 /build/dist/apps/meerkat/package.json ./
+RUN npm install --no-save prisma@7.0.1
+
+FROM node:25-slim
+LABEL author="Wildboar Software"
+LABEL app="meerkat"
+WORKDIR /srv/meerkat
+COPY --from=1 /srv/meerkat/node_modules ./node_modules
 COPY --from=0 /build/dist/apps/meerkat/assets ./assets
 COPY --from=0 /build/dist/apps/meerkat/prisma ./prisma
 COPY --from=0 /build/dist/apps/meerkat/prisma/prisma.config.ts ./

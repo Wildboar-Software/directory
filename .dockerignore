@@ -1,3 +1,4 @@
+*.dockerfile
 .vscode/
 data/
 # dist/
