@@ -10,6 +10,13 @@ import main from "./app/main.js";
 import { fileURLToPath } from "node:url";
 import ctx from "./app/ctx.js";
 
+function shutdown () {
+    process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
