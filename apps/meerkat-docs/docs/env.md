@@ -1211,7 +1211,9 @@ This can take on several values:
   - This is particularly useful in a closed off cluster of DSAs whose
     relationship is shadowing: the involved DSAs can all use the same private
     key for signing so that shadowing operational bindings can be established
-    between them without manual intervention.
+    between them without manual intervention. Note that this would mean that
+    all involved DSAs get the same exact AE titles, which comes with its own
+    problems.
 - If set to `myissuer`, Meerkat DSA will accept ALL requested operational
   bindings submitted that are signed by another DSA whose signing certificate
   was issued by the same issuer for this DSA's signing certificate.
