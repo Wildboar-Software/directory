@@ -19,8 +19,6 @@ in {
 
   config = lib.mkIf cfg.enable {
 
-    system.stateVersion = "26.05";
-
     users.users.meerkat = {
       isSystemUser = true;
       group = "meerkat";

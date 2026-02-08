@@ -1,3 +1,3 @@
 final: prev: {
-  meerkat-dsa = prev.callPackage ../pkg/default.nix {};
+  meerkat-dsa = prev.callPackage ./default.nix {};
 }

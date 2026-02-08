@@ -27,7 +27,7 @@
       apps = forAllSystems ({ pkgs, ... }: {
         default = {
           type = "app";
-          program = "${pkgs.meerkat-dsa}/bin/meerkat-dsa";
+          program = "${pkgs.meerkat-dsa}/bin/meerkat";
         };
       });
 
