@@ -444,5 +444,18 @@
     "repl_everything_within_ss_i_am_master": "Meerkat DSA is currently configured to replicate everything within a Kubernetes StatefulSet, and this instance appears to be the master (hostname ending with '-0').",
     "repl_everything_url_changed": "URL to replicate everything from changed, or corruption in the database. Establishing or modifying shadowing operational bindings accordingly.",
     "repl_everything_url_unchanged": "URL to replicate everything has not changed. No changes to operational bindings needed.",
-    "no_naddrs": "Attempted to bind to a DSA with no network addresses in its presentation address. It's AE title was {{aet}}."
+    "no_naddrs": "Attempted to bind to a DSA with no network addresses in its presentation address. It's AE title was {{aet}}.",
+    "unbind_result": "Unbinding association with {{aet}} succeeded.",
+    "unbind_error": "Unbinding association with {{aet}} returned an error.",
+    "unbind_abort": "Unbinding association with {{aet}} was aborted by peer.",
+    "unbind_timeout": "Unbinding association with {{aet}} timed out.",
+    "unbind_other": "Unbinding association with {{aet}} returned an unknown problem.",
+    "terminate_repl_everything_result": "Terminated replicate-everything shadow operational binding successfully.",
+    "terminate_repl_everything_ob_error": "Failed to terminate replicate-everything shadow operational binding with operational binding error with problem {{problem}}.",
+    "terminate_repl_everything_other_error": "Failed to terminate replicate-everything shadow operational binding with error {{code}}",
+    "terminate_repl_everything_reject": "Failed to terminate replicate-everything shadow operational binding: rejected with code {{code}}",
+    "terminate_repl_everything_abort": "Failed to terminate replicate-everything shadow operational binding: aborted with code {{code}}",
+    "terminate_repl_everything_timeout": "Timed out trying to terminate replicate-everything shadow operational binding.",
+    "terminate_repl_everything_other": "Other error when trying to terminate replicate-everything shadow operational binding: {{e}}",
+    "invalid_signed_error": "Invalid signed error: {{e}}"
 }

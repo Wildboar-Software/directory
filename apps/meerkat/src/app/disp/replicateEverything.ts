@@ -15,7 +15,7 @@ import {
 import { BERElement, packBits } from "@wildboar/asn1";
 import { _decode_AccessPoint, AccessPoint, DSABindArgument } from "@wildboar/x500/DistributedOperations";
 import { becomeShadowConsumer } from "../dop/establish/becomeShadowConsumer.js";
-import { establishOperationalBinding, modifyOperationalBinding, operationalBindingError, OperationalBindingID } from "@wildboar/x500/OperationalBindingManagement";
+import { establishOperationalBinding, modifyOperationalBinding, operationalBindingError, OperationalBindingID, terminateOperationalBinding } from "@wildboar/x500/OperationalBindingManagement";
 import { SubtreeSpecification } from "@wildboar/x500/InformationFramework";
 import { bindForOBM } from "../net/bindToOtherDSA.js";
 import { PresentationAddress } from "@wildboar/x500/SelectedAttributeTypes";
@@ -30,14 +30,80 @@ import { OperationalBindingInitiator, Knowledge as PrismaKnowledge } from "../ge
 import saveAccessPoint from "../database/saveAccessPoint.js";
 import rdnToJson from "../x500/rdnToJson.js";
 import { Buffer } from "node:buffer";
-import { randomBytes, randomInt } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { clearSafeTimeout } from "@wildboar/safe-timers";
-import { abortReasonToString, rejectReasonToString } from "@wildboar/rose-transport";
-import { securityError, SimpleCredentials } from "@wildboar/x500/DirectoryAbstractService";
+import { abortReasonToString, rejectReasonToString, UnbindOutcome, OperationOutcome } from "@wildboar/rose-transport";
+import { securityError } from "@wildboar/x500/DirectoryAbstractService";
 import printCode from "../utils/printCode.js";
 import _ from "lodash";
 import { DOPClient } from "@wildboar/x500-client-ts";
-import { id_ac_directoryOperationalBindingManagementAC } from "@wildboar/x500/DirectoryOSIProtocols";
+import * as util from "node:util";
+import { stringify } from "node:querystring";
+import stringifyDN from "../x500/stringifyDN.js";
+
+function handleUnbind(ctx: MeerkatContext, outcome: UnbindOutcome, aet: string): void {
+    if ("result" in outcome) {
+        ctx.log.debug(ctx.i18n.t("log:unbind_result"));
+    } else if ("error" in outcome) {
+        ctx.log.warn(ctx.i18n.t("log:unbind_error"));
+    } else if ("abort" in outcome) {
+        ctx.log.warn(ctx.i18n.t("log:unbind_abort"));
+    } else if ("timeout" in outcome) {
+        ctx.log.warn(ctx.i18n.t("log:unbind_timeout"));
+    } else if ("other" in outcome) {
+        ctx.log.warn(ctx.i18n.t("log:unbind_other"));
+    }
+}
+
+function handleTerminateOutcome(
+    ctx: MeerkatContext,
+    outcome: OperationOutcome<typeof terminateOperationalBinding["&ResultType"]>,
+): void {
+    if ("result" in outcome) {
+        ctx.log.debug(ctx.i18n.t("log:terminate_repl_everything_result"));
+    } else if ("error" in outcome) {
+        const error = outcome.error;
+        if (compareCode(error.code, operationalBindingError["&errorCode"]!)) {
+            try {
+                const param = operationalBindingError.decoderFor["&ParameterType"]!(error.parameter);
+                const unsigned = getOptionallyProtectedValue(param);
+                const code = codeToString(error.code);
+                const info = { code, problem: unsigned.problem };
+                ctx.log.warn(ctx.i18n.t("log:terminate_repl_everything_ob_error", info), info);
+            } catch {
+                const code = codeToString(error.code);
+                const info = { code };
+                ctx.log.warn(ctx.i18n.t("log:terminate_repl_everything_other_error", info), info);
+                return;
+            }
+            ctx.log.warn(ctx.i18n.t("log:terminate_repl_everything_ob_error"));
+        } else {
+            const code = codeToString(error.code);
+            const info = { code };
+            ctx.log.warn(ctx.i18n.t("log:terminate_repl_everything_other_error", info), info);
+        }
+    } else if ("reject" in outcome) {
+        const code = rejectReasonToString(outcome.reject.problem);
+        const info = { code };
+        ctx.log.warn(ctx.i18n.t("log:terminate_repl_everything_reject", info), info);
+    } else if ("abort" in outcome) {
+        const code = abortReasonToString(outcome.abort);
+        const info = { code };
+        ctx.log.warn(ctx.i18n.t("log:terminate_repl_everything_abort", info), info);
+    } else if ("timeout" in outcome) {
+        ctx.log.warn(ctx.i18n.t("log:terminate_repl_everything_timeout"));
+    } else if ("other" in outcome) {
+        ctx.log.warn(ctx.i18n.t("log:terminate_repl_everything_other"));
+    }
+}
+
+function handleReject(ctx: MeerkatContext, e: any): void {
+    if (process.env.MEERKAT_LOG_JSON !== "1") {
+        ctx.log.error(util.inspect(e));
+    } else {
+        ctx.log.error(e);
+    }
+}
 
 const enum ReplicateEverythingSOBStatus {
     Good,
@@ -179,7 +245,13 @@ async function establishReplicateEverythingAgreement(
             key: ctx.config.signing.key,
         },
     );
-    let err_message;
+    const aet = stringifyDN(ctx, yourAccessPoint.ae_title.rdnSequence);
+    if (!("result" in outcome)) {
+        assn.unbind()
+            .then((unbind_outcome) => handleUnbind(ctx, unbind_outcome, aet))
+            .catch((e) => handleReject(ctx, e));
+    }
+    let err_message: string;
     if ("result" in outcome) {
         const result = outcome.result;
         const data = getOptionallyProtectedValue(result.parameter);
@@ -198,15 +270,37 @@ async function establishReplicateEverythingAgreement(
                     undefined,
                 );
             } catch (e) {
-                /* We intentionally do nothing if we receive an invalid
-                signature. If we refuse to act on receipt, this could
-                result in this DSA spamming the master with one new shadow
-                operational binding requests each time it boots up. By the
-                time the response comes back, the master DSA has already
-                committed to shadowing. Unfortunately, the best we can do
-                is merely log that the signature was invalid. */
+                // If signature is invalid, we terminate the operational binding.
+                const terminateSP = createSecurityParameters(
+                    ctx,
+                    true,
+                    undefined,
+                    terminateOperationalBinding["&operationCode"],
+                    undefined,
+                    true,
+                );
+                assn.terminateOperationalBinding({
+                    bindingID,
+                    bindingType: shadowOperationalBinding["&id"]!,
+                    timeout: 15000,
+                    securityParameters: terminateSP,
+                    cert_path: ctx.config.signing.certPath,
+                    key: ctx.config.signing.key,
+                    _unrecognizedExtensionsList: [],
+                })
+                    .then((tob_outcome) => handleTerminateOutcome(ctx, tob_outcome))
+                    .catch((e) => handleReject(ctx, e))
+                    ;
+
+                assn.unbind()
+                    .then((unbind_outcome) => handleUnbind(ctx, unbind_outcome, aet))
+                    .catch((e) => handleReject(ctx, e));
+                return; // We never created the entry in the database.
             }
         }
+        assn.unbind()
+            .then((unbind_outcome) => handleUnbind(ctx, unbind_outcome, aet))
+            .catch((e) => handleReject(ctx, e));
         if (!data.bindingID) {
             ctx.log.error(ctx.i18n.t("err:other_dsa_did_not_choose_binding_id"));
             return;
@@ -255,7 +349,6 @@ async function establishReplicateEverythingAgreement(
                     ? Number(mySecurityParameters.errorProtection)
                     : undefined,
                 security_errorCode: mySecurityParameters?.errorCode && codeToString(mySecurityParameters.errorCode),
-                source_credentials_type: 1,
                 source_certificate_path: mySecurityParameters?.certification_path
                     ? _encode_CertificationPath(mySecurityParameters.certification_path, DER).toBytes()
                     : undefined,
@@ -294,7 +387,9 @@ async function establishReplicateEverythingAgreement(
                         "result",
                         undefined,
                     );
-                } catch {}
+                } catch (e) {
+                    ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
+                }
             }
             const data = getOptionallyProtectedValue(param);
             const logInfo = _.pick(data, ["problem", "bindingType", "retryAt"]);
@@ -315,13 +410,15 @@ async function establishReplicateEverythingAgreement(
                         "result",
                         undefined,
                     );
-                } catch {}
+                } catch (e) {
+                    ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
+                }
             }
             const data = getOptionallyProtectedValue(param);
             const logInfo = _.pick(data, ["problem"]);
-            ctx.log.error(ctx.i18n.t("log:repl_everything_establish_abort", { code: data.problem }), logInfo);
+            ctx.log.error(ctx.i18n.t("log:repl_everything_establish_sec_error", { code: data.problem }), logInfo);
         } else {
-            ctx.log.error(ctx.i18n.t("log:repl_everything_establish_sec_error", { code: printCode(error.code) }));
+            ctx.log.error(ctx.i18n.t("log:repl_everything_establish_error", { code: printCode(error.code) }));
         }
         return;
     } else if ("reject" in outcome) {
@@ -381,7 +478,11 @@ async function modifyReplicateEverythingAgreement(
             key: ctx.config.signing.key,
         },
     );
-    let err_message;
+    const aet = stringifyDN(ctx, yourAccessPoint.ae_title.rdnSequence);
+    assn.unbind()
+        .then((unbind_outcome) => handleUnbind(ctx, unbind_outcome, aet))
+        .catch((e) => handleReject(ctx, e));
+    let err_message: string;
     if ("result" in outcome) {
         const result = outcome.result;
         const data = ("protected_" in result.parameter)
@@ -409,6 +510,7 @@ async function modifyReplicateEverythingAgreement(
                 time the response comes back, the master DSA has already
                 committed to shadowing. Unfortunately, the best we can do
                 is merely log that the signature was invalid. */
+                return;
             }
         }
         if (
@@ -461,7 +563,6 @@ async function modifyReplicateEverythingAgreement(
                     ? Number(mySecurityParameters.errorProtection)
                     : undefined,
                 security_errorCode: mySecurityParameters?.errorCode && codeToString(mySecurityParameters.errorCode),
-                source_credentials_type: 1,
                 source_certificate_path: mySecurityParameters?.certification_path
                     ? _encode_CertificationPath(mySecurityParameters.certification_path, DER).toBytes()
                     : undefined,
@@ -513,7 +614,9 @@ async function modifyReplicateEverythingAgreement(
                         "result",
                         undefined,
                     );
-                } catch {}
+                } catch (e) {
+                    ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
+                }
             }
             const data = getOptionallyProtectedValue(param);
             const logInfo = _.pick(data, ["problem", "bindingType", "retryAt"]);
@@ -534,13 +637,15 @@ async function modifyReplicateEverythingAgreement(
                         "result",
                         undefined,
                     );
-                } catch {}
+                } catch (e) {
+                    ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
+                }
             }
             const data = getOptionallyProtectedValue(param);
             const logInfo = _.pick(data, ["problem"]);
-            ctx.log.error(ctx.i18n.t("log:repl_everything_modify_abort", { code: data.problem }), logInfo);
+            ctx.log.error(ctx.i18n.t("log:repl_everything_modify_sec_error", { code: data.problem }), logInfo);
         } else {
-            ctx.log.error(ctx.i18n.t("log:repl_everything_modify_sec_error", { code: printCode(error.code) }));
+            ctx.log.error(ctx.i18n.t("log:repl_everything_modify_error", { code: printCode(error.code) }));
         }
         return;
     } else if ("reject" in outcome) {
