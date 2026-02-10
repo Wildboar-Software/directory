@@ -1,5 +1,105 @@
 # Changelog for Meerkat DSA
 
+## Version 4.0.0
+
+### Using SQLite for Data Storage
+
+Yes, Meerkat DSA now uses SQLite for data storage rather than MySQL. Because
+Meerkat DSA functions as a database, it needs to be fast. Meerkat DSA is _not_
+fast, in part because I wrote it in TypeScript (which was not an accident; it
+was the only language for which I had a working ASN.1 compiler at the time), and
+then I used the Prisma ORM on top of that to persist the data. I made mistake
+after mistake in architecting Meerkat DSA, and it is in part due to the fact
+that this wasn't a serious project since the beginning: it started out as a
+curiosity, and I only decided after the fact to add database persistence and all
+of the optional X.500 features.
+
+Originally, I used Prisma ORM with MySQL when I introduced persistence. I used
+Prisma because it was an ORM I was familiar with from my previous job, and I
+used MySQL because it sounds like it is the faster of the two "big boy"
+FLOSS databases for read-heavy workloads.
+
+But this was a mistake too: the fact that MySQL is a networked database means
+that every operation that comes into Meerkat DSA has to result in multiple
+back-and-forth serializations and network messages between Meerkat DSA and its
+underlying data store. This means a huge increase in latency, and its probably
+not so great for throughput either.
+
+With this new version of Meerkat DSA, I made the cut over to SQLite. Real world
+testing shows it deniably faster, but even after implementing it
+and discovering these disappointingly small gains, I realized that the selling
+point is also ease of deployment: SQLite does not consume gigabytes of memory,
+require authentication, or require network access. This ease of deployment
+means that I could write better, simpler Helm charts, and easily create
+Snapcraft snaps and other packaging types for deploying Meerkat DSA. I also
+believe that the low gains in performance are due to problems with the Prisma
+ORM rather than this change itself; I believe these will get fixed and that this
+will become much faster (eventually).
+
+Is SQLite scalable enough for Meerkat DSA? Time will tell. Maybe somebody will
+come along with so much data that SQLite cannot handle it, but SQLite has been
+used successfully with gigabytes of data in production scenarios. It is a
+widely-loved, extremely battle-tested database. And if SQLite isn't enough,
+X.500 directories support sharding and shadowing, so you can scale horizontally.
+
+### Packages
+
+As mentioned above, SQLite makes packaging Meerkat DSA a lot easier, and that's
+one of the big new things about Meerkat DSA. Starting with Version 4.0.0,
+Meerkat DSA is now available as a:
+
+- Debian Package (`.deb`)
+- Snapcraft Snap (`.snap`)
+- RPM Package (`.rpm`)
+- Alpine Package (`.apk`)
+- Brew Formula
+- Open Container Image ("Docker image")
+- Helm Chart
+- NPM Package
+
+Work is underway to develop a Nix package for Meerkat DSA, but this will come
+after version 4.0.0.
+
+Currently, these packages are not published, but they will be. For now, you
+have to download them from the GitHub releases page.
+
+### Subcommands
+
+In the interest of future-proofing, Meerkat DSA now takes a single subcommand:
+
+Recognized subcommands are:
+
+- `start` - Start Meerkat DSA
+- `version` - Display the Meerkat DSA version
+- `help` - Show this help page
+
+This means that, if you want to start Meerkat DSA, you now need to run:
+`<your meerkat dsa command> start`. Currently, none of these take any arguments.
+
+### Other Changes
+
+- New "Replicate Everything" shadowing configuration
+- Attempt to discover AE-title of correspondent DSAs if unknown
+  - "Unknown" is indicated by zero-length AE-title.
+- Fix detection of signed arguments with DISP
+- Fix incorrect saving of access points obtained from shadowing
+- Better logging of errors when JSON logging is not used
+- Use ESM modules instead of CommonJS for almost everything and compile as ESM
+- Update TypeScript, Prisma, Nx
+- Clean up TCP sockets when done with chaining, shadowing, etc.
+- Made the Docker image about 25% smaller, and made it reproducible too
+- Added `man` pages for Meerkat DSA and its `.env` configuration
+- Special log handling when running on a system with `journald` to preserve the
+  severity levels
+- TODO: What is 7af8973bcaa39a78b27ef07328206a962ce571d5?
+
+### Other Projects
+
+- Make `newAgreement` optional in `x500-client-ts` when using DOP
+  - This should have always been the case
+- Option to close the underlying TCP or TLS socket when unbinding in
+  `rose-transport`
+
 ## Version 3.3.0
 
 This update hard-codes new default schema elements from the following LDAP and
