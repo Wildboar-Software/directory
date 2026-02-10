@@ -38,20 +38,20 @@ import printCode from "../utils/printCode.js";
 import _ from "lodash";
 import { DOPClient } from "@wildboar/x500-client-ts";
 import * as util from "node:util";
-import { stringify } from "node:querystring";
 import stringifyDN from "../x500/stringifyDN.js";
 
 function handleUnbind(ctx: MeerkatContext, outcome: UnbindOutcome, aet: string): void {
+    const info = { aet };
     if ("result" in outcome) {
-        ctx.log.debug(ctx.i18n.t("log:unbind_result"));
+        ctx.log.debug(ctx.i18n.t("log:unbind_result", info), info);
     } else if ("error" in outcome) {
-        ctx.log.warn(ctx.i18n.t("log:unbind_error"));
+        ctx.log.warn(ctx.i18n.t("log:unbind_error", info), info);
     } else if ("abort" in outcome) {
-        ctx.log.warn(ctx.i18n.t("log:unbind_abort"));
+        ctx.log.warn(ctx.i18n.t("log:unbind_abort", info), info);
     } else if ("timeout" in outcome) {
-        ctx.log.warn(ctx.i18n.t("log:unbind_timeout"));
+        ctx.log.warn(ctx.i18n.t("log:unbind_timeout", info), info);
     } else if ("other" in outcome) {
-        ctx.log.warn(ctx.i18n.t("log:unbind_other"));
+        ctx.log.warn(ctx.i18n.t("log:unbind_other", info), info);
     }
 }
 
