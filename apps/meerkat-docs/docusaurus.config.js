@@ -92,7 +92,7 @@ const config = {
                 },
                 {
                     name: 'copyright',
-                    content: 'Copyright (c) 2021-2025 Jonathan M. Wilbur <jonathan@wilbur.space>.',
+                    content: 'Copyright (c) 2021-2026 Jonathan M. Wilbur <jonathan@wilbur.space>.',
                 },
             ],
             colorMode: {
@@ -149,7 +149,7 @@ const config = {
             footer: {
                 style: 'dark',
                 links: [],
-                copyright: `Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.`,
+                copyright: `Copyright © 2022-2026 Wildboar Software. Built with Docusaurus.`,
             },
             prism: {
                 theme: lightCodeTheme,
