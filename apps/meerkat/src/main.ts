@@ -94,8 +94,12 @@ switch (cmd) {
         break;
     }
     default: {
-        console.error(`Command ${cmd} not recognized.`);
-        console.error(`Recognized commands are:`);
+        if (cmd) {
+            console.error(`Command ${cmd} not recognized.`);
+        } else {
+            console.error("No subcommand supplied.");
+        }
+        console.error(`Recognized subcommands are:`);
         displayHelp();
         process.exit(1);
     }
