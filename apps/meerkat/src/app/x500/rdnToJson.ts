@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/InformationFramework";

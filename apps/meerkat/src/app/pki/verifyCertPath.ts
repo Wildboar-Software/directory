@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
     Context,
     CRLIndex,
@@ -69,7 +70,7 @@ import {
 } from "@wildboar/x500/CertificateExtensions";
 import { dnWithinGeneralSubtree } from "@wildboar/x500";
 import groupByOID from "../utils/groupByOID.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { generalNameToString } from "@wildboar/x500";
 import type {
     TrustAnchorList,

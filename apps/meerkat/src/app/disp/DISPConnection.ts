@@ -1,3 +1,4 @@
+import process from "node:process";
 import {
     ClientAssociation,
     OperationStatistics,
@@ -47,7 +48,7 @@ import {
 import getServerStatistics from "../telemetry/getServerStatistics.js";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics.js";
 import { codeToString } from "@wildboar/x500";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500";
 import { printInvokeId } from "../utils/printInvokeId.js";

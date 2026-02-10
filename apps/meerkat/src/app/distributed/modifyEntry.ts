@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
     Context,
     IndexableOID,
@@ -95,7 +96,7 @@ import addValues from "../database/entry/addValues.js";
 import removeValues from "../database/entry/removeValues.js";
 import removeAttribute from "../database/entry/removeAttribute.js";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";

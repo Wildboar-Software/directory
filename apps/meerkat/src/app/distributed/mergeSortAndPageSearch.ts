@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type {
     Context,
     ClientAssociation,
@@ -28,7 +29,7 @@ import {
     SearchResultData_searchInfo,
 } from "@wildboar/x500/DirectoryAbstractService";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import type { SearchState } from "./search_i.js";
 import {

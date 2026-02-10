@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
     ASN1Element,
     FALSE_BIT,
@@ -65,7 +66,7 @@ import {
     id_ar_contextDefaultSpecificArea,
 } from "@wildboar/x500/InformationFramework";
 import * as crypto from "node:crypto";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { ResultOrError } from "@wildboar/x500";
 import {
     ServiceControlOptions,
     // ServiceControlOptions_preferChaining,
@@ -232,7 +233,7 @@ import {
 import {
     _encode_LocaleContextSyntax,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
     RelativeDistinguishedName,
 } from "@wildboar/x500/InformationFramework";

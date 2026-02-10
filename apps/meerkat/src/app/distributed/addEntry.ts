@@ -1,4 +1,13 @@
-import { Context, IndexableOID, Value, Vertex, ClientAssociation, OperationReturn, ChainedError } from "../types/index.js";
+import { Buffer } from "node:buffer";
+import {
+    Context,
+    IndexableOID,
+    Value,
+    Vertex,
+    ClientAssociation,
+    OperationReturn,
+    ChainedError,
+} from "../types/index.js";
 import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import {

@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
     Certificate, _encode_Certificate,
 } from "@wildboar/pki-stub";

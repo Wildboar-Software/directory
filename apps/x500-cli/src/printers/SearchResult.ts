@@ -1,3 +1,4 @@
+import process from "node:process";
 import type { Context } from "../types.js";
 import type {
     SearchResult,

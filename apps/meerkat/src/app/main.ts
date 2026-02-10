@@ -1,9 +1,11 @@
 import type { ClientAssociation } from "./types/index.js";
 import express from "express";
+import { Buffer } from "node:buffer";
 import * as net from "node:net";
 import * as tls from "node:tls";
 import * as path from "node:path";
 import * as os from "node:os";
+import process from "node:process";
 import { IdmBind } from "@wildboar/x500/IDMProtocolSpecification";
 import { rose_transport_from_idm_socket } from "./rose/idm.js";
 import { rose_transport_from_itot_stack } from "./rose/itot.js";
@@ -40,7 +42,7 @@ import { loadDSARelationships } from "./init/loadDSARelationships.js";
 import ctx, { MeerkatContext } from "./ctx.js";
 import terminate from "./dop/terminateByID.js";
 import { differenceInMilliseconds, differenceInMinutes } from "date-fns";
-import * as dns from "dns/promises";
+import * as dns from "node:dns/promises";
 import {
     updatesDomain,
 } from "./constants.js";

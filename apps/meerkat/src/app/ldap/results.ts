@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { LDAPResult } from "@wildboar/ldap";
 import {
     LDAPResult_resultCode_noSuchObject,

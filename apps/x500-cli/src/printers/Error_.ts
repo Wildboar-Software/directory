@@ -1,3 +1,5 @@
+import { Buffer } from "node:buffer";
+import process from "node:process";
 import type { Context } from "../types.js";
 import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {

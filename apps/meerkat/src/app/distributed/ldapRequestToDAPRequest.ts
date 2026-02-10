@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context, ClientAssociation } from "../types/index.js";
 import * as errors from "../types/index.js";
 import {

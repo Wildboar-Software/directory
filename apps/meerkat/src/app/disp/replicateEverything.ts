@@ -1,3 +1,4 @@
+import process from "node:process";
 import {
     _decode_ShadowingAgreementInfo,
     _encode_ModificationParameter,

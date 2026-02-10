@@ -33,7 +33,7 @@ import {
 } from "@wildboar/x500/DistributedOperations";
 import saveAccessPoint from "../../database/saveAccessPoint.js";
 import dseFromDatabaseEntry from "../../database/dseFromDatabaseEntry.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { NHOBSuperiorToSubordinate } from "@wildboar/x500/HierarchicalOperationalBindings";
 import deleteEntry from "../../database/deleteEntry.js";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub";

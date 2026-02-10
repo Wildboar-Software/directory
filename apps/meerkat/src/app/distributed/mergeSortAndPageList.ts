@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type {
     Context,
     ClientAssociation,
@@ -16,7 +17,7 @@ import {
 import * as $ from "@wildboar/asn1/functional";
 import { DER } from "@wildboar/asn1/functional";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     ListArgumentData,

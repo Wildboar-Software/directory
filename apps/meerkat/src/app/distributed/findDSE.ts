@@ -57,7 +57,7 @@ import {
 import { NameErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { list } from "@wildboar/x500/DirectoryAbstractService";
 import { search } from "@wildboar/x500/DirectoryAbstractService";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { compareCode } from "@wildboar/x500";
 import { splitIntoMastersAndShadows } from "@wildboar/x500";
 import checkSuitabilityProcedure from "./checkSuitability.js";

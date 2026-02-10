@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Connection, Context } from "../../types.js";
 import { DER } from "@wildboar/asn1/functional";
 import type {

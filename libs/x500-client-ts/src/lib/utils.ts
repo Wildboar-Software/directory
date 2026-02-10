@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
     ASN1Element,
     ENUMERATED,

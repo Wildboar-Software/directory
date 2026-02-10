@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { Attribute } from "@wildboar/x500/InformationFramework";
 import { randomInt, randomBytes } from "node:crypto";
 import {

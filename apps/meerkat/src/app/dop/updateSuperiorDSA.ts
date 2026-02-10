@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { Vertex, ServiceError, UpdateError } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { BERElement, packBits } from "@wildboar/asn1";
@@ -14,7 +15,7 @@ import {
     AccessPoint,
     _decode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { OperationalBindingID } from "@wildboar/x500/OperationalBindingManagement";
 import type {
     DistinguishedName,

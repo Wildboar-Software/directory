@@ -1,5 +1,5 @@
 import type { DIT, Vertex, DSE } from "../types/index.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import keepSubsetOfDITById from "./keepSubsetOfDITById.js";
 
 function dse (id: number, subordinates?: Vertex[]): Vertex {

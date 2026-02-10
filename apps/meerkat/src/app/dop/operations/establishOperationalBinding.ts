@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { MeerkatContext } from "../../ctx.js";
 import * as errors from "../../types/index.js";
 import { Vertex } from "../../types/index.js";

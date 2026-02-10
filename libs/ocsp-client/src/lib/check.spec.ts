@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { getOCSPResponse as check } from "./check";
 import { URL } from "node:url";
 import { PEMObject } from "@wildboar/pem";
@@ -14,9 +15,9 @@ import {
 import {
     _decode_BasicOCSPResponse,
 } from "@wildboar/ocsp";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { id_sha256 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
-import { getDateFromTime } from "@wildboar/x500/src/lib/utils/getDateFromTime";
+import { getDateFromTime } from "@wildboar/x500";
 import { OCSPRequest } from "@wildboar/ocsp";
 
 const PUBLIC_OCSP_RESPONDER_URL: string = "http://ocsp.sca1b.amazontrust.com";

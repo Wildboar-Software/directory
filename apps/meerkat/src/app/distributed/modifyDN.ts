@@ -35,7 +35,7 @@ import {
 import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { getRDN } from "@wildboar/x500";
 import dnToVertex from "../dit/dnToVertex.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { compareDistinguishedName } from "@wildboar/x500";
 import removeValues from "../database/entry/removeValues.js";
 import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";

@@ -63,7 +63,7 @@ import { list } from "@wildboar/x500/DirectoryAbstractService";
 import { read } from "@wildboar/x500/DirectoryAbstractService";
 import { removeEntry } from "@wildboar/x500/DirectoryAbstractService";
 import { search } from "@wildboar/x500/DirectoryAbstractService";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { abandon as doAbandon } from "./abandon.js";
 import { addEntry as doAddEntry } from "./addEntry.js";
 import { administerPassword as doAdministerPassword } from "./administerPassword.js";

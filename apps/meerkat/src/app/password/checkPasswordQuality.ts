@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context, Vertex } from "../types/index.js";
 import {
     PwdVocabulary_noDictionaryWords,

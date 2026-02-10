@@ -1,6 +1,7 @@
+import { Buffer } from "node:buffer";
 import type { ASN1Element } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
-import { EqualityMatcher } from "@wildboar/x500";
+import type { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_Capability,
     _encode_Capability,

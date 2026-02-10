@@ -1,4 +1,5 @@
-import { EqualityMatcher } from "@wildboar/x500";
+import { Buffer } from "node:buffer";
+import type { EqualityMatcher } from "@wildboar/x500";
 import { ASN1Element } from "@wildboar/asn1";
 
 export

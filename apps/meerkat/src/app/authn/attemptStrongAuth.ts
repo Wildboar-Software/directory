@@ -45,7 +45,7 @@ import {
     VT_RETURN_CODE_INVALID_SIG,
     VT_RETURN_CODE_UNTRUSTED, // FIXME: Why is this not used?
 } from "../pki/verifyToken.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
     StrongCredentials,
     Token,

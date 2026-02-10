@@ -1,5 +1,5 @@
 import type { Context } from "./types.js";
-import * as fs from "fs/promises";
+import * as fs from "node:fs/promises";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
 import { parse as yamlParse } from "@std/yaml";
 import validator from "./configValidator.js";

@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { Context, ClientAssociation, Vertex, MistypedArgumentError } from "../types/index.js";
 import {
     UserPwd,

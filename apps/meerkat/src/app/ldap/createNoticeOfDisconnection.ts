@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     LDAPMessage,

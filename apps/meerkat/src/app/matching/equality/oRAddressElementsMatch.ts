@@ -1,5 +1,6 @@
+import { Buffer } from "node:buffer";
 import type { ASN1Element } from "@wildboar/asn1";
-import { EqualityMatcher } from "@wildboar/x500";
+import type { EqualityMatcher } from "@wildboar/x500";
 import {
     ORAddress,
     _decode_ORAddress,

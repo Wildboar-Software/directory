@@ -1,3 +1,4 @@
+import process from "node:process";
 import {
     ClientAssociation,
     OperationStatistics,
@@ -48,7 +49,7 @@ import { EventEmitter } from "node:events";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "node:crypto";
 import sleep from "../utils/sleep.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics.js";

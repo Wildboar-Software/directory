@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context } from "../types.js";
 import type { ASN1Element } from "@wildboar/asn1";
 import { destringifyRDNSequence } from "@wildboar/ldap";

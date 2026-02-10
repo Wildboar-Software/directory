@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context } from "../types.js";
 import type {
     AccessPoint,

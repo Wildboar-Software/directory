@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import * as errors from "../types/index.js";
 import type { INTEGER } from "@wildboar/asn1";
 import {

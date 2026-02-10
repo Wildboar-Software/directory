@@ -1,4 +1,5 @@
 import { defineConfig } from 'prisma/config';
+import process from "node:process";
 
 export default defineConfig({
     migrations: {

@@ -9,7 +9,7 @@ import type {
 } from "@wildboar/x500/InformationFramework";
 import { top } from "@wildboar/x500/InformationFramework";
 import addAttributes from "./entry/addAttributes.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { randomUUID } from "node:crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass.js";
 import {

@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import { Context, Vertex, ServiceError, ClientAssociation, AttributeError } from "../types/index.js";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { ACDFTupleExtended, ACDFTuple, getACDFTuplesFromACIItem } from "@wildboar/x500";

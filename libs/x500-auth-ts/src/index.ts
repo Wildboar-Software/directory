@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
     DAPClient,
     create_dap_client,

@@ -1,3 +1,4 @@
+import process from "node:process";
 import { program } from "commander";
 import ctx from "./app/ctx.js";
 import bind from "./app/bind.js";

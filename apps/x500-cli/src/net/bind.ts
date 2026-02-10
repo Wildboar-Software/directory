@@ -1,3 +1,5 @@
+import { Buffer } from "node:buffer";
+import process from "node:process";
 import type { Context, Connection } from "../types.js";
 import * as fs from "node:fs";
 import * as readline from "readline";

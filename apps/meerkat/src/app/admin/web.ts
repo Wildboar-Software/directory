@@ -1,6 +1,8 @@
+import process from "node:process";
+import { Buffer } from "node:buffer";
 import type { Request, Response, NextFunction } from "express";
 import { MeerkatContext, default as ctx } from "../ctx.js";
-import * as fs from "fs/promises";
+import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { flatten } from "flat";
 import { getServerStatistics } from "../telemetry/getServerStatistics.js";

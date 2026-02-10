@@ -1,6 +1,6 @@
 import { CONFIG_FILE_LOCATIONS, PREFERRED_CONFIG_FILE_LOCATION } from "./configFileLocations.js";
-import * as fs from "fs/promises";
-import { strict as assert } from "assert";
+import * as fs from "node:fs/promises";
+import { strict as assert } from "node:assert";
 import { stringify as yamlStringify } from "@std/yaml";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
 

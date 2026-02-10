@@ -1,6 +1,8 @@
+import { Buffer } from "node:buffer";
+import process from "node:process";
 import { Readable } from "node:stream";
 import * as net from "node:net";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { ASN1Element, BERElement } from "@wildboar/asn1";
 import { BER, DER, _encodeObjectIdentifier, _encodeOctetString } from "@wildboar/asn1/functional";
 import { IDMConnection } from "@wildboar/idm";
@@ -47,7 +49,7 @@ import type {
     Code,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import * as crypto from "node:crypto";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { ResultOrError } from "@wildboar/x500";
 import {
     addEntry,
 } from "@wildboar/x500/DirectoryAbstractService";

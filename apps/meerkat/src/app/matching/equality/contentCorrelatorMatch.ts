@@ -1,5 +1,6 @@
+import { Buffer } from "node:buffer";
 import type { ASN1Element } from "@wildboar/asn1";
-import { EqualityMatcher } from "@wildboar/x500";
+import type { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_ContentCorrelator,
 } from "@wildboar/x400/MTSAbstractService";
@@ -13,7 +14,6 @@ const contentCorrelatorMatch: EqualityMatcher = (
     assertion: ASN1Element,
     value: ASN1Element,
 ): boolean => {
-    // return !Buffer.compare(assertion.value, value.value);
     const a = _decode_ContentCorrelator(assertion);
     const v = _decode_ContentCorrelator(value);
     if (("octets" in a) && ("octets" in v)) {

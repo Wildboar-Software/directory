@@ -6,10 +6,10 @@
  *
  * You might need to authenticate with NPM before running this script.
  */
-
+import process from "node:process";
 import { readCachedProjectGraph } from '@nrwl/devkit';
 import { execSync } from 'child_process';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import chalk from 'chalk';
 
 function invariant(condition, message) {

@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Context_list_Item } from '@wildboar/copp';
 import {

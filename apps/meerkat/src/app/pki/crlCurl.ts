@@ -20,7 +20,7 @@ import type {
 import type {
     GeneralNames,
 } from "@wildboar/x500/CertificateExtensions";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { URL } from "node:url";
 import type {
     ReadArgument,

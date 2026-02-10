@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { UUID } from "../types/index.js";
 
 /**
@@ -23,6 +24,7 @@ export
 function bytesToUUID (bytes: Uint8Array): UUID {
     const buf = Buffer.from(bytes);
     return (
+        // TODO: Do not use deprecated method .slice()
         buf.slice(0, 4).toString("hex") +
         "-" +
         buf.slice(4, 6).toString("hex") +

@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
     ASN1Construction,
     ASN1Element,

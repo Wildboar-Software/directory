@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import type { MeerkatContext } from "../ctx.js";
 import { BERElement } from "@wildboar/asn1";
 import {

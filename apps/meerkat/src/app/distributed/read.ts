@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { Vertex, ClientAssociation, OperationReturn, IndexableOID } from "../types/index.js";
 import {
     ObjectIdentifier,

@@ -3,7 +3,7 @@ import type {
     DIT,
     IndexableOID,
 } from "../types/index.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 /**
  * @summary Keep a subset of a tree of entries by their database ID

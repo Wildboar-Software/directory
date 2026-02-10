@@ -1,3 +1,4 @@
+import process from "node:process";
 import type { Connection, Context } from "./types.js";
 import {
     TRUE_BIT,

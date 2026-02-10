@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context, BindReturn } from "../types/index.js";
 import type {
     BindRequest,

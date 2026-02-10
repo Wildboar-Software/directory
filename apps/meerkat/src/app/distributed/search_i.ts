@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type {
     Vertex,
     ClientAssociation,
@@ -260,7 +261,7 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { id_ar_autonomousArea } from "@wildboar/x500/InformationFramework";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import _ from "lodash";
 import keepSubsetOfDITById from "../dit/keepSubsetOfDITById.js";
 import walkMemory from "../dit/walkMemory.js";

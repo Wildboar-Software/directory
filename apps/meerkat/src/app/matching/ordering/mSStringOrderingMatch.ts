@@ -1,5 +1,5 @@
 import type { ASN1Element } from "@wildboar/asn1";
-import { OrderingMatcher } from "@wildboar/x500";
+import type { OrderingMatcher } from "@wildboar/x500";
 import {
     _decode_MSString,
 } from "@wildboar/x400/MSMatchingRules";

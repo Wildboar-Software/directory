@@ -130,7 +130,7 @@ import { printInvokeId } from "../utils/printInvokeId.js";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import { userPwd } from "@wildboar/x500/PasswordPolicy";
 import { userPassword } from "@wildboar/x500/AuthenticationFramework";
-import { EqualityMatcher } from "@wildboar/x500";
+import type { EqualityMatcher } from "@wildboar/x500";
 import attemptPassword from "../authn/attemptPassword.js";
 import { SimpleCredentials_password } from "@wildboar/x500/DirectoryAbstractService";
 import {

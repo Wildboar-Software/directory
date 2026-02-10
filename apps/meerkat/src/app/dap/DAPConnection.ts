@@ -1,3 +1,4 @@
+import process from "node:process";
 import {
     ClientAssociation,
     OperationStatistics,
@@ -64,7 +65,7 @@ import { ASN1Element, FALSE } from "@wildboar/asn1";
 import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { AssertionError, strict as assert } from "assert";
+import { AssertionError, strict as assert } from "node:assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics.js";

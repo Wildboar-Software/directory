@@ -22,7 +22,7 @@ import {
 } from "@wildboar/x500/DistributedOperations";
 import { BERElement } from "@wildboar/asn1";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";

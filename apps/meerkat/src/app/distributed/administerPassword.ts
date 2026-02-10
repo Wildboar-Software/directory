@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context, Vertex, ClientAssociation, OperationReturn } from "../types/index.js";
 import { ASN1TagClass, ASN1UniversalType, ObjectIdentifier, unpackBits } from "@wildboar/asn1";
 import * as errors from "../types/index.js";

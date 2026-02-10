@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { uuidOrderingMatch } from "./uuidOrderingMatch.js";
 import { DER, _encodeOctetString } from "@wildboar/asn1/functional";
 

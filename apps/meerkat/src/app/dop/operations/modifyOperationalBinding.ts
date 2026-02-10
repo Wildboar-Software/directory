@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { OperationalBindingError } from "../../types/index.js";
 import type DOPAssociation from "../DOPConnection.js";
 import type { MeerkatContext } from "../../ctx.js";

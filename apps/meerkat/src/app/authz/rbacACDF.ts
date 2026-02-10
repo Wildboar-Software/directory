@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { Context, Vertex, ClientAssociation, RBAC_ACDF } from "../types/index.js";
 import { compareDistinguishedName } from "@wildboar/x500";
 import {

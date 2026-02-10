@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
     OCSPRequest,
     _encode_OCSPRequest,

@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { KeyObject, createSign, sign } from "node:crypto";
 import {
     AlgorithmIdentifier,

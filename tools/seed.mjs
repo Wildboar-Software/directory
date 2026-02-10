@@ -1,4 +1,5 @@
 import { Prisma, PrismaClient } from "@prisma/client";
+import process from "node:process";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 

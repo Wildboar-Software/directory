@@ -327,6 +327,7 @@ export default init;
 Below is an example for implementing a custom ldap syntax:
 
 ```javascript
+import { Buffer } from "node:buffer";
 import {
   ObjectIdentifier,
   FALSE,

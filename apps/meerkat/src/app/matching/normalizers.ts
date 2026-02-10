@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context, ValueNormalizer } from "../types/index.js";
 import { ASN1Element, ASN1TagClass, ASN1UniversalType, BERElement } from "@wildboar/asn1";
 import { directoryStringToString, getDateFromTime } from "@wildboar/x500";

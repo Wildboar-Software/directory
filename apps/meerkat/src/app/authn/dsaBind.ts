@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { DSABindError, BindReturn } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import type { Socket } from "node:net";
@@ -64,7 +65,7 @@ import { verifySIGNED } from "../pki/verifySIGNED.js";
 import {
     _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/DistributedOperations";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import attemptSPKMAuth from "./attemptSPKMAuth.js";
 import attemptExternalAuth from "./attemptExternalAuth.js";
 

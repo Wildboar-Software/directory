@@ -1,10 +1,9 @@
+import process from "node:process";
+import { Buffer } from "node:buffer";
 import type { Connection } from "./types.js";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
-} from "@wildboar/x500/IDMProtocolSpecification";
-import {
-    IdmBind,
 } from "@wildboar/x500/IDMProtocolSpecification";
 import {
     Request as IdmRequest,
@@ -31,7 +30,7 @@ import { IDMConnection } from "@wildboar/idm";
 import { URL } from "node:url";
 import * as crypto from "node:crypto";
 import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { DER } from "@wildboar/asn1/functional";
 import printCode from "./printCode.js";
 
@@ -114,7 +113,6 @@ async function connect (
     idm.events.on("error_", (e) => {
         console.error(`Invocation ${e.invokeID} returned an error with code ${printCode(e.errcode)}`);
         console.error(`Error parameter: ${Buffer.from(e.error.toBytes()).toString("hex")}`);
-        // process.exit(34);
     });
     idm.events.on("reject", (r) => {
         console.error(`Invocation ${r.invokeID} rejected with reason: ${r.reason}`);

@@ -1,3 +1,5 @@
+import { Buffer } from "node:buffer";
+import process from "node:process";
 import { default as express } from "express";
 import { default as serveStatic } from "serve-static";
 import { default as cookieParser } from "cookie-parser";

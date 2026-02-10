@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { ClientAssociation, OPCR } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { BOOLEAN, TRUE } from "@wildboar/asn1";
@@ -9,7 +10,7 @@ import {
     OperationProgress_nameResolutionPhase_completed,
 } from "@wildboar/x500/DistributedOperations";
 import { ReferralData } from "@wildboar/x500/DirectoryAbstractService";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { ServiceErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { apinfoProcedure } from "./apinfoProcedure.js";
 import createSecurityParameters from "../x500/createSecurityParameters.js";

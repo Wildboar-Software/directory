@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import type { Context, Connection } from "../types.js";
 import {
     IDM_PDU,
@@ -50,7 +51,7 @@ import * as crypto from "node:crypto";
 import destringifyDN from "../utils/destringifyDN.js";
 import generateSimpleCredsValidity from "../utils/generateSimpleCredsValidity.js";
 import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { DER } from "@wildboar/asn1/functional";
 import { OBJECT_IDENTIFIER, TRUE_BIT, unpackBits } from "@wildboar/asn1";
 import {

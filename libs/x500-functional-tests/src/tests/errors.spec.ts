@@ -1,12 +1,11 @@
+import { Buffer } from "node:buffer";
+import process from "node:process";
 import {
     ASN1Element,
     FALSE_BIT,
     TRUE_BIT,
-    ObjectIdentifier,
     OBJECT_IDENTIFIER,
     INTEGER,
-    FALSE,
-    TRUE,
 } from "@wildboar/asn1";
 import {
     BER,
@@ -16,400 +15,89 @@ import {
     _encodeOctetString,
 } from "@wildboar/asn1/functional";
 import * as net from "node:net";
+import * as crypto from "node:crypto";
+import {
+    IdmBind,
+    _encode_IDM_PDU,
+} from "@wildboar/x500/IDMProtocolSpecification";
+import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
+import { IDMConnection } from "@wildboar/idm";
+import {
+    DistinguishedName,
+    _decode_DistinguishedName,
+    _encode_DistinguishedName,
+    Attribute,
+    AttributeTypeAndValue,
+    administrativeRole,
+    objectClass,
+    id_ar_autonomousArea,
+    child,
+    _encode_SubtreeSpecification,
+    RelativeDistinguishedName,
+} from "@wildboar/x500/InformationFramework";
+import type { ResultOrError } from "@wildboar/x500";
+import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    IdmBind,
-} from "@wildboar/x500/IDMProtocolSpecification";
-import {
-    _encode_IDM_PDU,
-} from "@wildboar/x500/IDMProtocolSpecification";
-import {
-    dap_ip,
-} from "@wildboar/x500/DirectoryIDMProtocols";
-import {
-    IDMConnection,
-} from "@wildboar/idm";
-import {
     addEntry,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     AddEntryArgument,
     _encode_AddEntryArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     AddEntryArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    DistinguishedName, _decode_DistinguishedName, _encode_DistinguishedName,
-} from "@wildboar/x500/InformationFramework";
-import {
-    Attribute,
-} from "@wildboar/x500/InformationFramework";
-import { AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
-import {
-    name,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    commonName,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    _encode_UnboundedDirectoryString,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    applicationProcess,
-} from "@wildboar/x500/SelectedObjectClasses";
-import {
-    description,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    localityName,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    createTimestamp,
-} from "@wildboar/x500/InformationFramework";
-import {
-    administrativeRole,
-} from "@wildboar/x500/InformationFramework";
-import {
-    objectClass,
-} from "@wildboar/x500/InformationFramework";
-import {
-    id_ar_autonomousArea,
-} from "@wildboar/x500/InformationFramework";
-import {
-    id_ar_collectiveAttributeSpecificArea,
-} from "@wildboar/x500/InformationFramework";
-import {
-    id_ar_collectiveAttributeInnerArea,
-} from "@wildboar/x500/InformationFramework";
-import {
-    id_ar_subschemaAdminSpecificArea,
-} from "@wildboar/x500/InformationFramework";
-import {
-    id_ar_contextDefaultSpecificArea,
-} from "@wildboar/x500/InformationFramework";
-import * as crypto from "node:crypto";
-import type { ResultOrError } from "@wildboar/x500";
-import {
     ServiceControlOptions,
-    // ServiceControlOptions_preferChaining,
-    // ServiceControlOptions_chainingProhibited,
-    // ServiceControlOptions_localScope,
-    // ServiceControlOptions_dontUseCopy,
-    ServiceControlOptions_dontDereferenceAliases,
-    ServiceControlOptions_subentries,
-    // ServiceControlOptions_copyShallDo,
-    ServiceControlOptions_partialNameResolution,
     ServiceControlOptions_manageDSAIT,
-    ServiceControlOptions_noSubtypeMatch,
-    ServiceControlOptions_noSubtypeSelection,
-    ServiceControlOptions_countFamily,
-    ServiceControlOptions_dontSelectFriends,
-    ServiceControlOptions_dontMatchFriends,
-    // ServiceControlOptions_allowWriteableCopy,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ServiceControls,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    read,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    ReadArgument,
     _encode_ReadArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    ReadArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     _decode_ReadResult,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    EntryInformationSelection,
-} from "@wildboar/x500/DirectoryAbstractService";
-import type {
-    Code,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import { getOptionallyProtectedValue } from "@wildboar/x500";
-import type {
-    EntryInformation_information_Item,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    compare,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    CompareArgument,
     _encode_CompareArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    CompareArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     _decode_CompareResult,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    AttributeValueAssertion,
-} from "@wildboar/x500/InformationFramework";
-import {
-    list,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    ListArgument,
     _encode_ListArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    ListArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     _decode_ListResult,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     removeEntry,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     RemoveEntryArgument,
     _encode_RemoveEntryArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     RemoveEntryArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     modifyEntry,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ModifyEntryArgument,
     _encode_ModifyEntryArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ModifyEntryArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     _decode_ModifyEntryResult,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     modifyDN,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ModifyDNArgument,
     _encode_ModifyDNArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ModifyDNArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    administerPassword,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    AdministerPasswordArgument,
     _encode_AdministerPasswordArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    AdministerPasswordArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    changePassword,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    ChangePasswordArgument,
     _encode_ChangePasswordArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    ChangePasswordArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    search,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    SearchArgument,
     _encode_SearchArgument,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    SearchArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    SearchArgumentData_subset_baseObject,
-    SearchArgumentData_subset_oneLevel,
-    SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     _decode_SearchResult,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    Attribute_valuesWithContext_Item,
-} from "@wildboar/x500/InformationFramework";
-import {
-    Context,
-} from "@wildboar/x500/InformationFramework";
-import {
-    ContextAssertion,
-} from "@wildboar/x500/InformationFramework";
-import {
-    TypeAndContextAssertion,
     _encode_TypeAndContextAssertion,
 } from "@wildboar/x500/DirectoryAbstractService";
-import {
-    localeContext,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    _encode_LocaleContextSyntax,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import { strict as assert } from "assert";
-import {
-    RelativeDistinguishedName,
-} from "@wildboar/x500/InformationFramework";
+import { strict as assert } from "node:assert";
 import {
     organization,
-} from "@wildboar/x500/SelectedObjectClasses";
-import {
     organizationalUnit,
-} from "@wildboar/x500/SelectedObjectClasses";
-import {
     person,
-} from "@wildboar/x500/SelectedObjectClasses";
-import {
     device,
-} from "@wildboar/x500/SelectedObjectClasses";
-import {
-    organizationName,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    organizationalUnitName,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    surname,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    oidC,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    oidCobj,
-} from "@wildboar/x500/SelectedObjectClasses";
-import { child } from "@wildboar/x500/InformationFramework";
-import {
-    family_information,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    FamilyReturn,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    FamilyReturn_memberSelect_compoundEntry,
-    FamilyReturn_memberSelect_contributingEntriesOnly,
-    FamilyReturn_memberSelect_participatingEntriesOnly,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    PagedResultsRequest,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    PagedResultsRequest_newRequest,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    SortKey,
-} from "@wildboar/x500/DirectoryAbstractService";
-import { aliasedEntryName } from "@wildboar/x500/InformationFramework";
-import { alias } from "@wildboar/x500/InformationFramework";
-import { subentry } from "@wildboar/x500/InformationFramework";
-import {
-    collectiveAttributeSubentry,
-} from "@wildboar/x500/InformationFramework";
-import {
-    subschema,
-} from "@wildboar/x500/SchemaAdministration";
-import { compareCode } from "@wildboar/x500";
-import { nameError } from "@wildboar/x500/DirectoryAbstractService";
-import {
-    NameProblem_aliasDereferencingProblem,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    SubtreeSpecification,
-    _encode_SubtreeSpecification,
-} from "@wildboar/x500/InformationFramework";
-import {
-    subtreeSpecification,
-} from "@wildboar/x500/InformationFramework";
-import { friends } from "@wildboar/x500/SchemaAdministration";
-import {
-    FriendsDescription,
-    _encode_FriendsDescription,
-} from "@wildboar/x500/SchemaAdministration";
-import {
-    SearchControlOptions,
-    // SearchControlOptions_checkOverspecified,
-    SearchControlOptions_dnAttribute,
-    SearchControlOptions_entryCount,
-    // SearchControlOptions_includeAllAreas,
-    SearchControlOptions_matchOnResidualName,
-    // SearchControlOptions_noSystemRelaxation,
-    // SearchControlOptions_performExactly,
-    // SearchControlOptions_searchAliases,
-    SearchControlOptions_searchFamily,
-    SearchControlOptions_separateFamilyMembers,
-    // SearchControlOptions_useSubset,
-    SearchControlOptions_matchedValuesOnly,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    collectiveOrganizationName,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    collectiveOrganizationalUnitName,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    collectiveLocalityName,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
-    collectiveExclusions,
-} from "@wildboar/x500/InformationFramework";
-import {
-    contextAssertionDefaults,
-} from "@wildboar/x500/InformationFramework";
-import {
-    contextAssertionSubentry,
-} from "@wildboar/x500/InformationFramework";
-import {
-    hierarchyParent,
-} from "@wildboar/x500/InformationFramework";
-import {
-    hierarchyLevel,
-} from "@wildboar/x500/InformationFramework";
-import {
-    hierarchyTop,
-} from "@wildboar/x500/InformationFramework";
-import {
-    hierarchyBelow,
-} from "@wildboar/x500/InformationFramework";
-import {
-    caseIgnoreOrderingMatch,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
+    country,
+    applicationProcess,
     userPwdClass,
 } from "@wildboar/x500/SelectedObjectClasses";
 import {
-    FamilyGrouping_compoundEntry,
-    FamilyGrouping_entryOnly,
-    FamilyGrouping_multiStrand,
-    FamilyGrouping_strands,
-} from "@wildboar/x500/DirectoryAbstractService";
-import { accessControlScheme } from "@wildboar/x500/BasicAccessControl";
+    organizationName,
+    organizationalUnitName,
+    surname,
+    _encode_LocaleContextSyntax,
+    countryName,
+    commonName,
+    _encode_UnboundedDirectoryString,
+    description,
+} from "@wildboar/x500/SelectedAttributeTypes";
+import {
+    _encode_FriendsDescription,
+} from "@wildboar/x500/SchemaAdministration";
 import {
     _encode_UserPwd,
 } from "@wildboar/x500/PasswordPolicy";
-import {
-    userPwd,
-} from "@wildboar/x500/PasswordPolicy";
-import {
-    userPassword,
-} from "@wildboar/x500/AuthenticationFramework";
-import {
-    country,
-} from "@wildboar/x500/SelectedObjectClasses";
-import {
-    countryName,
-} from "@wildboar/x500/SelectedAttributeTypes";
 
 vi.setConfig({ testTimeout: 30_000 });
 

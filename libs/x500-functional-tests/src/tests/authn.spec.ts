@@ -1,3 +1,5 @@
+import { Buffer } from "node:buffer";
+import process from "node:process";
 import {
     ASN1Element,
     FALSE_BIT,
@@ -90,7 +92,7 @@ import type {
     Code,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
     RelativeDistinguishedName,
 } from "@wildboar/x500/InformationFramework";

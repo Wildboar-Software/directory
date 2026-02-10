@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { type OrderingMatcher } from "@wildboar/x500";
 import type { ASN1Element } from "@wildboar/asn1";
 

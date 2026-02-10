@@ -1,3 +1,5 @@
+import process from "node:process";
+import { Buffer } from "node:buffer";
 import type { Context, Connection } from "./types.js";
 import connect from "./connect.js";
 import {

@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { BERElement, ASN1TruncationError } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import { URL } from "node:url";

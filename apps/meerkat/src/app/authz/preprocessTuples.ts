@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { OBJECT_IDENTIFIER, ASN1Element, packBits, EXTERNAL } from "@wildboar/asn1";
 import type { AttributeType, DistinguishedName } from "@wildboar/x500/InformationFramework";
 import type {

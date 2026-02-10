@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { MeerkatContext } from "../ctx.js";
 import type { ClientAssociation } from "../types/index.js";
 import { TRUE, TRUE_BIT } from "@wildboar/asn1";

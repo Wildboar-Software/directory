@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { Vertex, ClientAssociation, OperationReturn } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { ObjectIdentifier, TRUE_BIT, FALSE, unpackBits } from "@wildboar/asn1";

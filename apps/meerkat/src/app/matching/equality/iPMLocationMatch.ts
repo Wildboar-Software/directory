@@ -1,5 +1,5 @@
 import type { ASN1Element } from "@wildboar/asn1";
-import { EqualityMatcher } from "@wildboar/x500";
+import type { EqualityMatcher } from "@wildboar/x500";
 import { _decode_SequenceNumber } from "@wildboar/x400/MSAbstractService";
 import { _decode_IPMLocation } from "@wildboar/x400/IPMSMessageStoreAttributes";
 

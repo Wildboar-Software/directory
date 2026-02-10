@@ -1,5 +1,6 @@
+import process from "node:process";
 import {
-    AccessPoint, PresentationAddress,
+    AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
 import {
     EstablishOperationalBindingArgument,
@@ -58,9 +59,8 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import {
     commonName,
-} from "@wildboar/x500/SelectedAttributeTypes";
-import {
     countryName,
+    PresentationAddress,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     SubentryInfo,

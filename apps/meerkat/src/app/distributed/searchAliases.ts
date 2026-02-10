@@ -22,7 +22,7 @@ import type {
     SearchState,
 } from "./search_i.js";
 import type { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { referral } from "@wildboar/x500/DirectoryAbstractService";
 import { serviceError } from "@wildboar/x500/DirectoryAbstractService";
 import {

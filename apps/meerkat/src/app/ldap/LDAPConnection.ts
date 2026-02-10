@@ -1,4 +1,5 @@
-import { Vertex, ClientAssociation, OperationStatistics } from "../types/index.js";
+import { Buffer } from "node:buffer";
+import { ClientAssociation, OperationStatistics } from "../types/index.js";
 import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import * as net from "node:net";
@@ -69,7 +70,7 @@ import { EventEmitter } from "node:events";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { stringifyDN } from "../x500/stringifyDN.js";
 import {
     SearchRequest_scope,

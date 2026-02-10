@@ -1,3 +1,4 @@
+import process from "node:process";
 import { MeerkatContext } from "../../ctx.js";
 import { ShadowError, UnknownError } from "../../types/index.js";
 import {

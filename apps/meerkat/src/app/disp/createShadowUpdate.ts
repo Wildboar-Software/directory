@@ -1,3 +1,4 @@
+import process from "node:process";
 import { BERElement } from "@wildboar/asn1";
 import type { MeerkatContext } from "../ctx.js";
 import {

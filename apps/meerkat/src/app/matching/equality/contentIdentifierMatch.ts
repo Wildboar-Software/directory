@@ -1,5 +1,5 @@
 import type { ASN1Element } from "@wildboar/asn1";
-import { EqualityMatcher } from "@wildboar/x500";
+import type { EqualityMatcher } from "@wildboar/x500";
 
 export
 const contentIdentifierMatch: EqualityMatcher = (

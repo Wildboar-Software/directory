@@ -1,5 +1,6 @@
-import { Socket } from 'net';
-import { TypedEmitter } from 'tiny-typed-emitter';
+import { Buffer } from "node:buffer";
+import type { Socket } from "node:net";
+import { TypedEmitter } from "tiny-typed-emitter";
 
 export const TPKT_VERSION: number = 3;
 export const MAX_UINT32: number = Math.pow(2, 32);

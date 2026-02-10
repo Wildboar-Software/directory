@@ -1,6 +1,7 @@
+import process from "node:process";
 import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { saveConfig } from "../saveConfig.js";
 
 export

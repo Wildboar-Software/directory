@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context, Vertex } from "../types/index.js";
 import {
     BERElement,
@@ -45,7 +46,7 @@ import type {
 } from "@wildboar/x500/DirectoryAbstractService";
 import getPartialAttributesFromEntryInformation from "../ldap/getPartialAttributesFromEntryInformation.js";
 import { decodeLDAPOID } from "@wildboar/ldap";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import LDAPAssociation from "../ldap/LDAPConnection.js";
 
 const {

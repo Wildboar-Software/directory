@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { MeerkatContext } from "../ctx.js";
 import type { ClientAssociation, IndexableDN } from "../types/index.js";
 import {

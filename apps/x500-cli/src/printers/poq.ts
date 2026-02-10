@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/DirectoryAbstractService";

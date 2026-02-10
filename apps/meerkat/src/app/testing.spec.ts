@@ -1,10 +1,12 @@
+import { Buffer } from "node:buffer";
+import process from "node:process";
 import {
     Context,
     SigningInfo,
     Vertex,
-    LogLevel,
     RemoteCRLCheckiness,
     Configuration,
+    OB_AUTO_ACCEPT_SELF,
 } from "./types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
@@ -86,7 +88,7 @@ import type {
     PkiPath,
 } from "@wildboar/pki-stub";
 import { rootCertificates } from "node:tls";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { attributes as x500at } from "@wildboar/x500";
 import { attributeFromInformationObject } from "./init/attributeFromInformationObject.js";
 import { loadMatchingRules } from "./init/loadMatchingRules.js";
@@ -855,7 +857,7 @@ const config: Configuration = {
             process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB ?? "128",
             process.env.MEERKAT_SIGNING_REQUIRED_FOR_OB,
         ),
-        autoAccept: (process.env.MEERKAT_OB_AUTO_ACCEPT === "1"),
+        autoAccept: OB_AUTO_ACCEPT_SELF,
     },
     sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
     administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,

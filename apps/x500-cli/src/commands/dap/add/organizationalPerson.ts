@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Connection, Context } from "../../../types.js";
 import {
     Attribute,

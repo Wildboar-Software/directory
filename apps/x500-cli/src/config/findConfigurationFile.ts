@@ -1,5 +1,5 @@
 import type { Context } from "../types.js";
-import * as fs from "fs/promises";
+import * as fs from "node:fs/promises";
 import { CONFIG_FILE_LOCATIONS } from "../configFileLocations.js";
 
 export

@@ -1,5 +1,6 @@
+import type { Buffer } from "node:buffer";
 import * as fsync from "node:fs";
-import * as fs from "fs/promises";
+import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { MeerkatContext } from "../../../../ctx.js";
 import {

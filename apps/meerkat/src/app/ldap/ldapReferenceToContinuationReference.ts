@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
     ContinuationReference,
 } from "@wildboar/x500/DistributedOperations";

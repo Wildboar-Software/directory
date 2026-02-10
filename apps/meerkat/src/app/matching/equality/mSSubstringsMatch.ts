@@ -1,4 +1,4 @@
-import { EqualityMatcher } from "@wildboar/x500";
+import type { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_SubstringAssertion,
 } from "@wildboar/x400/MSMatchingRules";

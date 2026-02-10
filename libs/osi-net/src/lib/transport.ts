@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { strict as assert } from 'node:assert';
 import { randomBytes } from 'node:crypto';

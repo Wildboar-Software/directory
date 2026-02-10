@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import type { Context, OCSPOptions } from "../types/index.js";
 import { getOCSPResponse, SignFunction } from "@wildboar/ocsp-client";
 import {

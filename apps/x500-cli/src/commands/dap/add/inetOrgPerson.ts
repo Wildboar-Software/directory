@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Connection, Context } from "../../../types.js";
 import {
     Attribute,
@@ -78,7 +79,7 @@ import {
 import {
     uid,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import * as fs from "fs/promises";
+import * as fs from "node:fs/promises";
 import * as pem from "@wildboar/pem";
 import { BERElement } from "@wildboar/asn1";
 

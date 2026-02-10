@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context } from "../types/index.js";
 import { type LDAPSyntaxEncoder } from "@wildboar/ldap";
 import { ASN1Element } from "@wildboar/asn1";

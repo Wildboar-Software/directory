@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Context, Vertex, Value } from "../types/index.js";
 import {
     UserPwd, _encode_UserPwd,

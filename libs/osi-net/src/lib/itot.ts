@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { ITOTSocket } from './tpkt';
 import { OSINetworkingOptions, WithOSINetworkingOptions } from "../index";
 import {

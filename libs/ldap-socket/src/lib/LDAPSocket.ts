@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import * as net from "node:net";
 import * as tls from "node:tls";
 import { BER } from "@wildboar/asn1/functional";

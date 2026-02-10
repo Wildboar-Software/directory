@@ -12,7 +12,7 @@ import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
 import { ObjectIdentifier } from "@wildboar/asn1";
-import { AssertionError } from "assert";
+import { AssertionError } from "node:assert";
 import {
     pwdAdminSubentry,
 } from "@wildboar/x500/InformationFramework";

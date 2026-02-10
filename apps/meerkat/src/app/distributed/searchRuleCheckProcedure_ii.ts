@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import { Context, ClientAssociation, Vertex, ServiceError } from "../types/index.js";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import {

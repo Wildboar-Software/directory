@@ -1,4 +1,5 @@
 import { Writable } from "node:stream";
+import process from "node:process";
 
 export
 class MutableWriteable extends Writable {

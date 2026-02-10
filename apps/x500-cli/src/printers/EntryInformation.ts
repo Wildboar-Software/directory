@@ -1,6 +1,7 @@
+import process from "node:process";
 import type { Context } from "../types.js";
 import { TRUE, FALSE } from "@wildboar/asn1";
-import {
+import type {
     EntryInformation,
 } from "@wildboar/x500/DirectoryAbstractService";
 import printValue from "./Value.js";

@@ -1,7 +1,8 @@
+import process from "node:process";
 import type { Context } from "../types.js";
 import type { CommandModule } from "yargs";
 import { findConfigurationFile } from "../config/findConfigurationFile.js";
-import * as fs from "fs/promises";
+import * as fs from "node:fs/promises";
 
 export
 function create (ctx: Context): CommandModule {

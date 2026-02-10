@@ -1,3 +1,4 @@
+import process from "node:process";
 import type { Connection, Context } from "../../../../types.js";
 import { DER } from "@wildboar/asn1/functional";
 import {

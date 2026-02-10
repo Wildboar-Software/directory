@@ -114,7 +114,7 @@ import {
 import {
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/InformationFramework";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
     subentryNameForm,
 } from "@wildboar/x500/InformationFramework";

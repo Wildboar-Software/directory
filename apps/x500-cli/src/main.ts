@@ -1,3 +1,4 @@
+import process from "node:process";
 import yargs from "yargs/yargs";
 import type { Argv } from "yargs";
 import ctx from "./ctx.js";

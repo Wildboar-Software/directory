@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Connection, Context, IndexableOID } from "../../types.js";
 import {
     DER,

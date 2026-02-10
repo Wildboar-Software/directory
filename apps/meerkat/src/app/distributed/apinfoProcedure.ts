@@ -74,7 +74,7 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import { printInvokeId } from "../utils/printInvokeId.js";
 import { signChainedArgument } from "../pki/signChainedArgument.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { verifySIGNED } from "../pki/verifySIGNED.js";
 import stringifyDN from "../x500/stringifyDN.js";
 import { bindForChaining } from "../net/bindToOtherDSA.js";

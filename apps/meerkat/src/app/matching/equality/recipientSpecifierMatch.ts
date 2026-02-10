@@ -1,5 +1,5 @@
 import { ASN1Element, ASN1TagClass } from "@wildboar/asn1";
-import { EqualityMatcher } from "@wildboar/x500";
+import type { EqualityMatcher } from "@wildboar/x500";
 import { Context } from "../../types/index.js";
 import getORDescriptorMatcher from "./oRDescriptorMatch.js";
 
