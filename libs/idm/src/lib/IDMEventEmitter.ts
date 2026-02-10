@@ -11,7 +11,7 @@ import type { StartTLS } from "@wildboar/x500/IDMProtocolSpecification";
 import type { TLSResponse } from "@wildboar/x500/IDMProtocolSpecification";
 import type { ResultOrError } from "@wildboar/x500";
 import type { EventEmitter } from "node:events";
-import type { TLSSocket } from "tls";
+import type { TLSSocket } from "node:tls";
 
 export
 interface EventMap {

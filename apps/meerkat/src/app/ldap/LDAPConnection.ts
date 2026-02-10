@@ -1,8 +1,8 @@
 import { Vertex, ClientAssociation, OperationStatistics } from "../types/index.js";
 import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
-import * as net from "net";
-import * as tls from "tls";
+import * as net from "node:net";
+import * as tls from "node:tls";
 import {
     BERElement,
     ASN1TruncationError,
@@ -58,7 +58,7 @@ import { extensions } from "@wildboar/ldap";
 import encodeLDAPDN from "./encodeLDAPDN.js";
 import createNoticeOfDisconnection from "./createNoticeOfDisconnection.js";
 import { differenceInMilliseconds } from "date-fns";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import sleep from "../utils/sleep.js";
 import getRootSubschema from "./getRootSubschema.js";
 import anyPasswordsExist from "../authz/anyPasswordsExist.js";

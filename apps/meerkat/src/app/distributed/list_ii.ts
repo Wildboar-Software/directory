@@ -2,7 +2,7 @@ import { Vertex, ClientAssociation, OperationReturn } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { ObjectIdentifier, TRUE_BIT, FALSE, unpackBits } from "@wildboar/asn1";
 import * as errors from "../types/index.js";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import readSubordinates from "../dit/readSubordinates.js";
 import {

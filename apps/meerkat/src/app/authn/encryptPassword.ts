@@ -2,7 +2,7 @@ import type {
     AlgorithmIdentifier,
 } from "@wildboar/x500/AuthenticationFramework";
 import { scrypt } from "@wildboar/scrypt-0";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 
 /**
  * @summary Encrypts a password for storage in the database or for comparison.

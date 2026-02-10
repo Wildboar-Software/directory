@@ -50,7 +50,7 @@ import {
 import {
     NonSpecificHierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import { randomInt } from "crypto";
+import { randomInt } from "node:crypto";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate.js";
 

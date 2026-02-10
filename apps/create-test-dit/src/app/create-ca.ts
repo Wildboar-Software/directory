@@ -9,7 +9,7 @@ import {
     ASN1Element,
     INTEGER,
 } from "@wildboar/asn1";
-import { KeyObject, createHash, createPrivateKey, createSign, randomBytes } from "crypto";
+import { KeyObject, createHash, createPrivateKey, createSign, randomBytes } from "node:crypto";
 import {
     addEntry,
 } from "@wildboar/x500/DirectoryAbstractService";

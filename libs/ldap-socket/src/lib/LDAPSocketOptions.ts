@@ -1,4 +1,4 @@
-import type { TLSSocketOptions } from "tls";
+import type { TLSSocketOptions } from "node:tls";
 
 /**
  * @summary Options for an LDAP socket

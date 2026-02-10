@@ -6,7 +6,7 @@ import {
     unpackBits,
     OBJECT_IDENTIFIER,
 } from "@wildboar/asn1";
-import { randomBytes, randomInt } from "crypto";
+import { randomBytes, randomInt } from "node:crypto";
 import {
     addEntry,
 } from "@wildboar/x500/DirectoryAbstractService";

@@ -23,14 +23,14 @@ import {
     getConsoleSink,
     getLogger,
 } from "@logtape/logtape";
-import { URL } from "url";
+import { URL } from "node:url";
 import {
     DEFAULT_IDM_BUFFER_SIZE,
     DEFAULT_LDAP_BUFFER_SIZE,
     DEFAULT_REMOTE_CRL_CACHE_TTL,
 } from "./constants.js";
-import type { SecureVersion } from "tls";
-import * as fs from "fs";
+import type { SecureVersion } from "node:tls";
+import * as fs from "node:fs";
 import { PEMObject } from "@wildboar/pem";
 import { BERElement, DERElement, ObjectIdentifier } from "@wildboar/asn1";
 import {
@@ -74,7 +74,7 @@ import {
 import {
     ACPathData,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
-import { KeyObject, createPrivateKey, randomUUID } from "crypto";
+import { KeyObject, createPrivateKey, randomUUID } from "node:crypto";
 import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/BasicAccessControl";
@@ -85,7 +85,7 @@ import { decodePkiPathFromPEM } from "./utils/decodePkiPathFromPEM.js";
 import type {
     PkiPath,
 } from "@wildboar/pki-stub";
-import { rootCertificates } from "tls";
+import { rootCertificates } from "node:tls";
 import { strict as assert } from "assert";
 import { attributes as x500at } from "@wildboar/x500";
 import { attributeFromInformationObject } from "./init/attributeFromInformationObject.js";

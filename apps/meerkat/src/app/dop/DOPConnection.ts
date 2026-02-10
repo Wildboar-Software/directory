@@ -75,7 +75,7 @@ import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
 import { differenceInMilliseconds } from "date-fns";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import sleep from "../utils/sleep.js";
 import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {

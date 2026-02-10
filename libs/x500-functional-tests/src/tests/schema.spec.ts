@@ -15,7 +15,7 @@ import {
     _encodeInteger,
     _encodePrintableString,
 } from "@wildboar/asn1/functional";
-import * as net from "net";
+import * as net from "node:net";
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
@@ -92,7 +92,7 @@ import {
     _encode_TimeSpecification,
     TimeSpecification_time_absolute,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import type { ResultOrError } from "@wildboar/x500";
 import type {
     Code,

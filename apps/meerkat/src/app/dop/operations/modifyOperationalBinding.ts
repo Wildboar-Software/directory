@@ -122,7 +122,7 @@ import {
     _decode_NonSpecificHierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import dnToID from "../../dit/dnToID.js";
-import { randomInt } from "crypto";
+import { randomInt } from "node:crypto";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     ShadowingAgreementInfo,

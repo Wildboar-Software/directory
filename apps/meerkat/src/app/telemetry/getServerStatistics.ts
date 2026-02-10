@@ -1,5 +1,5 @@
 import type { ServerStatistics, Context } from "../types/index.js";
-import * as os from "os";
+import * as os from "node:os";
 
 function canFail <T>(cb: () => T): T | undefined {
     try {

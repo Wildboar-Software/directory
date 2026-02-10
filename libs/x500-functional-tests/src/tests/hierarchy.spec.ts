@@ -18,7 +18,7 @@ import { AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
 import {
     commonName,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import type { ResultOrError } from "@wildboar/x500";
 import {
     ServiceControlOptions,

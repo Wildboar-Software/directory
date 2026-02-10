@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import { unpackBits } from "@wildboar/asn1";
 import {
     SimpleCredentials_validity,

@@ -41,8 +41,8 @@ import type {
 import type { KeyObject } from "node:crypto";
 import type { PkiPath } from "@wildboar/x500/AuthenticationFramework";
 import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
-import type { cpus, networkInterfaces } from "os";
-import type { Socket } from "net";
+import type { cpus, networkInterfaces } from "node:os";
+import type { Socket } from "node:net";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
     DSACredentials,
@@ -68,7 +68,7 @@ import {
     OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/EnhancedSecurity";
 import { DirectoryBindError, DSABindError } from "./errors.js";
-import type { URL } from "url";
+import type { URL } from "node:url";
 import type { PrismaClient, Entry, Prisma } from '../generated/client.js';
 
 type EventReceiver<T> = (params: T) => void;

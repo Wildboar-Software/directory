@@ -21,7 +21,7 @@ import type {
     Code,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { unpackBits } from "@wildboar/asn1";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 
 // TODO: Convert to native function?
 export

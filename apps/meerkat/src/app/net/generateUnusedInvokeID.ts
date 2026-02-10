@@ -1,5 +1,5 @@
 import type { Context } from "../types/index.js";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 
 /**
  * The invoke ID is capped at 1 billion so that the first digit can be

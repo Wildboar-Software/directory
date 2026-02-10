@@ -93,7 +93,7 @@ import { DERElement, unpackBits } from "@wildboar/asn1";
 import { TokenContent, _encode_TokenContent } from "@wildboar/x500/DirectoryAbstractService";
 import { getAlgorithmInfoFromKey } from "../pki/getAlgorithmInfoFromKey.js";
 import { addSeconds } from "date-fns";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import { DER } from "@wildboar/asn1/functional";
 import { SIGNED } from "@wildboar/pki-stub";
 import { sign, createSign } from "node:crypto";

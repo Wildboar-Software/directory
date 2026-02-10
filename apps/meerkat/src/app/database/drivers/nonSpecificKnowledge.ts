@@ -16,7 +16,7 @@ import {
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { DER } from "@wildboar/asn1/functional";
 import { Knowledge, Prisma } from "../../generated/client.js";
-import { randomInt } from "crypto";
+import { randomInt } from "node:crypto";
 import rdnToJson from "../../x500/rdnToJson.js";
 import rdnFromJson from "../../x500/rdnFromJson.js";
 import { compareRDNSequence } from "@wildboar/x500";

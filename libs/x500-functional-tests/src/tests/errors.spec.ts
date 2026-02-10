@@ -15,7 +15,7 @@ import {
     _encodeInteger,
     _encodeOctetString,
 } from "@wildboar/asn1/functional";
-import * as net from "net";
+import * as net from "node:net";
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
@@ -91,7 +91,7 @@ import {
 import {
     id_ar_contextDefaultSpecificArea,
 } from "@wildboar/x500/InformationFramework";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import type { ResultOrError } from "@wildboar/x500";
 import {
     ServiceControlOptions,

@@ -1,9 +1,9 @@
 import type { ClientAssociation } from "./types/index.js";
 import express from "express";
-import * as net from "net";
-import * as tls from "tls";
-import * as path from "path";
-import * as os from "os";
+import * as net from "node:net";
+import * as tls from "node:tls";
+import * as path from "node:path";
+import * as os from "node:os";
 import { IdmBind } from "@wildboar/x500/IDMProtocolSpecification";
 import { rose_transport_from_idm_socket } from "./rose/idm.js";
 import { rose_transport_from_itot_stack } from "./rose/itot.js";
@@ -47,7 +47,7 @@ import {
 import createDatabaseReport from "./telemetry/createDatabaseReport.js";
 import { parse as parseSemver, greaterThan as semverGreaterThan } from "@std/semver";
 import { setSafeTimeout } from "@wildboar/safe-timers";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { flatten } from "flat";
 import { getServerStatistics } from "./telemetry/getServerStatistics.js";
 import { naddrToURI } from "@wildboar/x500";

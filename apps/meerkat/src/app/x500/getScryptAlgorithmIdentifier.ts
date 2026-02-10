@@ -1,6 +1,6 @@
 import { AlgorithmIdentifier } from "@wildboar/pki-stub";
 import { scrypt, Scrypt_params } from "@wildboar/scrypt-0";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import { DER } from "@wildboar/asn1/functional";
 
 /**

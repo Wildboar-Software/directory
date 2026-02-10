@@ -5,7 +5,7 @@ import {
     ObjectIdentifier,
     TRUE_BIT,
 } from "@wildboar/asn1";
-import { randomInt } from "crypto";
+import { randomInt } from "node:crypto";
 import {
     addEntry,
     AddEntryArgument,

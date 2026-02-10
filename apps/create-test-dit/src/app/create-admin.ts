@@ -7,7 +7,7 @@ import {
 } from "@wildboar/asn1";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import {
     addEntry,
 } from "@wildboar/x500/DirectoryAbstractService";

@@ -2,7 +2,7 @@ import type { Context, Vertex, Value } from "../types/index.js";
 import {
     UserPwd, _encode_UserPwd,
 } from "@wildboar/x500/PasswordPolicy";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import encryptPassword from "./encryptPassword.js";
 import type {
     SimpleCredentials,

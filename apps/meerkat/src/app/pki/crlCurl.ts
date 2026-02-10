@@ -21,7 +21,7 @@ import type {
     GeneralNames,
 } from "@wildboar/x500/CertificateExtensions";
 import { strict as assert } from "assert";
-import { URL } from "url";
+import { URL } from "node:url";
 import type {
     ReadArgument,
 } from "@wildboar/x500/DirectoryAbstractService";

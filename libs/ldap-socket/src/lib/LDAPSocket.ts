@@ -1,5 +1,5 @@
-import * as net from "net";
-import * as tls from "tls";
+import * as net from "node:net";
+import * as tls from "node:tls";
 import { BER } from "@wildboar/asn1/functional";
 import { BERElement, ObjectIdentifier } from "@wildboar/asn1";
 import {

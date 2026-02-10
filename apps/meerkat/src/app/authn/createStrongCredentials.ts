@@ -14,7 +14,7 @@ import {
 } from "@wildboar/x500/AuthenticationFramework";
 import { keyTypeToAlgOID } from "../pki/keyTypeToAlgOID.js";
 import { DERElement, unpackBits } from "@wildboar/asn1";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import { generateSIGNED } from "../pki/generateSIGNED.js";
 import type {
     DistinguishedName,

@@ -7,7 +7,7 @@ import {
     objectClass,
     AttributeValueAssertion,
 } from "@wildboar/x500/InformationFramework";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import type { ResultOrError } from "@wildboar/x500";
 import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
 import { getOptionallyProtectedValue } from "@wildboar/x500";

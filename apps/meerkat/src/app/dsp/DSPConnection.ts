@@ -46,7 +46,7 @@ import getContinuationReferenceStatistics from "../telemetry/getContinuationRefe
 import { chainedRead } from "@wildboar/x500/DistributedOperations";
 import { EventEmitter } from "node:events";
 import { differenceInMilliseconds } from "date-fns";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import sleep from "../utils/sleep.js";
 import { strict as assert } from "assert";
 import { flatten } from "flat";

@@ -41,12 +41,12 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import type { Request } from "@wildboar/x500";
 import type { ResultOrError } from "@wildboar/x500";
-import * as net from "net";
-import * as tls from "tls";
+import * as net from "node:net";
+import * as tls from "node:tls";
 import { EventEmitter } from "node:events";
 import { IDMConnection } from "@wildboar/idm";
-import { URL } from "url";
-import * as crypto from "crypto";
+import { URL } from "node:url";
+import * as crypto from "node:crypto";
 import destringifyDN from "../utils/destringifyDN.js";
 import generateSimpleCredsValidity from "../utils/generateSimpleCredsValidity.js";
 import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";

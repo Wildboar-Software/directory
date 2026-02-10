@@ -95,7 +95,7 @@ import {
 import { getDateFromOBTime } from "../getDateFromOBTime.js";
 import { printInvokeId } from "../../utils/printInvokeId.js";
 import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry.js";
-import { randomInt, timingSafeEqual } from "crypto";
+import { randomInt, timingSafeEqual } from "node:crypto";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";

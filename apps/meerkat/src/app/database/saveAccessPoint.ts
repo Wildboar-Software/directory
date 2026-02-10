@@ -23,7 +23,7 @@ import { naddrToURI } from "@wildboar/x500";
 import { Knowledge } from "../generated/client.js";
 import rdnToJson from "../x500/rdnToJson.js";
 import { DER } from "@wildboar/asn1/functional";
-import { URL } from "url";
+import { URL } from "node:url";
 
 /**
  * @summary Save an access point to the database

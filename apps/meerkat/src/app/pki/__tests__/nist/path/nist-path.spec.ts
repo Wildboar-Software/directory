@@ -1,6 +1,6 @@
-import * as fsync from "fs";
+import * as fsync from "node:fs";
 import * as fs from "fs/promises";
-import * as path from "path";
+import * as path from "node:path";
 import type { MeerkatContext } from "../../../../ctx.js";
 import {
     ASN1Construction,

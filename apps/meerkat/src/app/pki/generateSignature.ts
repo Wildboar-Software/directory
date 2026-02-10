@@ -1,4 +1,4 @@
-import { KeyObject, createSign, sign } from "crypto";
+import { KeyObject, createSign, sign } from "node:crypto";
 import {
     AlgorithmIdentifier,
 } from "@wildboar/x500/AuthenticationFramework";

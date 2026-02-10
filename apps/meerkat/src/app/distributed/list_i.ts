@@ -9,7 +9,7 @@ import type { MeerkatContext } from "../ctx.js";
 import { ObjectIdentifier, TRUE_BIT, FALSE } from "@wildboar/asn1";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import * as errors from "../types/index.js";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import {
     ListArgument,
     _decode_ListArgument,

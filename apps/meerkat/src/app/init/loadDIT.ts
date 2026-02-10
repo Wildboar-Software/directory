@@ -1,6 +1,6 @@
 import type { Context, DIT } from "../types/index.js";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import type { Prisma } from "../generated/client.js";
 
 const ROOT_DSE_NAME: Prisma.InputJsonArray = [];

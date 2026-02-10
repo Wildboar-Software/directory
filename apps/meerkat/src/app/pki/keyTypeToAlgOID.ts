@@ -1,4 +1,4 @@
-import type { KeyType } from "crypto";
+import type { KeyType } from "node:crypto";
 import { sa_Ed25519 } from "@wildboar/safecurves-pkix-18";
 import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {

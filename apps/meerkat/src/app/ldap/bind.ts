@@ -2,8 +2,8 @@ import type { Context, BindReturn } from "../types/index.js";
 import type {
     BindRequest,
 } from "@wildboar/ldap";
-import type { Socket } from "net";
-import { TLSSocket } from "tls";
+import type { Socket } from "node:net";
+import { TLSSocket } from "node:tls";
 import {
     BindResponse,
 } from "@wildboar/ldap";

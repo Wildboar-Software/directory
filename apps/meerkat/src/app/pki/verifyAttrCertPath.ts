@@ -24,7 +24,7 @@ import { issuerAltName } from "@wildboar/x500/CertificateExtensions";
 import { BOOLEAN, DERElement, packBits } from "@wildboar/asn1";
 import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { digestOIDToNodeHash } from "./digestOIDToNodeHash.js";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import {
     ObjectDigestInfo_digestedObjectType_publicKeyCert,
     ObjectDigestInfo_digestedObjectType_publicKey,

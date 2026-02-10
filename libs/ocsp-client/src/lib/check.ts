@@ -23,10 +23,10 @@ import type {
     SingleResponse,
 } from "@wildboar/ocsp";
 import { DER } from "@wildboar/asn1/functional";
-import { URL } from "url";
-import * as http from "http";
-import * as https from "https";
-import { TlsOptions } from "tls";
+import { URL } from "node:url";
+import * as http from "node:http";
+import * as https from "node:https";
+import { TlsOptions } from "node:tls";
 import { BERElement, unpackBits } from "@wildboar/asn1";
 import {
     id_sha256,
@@ -42,7 +42,7 @@ import {
     DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import {
     id_pkix_ocsp_basic,
 } from "@wildboar/ocsp";

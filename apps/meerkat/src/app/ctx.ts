@@ -32,14 +32,14 @@ import { getRotatingFileSink } from "@logtape/file";
 import { getSyslogSink } from "@logtape/syslog";
 import i18n from "i18next";
 import { uriToNSAP } from "@wildboar/x500";
-import { URL } from "url";
+import { URL } from "node:url";
 import {
     DEFAULT_IDM_BUFFER_SIZE,
     DEFAULT_LDAP_BUFFER_SIZE,
     DEFAULT_REMOTE_CRL_CACHE_TTL,
 } from "./constants.js";
-import type { SecureVersion } from "tls";
-import * as fs from "fs";
+import type { SecureVersion } from "node:tls";
+import * as fs from "node:fs";
 import { PEMObject } from "@wildboar/pem";
 import { BERElement, DERElement, ObjectIdentifier } from "@wildboar/asn1";
 import {
@@ -83,7 +83,7 @@ import {
 import {
     ACPathData,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
-import { KeyObject, createPrivateKey, randomUUID } from "crypto";
+import { KeyObject, createPrivateKey, randomUUID } from "node:crypto";
 import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/BasicAccessControl";

@@ -7,7 +7,7 @@ import {
     unpackBits,
     OBJECT_IDENTIFIER,
 } from "@wildboar/asn1";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import { attributes as selat } from "@wildboar/x500";
 import { objectClasses as seloc } from "@wildboar/x500";
 import {

@@ -29,7 +29,7 @@ import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { DER } from "@wildboar/asn1/functional";
 import { getDateFromTime } from "@wildboar/x500";
-import { createVerify, createPublicKey, KeyObject } from "crypto";
+import { createVerify, createPublicKey, KeyObject } from "node:crypto";
 import {
     AlgorithmIdentifier, _encode_AlgorithmIdentifier,
 } from "@wildboar/x500/AuthenticationFramework"
@@ -120,7 +120,7 @@ import {
 import {
     id_ad_ocsp,
 } from "@wildboar/x500/PkiPmiExternalDataTypes";
-import { URL } from "url";
+import { URL } from "node:url";
 import { getOCSPResponse, SignFunction } from "@wildboar/ocsp-client";
 import { crlCurl, ReadDispatcherFunction } from "./crlCurl.js";
 import type {

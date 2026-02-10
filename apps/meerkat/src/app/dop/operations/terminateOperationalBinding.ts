@@ -71,7 +71,7 @@ import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import { MeerkatContext } from "../../ctx.js";
 import { AccessPoint, _decode_AccessPoint } from "@wildboar/x500/DistributedOperations";
 import { terminateByTypeAndBindingID } from "../terminateByTypeAndBindingID.js";
-import { timingSafeEqual } from "crypto";
+import { timingSafeEqual } from "node:crypto";
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";

@@ -1,5 +1,5 @@
-import * as net from "net";
-import * as tls from "tls";
+import * as net from "node:net";
+import * as tls from "node:tls";
 import IDMVersion from "./IDMVersion";
 import IDMSegment from "./IDMSegment";
 import { BERElement, ASN1Element, INTEGER, OBJECT_IDENTIFIER } from "@wildboar/asn1";

@@ -1,5 +1,5 @@
 import type { Context, Connection } from "../types.js";
-import * as fs from "fs";
+import * as fs from "node:fs";
 import * as readline from "readline";
 import MutableWriteable from "../utils/MutableWriteable.js";
 import connect from "./connect.js";
@@ -14,7 +14,7 @@ import type {
 } from "@wildboar/x500-cli-config";
 import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import { OBJECT_IDENTIFIER, BERElement } from "@wildboar/asn1";
-import { KeyObject, createPrivateKey } from "crypto";
+import { KeyObject, createPrivateKey } from "node:crypto";
 import { CertificatePair, CertificationPath } from "@wildboar/x500/AuthenticationFramework";
 import { PEMObject } from "@wildboar/pem";
 import {

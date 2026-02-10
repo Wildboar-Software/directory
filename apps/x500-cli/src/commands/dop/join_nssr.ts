@@ -32,7 +32,7 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import { addSeconds } from "date-fns";
 import { ASN1Construction, ASN1TagClass, DERElement, unpackBits } from "@wildboar/asn1";
-import { randomBytes, sign, createSign } from "crypto";
+import { randomBytes, sign, createSign } from "node:crypto";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";

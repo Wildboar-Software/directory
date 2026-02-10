@@ -1,7 +1,7 @@
 import { DSABindError, BindReturn } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
-import type { Socket } from "net";
-import { TLSSocket } from "tls";
+import type { Socket } from "node:net";
+import { TLSSocket } from "node:tls";
 import {
     DSABindArgument,
 } from "@wildboar/x500/DistributedOperations";

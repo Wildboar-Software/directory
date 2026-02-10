@@ -24,12 +24,12 @@ import type {
 } from "@wildboar/x500/InformationFramework";
 import type { Request } from "@wildboar/x500";
 import type { ResultOrError } from "@wildboar/x500";
-import * as net from "net";
-import * as tls from "tls";
+import * as net from "node:net";
+import * as tls from "node:tls";
 import { EventEmitter } from "node:events";
 import { IDMConnection } from "@wildboar/idm";
-import { URL } from "url";
-import * as crypto from "crypto";
+import { URL } from "node:url";
+import * as crypto from "node:crypto";
 import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import { strict as assert } from "assert";
 import { DER } from "@wildboar/asn1/functional";

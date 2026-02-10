@@ -129,7 +129,7 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import { signChainedResult } from "../pki/signChainedResult.js";
 import { addSeconds } from "date-fns";
-import { randomInt } from "crypto";
+import { randomInt } from "node:crypto";
 import { CommonArguments } from "@wildboar/x500/DirectoryAbstractService";
 import LDAPAssociation from "../ldap/LDAPConnection.js";
 import stringifyDN from "../x500/stringifyDN.js";

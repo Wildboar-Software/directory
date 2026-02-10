@@ -6,7 +6,7 @@ import type { Request } from "@wildboar/x500";
 import type { ResultOrError } from "@wildboar/x500";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
 import type { Logger } from "@logtape/logtape";
-import { KeyObject } from "crypto";
+import { KeyObject } from "node:crypto";
 import { CertificationPath } from "@wildboar/x500/AuthenticationFramework";
 import {
     AttributeCertificationPath,

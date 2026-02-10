@@ -25,7 +25,7 @@ import { DER, ASN1Encoder, _encodeNull } from "@wildboar/asn1/functional";
 import type {
     OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/EnhancedSecurity";
-import { KeyObject, createSign, sign, KeyType, randomInt } from "crypto";
+import { KeyObject, createSign, sign, KeyType, randomInt } from "node:crypto";
 import {
     AlgorithmIdentifier,
 } from "@wildboar/x500/AuthenticationFramework";

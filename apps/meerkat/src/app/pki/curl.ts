@@ -1,11 +1,11 @@
 import { BERElement, ASN1TruncationError } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
-import { URL } from "url";
-import * as http from "http";
-import * as https from "https";
-import * as net from "net";
-import { randomInt, randomUUID } from "crypto";
-import { connect, TlsOptions } from "tls";
+import { URL } from "node:url";
+import * as http from "node:http";
+import * as https from "node:https";
+import * as net from "node:net";
+import { randomInt, randomUUID } from "node:crypto";
+import { connect, TlsOptions } from "node:tls";
 import {
     LDAPMessage, _decode_LDAPMessage, _encode_LDAPMessage,
 } from "@wildboar/ldap";

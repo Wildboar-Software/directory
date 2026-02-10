@@ -22,7 +22,7 @@ import {
     HierarchicalAgreement,
     _encode_HierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     IDM_PDU,
@@ -69,7 +69,7 @@ import {
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import * as net from "net";
+import * as net from "node:net";
 import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 const { IDMConnection } = require("../../dist/libs/idm/src/index");
 import { DER } from "@wildboar/asn1/functional";

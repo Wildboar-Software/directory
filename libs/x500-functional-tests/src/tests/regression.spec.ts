@@ -9,7 +9,7 @@ import {
 } from "@wildboar/asn1";
 import { BER, _encodeInteger, _encodePrintableString } from "@wildboar/asn1/functional";
 import { IDMConnection } from "@wildboar/idm";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import type { ResultOrError } from "@wildboar/x500";
 import {
     ServiceControlOptions,

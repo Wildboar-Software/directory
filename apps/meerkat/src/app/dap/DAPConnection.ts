@@ -50,7 +50,7 @@ import getContinuationReferenceStatistics from "../telemetry/getContinuationRefe
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { EventEmitter } from "node:events";
 import { differenceInMilliseconds } from "date-fns";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import sleep from "../utils/sleep.js";
 import { compareCode } from "@wildboar/x500";
 import {

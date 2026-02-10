@@ -1,5 +1,5 @@
-import { Readable } from "stream";
-import * as net from "net";
+import { Readable } from "node:stream";
+import * as net from "node:net";
 import { strict as assert } from "assert";
 import { ASN1Element, BERElement } from "@wildboar/asn1";
 import { BER, DER, _encodeObjectIdentifier, _encodeOctetString } from "@wildboar/asn1/functional";
@@ -46,7 +46,7 @@ import {
 import type {
     Code,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     addEntry,

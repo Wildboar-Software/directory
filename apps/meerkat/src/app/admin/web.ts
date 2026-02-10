@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { MeerkatContext, default as ctx } from "../ctx.js";
 import * as fs from "fs/promises";
-import * as path from "path";
+import * as path from "node:path";
 import { flatten } from "flat";
 import { getServerStatistics } from "../telemetry/getServerStatistics.js";
 import sleep from "../utils/sleep.js";
@@ -270,7 +270,7 @@ import { crlCache } from "../pki/crlCurl.js";
 import { AttributeCertificate } from "@wildboar/pki-stub";
 import * as os from "node:os";
 import { fileURLToPath } from "node:url";
-import { timingSafeEqual, randomInt } from "crypto";
+import { timingSafeEqual, randomInt } from "node:crypto";
 
 async function unauthorized (
     ctx: Context,

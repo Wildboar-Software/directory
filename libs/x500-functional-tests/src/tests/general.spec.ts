@@ -64,7 +64,7 @@ import {
 import {
     id_ar_contextDefaultSpecificArea,
 } from "@wildboar/x500/InformationFramework";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,

@@ -1,6 +1,6 @@
 import { type EqualityMatcher } from "@wildboar/x500";
 import type { ASN1Element } from "@wildboar/asn1";
-import { URL } from "url";
+import { URL } from "node:url";
 
 export
 const uriMatch: EqualityMatcher = (

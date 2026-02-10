@@ -48,7 +48,7 @@ import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/DirectoryAbstractService";
 import type { INTEGER } from "@wildboar/asn1";
-import { randomInt } from "crypto";
+import { randomInt } from "node:crypto";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";

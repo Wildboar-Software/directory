@@ -5,7 +5,7 @@ import 'dotenv/config';
 import i18n from "i18next";
 import I18FileSystemBackend from "i18next-fs-backend";
 import { osLocaleSync } from "os-locale";
-import * as path from "path";
+import * as path from "node:path";
 import main from "./app/main.js";
 import { fileURLToPath } from "node:url";
 import ctx from "./app/ctx.js";
