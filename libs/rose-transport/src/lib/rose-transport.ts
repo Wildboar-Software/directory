@@ -169,6 +169,7 @@ interface RejectParameters {
 export
 interface UnbindParameters extends Timeboxed {
     parameter?: ASN1Element;
+    disconnectSocket?: boolean;
 }
 
 export
@@ -443,7 +444,11 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
             }
             rose.socket?.once("timeout", timeout_function);
             rose.socket?.once("end", end_function);
+            rose.socket?.once("close", end_function);
             rose.write_unbind(params);
+            if (params?.disconnectSocket) {
+                rose.socket?.end();
+            }
         }),
         startTLS: async (params): Promise<StartTLSOutcome> => new Promise((resolve) => {
             if (!rose.write_start_tls) {

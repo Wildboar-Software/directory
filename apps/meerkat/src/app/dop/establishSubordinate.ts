@@ -214,11 +214,6 @@ async function establishSubordinate (
         uuid: immediateSuperior.dse.uuid,
     }));
     const assn = await bindForOBM(ctx, undefined, undefined, targetSystem, aliasDereferenced, signErrors);
-    // const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
-    //     timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
-    //     tlsOptional: ctx.config.chaining.tlsOptional,
-    //     signErrors,
-    // });
     if (!assn) {
         throw new ServiceError(
             ctx.i18n.t("err:could_not_connect"),
@@ -416,7 +411,7 @@ async function establishSubordinate (
             key: ctx.config.signing.key,
         };
         const response = await assn.establishHOBWithSubordinate(opts);
-        assn.unbind() // INTENTIONAL_NO_AWAIT
+        assn.unbind({ disconnectSocket: true }) // INTENTIONAL_NO_AWAIT
             .then()
             .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_unbind"), e));
         if ("result" in response && response.result) {

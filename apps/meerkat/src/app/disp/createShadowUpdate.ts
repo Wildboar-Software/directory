@@ -226,7 +226,7 @@ async function _updateShadowConsumer (
                         code: printCode(coordinateOutcome.error.code),
                     }));
                 }
-                await disp_client.unbind();
+                await disp_client.unbind({ disconnectSocket: true });
                 return;
             }
             else if ("reject" in coordinateOutcome) {
@@ -234,7 +234,7 @@ async function _updateShadowConsumer (
                     obid: ob.binding_identifier,
                     code: coordinateOutcome.reject.problem.toString(),
                 }));
-                await disp_client.unbind();
+                await disp_client.unbind({ disconnectSocket: true });
                 return;
             }
             else if ("abort" in coordinateOutcome) {
@@ -242,14 +242,14 @@ async function _updateShadowConsumer (
                     obid: ob.binding_identifier,
                     code: coordinateOutcome.abort.toString(),
                 }));
-                await disp_client.unbind();
+                await disp_client.unbind({ disconnectSocket: true });
                 return;
             }
             else if ("timeout" in coordinateOutcome) {
                 ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_timeout", {
                     obid: ob.binding_identifier,
                 }));
-                await disp_client.unbind();
+                await disp_client.unbind({ disconnectSocket: true });
                 return;
             }
             else {
@@ -257,7 +257,7 @@ async function _updateShadowConsumer (
                     obid: ob.binding_identifier,
                     data: coordinateOutcome.other,
                 }));
-                await disp_client.unbind();
+                await disp_client.unbind({ disconnectSocket: true });
                 return;
             }
         } else {
@@ -274,7 +274,7 @@ async function _updateShadowConsumer (
         if (performTotalRefresh) {
             const total = await createTotalRefresh(ctx, ob_db_id);
             if (!total) {
-                await disp_client.unbind();
+                await disp_client.unbind({ disconnectSocket: true });
                 return;
             }
             updatedInfo = { total };
@@ -479,7 +479,7 @@ async function _updateShadowConsumer (
         }), extraLogData);
     } finally {
         try {
-            await disp_client?.unbind(); // INTENTIONAL_NO_AWAIT
+            await disp_client?.unbind({ disconnectSocket: true }); // INTENTIONAL_NO_AWAIT
         } catch (e) {
             const extraLogData =  (typeof e === "object" && e !== null)
                 ? {

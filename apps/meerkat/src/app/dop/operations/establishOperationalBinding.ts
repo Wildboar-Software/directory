@@ -275,7 +275,7 @@ async function modifySOB_delete_me (
             key: ctx.config.signing.key,
             securityParameters: sp,
         });
-    dop.unbind();
+    dop.unbind({ disconnectSocket: true });
     if (!("result" in outcome)) {
         return;
     }
@@ -1214,7 +1214,8 @@ async function relayedEstablishOperationalBinding (
     } finally {
         // We update the cached naming contexts, which might have changed.
         cacheNamingContexts(ctx);
-        dop.unbind().catch((e) => ctx.log.warn(ctx.i18n.t("log:dop_unbind_error", { e })));
+        dop.unbind({ disconnectSocket: true })
+            .catch((e) => ctx.log.warn(ctx.i18n.t("log:dop_unbind_error", { e })));
     }
 }
 

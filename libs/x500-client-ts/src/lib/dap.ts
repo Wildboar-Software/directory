@@ -6,6 +6,7 @@ import {
     BindOutcome,
     OperationOutcome,
     UnbindOutcome,
+    UnbindParameters,
 } from "@wildboar/rose-transport";
 import {
     directoryBind,
@@ -319,7 +320,7 @@ interface DAPClient extends AsyncROSEClient<BindArgument, BindResult>, DAPOption
     // From AsyncROSEClient
     bind: (params: DAPBindParameters) => Promise<DAPBindOutcome>;
     request: (params: RequestParameters) => Promise<OperationOutcome>;
-    unbind: () => Promise<UnbindOutcome>;
+    unbind: (params?: UnbindParameters) => Promise<UnbindOutcome>;
 
     read: (arg: ReadOptions) => Promise<OperationOutcome<typeof read["&ResultType"]>>;
     compare: (arg: CompareOptions) => Promise<OperationOutcome<typeof compare["&ResultType"]>>;
@@ -365,7 +366,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             }
         },
         request: (params: RequestParameters): Promise<OperationOutcome> => rose.request(params),
-        unbind: (): Promise<UnbindOutcome> => rose.unbind(),
+        unbind: (params?: UnbindParameters): Promise<UnbindOutcome> => rose.unbind(params),
 
         read: async (params: ReadOptions): Promise<OperationOutcome<typeof read["&ResultType"]>> => {
             const name = name_option_to_name(params.object);

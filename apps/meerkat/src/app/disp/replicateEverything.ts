@@ -247,7 +247,9 @@ async function establishReplicateEverythingAgreement(
     );
     const aet = stringifyDN(ctx, yourAccessPoint.ae_title.rdnSequence);
     if (!("result" in outcome)) {
-        assn.unbind()
+        assn.unbind({
+            disconnectSocket: true,
+        })
             .then((unbind_outcome) => handleUnbind(ctx, unbind_outcome, aet))
             .catch((e) => handleReject(ctx, e));
     }
@@ -292,13 +294,15 @@ async function establishReplicateEverythingAgreement(
                     .catch((e) => handleReject(ctx, e))
                     ;
 
-                assn.unbind()
+                assn.unbind({
+                    disconnectSocket: true,
+                })
                     .then((unbind_outcome) => handleUnbind(ctx, unbind_outcome, aet))
                     .catch((e) => handleReject(ctx, e));
                 return; // We never created the entry in the database.
             }
         }
-        assn.unbind()
+        assn.unbind({ disconnectSocket: true })
             .then((unbind_outcome) => handleUnbind(ctx, unbind_outcome, aet))
             .catch((e) => handleReject(ctx, e));
         if (!data.bindingID) {
@@ -479,7 +483,7 @@ async function modifyReplicateEverythingAgreement(
         },
     );
     const aet = stringifyDN(ctx, yourAccessPoint.ae_title.rdnSequence);
-    assn.unbind()
+    assn.unbind({ disconnectSocket: true })
         .then((unbind_outcome) => handleUnbind(ctx, unbind_outcome, aet))
         .catch((e) => handleReject(ctx, e));
     let err_message: string;

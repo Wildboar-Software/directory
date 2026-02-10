@@ -6,6 +6,7 @@ import {
     BindOutcome,
     OperationOutcome,
     UnbindOutcome,
+    UnbindParameters,
 } from "@wildboar/rose-transport";
 import {
     dSABind, DSABindArgument, DSABindResult,
@@ -142,7 +143,7 @@ interface DOPClient extends AsyncROSEClient<BindArgument, BindResult>, DOPOption
     // From AsyncROSEClient
     bind: (params: DOPBindParameters) => Promise<DOPBindOutcome>;
     request: (params: RequestParameters) => Promise<OperationOutcome>;
-    unbind: () => Promise<UnbindOutcome>;
+    unbind: (params?: UnbindParameters) => Promise<UnbindOutcome>;
 
     // Generic operation methods
     establishOperationalBinding: (params: EstablishOBOptions) => Promise<OperationOutcome<typeof establishOperationalBinding["&ResultType"]>>;
@@ -517,7 +518,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
             }
         },
         request: async (params: RequestParameters): Promise<OperationOutcome> => rose.request(params),
-        unbind: async (): Promise<UnbindOutcome> => rose.unbind(),
+        unbind: async (params): Promise<UnbindOutcome> => rose.unbind(params),
         establishOperationalBinding: establishOperationalBinding_,
         modifyOperationalBinding: modifyOperationalBinding_,
         terminateOperationalBinding: terminateOperationalBinding_,

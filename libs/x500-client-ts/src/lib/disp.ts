@@ -6,6 +6,7 @@ import {
     BindOutcome,
     OperationOutcome,
     UnbindOutcome,
+    UnbindParameters,
 } from "@wildboar/rose-transport";
 import {
     dSABind,
@@ -81,7 +82,7 @@ interface DISPClient extends AsyncROSEClient<BindArgument, BindResult>, DISPOpti
     // From AsyncROSEClient
     bind: (params: DISPBindParameters) => Promise<DISPBindOutcome>;
     request: (params: RequestParameters) => Promise<OperationOutcome>;
-    unbind: () => Promise<UnbindOutcome>;
+    unbind: (params?: UnbindParameters) => Promise<UnbindOutcome>;
 
     requestShadowUpdate: (params: RequestShadowUpdateOptions) => Promise<OperationOutcome<typeof requestShadowUpdate["&ResultType"]>>;
     updateShadow: (params: UpdateShadowOptions) => Promise<OperationOutcome<typeof updateShadow["&ResultType"]>>;
@@ -120,7 +121,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
             }
         },
         request: async (params: RequestParameters): Promise<OperationOutcome> => rose.request(params),
-        unbind: async (): Promise<UnbindOutcome> => rose.unbind(),
+        unbind: async (params?: UnbindParameters): Promise<UnbindOutcome> => rose.unbind(params),
 
         requestShadowUpdate: async (params: RequestShadowUpdateOptions): Promise<OperationOutcome<typeof requestShadowUpdate["&ResultType"]>> => {
             const data = new RequestShadowUpdateArgumentData(

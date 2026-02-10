@@ -165,7 +165,7 @@ async function request_a_shadow_update (
             return;
         }
     } finally {
-        disp_client.unbind();
+        disp_client.unbind({ disconnectSocket: true });
     }
 }
 

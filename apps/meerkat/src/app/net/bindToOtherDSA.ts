@@ -382,7 +382,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                 if (result.responding_ae_title && "directoryName" in result.responding_ae_title) {
                     ae_title = result.responding_ae_title.directoryName.rdnSequence;
                 }
-                const _ = await c.unbind();
+                const _ = await c.unbind({ disconnectSocket: true });
             } else if ("error" in bind_outcome) {
                 const error = bind_outcome.error;
                 if (error.responding_ae_title && "directoryName" in error.responding_ae_title) {

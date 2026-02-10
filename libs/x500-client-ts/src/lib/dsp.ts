@@ -6,6 +6,7 @@ import {
     BindOutcome,
     OperationOutcome,
     UnbindOutcome,
+    UnbindParameters,
 } from "@wildboar/rose-transport";
 import {
     read,
@@ -355,7 +356,7 @@ interface DSPClient extends AsyncROSEClient<BindArgument, BindResult>, DSPOption
     // From AsyncROSEClient
     bind: (params: DSPBindParameters) => Promise<DSPBindOutcome>;
     request: (params: RequestParameters) => Promise<OperationOutcome>;
-    unbind: () => Promise<UnbindOutcome>;
+    unbind: (params?: UnbindParameters) => Promise<UnbindOutcome>;
 
     read: (arg: DSPReadOptions) => Promise<OperationOutcome<typeof chainedRead["&ResultType"]>>;
     compare: (arg: DSPCompareOptions) => Promise<OperationOutcome<typeof chainedCompare["&ResultType"]>>;
@@ -433,7 +434,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             }
         },
         request: async (params: RequestParameters): Promise<OperationOutcome> => rose.request(params),
-        unbind: async (): Promise<UnbindOutcome> => rose.unbind(),
+        unbind: async (params?: UnbindParameters): Promise<UnbindOutcome> => rose.unbind(params),
 
         read: async (params: DSPReadOptions): Promise<OperationOutcome<typeof chainedRead["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
