@@ -49,6 +49,9 @@ async function stripEntry (ctx: Context, vertex: Vertex): Promise<void> {
                 hierarchyPath: null,
                 hierarchyLevel: null,
             },
+            select: {
+                id: true,
+            },
         }),
     ]);
 }

@@ -96,6 +96,9 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             password: Buffer.from(hist.password.toBytes()),
             time: hist.time,
         },
+        select: {
+            id: true,
+        },
     }));
 };
 

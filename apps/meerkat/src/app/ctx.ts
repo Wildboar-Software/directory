@@ -116,7 +116,10 @@ const adapter = new PrismaLibSql({
     // Recommended choice here: https://www.prisma.io/docs/orm/overview/databases/sqlite#3-configure-timestamp-format-for-backward-compatibility
     timestampFormat: 'iso8601',
 });
-const db = new PrismaClient({ adapter });
+const db = new PrismaClient({
+    adapter,
+    // log: ["query"], // Uncomment to log queries
+});
 
 function parseLogLevel(s: string | null | undefined): LogtapeLogLevel {
     if (!s) {
