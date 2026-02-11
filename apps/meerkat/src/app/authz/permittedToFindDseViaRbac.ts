@@ -55,6 +55,8 @@ async function permittedToFindDseViaRbac (
                 in: vertex.dse.rdn.map((atav) => atav.type_.toBytes()),
             },
             normalized_str: {
+                // TODO: I think this could be replaced with a query to DistinguishedValue directly,
+                // then you can get rid of the normalized_str field in AttributeValue entirely.
                 in: vertex.dse.rdn.map((atav) => getNormalizer(atav.type_)?.(ctx, atav.value) ?? ""),
             },
         },

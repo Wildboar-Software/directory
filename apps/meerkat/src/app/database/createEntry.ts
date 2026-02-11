@@ -158,16 +158,10 @@ async function createDse (
             lastShadowUpdate: entryInit.lastShadowUpdate,
             alias: entryInit.alias,
         },
-        include: {
-            RDN: {
-                select: {
-                    type_oid: true,
-                    tag_class: true,
-                    constructed: true,
-                    tag_number: true,
-                    content_octets: true,
-                },
-            },
+        select: {
+            id: true,
+            dseUUID: true,
+            entryUUID: true,
         },
     });
     const aliasedEntryValue = groupedAttrs.get(ID_AEN)?.[0].values[0];
@@ -248,6 +242,7 @@ async function createDse (
             modifier,
             false, // Don't check for existing values.
             signErrors,
+            true,
         ),
         ctx.db.entry.update({
             where: {
@@ -256,26 +251,8 @@ async function createDse (
             data: {
                 deleteTimestamp: null,
             },
-            include: {
-                RDN: {
-                    select: {
-                        type_oid: true,
-                        tag_class: true,
-                        constructed: true,
-                        tag_number: true,
-                        content_octets: true,
-                    },
-                    orderBy: { // So the RDNs appear in the order in which they were entered.
-                        // This prevents an undesirable scenario where some users might show
-                        // up as GN=Jonathan+SN=Wilbur or SN=Wilbur+GN=Jonathan.
-                        order_index: "asc",
-                    },
-                },
-                EntryObjectClass: {
-                    select: {
-                        object_class: true,
-                    },
-                },
+            select: {
+                id: true,
             },
         }),
     ]);
@@ -489,6 +466,7 @@ async function createEntry (
             modifier,
             false, // Don't check for existing values.
             signErrors,
+            true,
         ),
         ctx.db.entry.update({
             where: {

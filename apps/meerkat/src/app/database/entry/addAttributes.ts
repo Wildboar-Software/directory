@@ -32,6 +32,8 @@ import { ASN1Construction } from "@wildboar/asn1";
  * @param modifier The modifier of the entry
  * @param checkForExisting Whether to check whether the values already exist and
  *  throw an error if so
+ * @param signErrors Whether to sign errors
+ * @param addingEntry Whether this is coming from an added entry
  * @returns An array of `PrismaPromise`s that will effectively add those
  *  attributes to the entry
  *
@@ -46,6 +48,7 @@ async function addAttributes (
     modifier?: DistinguishedName,
     checkForExisting: boolean = true,
     signErrors: boolean = false,
+    addingEntry: boolean = false,
 ): Promise<Prisma.PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
         // TODO: Change the function signature to use attributes directly.
@@ -59,10 +62,12 @@ async function addAttributes (
     }
     const normalizerGetter = getEqualityNormalizer(ctx);
     const pendingUpdates: PendingUpdates = {
-        entryUpdate: {
-            modifyTimestamp: new Date(),
-            modifiersName: modifier?.map(rdnToJson),
-        },
+        entryUpdate: addingEntry
+            ? {}
+            : {
+                modifyTimestamp: new Date(),
+                modifiersName: modifier?.map(rdnToJson),
+            },
         otherWrites: [],
     };
     const unspecialAttributes: Attribute[] = [];
@@ -137,13 +142,17 @@ async function addAttributes (
         }
     }
     return [
-        ctx.db.entry.update({
-            where: {
-                id: entry.dse.id,
-            },
-            data: pendingUpdates.entryUpdate,
-            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-        }),
+        ...Object.keys(pendingUpdates.entryUpdate).length > 0
+            ? [
+                ctx.db.entry.update({
+                    where: {
+                        id: entry.dse.id,
+                    },
+                    data: pendingUpdates.entryUpdate,
+                    select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+                }),
+            ]
+            : [],
         ...pendingUpdates.otherWrites,
         ctx.db.attributeValue.createMany({ data: noContextValueCreates }),
         ...contextPromises,
