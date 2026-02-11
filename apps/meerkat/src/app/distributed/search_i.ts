@@ -556,11 +556,7 @@ function addFriends (
  * When using a search operation to filter entries, it may be possible to
  * "pre-filter" said entries within the DBMS before
  * performing the more expensive work of loading those entries and evaluating
- * the filter against them in memory. For instance, if the user is filtering for
- * a `surname` of `Wilbur`, we can pre-filter entries that have an
- * `AttributeValue` whose `normalized_str` is `WILBUR`, thereby greatly
- * narrowing the number of entries Meerkat DSA has to actually load into memory
- * and evaluate.
+ * the filter against them in memory.
  *
  * This function implements such an optimization by converting the search filter
  * item into a Prisma (that's the ORM used by Meerkat DSA) filter.
@@ -743,63 +739,6 @@ function convertFilterItemToPrismaSelect (
                     },
                 };
             }
-            // case (uuid["&id"].toString()): {
-            //     return {
-            //         AttributeValue: {
-            //             some: {
-            //                 type_oid: {
-            //                     in: superTypes.map((st) => st.toBytes()),
-            //                 },
-            //             },
-            //         },
-            //     };
-            // }
-            // case (bitString["&id"].toString()): {
-            //     return {
-            //         AttributeValue: {
-            //             some: {
-            //                 type_oid: {
-            //                     in: superTypes.map((st) => st.toBytes()),
-            //                 },
-            //             },
-            //         },
-            //     };
-            // }
-            // case (countryString["&id"].toString()): {
-            //     return {
-            //         AttributeValue: {
-            //             some: {
-            //                 type_oid: {
-            //                     in: superTypes.map((st) => st.toBytes()),
-            //                 },
-            //             },
-            //         },
-            //     };
-            // }
-            // case (octetString["&id"].toString()): {
-            //     return {
-            //         AttributeValue: {
-            //             some: {
-            //                 type_oid: {
-            //                     in: superTypes.map((st) => st.toBytes()),
-            //                 },
-            //             },
-            //         },
-            //     };
-            // }
-        }
-        const normalized_str = getEqualityNormalizer(ctx)(type_)?.(ctx, filterItem.equality.assertion);
-        if (normalized_str) {
-            return {
-                AttributeValue: {
-                    some: {
-                        type_oid: {
-                            in: selected.map((st) => st.toBytes()),
-                        },
-                        normalized_str,
-                    },
-                },
-            };
         }
         return {
             AttributeValue: {
@@ -946,11 +885,7 @@ function convertFilterItemToPrismaSelect (
  * When using a search operation to filter entries, it may be possible to
  * "pre-filter" said entries within the DBMS before
  * performing the more expensive work of loading those entries and evaluating
- * the filter against them in memory. For instance, if the user is filtering for
- * a `surname` of `Wilbur`, we can pre-filter entries that have an
- * `AttributeValue` whose `normalized_str` is `WILBUR`, thereby greatly
- * narrowing the number of entries Meerkat DSA has to actually load into memory
- * and evaluate.
+ * the filter against them in memory.
  *
  * This function implements such an optimization by converting the search filter
  * into a Prisma (that's the ORM used by Meerkat DSA) filter.

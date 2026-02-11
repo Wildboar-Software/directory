@@ -2927,8 +2927,7 @@ export const AttributeValueScalarFieldEnum = {
   constructed: 'constructed',
   tag_number: 'tag_number',
   content_octets: 'content_octets',
-  jer: 'jer',
-  normalized_str: 'normalized_str'
+  jer: 'jer'
 } as const
 
 export type AttributeValueScalarFieldEnum = (typeof AttributeValueScalarFieldEnum)[keyof typeof AttributeValueScalarFieldEnum]
@@ -3235,8 +3234,7 @@ export type DistinguishedValueScalarFieldEnum = (typeof DistinguishedValueScalar
 export const EntryObjectClassScalarFieldEnum = {
   id: 'id',
   entry_id: 'entry_id',
-  object_class: 'object_class',
-  created_at: 'created_at'
+  object_class: 'object_class'
 } as const
 
 export type EntryObjectClassScalarFieldEnum = (typeof EntryObjectClassScalarFieldEnum)[keyof typeof EntryObjectClassScalarFieldEnum]

@@ -184,13 +184,6 @@ model PasswordDictionaryItem {
   @@unique([bit, item])
 }
 
-// AccessPoint ::= SET {
-//     ae-title             [0]  Name,
-//     address              [1]  PresentationAddress,
-//     protocolInformation  [2]  SET SIZE (1..MAX) OF ProtocolInformation OPTIONAL,
-//     --                   [6]  Not to be used
-//     ... }
-
 model AttributeValue {
   id             Int     @id @default(autoincrement())
   entry_id       Int
@@ -202,14 +195,10 @@ model AttributeValue {
   tag_number     Int
   content_octets Bytes
   jer            Json?
-  normalized_str String?
 
   ContextValue ContextValue[]
 
-  // 128 is the old upper bound on most string types. See UpperBounds.asn1.
-  @@index([entry_id, type_oid, tag_class, constructed, tag_number, normalized_str])
-  @@index([entry_id, operational, type_oid])
-  @@index([type_oid, tag_class, constructed, tag_number, normalized_str])
+  @@index([entry_id, type_oid, operational])
 }
 
 model ContextValue {
@@ -682,8 +671,6 @@ model DistinguishedValue {
   order_index    Int
 
   @@unique([entry_id, type_oid])
-  // I'm not sure if the entry_id really belongs in the index, but
-  @@unique([type_oid, normalized_str, entry_id])
 }
 
 model EntryObjectClass {
@@ -691,10 +678,8 @@ model EntryObjectClass {
   entry_id     Int
   entry        Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   object_class String // OID
-  created_at   DateTime @default(now())
 
   @@unique([entry_id, object_class])
-  @@index([object_class, entry_id])
 }
 
 model Alias {

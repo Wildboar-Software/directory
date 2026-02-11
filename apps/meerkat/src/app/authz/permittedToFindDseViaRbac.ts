@@ -8,6 +8,7 @@ import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecur
 import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 import { rbacACDF } from "./rbacACDF.js";
 import { _decode_SignedSecurityLabel } from "@wildboar/x500/EnhancedSecurity";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
 
 /**
  * @summary Whether a user is permitted to find a given DSE under RBAC.
@@ -43,8 +44,9 @@ async function permittedToFindDseViaRbac (
     vertex: Vertex,
 ): Promise<boolean> {
     const getNormalizer = getEqualityNormalizer(ctx);
-    const dvs = await ctx.db.attributeValue.findMany({
+    const allValuesOfDistinguishedTypes = await ctx.db.attributeValue.findMany({
         where: {
+            entry_id: vertex.dse.id,
             /**
              * This selection will technically over-match. For instance,
              * if the RDN is gn=Jonathan+sn=Wilbur, it will also return
@@ -53,11 +55,6 @@ async function permittedToFindDseViaRbac (
              */
             type_oid: {
                 in: vertex.dse.rdn.map((atav) => atav.type_.toBytes()),
-            },
-            normalized_str: {
-                // TODO: I think this could be replaced with a query to DistinguishedValue directly,
-                // then you can get rid of the normalized_str field in AttributeValue entirely.
-                in: vertex.dse.rdn.map((atav) => getNormalizer(atav.type_)?.(ctx, atav.value) ?? ""),
             },
         },
         select: {
@@ -76,6 +73,53 @@ async function permittedToFindDseViaRbac (
             },
         },
     });
+
+    const noSecurityLabels = allValuesOfDistinguishedTypes
+        .every((v) => v.ContextValue.length === 0);
+    if (noSecurityLabels) {
+        return true;
+    }
+
+    // const namingMatcher = getNamingMatcherGetter(ctx);
+    const rdnSet: Set<string> = new Set();
+    for (const atav of vertex.dse.rdn) {
+        const normalizer = getNormalizer(atav.type_);
+        if (!normalizer) {
+            continue;
+        }
+        const normalized = normalizer(ctx, atav.value);
+        if (!normalized) {
+            continue;
+        }
+        const key = `${atav.type_.toString()}=${normalized}`;
+        rdnSet.add(key);
+    }
+
+    const dvs: typeof allValuesOfDistinguishedTypes = [];
+    for (const v of allValuesOfDistinguishedTypes) {
+        const attr_type = ObjectIdentifier.fromBytes(v.type_oid);
+        const normalizer = getNormalizer(attr_type);
+        if (!normalizer) {
+            continue;
+        }
+        const el = attributeValueFromDB(v);
+        const normalized = normalizer(ctx, el);
+        if (!normalized) {
+            continue;
+        }
+        const key = `${attr_type.toString()}=${normalized}`;
+        if (rdnSet.has(key)) {
+            dvs.push(v);
+            rdnSet.delete(key);
+        }
+    }
+    if (rdnSet.size > 0) {
+        // We return "false" because we could not relate attribute values to
+        // the distinguished ones stored in the database.
+        // TODO: Log
+        return false;
+    }
+
     for (const dv of dvs) {
         if (dv.ContextValue.length === 0) {
             continue;

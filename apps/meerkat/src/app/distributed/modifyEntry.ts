@@ -3685,7 +3685,6 @@ async function modifyEntry (
                     tag_number: ASN1UniversalType.objectIdentifier,
                     content_octets: autonomousId.value as Uint8Array<ArrayBuffer>,
                     jer: id_ar_autonomousArea.toJSON(),
-                    normalized_str: id_ar_autonomousArea.toString(),
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),

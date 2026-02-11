@@ -40,21 +40,18 @@ export type EntryObjectClassMinAggregateOutputType = {
   id: number | null
   entry_id: number | null
   object_class: string | null
-  created_at: Date | null
 }
 
 export type EntryObjectClassMaxAggregateOutputType = {
   id: number | null
   entry_id: number | null
   object_class: string | null
-  created_at: Date | null
 }
 
 export type EntryObjectClassCountAggregateOutputType = {
   id: number
   entry_id: number
   object_class: number
-  created_at: number
   _all: number
 }
 
@@ -73,21 +70,18 @@ export type EntryObjectClassMinAggregateInputType = {
   id?: true
   entry_id?: true
   object_class?: true
-  created_at?: true
 }
 
 export type EntryObjectClassMaxAggregateInputType = {
   id?: true
   entry_id?: true
   object_class?: true
-  created_at?: true
 }
 
 export type EntryObjectClassCountAggregateInputType = {
   id?: true
   entry_id?: true
   object_class?: true
-  created_at?: true
   _all?: true
 }
 
@@ -181,7 +175,6 @@ export type EntryObjectClassGroupByOutputType = {
   id: number
   entry_id: number
   object_class: string
-  created_at: Date
   _count: EntryObjectClassCountAggregateOutputType | null
   _avg: EntryObjectClassAvgAggregateOutputType | null
   _sum: EntryObjectClassSumAggregateOutputType | null
@@ -211,7 +204,6 @@ export type EntryObjectClassWhereInput = {
   id?: Prisma.IntFilter<"EntryObjectClass"> | number
   entry_id?: Prisma.IntFilter<"EntryObjectClass"> | number
   object_class?: Prisma.StringFilter<"EntryObjectClass"> | string
-  created_at?: Prisma.DateTimeFilter<"EntryObjectClass"> | Date | string
   entry?: Prisma.XOR<Prisma.EntryScalarRelationFilter, Prisma.EntryWhereInput>
 }
 
@@ -219,7 +211,6 @@ export type EntryObjectClassOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   entry_id?: Prisma.SortOrder
   object_class?: Prisma.SortOrder
-  created_at?: Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
 }
 
@@ -231,7 +222,6 @@ export type EntryObjectClassWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.EntryObjectClassWhereInput | Prisma.EntryObjectClassWhereInput[]
   entry_id?: Prisma.IntFilter<"EntryObjectClass"> | number
   object_class?: Prisma.StringFilter<"EntryObjectClass"> | string
-  created_at?: Prisma.DateTimeFilter<"EntryObjectClass"> | Date | string
   entry?: Prisma.XOR<Prisma.EntryScalarRelationFilter, Prisma.EntryWhereInput>
 }, "id" | "entry_id_object_class">
 
@@ -239,7 +229,6 @@ export type EntryObjectClassOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   entry_id?: Prisma.SortOrder
   object_class?: Prisma.SortOrder
-  created_at?: Prisma.SortOrder
   _count?: Prisma.EntryObjectClassCountOrderByAggregateInput
   _avg?: Prisma.EntryObjectClassAvgOrderByAggregateInput
   _max?: Prisma.EntryObjectClassMaxOrderByAggregateInput
@@ -254,12 +243,10 @@ export type EntryObjectClassScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"EntryObjectClass"> | number
   entry_id?: Prisma.IntWithAggregatesFilter<"EntryObjectClass"> | number
   object_class?: Prisma.StringWithAggregatesFilter<"EntryObjectClass"> | string
-  created_at?: Prisma.DateTimeWithAggregatesFilter<"EntryObjectClass"> | Date | string
 }
 
 export type EntryObjectClassCreateInput = {
   object_class: string
-  created_at?: Date | string
   entry: Prisma.EntryCreateNestedOneWithoutEntryObjectClassInput
 }
 
@@ -267,12 +254,10 @@ export type EntryObjectClassUncheckedCreateInput = {
   id?: number
   entry_id: number
   object_class: string
-  created_at?: Date | string
 }
 
 export type EntryObjectClassUpdateInput = {
   object_class?: Prisma.StringFieldUpdateOperationsInput | string
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   entry?: Prisma.EntryUpdateOneRequiredWithoutEntryObjectClassNestedInput
 }
 
@@ -280,26 +265,22 @@ export type EntryObjectClassUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   entry_id?: Prisma.IntFieldUpdateOperationsInput | number
   object_class?: Prisma.StringFieldUpdateOperationsInput | string
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EntryObjectClassCreateManyInput = {
   id?: number
   entry_id: number
   object_class: string
-  created_at?: Date | string
 }
 
 export type EntryObjectClassUpdateManyMutationInput = {
   object_class?: Prisma.StringFieldUpdateOperationsInput | string
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EntryObjectClassUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   entry_id?: Prisma.IntFieldUpdateOperationsInput | number
   object_class?: Prisma.StringFieldUpdateOperationsInput | string
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EntryObjectClassListRelationFilter = {
@@ -321,7 +302,6 @@ export type EntryObjectClassCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   entry_id?: Prisma.SortOrder
   object_class?: Prisma.SortOrder
-  created_at?: Prisma.SortOrder
 }
 
 export type EntryObjectClassAvgOrderByAggregateInput = {
@@ -333,14 +313,12 @@ export type EntryObjectClassMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   entry_id?: Prisma.SortOrder
   object_class?: Prisma.SortOrder
-  created_at?: Prisma.SortOrder
 }
 
 export type EntryObjectClassMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   entry_id?: Prisma.SortOrder
   object_class?: Prisma.SortOrder
-  created_at?: Prisma.SortOrder
 }
 
 export type EntryObjectClassSumOrderByAggregateInput = {
@@ -392,13 +370,11 @@ export type EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput = {
 
 export type EntryObjectClassCreateWithoutEntryInput = {
   object_class: string
-  created_at?: Date | string
 }
 
 export type EntryObjectClassUncheckedCreateWithoutEntryInput = {
   id?: number
   object_class: string
-  created_at?: Date | string
 }
 
 export type EntryObjectClassCreateOrConnectWithoutEntryInput = {
@@ -433,30 +409,25 @@ export type EntryObjectClassScalarWhereInput = {
   id?: Prisma.IntFilter<"EntryObjectClass"> | number
   entry_id?: Prisma.IntFilter<"EntryObjectClass"> | number
   object_class?: Prisma.StringFilter<"EntryObjectClass"> | string
-  created_at?: Prisma.DateTimeFilter<"EntryObjectClass"> | Date | string
 }
 
 export type EntryObjectClassCreateManyEntryInput = {
   id?: number
   object_class: string
-  created_at?: Date | string
 }
 
 export type EntryObjectClassUpdateWithoutEntryInput = {
   object_class?: Prisma.StringFieldUpdateOperationsInput | string
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EntryObjectClassUncheckedUpdateWithoutEntryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   object_class?: Prisma.StringFieldUpdateOperationsInput | string
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EntryObjectClassUncheckedUpdateManyWithoutEntryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   object_class?: Prisma.StringFieldUpdateOperationsInput | string
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -465,7 +436,6 @@ export type EntryObjectClassSelect<ExtArgs extends runtime.Types.Extensions.Inte
   id?: boolean
   entry_id?: boolean
   object_class?: boolean
-  created_at?: boolean
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["entryObjectClass"]>
 
@@ -473,7 +443,6 @@ export type EntryObjectClassSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   id?: boolean
   entry_id?: boolean
   object_class?: boolean
-  created_at?: boolean
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["entryObjectClass"]>
 
@@ -481,7 +450,6 @@ export type EntryObjectClassSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   id?: boolean
   entry_id?: boolean
   object_class?: boolean
-  created_at?: boolean
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["entryObjectClass"]>
 
@@ -489,10 +457,9 @@ export type EntryObjectClassSelectScalar = {
   id?: boolean
   entry_id?: boolean
   object_class?: boolean
-  created_at?: boolean
 }
 
-export type EntryObjectClassOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "object_class" | "created_at", ExtArgs["result"]["entryObjectClass"]>
+export type EntryObjectClassOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "object_class", ExtArgs["result"]["entryObjectClass"]>
 export type EntryObjectClassInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }
@@ -512,7 +479,6 @@ export type $EntryObjectClassPayload<ExtArgs extends runtime.Types.Extensions.In
     id: number
     entry_id: number
     object_class: string
-    created_at: Date
   }, ExtArgs["result"]["entryObjectClass"]>
   composites: {}
 }
@@ -940,7 +906,6 @@ export interface EntryObjectClassFieldRefs {
   readonly id: Prisma.FieldRef<"EntryObjectClass", 'Int'>
   readonly entry_id: Prisma.FieldRef<"EntryObjectClass", 'Int'>
   readonly object_class: Prisma.FieldRef<"EntryObjectClass", 'String'>
-  readonly created_at: Prisma.FieldRef<"EntryObjectClass", 'DateTime'>
 }
     
 

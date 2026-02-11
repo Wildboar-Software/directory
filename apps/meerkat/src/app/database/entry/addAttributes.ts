@@ -93,7 +93,6 @@ async function addAttributes (
     for (const attr of unspecialAttributes) {
         const type_oid = attr.type_.toBytes();
         const operational = ((ctx.attributeTypes.get(attr.type_.toString())?.usage ?? userApplications) !== userApplications);
-        const normalizer = normalizerGetter(attr.type_);
         for (const value of attr.values) {
             noContextValueCreates.push({
                 entry_id: entry.dse.id,
@@ -106,7 +105,6 @@ async function addAttributes (
                 jer: (value.construction === ASN1Construction.primitive)
                     ? value.toJSON() as Prisma.InputJsonValue
                     : undefined,
-                normalized_str: normalizer?.(ctx, value),
             });
         }
         for (const vwc of attr.valuesWithContext ?? []) {
@@ -122,7 +120,6 @@ async function addAttributes (
                     jer: (vwc.value.construction === ASN1Construction.primitive)
                         ? vwc.value.toJSON() as Prisma.InputJsonValue
                         : undefined,
-                    normalized_str: normalizer?.(ctx, vwc.value),
                     ContextValue: {
                         createMany: {
                             data: vwc.contextList

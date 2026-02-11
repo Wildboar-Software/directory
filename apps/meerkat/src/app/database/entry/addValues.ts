@@ -32,7 +32,6 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import hasValueWithoutDriver from "./hasValueWithoutDriver.js";
-import getEqualityNormalizer from "../../x500/getEqualityNormalizer.js";
 
 /**
  * @summary Validate the values to be added to the entry
@@ -304,7 +303,6 @@ async function addValues(
             signErrors,
         );
     }
-    const normalizerGetter = getEqualityNormalizer(ctx);
     const pendingUpdates: PendingUpdates = otherPromises ?? {
         entryUpdate: {
             modifyTimestamp: new Date(),
@@ -351,7 +349,6 @@ async function addValues(
                 jer: (attr.value.construction === ASN1Construction.primitive)
                     ? attr.value.toJSON() as Prisma.InputJsonValue
                     : undefined,
-                normalized_str: normalizerGetter(attr.type)?.(ctx, attr.value),
             })),
         }),
         ...unspecialValuesWithContexts // The ContextValue relation is only available in .create(), not .createMany().
@@ -367,7 +364,6 @@ async function addValues(
                     jer: (attr.value.construction === ASN1Construction.primitive)
                         ? attr.value.toJSON() as Prisma.InputJsonValue
                         : undefined,
-                    normalized_str: normalizerGetter(attr.type)?.(ctx, attr.value),
                     ContextValue: {
                         createMany: {
                             data: (attr.contexts ?? [])

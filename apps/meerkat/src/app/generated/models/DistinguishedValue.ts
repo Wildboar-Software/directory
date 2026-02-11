@@ -283,7 +283,6 @@ export type DistinguishedValueOrderByWithRelationInput = {
 export type DistinguishedValueWhereUniqueInput = Prisma.AtLeast<{
   id?: number
   entry_id_type_oid?: Prisma.DistinguishedValueEntry_idType_oidCompoundUniqueInput
-  type_oid_normalized_str_entry_id?: Prisma.DistinguishedValueType_oidNormalized_strEntry_idCompoundUniqueInput
   AND?: Prisma.DistinguishedValueWhereInput | Prisma.DistinguishedValueWhereInput[]
   OR?: Prisma.DistinguishedValueWhereInput[]
   NOT?: Prisma.DistinguishedValueWhereInput | Prisma.DistinguishedValueWhereInput[]
@@ -296,7 +295,7 @@ export type DistinguishedValueWhereUniqueInput = Prisma.AtLeast<{
   normalized_str?: Prisma.StringNullableFilter<"DistinguishedValue"> | string | null
   order_index?: Prisma.IntFilter<"DistinguishedValue"> | number
   entry?: Prisma.XOR<Prisma.EntryScalarRelationFilter, Prisma.EntryWhereInput>
-}, "id" | "entry_id_type_oid" | "type_oid_normalized_str_entry_id">
+}, "id" | "entry_id_type_oid">
 
 export type DistinguishedValueOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -423,12 +422,6 @@ export type DistinguishedValueOrderByRelationAggregateInput = {
 export type DistinguishedValueEntry_idType_oidCompoundUniqueInput = {
   entry_id: number
   type_oid: runtime.Bytes
-}
-
-export type DistinguishedValueType_oidNormalized_strEntry_idCompoundUniqueInput = {
-  type_oid: runtime.Bytes
-  normalized_str: string
-  entry_id: number
 }
 
 export type DistinguishedValueCountOrderByAggregateInput = {
