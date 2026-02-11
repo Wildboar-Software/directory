@@ -1,4 +1,4 @@
-import { TypedEmitter } from 'tiny-typed-emitter';
+import { TypedEmitter } from "tiny-typed-emitter";
 import type { Socket } from "node:net";
 import { TLSSocket } from "node:tls";
 import type { ASN1Element, OBJECT_IDENTIFIER, INTEGER } from "@wildboar/asn1";
