@@ -607,16 +607,6 @@ function convertFilterItemToPrismaSelect (
                 },
             };
         }
-        // TODO: You can pre-filter DN-typed values using the `jer` field by
-        // checking that every RDN has the correct attribute types.
-        // if (type_.isEqualTo(aliasedEntryName["&id"])) {
-        //     return {
-        //         alias: true,
-        //         AliasEntry: {
-        //             some: {}, // REVIEW: I feel like this would crash. No way Prisma actually lets you do this.
-        //         },
-        //     };
-        // }
         const typeAndFriends: AttributeType[] = [ type_ ];
         if (selectFriends) {
             typeAndFriends.push(...addFriends(relevantSubentries, type_));

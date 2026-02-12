@@ -102,9 +102,6 @@ async function addAttributes (
                 constructed: (value.construction === ASN1Construction.constructed),
                 tag_number: value.tagNumber,
                 content_octets: value.value as Uint8Array<ArrayBuffer>,
-                jer: (value.construction === ASN1Construction.primitive)
-                    ? value.toJSON() as Prisma.InputJsonValue
-                    : undefined,
             });
         }
         for (const vwc of attr.valuesWithContext ?? []) {
@@ -117,9 +114,6 @@ async function addAttributes (
                     constructed: (vwc.value.construction === ASN1Construction.constructed),
                     tag_number: vwc.value.tagNumber,
                     content_octets: vwc.value.value as Uint8Array<ArrayBuffer>,
-                    jer: (vwc.value.construction === ASN1Construction.primitive)
-                        ? vwc.value.toJSON() as Prisma.InputJsonValue
-                        : undefined,
                     ContextValue: {
                         createMany: {
                             data: vwc.contextList

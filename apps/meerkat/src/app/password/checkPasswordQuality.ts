@@ -27,7 +27,7 @@ import {
     pwdMaxLength,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa.js";
 import { groupByOID } from "../utils/groupByOID.js";
-import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
+import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB.js";
 
 export const CHECK_PWD_QUALITY_OK: number = 0;
 export const CHECK_PWD_QUALITY_LENGTH: number = -1;
@@ -45,6 +45,18 @@ const ID_MIN_TIH: string = pwdMinTimeInHistory["&id"].toString();
 const ID_MIN_LEN: string = pwdMinLength["&id"].toString();
 const IN_MAX_LEN: string = pwdMaxLength["&id"].toString();
 
+function toint(dbv: DBAttributeValue | undefined | null): number | undefined {
+    if (!dbv) {
+        return undefined;
+    }
+    const attr = attributeValueFromDB(dbv);
+    try {
+        return Number(attr.integer);
+    } catch {
+        return undefined;
+    }
+}
+
 // NOTE: This was refactored out of `checkPasswordQualityAndHistory()` since
 // `addEntry` needs to check password quality, but not history.
 export
@@ -58,24 +70,32 @@ async function checkPasswordQuality (
         return CHECK_PWD_QUALITY_OK;
     }
 
-    const minLength: number = length_constraints?.[0] ?? (await ctx.db.attributeValue.findFirst({
-        where: {
-            entry_id: subentry.dse.id,
-            type_oid: pwdMinLength["&id"].toBytes(),
-        },
-        select: {
-            jer: true,
-        },
-    }))?.jer as number ?? 0;
-    const maxLength: number = length_constraints?.[1] ?? (await ctx.db.attributeValue.findFirst({
-        where: {
-            entry_id: subentry.dse.id,
-            type_oid: pwdMaxLength["&id"].toBytes(),
-        },
-        select: {
-            jer: true,
-        },
-    }))?.jer as number ?? 100_000;
+    const minLength: number = length_constraints?.[0]
+        ?? toint(await ctx.db.attributeValue.findFirst({
+            where: {
+                entry_id: subentry.dse.id,
+                type_oid: pwdMinLength["&id"].toBytes(),
+            },
+            select: {
+                tag_class: true,
+                tag_number: true,
+                constructed: true,
+                content_octets: true,
+            },
+        })) ?? 0;
+    const maxLength: number = length_constraints?.[1]
+        ?? toint(await ctx.db.attributeValue.findFirst({
+            where: {
+                entry_id: subentry.dse.id,
+                type_oid: pwdMaxLength["&id"].toBytes(),
+            },
+            select: {
+                tag_class: true,
+                tag_number: true,
+                constructed: true,
+                content_octets: true,
+            },
+        })) ?? 100_000;
 
     if ((password.length < minLength) || (password.length > maxLength)) {
         return CHECK_PWD_QUALITY_LENGTH;
@@ -225,16 +245,19 @@ async function checkPasswordQualityAndHistory (
         },
         select: {
             type_oid: true,
-            jer: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
     });
 
     const subentry_attrs = groupByOID(subentry_value_rows, (r) => ObjectIdentifier.fromBytes(r.type_oid).toString());
-    const slots: number | undefined = subentry_attrs[ID_HISTORY_SLOTS]?.[0].jer as number;
-    const max_tih: number | undefined = subentry_attrs[ID_MAX_TIH]?.[0].jer as number;
-    const min_tih: number | undefined = subentry_attrs[ID_MIN_TIH]?.[0].jer as number;
-    const min_len: number | undefined = subentry_attrs[ID_MIN_LEN]?.[0].jer as number;
-    const max_len: number | undefined = subentry_attrs[IN_MAX_LEN]?.[0].jer as number;
+    const slots: number | undefined = toint(subentry_attrs[ID_HISTORY_SLOTS]?.[0]);
+    const max_tih: number | undefined = toint(subentry_attrs[ID_MAX_TIH]?.[0]);
+    const min_tih: number | undefined = toint(subentry_attrs[ID_MIN_TIH]?.[0]);
+    const min_len: number | undefined = toint(subentry_attrs[ID_MIN_LEN]?.[0]);
+    const max_len: number | undefined = toint(subentry_attrs[IN_MAX_LEN]?.[0]);
 
     const qualityResult = await checkPasswordQuality(
         ctx,

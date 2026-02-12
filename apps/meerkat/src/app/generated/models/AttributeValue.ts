@@ -71,7 +71,6 @@ export type AttributeValueCountAggregateOutputType = {
   constructed: number
   tag_number: number
   content_octets: number
-  jer: number
   _all: number
 }
 
@@ -121,7 +120,6 @@ export type AttributeValueCountAggregateInputType = {
   constructed?: true
   tag_number?: true
   content_octets?: true
-  jer?: true
   _all?: true
 }
 
@@ -220,7 +218,6 @@ export type AttributeValueGroupByOutputType = {
   constructed: boolean
   tag_number: number
   content_octets: runtime.Bytes
-  jer: runtime.JsonValue | null
   _count: AttributeValueCountAggregateOutputType | null
   _avg: AttributeValueAvgAggregateOutputType | null
   _sum: AttributeValueSumAggregateOutputType | null
@@ -255,7 +252,6 @@ export type AttributeValueWhereInput = {
   constructed?: Prisma.BoolFilter<"AttributeValue"> | boolean
   tag_number?: Prisma.IntFilter<"AttributeValue"> | number
   content_octets?: Prisma.BytesFilter<"AttributeValue"> | runtime.Bytes
-  jer?: Prisma.JsonNullableFilter<"AttributeValue">
   entry?: Prisma.XOR<Prisma.EntryScalarRelationFilter, Prisma.EntryWhereInput>
   ContextValue?: Prisma.ContextValueListRelationFilter
 }
@@ -269,7 +265,6 @@ export type AttributeValueOrderByWithRelationInput = {
   constructed?: Prisma.SortOrder
   tag_number?: Prisma.SortOrder
   content_octets?: Prisma.SortOrder
-  jer?: Prisma.SortOrderInput | Prisma.SortOrder
   entry?: Prisma.EntryOrderByWithRelationInput
   ContextValue?: Prisma.ContextValueOrderByRelationAggregateInput
 }
@@ -286,7 +281,6 @@ export type AttributeValueWhereUniqueInput = Prisma.AtLeast<{
   constructed?: Prisma.BoolFilter<"AttributeValue"> | boolean
   tag_number?: Prisma.IntFilter<"AttributeValue"> | number
   content_octets?: Prisma.BytesFilter<"AttributeValue"> | runtime.Bytes
-  jer?: Prisma.JsonNullableFilter<"AttributeValue">
   entry?: Prisma.XOR<Prisma.EntryScalarRelationFilter, Prisma.EntryWhereInput>
   ContextValue?: Prisma.ContextValueListRelationFilter
 }, "id">
@@ -300,7 +294,6 @@ export type AttributeValueOrderByWithAggregationInput = {
   constructed?: Prisma.SortOrder
   tag_number?: Prisma.SortOrder
   content_octets?: Prisma.SortOrder
-  jer?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AttributeValueCountOrderByAggregateInput
   _avg?: Prisma.AttributeValueAvgOrderByAggregateInput
   _max?: Prisma.AttributeValueMaxOrderByAggregateInput
@@ -320,7 +313,6 @@ export type AttributeValueScalarWhereWithAggregatesInput = {
   constructed?: Prisma.BoolWithAggregatesFilter<"AttributeValue"> | boolean
   tag_number?: Prisma.IntWithAggregatesFilter<"AttributeValue"> | number
   content_octets?: Prisma.BytesWithAggregatesFilter<"AttributeValue"> | runtime.Bytes
-  jer?: Prisma.JsonNullableWithAggregatesFilter<"AttributeValue">
 }
 
 export type AttributeValueCreateInput = {
@@ -330,7 +322,6 @@ export type AttributeValueCreateInput = {
   constructed: boolean
   tag_number: number
   content_octets: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   entry: Prisma.EntryCreateNestedOneWithoutAttributeValueInput
   ContextValue?: Prisma.ContextValueCreateNestedManyWithoutValueInput
 }
@@ -344,7 +335,6 @@ export type AttributeValueUncheckedCreateInput = {
   constructed: boolean
   tag_number: number
   content_octets: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ContextValue?: Prisma.ContextValueUncheckedCreateNestedManyWithoutValueInput
 }
 
@@ -355,7 +345,6 @@ export type AttributeValueUpdateInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   content_octets?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   entry?: Prisma.EntryUpdateOneRequiredWithoutAttributeValueNestedInput
   ContextValue?: Prisma.ContextValueUpdateManyWithoutValueNestedInput
 }
@@ -369,7 +358,6 @@ export type AttributeValueUncheckedUpdateInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   content_octets?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ContextValue?: Prisma.ContextValueUncheckedUpdateManyWithoutValueNestedInput
 }
 
@@ -382,7 +370,6 @@ export type AttributeValueCreateManyInput = {
   constructed: boolean
   tag_number: number
   content_octets: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type AttributeValueUpdateManyMutationInput = {
@@ -392,7 +379,6 @@ export type AttributeValueUpdateManyMutationInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   content_octets?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type AttributeValueUncheckedUpdateManyInput = {
@@ -404,7 +390,6 @@ export type AttributeValueUncheckedUpdateManyInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   content_octets?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type AttributeValueListRelationFilter = {
@@ -426,7 +411,6 @@ export type AttributeValueCountOrderByAggregateInput = {
   constructed?: Prisma.SortOrder
   tag_number?: Prisma.SortOrder
   content_octets?: Prisma.SortOrder
-  jer?: Prisma.SortOrder
 }
 
 export type AttributeValueAvgOrderByAggregateInput = {
@@ -533,7 +517,6 @@ export type AttributeValueCreateWithoutEntryInput = {
   constructed: boolean
   tag_number: number
   content_octets: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ContextValue?: Prisma.ContextValueCreateNestedManyWithoutValueInput
 }
 
@@ -545,7 +528,6 @@ export type AttributeValueUncheckedCreateWithoutEntryInput = {
   constructed: boolean
   tag_number: number
   content_octets: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ContextValue?: Prisma.ContextValueUncheckedCreateNestedManyWithoutValueInput
 }
 
@@ -586,7 +568,6 @@ export type AttributeValueScalarWhereInput = {
   constructed?: Prisma.BoolFilter<"AttributeValue"> | boolean
   tag_number?: Prisma.IntFilter<"AttributeValue"> | number
   content_octets?: Prisma.BytesFilter<"AttributeValue"> | runtime.Bytes
-  jer?: Prisma.JsonNullableFilter<"AttributeValue">
 }
 
 export type AttributeValueCreateWithoutContextValueInput = {
@@ -596,7 +577,6 @@ export type AttributeValueCreateWithoutContextValueInput = {
   constructed: boolean
   tag_number: number
   content_octets: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   entry: Prisma.EntryCreateNestedOneWithoutAttributeValueInput
 }
 
@@ -609,7 +589,6 @@ export type AttributeValueUncheckedCreateWithoutContextValueInput = {
   constructed: boolean
   tag_number: number
   content_octets: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type AttributeValueCreateOrConnectWithoutContextValueInput = {
@@ -635,7 +614,6 @@ export type AttributeValueUpdateWithoutContextValueInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   content_octets?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   entry?: Prisma.EntryUpdateOneRequiredWithoutAttributeValueNestedInput
 }
 
@@ -648,7 +626,6 @@ export type AttributeValueUncheckedUpdateWithoutContextValueInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   content_octets?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type AttributeValueCreateManyEntryInput = {
@@ -659,7 +636,6 @@ export type AttributeValueCreateManyEntryInput = {
   constructed: boolean
   tag_number: number
   content_octets: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type AttributeValueUpdateWithoutEntryInput = {
@@ -669,7 +645,6 @@ export type AttributeValueUpdateWithoutEntryInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   content_octets?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ContextValue?: Prisma.ContextValueUpdateManyWithoutValueNestedInput
 }
 
@@ -681,7 +656,6 @@ export type AttributeValueUncheckedUpdateWithoutEntryInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   content_octets?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   ContextValue?: Prisma.ContextValueUncheckedUpdateManyWithoutValueNestedInput
 }
 
@@ -693,7 +667,6 @@ export type AttributeValueUncheckedUpdateManyWithoutEntryInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   content_octets?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 
@@ -736,7 +709,6 @@ export type AttributeValueSelect<ExtArgs extends runtime.Types.Extensions.Intern
   constructed?: boolean
   tag_number?: boolean
   content_octets?: boolean
-  jer?: boolean
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
   ContextValue?: boolean | Prisma.AttributeValue$ContextValueArgs<ExtArgs>
   _count?: boolean | Prisma.AttributeValueCountOutputTypeDefaultArgs<ExtArgs>
@@ -751,7 +723,6 @@ export type AttributeValueSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   constructed?: boolean
   tag_number?: boolean
   content_octets?: boolean
-  jer?: boolean
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["attributeValue"]>
 
@@ -764,7 +735,6 @@ export type AttributeValueSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   constructed?: boolean
   tag_number?: boolean
   content_octets?: boolean
-  jer?: boolean
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["attributeValue"]>
 
@@ -777,10 +747,9 @@ export type AttributeValueSelectScalar = {
   constructed?: boolean
   tag_number?: boolean
   content_octets?: boolean
-  jer?: boolean
 }
 
-export type AttributeValueOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "type_oid" | "operational" | "tag_class" | "constructed" | "tag_number" | "content_octets" | "jer", ExtArgs["result"]["attributeValue"]>
+export type AttributeValueOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entry_id" | "type_oid" | "operational" | "tag_class" | "constructed" | "tag_number" | "content_octets", ExtArgs["result"]["attributeValue"]>
 export type AttributeValueInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.EntryDefaultArgs<ExtArgs>
   ContextValue?: boolean | Prisma.AttributeValue$ContextValueArgs<ExtArgs>
@@ -808,7 +777,6 @@ export type $AttributeValuePayload<ExtArgs extends runtime.Types.Extensions.Inte
     constructed: boolean
     tag_number: number
     content_octets: runtime.Bytes
-    jer: runtime.JsonValue | null
   }, ExtArgs["result"]["attributeValue"]>
   composites: {}
 }
@@ -1242,7 +1210,6 @@ export interface AttributeValueFieldRefs {
   readonly constructed: Prisma.FieldRef<"AttributeValue", 'Boolean'>
   readonly tag_number: Prisma.FieldRef<"AttributeValue", 'Int'>
   readonly content_octets: Prisma.FieldRef<"AttributeValue", 'Bytes'>
-  readonly jer: Prisma.FieldRef<"AttributeValue", 'Json'>
 }
     
 

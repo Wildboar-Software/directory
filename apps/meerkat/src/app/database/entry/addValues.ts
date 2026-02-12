@@ -346,9 +346,6 @@ async function addValues(
                 constructed: (attr.value.construction === ASN1Construction.constructed),
                 tag_number: attr.value.tagNumber,
                 content_octets: attr.value.value as Uint8Array<ArrayBuffer>,
-                jer: (attr.value.construction === ASN1Construction.primitive)
-                    ? attr.value.toJSON() as Prisma.InputJsonValue
-                    : undefined,
             })),
         }),
         ...unspecialValuesWithContexts // The ContextValue relation is only available in .create(), not .createMany().
@@ -361,9 +358,6 @@ async function addValues(
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
                     content_octets: attr.value.value as Uint8Array<ArrayBuffer>,
-                    jer: (attr.value.construction === ASN1Construction.primitive)
-                        ? attr.value.toJSON() as Prisma.InputJsonValue
-                        : undefined,
                     ContextValue: {
                         createMany: {
                             data: (attr.contexts ?? [])

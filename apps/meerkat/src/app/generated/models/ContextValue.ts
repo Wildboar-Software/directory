@@ -70,7 +70,6 @@ export type ContextValueCountAggregateOutputType = {
   constructed: number
   tag_number: number
   ber: number
-  jer: number
   fallback: number
   _all: number
 }
@@ -120,7 +119,6 @@ export type ContextValueCountAggregateInputType = {
   constructed?: true
   tag_number?: true
   ber?: true
-  jer?: true
   fallback?: true
   _all?: true
 }
@@ -219,7 +217,6 @@ export type ContextValueGroupByOutputType = {
   constructed: boolean
   tag_number: number
   ber: runtime.Bytes
-  jer: runtime.JsonValue | null
   fallback: boolean
   _count: ContextValueCountAggregateOutputType | null
   _avg: ContextValueAvgAggregateOutputType | null
@@ -254,7 +251,6 @@ export type ContextValueWhereInput = {
   constructed?: Prisma.BoolFilter<"ContextValue"> | boolean
   tag_number?: Prisma.IntFilter<"ContextValue"> | number
   ber?: Prisma.BytesFilter<"ContextValue"> | runtime.Bytes
-  jer?: Prisma.JsonNullableFilter<"ContextValue">
   fallback?: Prisma.BoolFilter<"ContextValue"> | boolean
   value?: Prisma.XOR<Prisma.AttributeValueScalarRelationFilter, Prisma.AttributeValueWhereInput>
 }
@@ -267,7 +263,6 @@ export type ContextValueOrderByWithRelationInput = {
   constructed?: Prisma.SortOrder
   tag_number?: Prisma.SortOrder
   ber?: Prisma.SortOrder
-  jer?: Prisma.SortOrderInput | Prisma.SortOrder
   fallback?: Prisma.SortOrder
   value?: Prisma.AttributeValueOrderByWithRelationInput
 }
@@ -283,7 +278,6 @@ export type ContextValueWhereUniqueInput = Prisma.AtLeast<{
   constructed?: Prisma.BoolFilter<"ContextValue"> | boolean
   tag_number?: Prisma.IntFilter<"ContextValue"> | number
   ber?: Prisma.BytesFilter<"ContextValue"> | runtime.Bytes
-  jer?: Prisma.JsonNullableFilter<"ContextValue">
   fallback?: Prisma.BoolFilter<"ContextValue"> | boolean
   value?: Prisma.XOR<Prisma.AttributeValueScalarRelationFilter, Prisma.AttributeValueWhereInput>
 }, "id">
@@ -296,7 +290,6 @@ export type ContextValueOrderByWithAggregationInput = {
   constructed?: Prisma.SortOrder
   tag_number?: Prisma.SortOrder
   ber?: Prisma.SortOrder
-  jer?: Prisma.SortOrderInput | Prisma.SortOrder
   fallback?: Prisma.SortOrder
   _count?: Prisma.ContextValueCountOrderByAggregateInput
   _avg?: Prisma.ContextValueAvgOrderByAggregateInput
@@ -316,7 +309,6 @@ export type ContextValueScalarWhereWithAggregatesInput = {
   constructed?: Prisma.BoolWithAggregatesFilter<"ContextValue"> | boolean
   tag_number?: Prisma.IntWithAggregatesFilter<"ContextValue"> | number
   ber?: Prisma.BytesWithAggregatesFilter<"ContextValue"> | runtime.Bytes
-  jer?: Prisma.JsonNullableWithAggregatesFilter<"ContextValue">
   fallback?: Prisma.BoolWithAggregatesFilter<"ContextValue"> | boolean
 }
 
@@ -326,7 +318,6 @@ export type ContextValueCreateInput = {
   constructed: boolean
   tag_number: number
   ber: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback: boolean
   value: Prisma.AttributeValueCreateNestedOneWithoutContextValueInput
 }
@@ -339,7 +330,6 @@ export type ContextValueUncheckedCreateInput = {
   constructed: boolean
   tag_number: number
   ber: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback: boolean
 }
 
@@ -349,7 +339,6 @@ export type ContextValueUpdateInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   ber?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback?: Prisma.BoolFieldUpdateOperationsInput | boolean
   value?: Prisma.AttributeValueUpdateOneRequiredWithoutContextValueNestedInput
 }
@@ -362,7 +351,6 @@ export type ContextValueUncheckedUpdateInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   ber?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -374,7 +362,6 @@ export type ContextValueCreateManyInput = {
   constructed: boolean
   tag_number: number
   ber: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback: boolean
 }
 
@@ -384,7 +371,6 @@ export type ContextValueUpdateManyMutationInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   ber?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -396,7 +382,6 @@ export type ContextValueUncheckedUpdateManyInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   ber?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -418,7 +403,6 @@ export type ContextValueCountOrderByAggregateInput = {
   constructed?: Prisma.SortOrder
   tag_number?: Prisma.SortOrder
   ber?: Prisma.SortOrder
-  jer?: Prisma.SortOrder
   fallback?: Prisma.SortOrder
 }
 
@@ -506,7 +490,6 @@ export type ContextValueCreateWithoutValueInput = {
   constructed: boolean
   tag_number: number
   ber: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback: boolean
 }
 
@@ -517,7 +500,6 @@ export type ContextValueUncheckedCreateWithoutValueInput = {
   constructed: boolean
   tag_number: number
   ber: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback: boolean
 }
 
@@ -557,7 +539,6 @@ export type ContextValueScalarWhereInput = {
   constructed?: Prisma.BoolFilter<"ContextValue"> | boolean
   tag_number?: Prisma.IntFilter<"ContextValue"> | number
   ber?: Prisma.BytesFilter<"ContextValue"> | runtime.Bytes
-  jer?: Prisma.JsonNullableFilter<"ContextValue">
   fallback?: Prisma.BoolFilter<"ContextValue"> | boolean
 }
 
@@ -568,7 +549,6 @@ export type ContextValueCreateManyValueInput = {
   constructed: boolean
   tag_number: number
   ber: runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback: boolean
 }
 
@@ -578,7 +558,6 @@ export type ContextValueUpdateWithoutValueInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   ber?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -589,7 +568,6 @@ export type ContextValueUncheckedUpdateWithoutValueInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   ber?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -600,7 +578,6 @@ export type ContextValueUncheckedUpdateManyWithoutValueInput = {
   constructed?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tag_number?: Prisma.IntFieldUpdateOperationsInput | number
   ber?: Prisma.BytesFieldUpdateOperationsInput | runtime.Bytes
-  jer?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   fallback?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
@@ -614,7 +591,6 @@ export type ContextValueSelect<ExtArgs extends runtime.Types.Extensions.Internal
   constructed?: boolean
   tag_number?: boolean
   ber?: boolean
-  jer?: boolean
   fallback?: boolean
   value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["contextValue"]>
@@ -627,7 +603,6 @@ export type ContextValueSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   constructed?: boolean
   tag_number?: boolean
   ber?: boolean
-  jer?: boolean
   fallback?: boolean
   value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["contextValue"]>
@@ -640,7 +615,6 @@ export type ContextValueSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   constructed?: boolean
   tag_number?: boolean
   ber?: boolean
-  jer?: boolean
   fallback?: boolean
   value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["contextValue"]>
@@ -653,11 +627,10 @@ export type ContextValueSelectScalar = {
   constructed?: boolean
   tag_number?: boolean
   ber?: boolean
-  jer?: boolean
   fallback?: boolean
 }
 
-export type ContextValueOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "value_id" | "type" | "tag_class" | "constructed" | "tag_number" | "ber" | "jer" | "fallback", ExtArgs["result"]["contextValue"]>
+export type ContextValueOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "value_id" | "type" | "tag_class" | "constructed" | "tag_number" | "ber" | "fallback", ExtArgs["result"]["contextValue"]>
 export type ContextValueInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   value?: boolean | Prisma.AttributeValueDefaultArgs<ExtArgs>
 }
@@ -681,7 +654,6 @@ export type $ContextValuePayload<ExtArgs extends runtime.Types.Extensions.Intern
     constructed: boolean
     tag_number: number
     ber: runtime.Bytes
-    jer: runtime.JsonValue | null
     fallback: boolean
   }, ExtArgs["result"]["contextValue"]>
   composites: {}
@@ -1114,7 +1086,6 @@ export interface ContextValueFieldRefs {
   readonly constructed: Prisma.FieldRef<"ContextValue", 'Boolean'>
   readonly tag_number: Prisma.FieldRef<"ContextValue", 'Int'>
   readonly ber: Prisma.FieldRef<"ContextValue", 'Bytes'>
-  readonly jer: Prisma.FieldRef<"ContextValue", 'Json'>
   readonly fallback: Prisma.FieldRef<"ContextValue", 'Boolean'>
 }
     

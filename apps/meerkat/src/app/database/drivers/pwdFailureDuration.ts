@@ -90,7 +90,6 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             constructed: (value.value.construction === ASN1Construction.constructed),
             tag_number: value.value.tagNumber,
             content_octets: value.value.value as Uint8Array<ArrayBuffer>,
-            jer: value.value.toJSON() as Prisma.InputJsonValue,
         },
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));

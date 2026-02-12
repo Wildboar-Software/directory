@@ -662,10 +662,18 @@ async function checkPermissionToModifyPassword (
             operational: true,
         },
         select: {
-            jer: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
     }))
-        .map(({ jer }) => jer as boolean)
+        .map((dbv) => (
+            dbv.tag_class == ASN1TagClass.universal
+            && !dbv.constructed
+            && dbv.tag_number === ASN1UniversalType.boolean
+            && ((dbv.content_octets[0] ?? 0) > 0)
+        ))
         .every((x) => x);
 }
 
@@ -3684,7 +3692,6 @@ async function modifyEntry (
                     constructed: false,
                     tag_number: ASN1UniversalType.objectIdentifier,
                     content_octets: autonomousId.value as Uint8Array<ArrayBuffer>,
-                    jer: id_ar_autonomousArea.toJSON(),
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),

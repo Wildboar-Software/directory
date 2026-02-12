@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 import type { Context, Vertex, ClientAssociation, OperationReturn } from "../types/index.js";
-import { ASN1TagClass, ASN1UniversalType, ObjectIdentifier, unpackBits } from "@wildboar/asn1";
+import { ASN1TagClass, ASN1UniversalType, BERElement, ObjectIdentifier, unpackBits } from "@wildboar/asn1";
 import * as errors from "../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
@@ -91,6 +91,7 @@ import { pwdHistorySlots } from "@wildboar/x500/PasswordPolicy";
 import { id_scrypt } from "@wildboar/scrypt-0";
 import { validateAlgorithmParameters } from "../authn/validateAlgorithmParameters.js";
 import { acdf } from "../authz/acdf.js";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -390,10 +391,13 @@ async function administerPassword (
                     operational: true,
                 },
                 select: {
-                    jer: true,
+                    tag_class: true,
+                    tag_number: true,
+                    constructed: true,
+                    content_octets: true,
                 },
             }))
-                .map(({ jer }) => jer as number)
+                .map((dbv) => Number(attributeValueFromDB(dbv).integer))
                 // Do not reduce with initialValue = 0! Use undefined, then default to a large number.
                 .reduce((acc, curr) => Math.min(Number(acc), Number(curr)), undefined)
                 ?? 10_000_000;
@@ -480,7 +484,6 @@ async function administerPassword (
                 constructed: false,
                 tag_number: ASN1UniversalType.boolean,
                 content_octets: Buffer.from([ 0xFF ]),
-                jer: true,
             },
             select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),

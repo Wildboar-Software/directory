@@ -194,7 +194,6 @@ model AttributeValue {
   constructed    Boolean
   tag_number     Int
   content_octets Bytes
-  jer            Json?
 
   ContextValue ContextValue[]
 
@@ -210,7 +209,6 @@ model ContextValue {
   constructed Boolean
   tag_number  Int
   ber         Bytes
-  jer         Json?
   fallback    Boolean
 
   @@index([value_id])

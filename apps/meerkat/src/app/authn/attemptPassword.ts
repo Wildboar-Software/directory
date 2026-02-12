@@ -482,7 +482,6 @@ async function attemptPassword (
                 constructed: false,
                 tag_number: ASN1UniversalType.integer,
                 content_octets: newFailsEl.value,
-                jer: fails + 1,
             },
             {
                 entry_id: vertex.dse.id,
@@ -492,7 +491,6 @@ async function attemptPassword (
                 constructed: false,
                 tag_number: nowElement.tagNumber,
                 content_octets: nowElement.value,
-                jer: nowElement.toJSON() as string,
             },
         ];
 
@@ -505,7 +503,6 @@ async function attemptPassword (
                 constructed: false,
                 tag_number: ASN1UniversalType.boolean,
                 content_octets: Buffer.from([ 0xFF ]),
-                jer: true,
             });
             new_attrs.push({
                 entry_id: vertex.dse.id,
@@ -515,7 +512,6 @@ async function attemptPassword (
                 constructed: false,
                 tag_number: nowElement.tagNumber,
                 content_octets: nowElement.value,
-                jer: nowElement.toJSON() as string,
             });
         }
 
@@ -628,7 +624,6 @@ async function attemptPassword (
                     constructed: false,
                     tag_number: ASN1UniversalType.integer,
                     content_octets: zeroFailsEl.value,
-                    jer: 0,
                 },
                 {
                     entry_id: vertex.dse.id,
@@ -638,7 +633,6 @@ async function attemptPassword (
                     constructed: false,
                     tag_number: ASN1UniversalType.generalizedTime,
                     content_octets: nowElement.value,
-                    jer: now.toISOString(),
                 },
             ],
         }),

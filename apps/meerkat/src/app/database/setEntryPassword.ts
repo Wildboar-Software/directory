@@ -28,12 +28,12 @@ import { pwdEncAlg, pwdExpiryAge, pwdMaxAge } from "@wildboar/x500/PasswordPolic
 import { AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/pki-stub";
 import {
     ASN1Construction,
-    ASN1Element,
     ASN1TagClass,
     ASN1UniversalType,
     DERElement,
     ObjectIdentifier,
 } from "@wildboar/asn1";
+import { attributeValueFromDB } from "./attributeValueFromDB.js";
 
 /**
  * @summary Set the password of an entry
@@ -126,10 +126,13 @@ async function setEntryPassword (
             operational: true,
         },
         select: {
-            jer: true,
+            tag_class: true,
+            tag_number: true,
+            constructed: true,
+            content_octets: true,
         },
     }))
-        .map(({ jer }) => jer as number)
+        .map((dbv) => Number(attributeValueFromDB(dbv).integer))
         // Do not reduce with initialValue = 0! Use undefined, then default to 0.
         .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
 
@@ -142,10 +145,13 @@ async function setEntryPassword (
             operational: true,
         },
         select: {
-            jer: true,
+            tag_class: true,
+            tag_number: true,
+            constructed: true,
+            content_octets: true,
         },
     }))
-        .map(({ jer }) => jer as number)
+        .map((dbv) => Number(attributeValueFromDB(dbv).integer))
         // Do not reduce with initialValue = 0! Use undefined, then default to 0.
         .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
 
@@ -230,7 +236,6 @@ async function setEntryPassword (
                     constructed: false,
                     tag_number: nowElement.tagNumber,
                     content_octets: nowElement.value,
-                    jer: nowElement.toJSON() as string,
                 },
                 {
                     entry_id: vertex.dse.id,
@@ -240,7 +245,6 @@ async function setEntryPassword (
                     constructed: true,
                     tag_number: ASN1UniversalType.sequence,
                     content_octets: encoded_enc_alg.value as Buffer<ArrayBuffer>,
-                    jer: encoded_enc_alg.toJSON() as object,
                 },
                 ...(exp_time_el
                     ? [{
@@ -251,7 +255,6 @@ async function setEntryPassword (
                         constructed: false,
                         tag_number: ASN1UniversalType.generalizedTime,
                         content_octets: exp_time_el.value as Buffer<ArrayBuffer>,
-                        jer: nowElement.toJSON() as string,
                     }]
                     : []),
                 ...(end_time_el
@@ -263,7 +266,6 @@ async function setEntryPassword (
                         constructed: false,
                         tag_number: ASN1UniversalType.generalizedTime,
                         content_octets: end_time_el.value as Buffer<ArrayBuffer>,
-                        jer: nowElement.toJSON() as string,
                     }]
                     : []),
                 /**

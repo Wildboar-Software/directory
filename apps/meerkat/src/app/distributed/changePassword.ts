@@ -1,5 +1,5 @@
 import type { Context, Vertex, ClientAssociation, OperationReturn } from "../types/index.js";
-import { ObjectIdentifier, unpackBits } from "@wildboar/asn1";
+import { ASN1TagClass, ASN1UniversalType, ObjectIdentifier, unpackBits } from "@wildboar/asn1";
 import * as errors from "../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
@@ -406,10 +406,18 @@ async function changePassword (
                 operational: true,
             },
             select: {
-                jer: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
             },
         }))
-            .map(({ jer }) => jer as boolean)
+            .map((dbv) => (
+                dbv.tag_class == ASN1TagClass.universal
+                && !dbv.constructed
+                && dbv.tag_number === ASN1UniversalType.boolean
+                && ((dbv.content_octets[0] ?? 0) > 0)
+            ))
             .every((x) => x);
 
         if (!allowed) {

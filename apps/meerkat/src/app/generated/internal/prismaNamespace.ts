@@ -2926,8 +2926,7 @@ export const AttributeValueScalarFieldEnum = {
   tag_class: 'tag_class',
   constructed: 'constructed',
   tag_number: 'tag_number',
-  content_octets: 'content_octets',
-  jer: 'jer'
+  content_octets: 'content_octets'
 } as const
 
 export type AttributeValueScalarFieldEnum = (typeof AttributeValueScalarFieldEnum)[keyof typeof AttributeValueScalarFieldEnum]
@@ -2941,7 +2940,6 @@ export const ContextValueScalarFieldEnum = {
   constructed: 'constructed',
   tag_number: 'tag_number',
   ber: 'ber',
-  jer: 'jer',
   fallback: 'fallback'
 } as const
 
