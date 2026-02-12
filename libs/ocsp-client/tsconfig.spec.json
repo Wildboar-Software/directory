@@ -3,7 +3,11 @@
     "compilerOptions": {
         "outDir": "../../dist/out-tsc",
         "types": [
-            "node"
+            "vitest/globals",
+            "vitest/importMeta",
+            "vite/client",
+            "node",
+            "vitest"
         ]
     },
     "include": [
