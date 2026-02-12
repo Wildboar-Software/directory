@@ -15,84 +15,111 @@ import {
 import {
     _decode_BasicOCSPResponse,
 } from "@wildboar/ocsp";
-import { strict as assert } from "node:assert";
-import { id_sha256 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
+import { strict as assert, strictEqual as assertEqual } from "node:assert";
+import { id_sha1 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import { getDateFromTime } from "@wildboar/x500";
-import { OCSPRequest } from "@wildboar/ocsp";
 
-const PUBLIC_OCSP_RESPONDER_URL: string = "http://ocsp.sca1b.amazontrust.com";
+const PUBLIC_OCSP_RESPONDER_URL: string = "http://ocsp.r2m04.amazontrust.com";
 
-// Nabbed from a website I stumbled upon when looking for a public OCSP responder URL.
+const ISSUER_CERT_PEM: string = `-----BEGIN CERTIFICATE-----
+MIIEXjCCA0agAwIBAgITB3MSTyqVLj7Rili9uF0bwM5fJzANBgkqhkiG9w0BAQsF
+ADA5MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRkwFwYDVQQDExBBbWF6
+b24gUm9vdCBDQSAxMB4XDTIyMDgyMzIyMjYzNVoXDTMwMDgyMzIyMjYzNVowPDEL
+MAkGA1UEBhMCVVMxDzANBgNVBAoTBkFtYXpvbjEcMBoGA1UEAxMTQW1hem9uIFJT
+QSAyMDQ4IE0wNDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAM3pVR6A
+lQOp4xe776FdePXyejgA38mYx1ou9/jrpV6Sfn+/oqBKgwhY6ePsQHHQayWBJdBn
+v4Wz363qRI4XUh9swBFJ11TnZ3LqOMvHmWq2+loA0QPtOfXdJ2fHBLrBrngtJ/GB
+0p5olAVYrSZgvQGP16Rf8ddtNyxEEhYm3HuhmNi+vSeAq1tLYJPAvRCXonTpWdSD
+xY6hvdmxlqTYi82AtBXSfpGQ58HHM0hw0C6aQakghrwWi5fGslLOqzpimNMIsT7c
+qa0GJx6JfKqJqmQQNplO2h8n9ZsFJgBowof01ppdoLAWg6caMOM0om/VILKaa30F
+9W/r8Qjah7ltGVkCAwEAAaOCAVowggFWMBIGA1UdEwEB/wQIMAYBAf8CAQAwDgYD
+VR0PAQH/BAQDAgGGMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAdBgNV
+HQ4EFgQUH1KSYVaCVH+BZtgdPQqqMlyH3QgwHwYDVR0jBBgwFoAUhBjMhTTsvAyU
+lC4IWZzHshBOCggwewYIKwYBBQUHAQEEbzBtMC8GCCsGAQUFBzABhiNodHRwOi8v
+b2NzcC5yb290Y2ExLmFtYXpvbnRydXN0LmNvbTA6BggrBgEFBQcwAoYuaHR0cDov
+L2NydC5yb290Y2ExLmFtYXpvbnRydXN0LmNvbS9yb290Y2ExLmNlcjA/BgNVHR8E
+ODA2MDSgMqAwhi5odHRwOi8vY3JsLnJvb3RjYTEuYW1hem9udHJ1c3QuY29tL3Jv
+b3RjYTEuY3JsMBMGA1UdIAQMMAowCAYGZ4EMAQIBMA0GCSqGSIb3DQEBCwUAA4IB
+AQA+1O5UsAaNuW3lHzJtpNGwBnZd9QEYFtxpiAnIaV4qApnGS9OCw5ZPwie7YSlD
+ZF5yyFPsFhUC2Q9uJHY/CRV1b5hIiGH0+6+w5PgKiY1MWuWT8VAaJjFxvuhM7a/e
+fN2TIw1Wd6WCl6YRisunjQOrSP+unqC8A540JNyZ1JOE3jVqat3OZBGgMvihdj2w
+Y23EpwesrKiQzkHzmvSH67PVW4ycbPy08HVZnBxZ5NrlGG9bwXR3fNTaz+c+Ej6c
+5AnwI3qkOFgSkg3Y75cdFz6pO/olK+e3AqygAcv0WjzmkDPuBjssuZjCHMC56oH3
+GJkV29Di2j5prHJbwZjG1inU
+-----END CERTIFICATE-----`;
+
 const CERT_PEM: string = `-----BEGIN CERTIFICATE-----
-MIIGGDCCBQCgAwIBAgIQA1y/71yzITuQmFyxHFUT2DANBgkqhkiG9w0BAQsFADBG
-MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRUwEwYDVQQLEwxTZXJ2ZXIg
-Q0EgMUIxDzANBgNVBAMTBkFtYXpvbjAeFw0yMjA0MTkwMDAwMDBaFw0yMzA1MTgy
-MzU5NTlaMBwxGjAYBgNVBAMTEW90eC5hbGllbnZhdWx0LmlvMIIBIjANBgkqhkiG
-9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqdbtomPMjrt+HdLkGBqYCix63T3D5DbDTAIT
-AenVAn/fYvUYMy5SlQmAc+psgF4PlVxX0hjA7/loKC1Ltnc8MoBZ8zz1enYPkg28
-eGfiI1owSLcfh7xI5cfxz2Ipsk96qQpkLHbWJNxL0cohUpoeREMDW8tZi5/18Hg3
-3xH2iUEBKUB6mbs/j55VsD3GFlXCASiiirLVPIL0Rw8OghTOxMH+hTkaR8vAPcGL
-JAdYQfPhtJqwuzuU8RS/fqp2KGl7evR8FTXwvdM7zXsqwPXsC7k4OX9CKuKTArMO
-G5kVC88FNtDC1Xen+Mw8iXbi+lGsn+811EDSt61ChoCcy2a6VwIDAQABo4IDKjCC
-AyYwHwYDVR0jBBgwFoAUWaRmBlKge5WSPKOUByeWdFv5PdAwHQYDVR0OBBYEFEzl
-L7PHTuH37zWtyE0LETCUsWGpMFsGA1UdEQRUMFKCEW90eC5hbGllbnZhdWx0Lmlv
-ghMqLm90eC5hbGllbnZhdWx0LmlvghJvdHguYWxpZW52YXVsdC5jb22CFCoub3R4
-LmFsaWVudmF1bHQuY29tMA4GA1UdDwEB/wQEAwIFoDAdBgNVHSUEFjAUBggrBgEF
-BQcDAQYIKwYBBQUHAwIwPQYDVR0fBDYwNDAyoDCgLoYsaHR0cDovL2NybC5zY2Ex
-Yi5hbWF6b250cnVzdC5jb20vc2NhMWItMS5jcmwwEwYDVR0gBAwwCjAIBgZngQwB
-AgEwdQYIKwYBBQUHAQEEaTBnMC0GCCsGAQUFBzABhiFodHRwOi8vb2NzcC5zY2Ex
-Yi5hbWF6b250cnVzdC5jb20wNgYIKwYBBQUHMAKGKmh0dHA6Ly9jcnQuc2NhMWIu
-YW1hem9udHJ1c3QuY29tL3NjYTFiLmNydDAMBgNVHRMBAf8EAjAAMIIBfQYKKwYB
-BAHWeQIEAgSCAW0EggFpAWcAdQDoPtDaPvUGNTLnVyi8iWvJA9PL0RFr7Otp4Xd9
-bQa9bgAAAYA/7nRmAAAEAwBGMEQCIFOUqwoz+hXJA9aoq+lXvv+2xi+e9eGqlJI4
-2s5O4C8bAiAk8fTdt1a9FJyzOMXcrSYWoEs6bxLwXCaC8ttxC8HBUQB2ADXPGRu/
-sWxXvw+tTG1Cy7u2JyAmUeo/4SrvqAPDO9ZMAAABgD/udC0AAAQDAEcwRQIgFLPS
-ctv/LuCykYwqs4khJNi9DJne2d6nUoKtWxu+WUoCIQCkvWEREHPXmVSDQ5icIKrP
-Pq8t2rOgbO6hWCsRyNy6pAB2ALNzdwfhhFD4Y4bWBancEQlKeS2xZwwLh9zwAw55
-NqWaAAABgD/udE8AAAQDAEcwRQIgNgwOsHomsfjkuBIURlnKhp3ifIMqD16WEZ5D
-oFOrT8UCIQC1hZwMgVYalMjWRTWN08mKhZj7WDlStnjf3Mx5g0gZrTANBgkqhkiG
-9w0BAQsFAAOCAQEAs8J6GR5OP5ceHUtsB7i0Vw0XNh9j4FlEBAL/ButZ/5Ob3ebL
-+jm231ooULuvibE85TeVZxHxn6KXnWX8zcX9OjV5oqWsGiPtARTGVv8QLduy/d27
-qBiu0MGDPk+VrfcLKI6lY7ozv7EK/nPoK0eDV/SK8jqe0QruEyVZQJIPEWnib32+
-exg1fqVo3vNic2UfIcLauYYG32Kq5ctzmwR+jgQ349L8FRuzqL26ELvCUzcc9DN+
-KQyzqKkECvp0xnr63Dx9BOqNVPI3kyak/RbR3FSAo3MK15juO+W7QUllFnlCQM5S
-k35Pe4Mmghdn/0qDw6vAHC4smMQja59S/VEHfg==
+MIIFwjCCBKqgAwIBAgIQBCE+Xsve3Ix7ofAUpX9pjzANBgkqhkiG9w0BAQsFADA8
+MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRwwGgYDVQQDExNBbWF6b24g
+UlNBIDIwNDggTTA0MB4XDTI1MTAwMjAwMDAwMFoXDTI2MTAzMDIzNTk1OVowGzEZ
+MBcGA1UEAxMQc2VhcmNoLmJyYXZlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEP
+ADCCAQoCggEBAJkSe6Qcvl5xJuVZy+FvllqiNaMfmf+nY11o0im3WhUjdjDX94XO
+DPqw9L+AJmgzMq4CQCdF+GSE6SpzD5rmcBYe72NgPiaauLVPXWn75MjbWoNWTh38
+eVG+fskE+VeVIG/gnZ397hh/ySWS1gS2HTALCmAPw9m8G44lp+K1+4VIxFwtQCLj
+F+0DwdW/WCeD7D3J+dw5B61nCJXHJgyyUIpUTv+GqIa829957ULtrttPQN+Nvm7N
+dumdaySvLdS7apxhsTVD0z8zNMa2NxrswkloAPM9o6QVV4fF0Qto1LcAj7cD4n34
+jHHpzhuv4/jfX6Nk5Q1+f71IH9kWRJPBtasCAwEAAaOCAt8wggLbMB8GA1UdIwQY
+MBaAFB9SkmFWglR/gWbYHT0KqjJch90IMB0GA1UdDgQWBBQ1+DvB+t8ie+HXrcQj
+rLrFhTVVcTAbBgNVHREEFDASghBzZWFyY2guYnJhdmUuY29tMBMGA1UdIAQMMAow
+CAYGZ4EMAQIBMA4GA1UdDwEB/wQEAwIFoDATBgNVHSUEDDAKBggrBgEFBQcDATA7
+BgNVHR8ENDAyMDCgLqAshipodHRwOi8vY3JsLnIybTA0LmFtYXpvbnRydXN0LmNv
+bS9yMm0wNC5jcmwwdQYIKwYBBQUHAQEEaTBnMC0GCCsGAQUFBzABhiFodHRwOi8v
+b2NzcC5yMm0wNC5hbWF6b250cnVzdC5jb20wNgYIKwYBBQUHMAKGKmh0dHA6Ly9j
+cnQucjJtMDQuYW1hem9udHJ1c3QuY29tL3IybTA0LmNlcjAMBgNVHRMBAf8EAjAA
+MIIBfgYKKwYBBAHWeQIEAgSCAW4EggFqAWgAdgDXbX0Q0af1d8LH6V/XAL/5gskz
+WmXh0LMBcxfAyMVpdwAAAZmipHmDAAAEAwBHMEUCIQCnsXZzDtNbblyZUJwjEV28
+2ikmmdbOz6Di57X9UmdLRgIgBJzzDbgBLM8GjWjb0j8L7nb0+8GOTL60lu0m41BI
+lkIAdgDCMX5XRRmjRe5/ON6ykEHrx8IhWiK/f9W1rXaa2Q5SzQAAAZmipHm+AAAE
+AwBHMEUCIQDxJshrXFD6ZiJdWYtnvdVCtjQ97emxrSdwnZ8nmQ73lQIgcnuag3Bc
+ijEmOcebYsIHjCWBgAvlMabvBO0cr6+xs/AAdgCUTkOH+uzB74HzGSQmqBhlAcfT
+XzgCAT9yZ31VNy4Z2AAAAZmipHnSAAAEAwBHMEUCICJsfLbvc0ExUi74Nx6wILgl
+wUxn4zRmgCu2WdU4B2iGAiEA1KarZ4nmqvTbt9EnBf0aV2QZkMmRHc/Etzkv7i0m
+SYgwDQYJKoZIhvcNAQELBQADggEBAIqGCX3XL6GGK91PUKZwwVUyfF3dNk67ItMl
+4IYFO7+lKrJ8ObuSa04FHLatbbLfUt/NSJMaLhGy3U/HjCC8Y1FUlMNgmBIdvv5W
+RwG5+utadDxVBHpmuGn5JhknYqnDrwHQFTCEkHsX/sF8Ul0EYdkqqPXbZsSrOjaR
++N0gpEG0TpeEJLik8O0FoOPDYlCpaCS8WJeXoAdFcZC9Lgwqaqp8QGFNmhqDU7xO
+2/oem4sQ3ONqHrENBKT2bXW9Al3BrgUBwuebolZTrd+jjEDLmVQOPYi+r37Tdo4F
+reoRSSZ7XqeDjut+6wnhRCEO3InxXEvh7vkFjpZ2HQLiILaBbSQ=
 -----END CERTIFICATE-----`;
 
 describe("check", () => {
+    it("works", async () => {
+        const issuerCertPem = PEMObject.parse(ISSUER_CERT_PEM)[0];
+        const issuerCertEl = new BERElement();
+        issuerCertEl.fromBytes(issuerCertPem.data);
+        const issuerCert = _decode_Certificate(issuerCertEl);
 
-    // I don't know how this ever worked.
-
-    // it("works", async () => {
-    //     const certPem = PEMObject.parse(CERT_PEM)[0];
-    //     const certEl = new BERElement();
-    //     certEl.fromBytes(certPem.data);
-    //     const cert = _decode_Certificate(certEl);
-    //     const url = new URL(PUBLIC_OCSP_RESPONDER_URL);
-    //     const resp = await check(url, [
-    //         cert.toBeSigned.issuer.rdnSequence,
-    //     ], undefined, 5000);
-    //     assert(resp);
-    //     const { res: result } = resp;
-    //     expect(result.responseStatus).toBe(OCSPResponseStatus_successful);
-    //     assert(result.responseBytes);
-    //     expect(result.responseBytes.responseType.isEqualTo(id_pkix_ocsp_basic)).toBe(true);
-    //     const resBytes = result.responseBytes.response;
-    //     const resEl = new BERElement();
-    //     resEl.fromBytes(resBytes);
-    //     const basicRes = _decode_BasicOCSPResponse(resEl);
-    //     const resData = basicRes.tbsResponseData;
-    //     const now = new Date();
-    //     expect(resData.producedAt.getFullYear()).toBe(now.getFullYear());
-    //     expect(resData.responses).toHaveLength(1);
-    //     const response = resData.responses[0];
-    //     expect(response.certID.hashAlgorithm.algorithm.isEqualTo(id_sha256));
-    //     expect(!Buffer.compare(response.certID.serialNumber, cert.toBeSigned.serialNumber));
-    //     const certExpires = getDateFromTime(cert.toBeSigned.validity.notAfter);
-    //     if (certExpires <= now) {
-    //         assert("revoked" in response.certStatus);
-    //     } else {
-    //         assert("good" in response.certStatus);
-    //     }
-    // });
-})
+        const certPem = PEMObject.parse(CERT_PEM)[0];
+        const certEl = new BERElement();
+        certEl.fromBytes(certPem.data);
+        const cert = _decode_Certificate(certEl);
+        const url = new URL(PUBLIC_OCSP_RESPONDER_URL);
+        const resp = await check(url, [
+            cert.toBeSigned.issuer.rdnSequence,
+            issuerCert.toBeSigned.subjectPublicKeyInfo,
+            cert.toBeSigned.serialNumber,
+        ], undefined, 5000);
+        assert(resp);
+        const { res: result } = resp;
+        assertEqual(result.responseStatus, OCSPResponseStatus_successful);
+        assert(result.responseBytes);
+        assert(result.responseBytes.responseType.isEqualTo(id_pkix_ocsp_basic));
+        const resBytes = result.responseBytes.response;
+        const resEl = new BERElement();
+        resEl.fromBytes(resBytes);
+        const basicRes = _decode_BasicOCSPResponse(resEl);
+        const resData = basicRes.tbsResponseData;
+        const now = new Date();
+        assertEqual(resData.producedAt.getFullYear(), now.getFullYear());
+        assertEqual(resData.responses.length, 1);
+        const response = resData.responses[0];
+        assert(response.certID.hashAlgorithm.algorithm.isEqualTo(id_sha1));
+        assert(!Buffer.compare(response.certID.serialNumber, cert.toBeSigned.serialNumber));
+        const certExpires = getDateFromTime(cert.toBeSigned.validity.notAfter);
+        if (certExpires <= now) {
+            assert("revoked" in response.certStatus);
+        } else {
+            assert("good" in response.certStatus);
+        }
+    });
+});

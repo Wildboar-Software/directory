@@ -28,9 +28,9 @@ import { URL } from "node:url";
 import * as http from "node:http";
 import * as https from "node:https";
 import { TlsOptions } from "node:tls";
-import { BERElement, unpackBits } from "@wildboar/asn1";
+import { BERElement, unpackBits, ASN1TagClass, ASN1Construction, ASN1UniversalType } from "@wildboar/asn1";
 import {
-    id_sha256,
+    id_sha1,
 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     AlgorithmIdentifier,
@@ -66,6 +66,8 @@ function getReceivedDataSize (chunks: Buffer[]) {
     }
     return sum;
 }
+
+const HASH_BASICALLY_REQUIRED_BY_ALL_RESPONDERS = "sha1" as const;
 
 /**
  * @summary A function that digitally signs arbitrary data
@@ -109,10 +111,14 @@ function convertCertAndSerialToOCSPRequest (
 ): OCSPRequest {
     const dnBytes = _encode_DistinguishedName(issuerDN, DER).toBytes();
     const spkiElement = _encode_SubjectPublicKeyInfo(issuerSPKI, DER);
-    const dnHasher = createHash("sha256");
-    const spkiHasher = createHash("sha256");
+    const dnHasher = createHash(HASH_BASICALLY_REQUIRED_BY_ALL_RESPONDERS);
+    const spkHasher = createHash(HASH_BASICALLY_REQUIRED_BY_ALL_RESPONDERS);
     dnHasher.update(dnBytes);
-    spkiHasher.update(spkiElement.value); // Not calculated over tag and length.
+    // This hash is over the subjectPublicKey field, not the whole SPKI. It is
+    // not calculated over tag, length, or first byte of the bit string.
+    spkHasher.update(spkiElement.sequence[1].value.subarray(1));
+    const dnHash = dnHasher.digest();
+    const spkHash = spkHasher.digest();
     const tbs = new TBSRequest(
         undefined,
         undefined,
@@ -120,11 +126,15 @@ function convertCertAndSerialToOCSPRequest (
             new Request(
                 new CertID(
                     new AlgorithmIdentifier(
-                        id_sha256,
-                        undefined,
+                        id_sha1,
+                        new BERElement(
+                            ASN1TagClass.universal,
+                            ASN1Construction.primitive,
+                            ASN1UniversalType.nill,
+                        ),
                     ),
-                    dnHasher.digest(),
-                    spkiHasher.digest(),
+                    dnHash,
+                    spkHash,
                     subjectSerial,
                 ),
                 undefined,

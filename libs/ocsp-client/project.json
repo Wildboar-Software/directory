@@ -15,6 +15,13 @@
                 "main": "libs/ocsp-client/src/index.ts",
                 "assets": ["libs/ocsp-client/*.md"]
             }
+        },
+        "test": {
+            "executor": "@nx/vitest:test",
+            "outputs": ["{options.reportsDirectory}"],
+            "options": {
+                "reportsDirectory": "../../coverage/libs/ocsp-client"
+            }
         }
     }
 }
