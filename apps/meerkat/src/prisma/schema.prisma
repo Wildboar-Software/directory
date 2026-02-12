@@ -9,8 +9,6 @@
 
 datasource db {
   provider = "sqlite"
-  // provider = "postgresql"
-  // provider = "sqlserver"
 }
 
 generator client {
