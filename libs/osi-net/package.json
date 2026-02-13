@@ -6,6 +6,7 @@
         "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.4",
         "@wildboar/acse": "npm:@jsr/wildboar__acse@^2.0.0",
         "@wildboar/copp": "npm:@jsr/wildboar__copp@^2.0.0",
-        "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4"
+        "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4",
+        "tiny-typed-emitter": "2.1.0"
     }
 }

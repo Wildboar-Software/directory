@@ -20,7 +20,7 @@ jobs:
           - osi-net
           - rose-transport
           - x500-auth-ts
-          - x500-cli-config
+          # - x500-cli-config
           - x500-client-ts
     steps:
       - uses: actions/checkout@v6

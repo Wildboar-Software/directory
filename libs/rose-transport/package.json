@@ -4,6 +4,7 @@
     "license": "MIT",
     "dependencies": {
         "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.4",
-        "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4"
+        "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4",
+        "tiny-typed-emitter": "2.1.0"
     }
 }
