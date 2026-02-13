@@ -10,6 +10,6 @@
         "@wildboar/osi-net": "npm:@jsr/wildboar__osi-net@^1.0.1",
         "@wildboar/rose-transport": "npm:@jsr/wildboar__rose-transport@^1.2.0",
         "@wildboar/ldap": "npm:@jsr/wildboar__ldap@^2.0.1",
-        "@wildboar/idm": "npm:@jsr/wildboar__idm@^2.0.0"
+        "@wildboar/idm": "npm:@jsr/wildboar__idm@^3.1.2"
     }
 }
