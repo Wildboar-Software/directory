@@ -1,0 +1,28 @@
+name: Publish Libraries
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        library:
+          - idm
+          - ldap-socket
+          - ocsp-client
+          - osi-net
+          - rose-transport
+          - x500-auth-ts
+          - x500-cli-config
+          - x500-client-ts
+    steps:
+      - uses: actions/checkout@v6
+      - name: Publish ${{ matrix.library }}
+        working-directory: libs/${{ matrix.library }}
+        run: npx jsr publish
