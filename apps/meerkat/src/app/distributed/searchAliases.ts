@@ -79,20 +79,21 @@ async function searchAliases (
     chaining: ChainingArguments,
     ret: SearchState,
 ): Promise<void> {
-    assert(target.dse.alias);
+    assert(target.dse.alias?.aliasedEntryName);
+    const aen = target.dse.alias?.aliasedEntryName;
     const data = getOptionallyProtectedValue(argument);
     const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
     if (subset === SearchArgumentData_subset_wholeSubtree) { // Same as !== baseObject or oneLevel
-        if (isPrefix(ctx, target.dse.alias.aliasedEntryName, data.baseObject.rdnSequence)) {
+        if (isPrefix(ctx, aen, data.baseObject.rdnSequence)) {
             return;
         }
-        if (chaining.targetObject && isPrefix(ctx, target.dse.alias.aliasedEntryName, chaining.targetObject)) {
+        if (chaining.targetObject && isPrefix(ctx, aen, chaining.targetObject)) {
             return;
         }
         const prefixFoundInTrace = chaining.traceInformation
             .some((ti) => (
                 ti.targetObject
-                && isPrefix(ctx, target.dse.alias!.aliasedEntryName, ti.targetObject.rdnSequence)
+                && isPrefix(ctx, aen, ti.targetObject.rdnSequence)
             ));
         if (prefixFoundInTrace) {
             return;
@@ -116,7 +117,7 @@ async function searchAliases (
     const entryOnly: BOOLEAN = (subset === SearchArgumentData_subset_oneLevel);
     const newChaining: ChainingArguments = new ChainingArguments(
         requestor,
-        target.dse.alias.aliasedEntryName,
+        aen,
         undefined,
         [],
         TRUE,
@@ -178,7 +179,7 @@ async function searchAliases (
             ) {
                 const cr = new ContinuationReference(
                     {
-                        rdnSequence: target.dse.alias.aliasedEntryName,
+                        rdnSequence: aen,
                     },
                     undefined,
                     new OperationProgress(

@@ -542,6 +542,7 @@ async function mergeSortAndPageList(
         orderBy: {
             result_index: "asc",
         },
+        // https://github.com/prisma/prisma/issues/23733?
         cursor: {
             connection_uuid_query_ref_result_index: {
                 connection_uuid: assn.id,

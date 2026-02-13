@@ -25,6 +25,7 @@ import {
     ServiceControlOptions_partialNameResolution,
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
+    ServiceProblem_ditError,
     // ServiceControlOptions_subentries,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
@@ -1761,6 +1762,26 @@ export
                     );
                 }
             } else {
+                if (!dse_i.dse.alias.aliasedEntryName) {
+                    throw new errors.ServiceError(
+                        ctx.i18n.t("err:alias_but_no_aen"),
+                        new ServiceErrorData(
+                            ServiceProblem_ditError,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn?.boundNameAndUID?.dn,
+                                undefined,
+                                serviceError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
                 const newN = [
                     ...dse_i.dse.alias.aliasedEntryName,
                     ...needleDN.slice(i), // RDNs N(i + 1) to N(m)

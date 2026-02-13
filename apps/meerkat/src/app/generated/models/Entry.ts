@@ -33,6 +33,7 @@ export type EntryAvgAggregateOutputType = {
   hierarchyParent_id: number | null
   hierarchyTop_id: number | null
   hierarchyLevel: number | null
+  aliased_entry_id: number | null
 }
 
 export type EntrySumAggregateOutputType = {
@@ -42,6 +43,7 @@ export type EntrySumAggregateOutputType = {
   hierarchyParent_id: number | null
   hierarchyTop_id: number | null
   hierarchyLevel: number | null
+  aliased_entry_id: number | null
 }
 
 export type EntryMinAggregateOutputType = {
@@ -82,6 +84,7 @@ export type EntryMinAggregateOutputType = {
   hierarchyTopStr: string | null
   hierarchyPath: string | null
   hierarchyLevel: number | null
+  aliased_entry_id: number | null
 }
 
 export type EntryMaxAggregateOutputType = {
@@ -122,6 +125,7 @@ export type EntryMaxAggregateOutputType = {
   hierarchyTopStr: string | null
   hierarchyPath: string | null
   hierarchyLevel: number | null
+  aliased_entry_id: number | null
 }
 
 export type EntryCountAggregateOutputType = {
@@ -167,6 +171,8 @@ export type EntryCountAggregateOutputType = {
   hierarchyTopStr: number
   hierarchyPath: number
   hierarchyLevel: number
+  aliased_entry_name: number
+  aliased_entry_id: number
   otherData: number
   _all: number
 }
@@ -179,6 +185,7 @@ export type EntryAvgAggregateInputType = {
   hierarchyParent_id?: true
   hierarchyTop_id?: true
   hierarchyLevel?: true
+  aliased_entry_id?: true
 }
 
 export type EntrySumAggregateInputType = {
@@ -188,6 +195,7 @@ export type EntrySumAggregateInputType = {
   hierarchyParent_id?: true
   hierarchyTop_id?: true
   hierarchyLevel?: true
+  aliased_entry_id?: true
 }
 
 export type EntryMinAggregateInputType = {
@@ -228,6 +236,7 @@ export type EntryMinAggregateInputType = {
   hierarchyTopStr?: true
   hierarchyPath?: true
   hierarchyLevel?: true
+  aliased_entry_id?: true
 }
 
 export type EntryMaxAggregateInputType = {
@@ -268,6 +277,7 @@ export type EntryMaxAggregateInputType = {
   hierarchyTopStr?: true
   hierarchyPath?: true
   hierarchyLevel?: true
+  aliased_entry_id?: true
 }
 
 export type EntryCountAggregateInputType = {
@@ -313,6 +323,8 @@ export type EntryCountAggregateInputType = {
   hierarchyTopStr?: true
   hierarchyPath?: true
   hierarchyLevel?: true
+  aliased_entry_name?: true
+  aliased_entry_id?: true
   otherData?: true
   _all?: true
 }
@@ -446,6 +458,8 @@ export type EntryGroupByOutputType = {
   hierarchyTopStr: string | null
   hierarchyPath: string | null
   hierarchyLevel: number | null
+  aliased_entry_name: runtime.JsonValue | null
+  aliased_entry_id: number | null
   otherData: runtime.JsonValue | null
   _count: EntryCountAggregateOutputType | null
   _avg: EntryAvgAggregateOutputType | null
@@ -515,10 +529,14 @@ export type EntryWhereInput = {
   hierarchyTopStr?: Prisma.StringNullableFilter<"Entry"> | string | null
   hierarchyPath?: Prisma.StringNullableFilter<"Entry"> | string | null
   hierarchyLevel?: Prisma.IntNullableFilter<"Entry"> | number | null
+  aliased_entry_name?: Prisma.JsonNullableFilter<"Entry">
+  aliased_entry_id?: Prisma.IntNullableFilter<"Entry"> | number | null
   otherData?: Prisma.JsonNullableFilter<"Entry">
   immediate_superior?: Prisma.XOR<Prisma.EntryNullableScalarRelationFilter, Prisma.EntryWhereInput> | null
   hierarchyParent?: Prisma.XOR<Prisma.EntryNullableScalarRelationFilter, Prisma.EntryWhereInput> | null
   hierarchyTop?: Prisma.XOR<Prisma.EntryNullableScalarRelationFilter, Prisma.EntryWhereInput> | null
+  aliased_entry?: Prisma.XOR<Prisma.EntryNullableScalarRelationFilter, Prisma.EntryWhereInput> | null
+  aliases?: Prisma.EntryListRelationFilter
   subordinates?: Prisma.EntryListRelationFilter
   hierarchicalChildren?: Prisma.EntryListRelationFilter
   MatchingRuleUse?: Prisma.MatchingRuleUseListRelationFilter
@@ -527,8 +545,6 @@ export type EntryWhereInput = {
   Password?: Prisma.PasswordListRelationFilter
   RDN?: Prisma.DistinguishedValueListRelationFilter
   EntryObjectClass?: Prisma.EntryObjectClassListRelationFilter
-  AliasEntry?: Prisma.AliasListRelationFilter
-  AliasedEntry?: Prisma.XOR<Prisma.AliasNullableScalarRelationFilter, Prisma.AliasWhereInput> | null
   DITStructureRule?: Prisma.DITStructureRuleListRelationFilter
   ContentRule?: Prisma.ContentRuleListRelationFilter
   ContextUseRule?: Prisma.ContextUseRuleListRelationFilter
@@ -588,10 +604,14 @@ export type EntryOrderByWithRelationInput = {
   hierarchyTopStr?: Prisma.SortOrderInput | Prisma.SortOrder
   hierarchyPath?: Prisma.SortOrderInput | Prisma.SortOrder
   hierarchyLevel?: Prisma.SortOrderInput | Prisma.SortOrder
+  aliased_entry_name?: Prisma.SortOrderInput | Prisma.SortOrder
+  aliased_entry_id?: Prisma.SortOrderInput | Prisma.SortOrder
   otherData?: Prisma.SortOrderInput | Prisma.SortOrder
   immediate_superior?: Prisma.EntryOrderByWithRelationInput
   hierarchyParent?: Prisma.EntryOrderByWithRelationInput
   hierarchyTop?: Prisma.EntryOrderByWithRelationInput
+  aliased_entry?: Prisma.EntryOrderByWithRelationInput
+  aliases?: Prisma.EntryOrderByRelationAggregateInput
   subordinates?: Prisma.EntryOrderByRelationAggregateInput
   hierarchicalChildren?: Prisma.EntryOrderByRelationAggregateInput
   MatchingRuleUse?: Prisma.MatchingRuleUseOrderByRelationAggregateInput
@@ -600,8 +620,6 @@ export type EntryOrderByWithRelationInput = {
   Password?: Prisma.PasswordOrderByRelationAggregateInput
   RDN?: Prisma.DistinguishedValueOrderByRelationAggregateInput
   EntryObjectClass?: Prisma.EntryObjectClassOrderByRelationAggregateInput
-  AliasEntry?: Prisma.AliasOrderByRelationAggregateInput
-  AliasedEntry?: Prisma.AliasOrderByWithRelationInput
   DITStructureRule?: Prisma.DITStructureRuleOrderByRelationAggregateInput
   ContentRule?: Prisma.ContentRuleOrderByRelationAggregateInput
   ContextUseRule?: Prisma.ContextUseRuleOrderByRelationAggregateInput
@@ -664,10 +682,14 @@ export type EntryWhereUniqueInput = Prisma.AtLeast<{
   hierarchyTopStr?: Prisma.StringNullableFilter<"Entry"> | string | null
   hierarchyPath?: Prisma.StringNullableFilter<"Entry"> | string | null
   hierarchyLevel?: Prisma.IntNullableFilter<"Entry"> | number | null
+  aliased_entry_name?: Prisma.JsonNullableFilter<"Entry">
+  aliased_entry_id?: Prisma.IntNullableFilter<"Entry"> | number | null
   otherData?: Prisma.JsonNullableFilter<"Entry">
   immediate_superior?: Prisma.XOR<Prisma.EntryNullableScalarRelationFilter, Prisma.EntryWhereInput> | null
   hierarchyParent?: Prisma.XOR<Prisma.EntryNullableScalarRelationFilter, Prisma.EntryWhereInput> | null
   hierarchyTop?: Prisma.XOR<Prisma.EntryNullableScalarRelationFilter, Prisma.EntryWhereInput> | null
+  aliased_entry?: Prisma.XOR<Prisma.EntryNullableScalarRelationFilter, Prisma.EntryWhereInput> | null
+  aliases?: Prisma.EntryListRelationFilter
   subordinates?: Prisma.EntryListRelationFilter
   hierarchicalChildren?: Prisma.EntryListRelationFilter
   MatchingRuleUse?: Prisma.MatchingRuleUseListRelationFilter
@@ -676,8 +698,6 @@ export type EntryWhereUniqueInput = Prisma.AtLeast<{
   Password?: Prisma.PasswordListRelationFilter
   RDN?: Prisma.DistinguishedValueListRelationFilter
   EntryObjectClass?: Prisma.EntryObjectClassListRelationFilter
-  AliasEntry?: Prisma.AliasListRelationFilter
-  AliasedEntry?: Prisma.XOR<Prisma.AliasNullableScalarRelationFilter, Prisma.AliasWhereInput> | null
   DITStructureRule?: Prisma.DITStructureRuleListRelationFilter
   ContentRule?: Prisma.ContentRuleListRelationFilter
   ContextUseRule?: Prisma.ContextUseRuleListRelationFilter
@@ -737,6 +757,8 @@ export type EntryOrderByWithAggregationInput = {
   hierarchyTopStr?: Prisma.SortOrderInput | Prisma.SortOrder
   hierarchyPath?: Prisma.SortOrderInput | Prisma.SortOrder
   hierarchyLevel?: Prisma.SortOrderInput | Prisma.SortOrder
+  aliased_entry_name?: Prisma.SortOrderInput | Prisma.SortOrder
+  aliased_entry_id?: Prisma.SortOrderInput | Prisma.SortOrder
   otherData?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.EntryCountOrderByAggregateInput
   _avg?: Prisma.EntryAvgOrderByAggregateInput
@@ -791,6 +813,8 @@ export type EntryScalarWhereWithAggregatesInput = {
   hierarchyTopStr?: Prisma.StringNullableWithAggregatesFilter<"Entry"> | string | null
   hierarchyPath?: Prisma.StringNullableWithAggregatesFilter<"Entry"> | string | null
   hierarchyLevel?: Prisma.IntNullableWithAggregatesFilter<"Entry"> | number | null
+  aliased_entry_name?: Prisma.JsonNullableWithAggregatesFilter<"Entry">
+  aliased_entry_id?: Prisma.IntNullableWithAggregatesFilter<"Entry"> | number | null
   otherData?: Prisma.JsonNullableWithAggregatesFilter<"Entry">
 }
 
@@ -833,10 +857,13 @@ export type EntryCreateInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -845,8 +872,6 @@ export type EntryCreateInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -906,7 +931,10 @@ export type EntryUncheckedCreateInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -915,8 +943,6 @@ export type EntryUncheckedCreateInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -972,10 +998,13 @@ export type EntryUpdateInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -984,8 +1013,6 @@ export type EntryUpdateInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -1045,7 +1072,10 @@ export type EntryUncheckedUpdateInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -1054,8 +1084,6 @@ export type EntryUncheckedUpdateInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -1115,6 +1143,8 @@ export type EntryCreateManyInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
@@ -1157,6 +1187,7 @@ export type EntryUpdateManyMutationInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
@@ -1203,6 +1234,8 @@ export type EntryUncheckedUpdateManyInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
@@ -1264,6 +1297,8 @@ export type EntryCountOrderByAggregateInput = {
   hierarchyTopStr?: Prisma.SortOrder
   hierarchyPath?: Prisma.SortOrder
   hierarchyLevel?: Prisma.SortOrder
+  aliased_entry_name?: Prisma.SortOrder
+  aliased_entry_id?: Prisma.SortOrder
   otherData?: Prisma.SortOrder
 }
 
@@ -1274,6 +1309,7 @@ export type EntryAvgOrderByAggregateInput = {
   hierarchyParent_id?: Prisma.SortOrder
   hierarchyTop_id?: Prisma.SortOrder
   hierarchyLevel?: Prisma.SortOrder
+  aliased_entry_id?: Prisma.SortOrder
 }
 
 export type EntryMaxOrderByAggregateInput = {
@@ -1314,6 +1350,7 @@ export type EntryMaxOrderByAggregateInput = {
   hierarchyTopStr?: Prisma.SortOrder
   hierarchyPath?: Prisma.SortOrder
   hierarchyLevel?: Prisma.SortOrder
+  aliased_entry_id?: Prisma.SortOrder
 }
 
 export type EntryMinOrderByAggregateInput = {
@@ -1354,6 +1391,7 @@ export type EntryMinOrderByAggregateInput = {
   hierarchyTopStr?: Prisma.SortOrder
   hierarchyPath?: Prisma.SortOrder
   hierarchyLevel?: Prisma.SortOrder
+  aliased_entry_id?: Prisma.SortOrder
 }
 
 export type EntrySumOrderByAggregateInput = {
@@ -1363,6 +1401,7 @@ export type EntrySumOrderByAggregateInput = {
   hierarchyParent_id?: Prisma.SortOrder
   hierarchyTop_id?: Prisma.SortOrder
   hierarchyLevel?: Prisma.SortOrder
+  aliased_entry_id?: Prisma.SortOrder
 }
 
 export type EntryScalarRelationFilter = {
@@ -1388,6 +1427,19 @@ export type EntryCreateNestedOneWithoutEntryInput = {
   connect?: Prisma.EntryWhereUniqueInput
 }
 
+export type EntryCreateNestedOneWithoutAliasesInput = {
+  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliasesInput, Prisma.EntryUncheckedCreateWithoutAliasesInput>
+  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliasesInput
+  connect?: Prisma.EntryWhereUniqueInput
+}
+
+export type EntryCreateNestedManyWithoutAliased_entryInput = {
+  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliased_entryInput, Prisma.EntryUncheckedCreateWithoutAliased_entryInput> | Prisma.EntryCreateWithoutAliased_entryInput[] | Prisma.EntryUncheckedCreateWithoutAliased_entryInput[]
+  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliased_entryInput | Prisma.EntryCreateOrConnectWithoutAliased_entryInput[]
+  createMany?: Prisma.EntryCreateManyAliased_entryInputEnvelope
+  connect?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+}
+
 export type EntryCreateNestedManyWithoutImmediate_superiorInput = {
   create?: Prisma.XOR<Prisma.EntryCreateWithoutImmediate_superiorInput, Prisma.EntryUncheckedCreateWithoutImmediate_superiorInput> | Prisma.EntryCreateWithoutImmediate_superiorInput[] | Prisma.EntryUncheckedCreateWithoutImmediate_superiorInput[]
   connectOrCreate?: Prisma.EntryCreateOrConnectWithoutImmediate_superiorInput | Prisma.EntryCreateOrConnectWithoutImmediate_superiorInput[]
@@ -1406,6 +1458,13 @@ export type EntryCreateNestedManyWithoutHierarchyTopInput = {
   create?: Prisma.XOR<Prisma.EntryCreateWithoutHierarchyTopInput, Prisma.EntryUncheckedCreateWithoutHierarchyTopInput> | Prisma.EntryCreateWithoutHierarchyTopInput[] | Prisma.EntryUncheckedCreateWithoutHierarchyTopInput[]
   connectOrCreate?: Prisma.EntryCreateOrConnectWithoutHierarchyTopInput | Prisma.EntryCreateOrConnectWithoutHierarchyTopInput[]
   createMany?: Prisma.EntryCreateManyHierarchyTopInputEnvelope
+  connect?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+}
+
+export type EntryUncheckedCreateNestedManyWithoutAliased_entryInput = {
+  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliased_entryInput, Prisma.EntryUncheckedCreateWithoutAliased_entryInput> | Prisma.EntryCreateWithoutAliased_entryInput[] | Prisma.EntryUncheckedCreateWithoutAliased_entryInput[]
+  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliased_entryInput | Prisma.EntryCreateOrConnectWithoutAliased_entryInput[]
+  createMany?: Prisma.EntryCreateManyAliased_entryInputEnvelope
   connect?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
 }
 
@@ -1492,6 +1551,30 @@ export type EntryUpdateOneWithoutEntryNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EntryUpdateToOneWithWhereWithoutEntryInput, Prisma.EntryUpdateWithoutEntryInput>, Prisma.EntryUncheckedUpdateWithoutEntryInput>
 }
 
+export type EntryUpdateOneWithoutAliasesNestedInput = {
+  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliasesInput, Prisma.EntryUncheckedCreateWithoutAliasesInput>
+  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliasesInput
+  upsert?: Prisma.EntryUpsertWithoutAliasesInput
+  disconnect?: Prisma.EntryWhereInput | boolean
+  delete?: Prisma.EntryWhereInput | boolean
+  connect?: Prisma.EntryWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EntryUpdateToOneWithWhereWithoutAliasesInput, Prisma.EntryUpdateWithoutAliasesInput>, Prisma.EntryUncheckedUpdateWithoutAliasesInput>
+}
+
+export type EntryUpdateManyWithoutAliased_entryNestedInput = {
+  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliased_entryInput, Prisma.EntryUncheckedCreateWithoutAliased_entryInput> | Prisma.EntryCreateWithoutAliased_entryInput[] | Prisma.EntryUncheckedCreateWithoutAliased_entryInput[]
+  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliased_entryInput | Prisma.EntryCreateOrConnectWithoutAliased_entryInput[]
+  upsert?: Prisma.EntryUpsertWithWhereUniqueWithoutAliased_entryInput | Prisma.EntryUpsertWithWhereUniqueWithoutAliased_entryInput[]
+  createMany?: Prisma.EntryCreateManyAliased_entryInputEnvelope
+  set?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+  disconnect?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+  delete?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+  connect?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+  update?: Prisma.EntryUpdateWithWhereUniqueWithoutAliased_entryInput | Prisma.EntryUpdateWithWhereUniqueWithoutAliased_entryInput[]
+  updateMany?: Prisma.EntryUpdateManyWithWhereWithoutAliased_entryInput | Prisma.EntryUpdateManyWithWhereWithoutAliased_entryInput[]
+  deleteMany?: Prisma.EntryScalarWhereInput | Prisma.EntryScalarWhereInput[]
+}
+
 export type EntryUpdateManyWithoutImmediate_superiorNestedInput = {
   create?: Prisma.XOR<Prisma.EntryCreateWithoutImmediate_superiorInput, Prisma.EntryUncheckedCreateWithoutImmediate_superiorInput> | Prisma.EntryCreateWithoutImmediate_superiorInput[] | Prisma.EntryUncheckedCreateWithoutImmediate_superiorInput[]
   connectOrCreate?: Prisma.EntryCreateOrConnectWithoutImmediate_superiorInput | Prisma.EntryCreateOrConnectWithoutImmediate_superiorInput[]
@@ -1540,6 +1623,20 @@ export type IntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type EntryUncheckedUpdateManyWithoutAliased_entryNestedInput = {
+  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliased_entryInput, Prisma.EntryUncheckedCreateWithoutAliased_entryInput> | Prisma.EntryCreateWithoutAliased_entryInput[] | Prisma.EntryUncheckedCreateWithoutAliased_entryInput[]
+  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliased_entryInput | Prisma.EntryCreateOrConnectWithoutAliased_entryInput[]
+  upsert?: Prisma.EntryUpsertWithWhereUniqueWithoutAliased_entryInput | Prisma.EntryUpsertWithWhereUniqueWithoutAliased_entryInput[]
+  createMany?: Prisma.EntryCreateManyAliased_entryInputEnvelope
+  set?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+  disconnect?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+  delete?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+  connect?: Prisma.EntryWhereUniqueInput | Prisma.EntryWhereUniqueInput[]
+  update?: Prisma.EntryUpdateWithWhereUniqueWithoutAliased_entryInput | Prisma.EntryUpdateWithWhereUniqueWithoutAliased_entryInput[]
+  updateMany?: Prisma.EntryUpdateManyWithWhereWithoutAliased_entryInput | Prisma.EntryUpdateManyWithWhereWithoutAliased_entryInput[]
+  deleteMany?: Prisma.EntryScalarWhereInput | Prisma.EntryScalarWhereInput[]
 }
 
 export type EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput = {
@@ -1820,36 +1917,6 @@ export type EntryUpdateOneRequiredWithoutEntryObjectClassNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EntryUpdateToOneWithWhereWithoutEntryObjectClassInput, Prisma.EntryUpdateWithoutEntryObjectClassInput>, Prisma.EntryUncheckedUpdateWithoutEntryObjectClassInput>
 }
 
-export type EntryCreateNestedOneWithoutAliasEntryInput = {
-  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliasEntryInput, Prisma.EntryUncheckedCreateWithoutAliasEntryInput>
-  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliasEntryInput
-  connect?: Prisma.EntryWhereUniqueInput
-}
-
-export type EntryCreateNestedOneWithoutAliasedEntryInput = {
-  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliasedEntryInput, Prisma.EntryUncheckedCreateWithoutAliasedEntryInput>
-  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliasedEntryInput
-  connect?: Prisma.EntryWhereUniqueInput
-}
-
-export type EntryUpdateOneRequiredWithoutAliasEntryNestedInput = {
-  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliasEntryInput, Prisma.EntryUncheckedCreateWithoutAliasEntryInput>
-  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliasEntryInput
-  upsert?: Prisma.EntryUpsertWithoutAliasEntryInput
-  connect?: Prisma.EntryWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.EntryUpdateToOneWithWhereWithoutAliasEntryInput, Prisma.EntryUpdateWithoutAliasEntryInput>, Prisma.EntryUncheckedUpdateWithoutAliasEntryInput>
-}
-
-export type EntryUpdateOneWithoutAliasedEntryNestedInput = {
-  create?: Prisma.XOR<Prisma.EntryCreateWithoutAliasedEntryInput, Prisma.EntryUncheckedCreateWithoutAliasedEntryInput>
-  connectOrCreate?: Prisma.EntryCreateOrConnectWithoutAliasedEntryInput
-  upsert?: Prisma.EntryUpsertWithoutAliasedEntryInput
-  disconnect?: Prisma.EntryWhereInput | boolean
-  delete?: Prisma.EntryWhereInput | boolean
-  connect?: Prisma.EntryWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.EntryUpdateToOneWithWhereWithoutAliasedEntryInput, Prisma.EntryUpdateWithoutAliasedEntryInput>, Prisma.EntryUncheckedUpdateWithoutAliasedEntryInput>
-}
-
 export type EntryCreateNestedOneWithoutEntryAttributeValuesIncompleteInput = {
   create?: Prisma.XOR<Prisma.EntryCreateWithoutEntryAttributeValuesIncompleteInput, Prisma.EntryUncheckedCreateWithoutEntryAttributeValuesIncompleteInput>
   connectOrCreate?: Prisma.EntryCreateOrConnectWithoutEntryAttributeValuesIncompleteInput
@@ -1935,10 +2002,13 @@ export type EntryCreateWithoutSubordinatesInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
   AttributeValue?: Prisma.AttributeValueCreateNestedManyWithoutEntryInput
@@ -1946,8 +2016,6 @@ export type EntryCreateWithoutSubordinatesInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -2007,7 +2075,10 @@ export type EntryUncheckedCreateWithoutSubordinatesInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
   AttributeValue?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutEntryInput
@@ -2015,8 +2086,6 @@ export type EntryUncheckedCreateWithoutSubordinatesInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -2077,10 +2146,13 @@ export type EntryCreateWithoutHierarchicalChildrenInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
   AttributeValue?: Prisma.AttributeValueCreateNestedManyWithoutEntryInput
@@ -2088,8 +2160,6 @@ export type EntryCreateWithoutHierarchicalChildrenInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -2149,7 +2219,10 @@ export type EntryUncheckedCreateWithoutHierarchicalChildrenInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
   AttributeValue?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutEntryInput
@@ -2157,8 +2230,6 @@ export type EntryUncheckedCreateWithoutHierarchicalChildrenInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -2219,10 +2290,13 @@ export type EntryCreateWithoutEntryInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -2231,8 +2305,6 @@ export type EntryCreateWithoutEntryInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -2291,7 +2363,10 @@ export type EntryUncheckedCreateWithoutEntryInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -2300,8 +2375,6 @@ export type EntryUncheckedCreateWithoutEntryInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -2320,6 +2393,298 @@ export type EntryUncheckedCreateWithoutEntryInput = {
 export type EntryCreateOrConnectWithoutEntryInput = {
   where: Prisma.EntryWhereUniqueInput
   create: Prisma.XOR<Prisma.EntryCreateWithoutEntryInput, Prisma.EntryUncheckedCreateWithoutEntryInput>
+}
+
+export type EntryCreateWithoutAliasesInput = {
+  entryUUID?: string | null
+  dseUUID?: string
+  materialized_path: string
+  glue?: boolean
+  cp?: boolean
+  entry?: boolean
+  alias?: boolean
+  subr?: boolean
+  nssr?: boolean
+  xr?: boolean
+  admPoint?: boolean
+  subentry?: boolean
+  shadow?: boolean
+  immSupr?: boolean
+  rhob?: boolean
+  sa?: boolean
+  dsSubentry?: boolean
+  createTimestamp: Date | string
+  modifyTimestamp: Date | string
+  deleteTimestamp?: Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Date | string | null
+  modifyNameTimestamp?: Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: number | null
+  structuralObjectClass?: string | null
+  subordinate_completeness?: boolean | null
+  attribute_completeness?: boolean | null
+  lastShadowUpdate?: Date | string | null
+  keep_children_in_database?: boolean
+  may_add_top_level_dse?: boolean
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: string | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: string | null
+  hierarchyPath?: string | null
+  hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
+  hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
+  hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
+  hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
+  MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
+  AttributeValue?: Prisma.AttributeValueCreateNestedManyWithoutEntryInput
+  AccessPoint?: Prisma.AccessPointCreateNestedManyWithoutEntryInput
+  Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
+  RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
+  EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
+  DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
+  ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
+  ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
+  Friendship?: Prisma.FriendshipCreateNestedManyWithoutEntryInput
+  OperationalBinding?: Prisma.OperationalBindingCreateNestedManyWithoutEntryInput
+  PasswordHistory?: Prisma.PasswordHistoryCreateNestedManyWithoutEntryInput
+  Entry?: Prisma.EntryCreateNestedManyWithoutHierarchyTopInput
+  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultCreateNestedManyWithoutEntryInput
+  EnqueuedListResult?: Prisma.EnqueuedListResultCreateNestedManyWithoutEntryInput
+  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteCreateNestedManyWithoutEntryInput
+  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionCreateNestedManyWithoutEntryInput
+  ObjectClassDescription?: Prisma.ObjectClassDescriptionCreateNestedManyWithoutEntryInput
+  NameForm?: Prisma.NameFormCreateNestedManyWithoutEntryInput
+  ContextDescription?: Prisma.ContextDescriptionCreateNestedManyWithoutEntryInput
+}
+
+export type EntryUncheckedCreateWithoutAliasesInput = {
+  id?: number
+  entryUUID?: string | null
+  dseUUID?: string
+  materialized_path: string
+  immediate_superior_id?: number | null
+  glue?: boolean
+  cp?: boolean
+  entry?: boolean
+  alias?: boolean
+  subr?: boolean
+  nssr?: boolean
+  xr?: boolean
+  admPoint?: boolean
+  subentry?: boolean
+  shadow?: boolean
+  immSupr?: boolean
+  rhob?: boolean
+  sa?: boolean
+  dsSubentry?: boolean
+  createTimestamp: Date | string
+  modifyTimestamp: Date | string
+  deleteTimestamp?: Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Date | string | null
+  modifyNameTimestamp?: Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: number | null
+  structuralObjectClass?: string | null
+  subordinate_completeness?: boolean | null
+  attribute_completeness?: boolean | null
+  lastShadowUpdate?: Date | string | null
+  keep_children_in_database?: boolean
+  may_add_top_level_dse?: boolean
+  hierarchyParent_id?: number | null
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: string | null
+  hierarchyTop_id?: number | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: string | null
+  hierarchyPath?: string | null
+  hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
+  hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
+  MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
+  AttributeValue?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutEntryInput
+  AccessPoint?: Prisma.AccessPointUncheckedCreateNestedManyWithoutEntryInput
+  Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
+  RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
+  EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
+  DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
+  ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
+  ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
+  Friendship?: Prisma.FriendshipUncheckedCreateNestedManyWithoutEntryInput
+  OperationalBinding?: Prisma.OperationalBindingUncheckedCreateNestedManyWithoutEntryInput
+  PasswordHistory?: Prisma.PasswordHistoryUncheckedCreateNestedManyWithoutEntryInput
+  Entry?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyTopInput
+  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUncheckedCreateNestedManyWithoutEntryInput
+  EnqueuedListResult?: Prisma.EnqueuedListResultUncheckedCreateNestedManyWithoutEntryInput
+  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUncheckedCreateNestedManyWithoutEntryInput
+  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUncheckedCreateNestedManyWithoutEntryInput
+  ObjectClassDescription?: Prisma.ObjectClassDescriptionUncheckedCreateNestedManyWithoutEntryInput
+  NameForm?: Prisma.NameFormUncheckedCreateNestedManyWithoutEntryInput
+  ContextDescription?: Prisma.ContextDescriptionUncheckedCreateNestedManyWithoutEntryInput
+}
+
+export type EntryCreateOrConnectWithoutAliasesInput = {
+  where: Prisma.EntryWhereUniqueInput
+  create: Prisma.XOR<Prisma.EntryCreateWithoutAliasesInput, Prisma.EntryUncheckedCreateWithoutAliasesInput>
+}
+
+export type EntryCreateWithoutAliased_entryInput = {
+  entryUUID?: string | null
+  dseUUID?: string
+  materialized_path: string
+  glue?: boolean
+  cp?: boolean
+  entry?: boolean
+  alias?: boolean
+  subr?: boolean
+  nssr?: boolean
+  xr?: boolean
+  admPoint?: boolean
+  subentry?: boolean
+  shadow?: boolean
+  immSupr?: boolean
+  rhob?: boolean
+  sa?: boolean
+  dsSubentry?: boolean
+  createTimestamp: Date | string
+  modifyTimestamp: Date | string
+  deleteTimestamp?: Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Date | string | null
+  modifyNameTimestamp?: Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: number | null
+  structuralObjectClass?: string | null
+  subordinate_completeness?: boolean | null
+  attribute_completeness?: boolean | null
+  lastShadowUpdate?: Date | string | null
+  keep_children_in_database?: boolean
+  may_add_top_level_dse?: boolean
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: string | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: string | null
+  hierarchyPath?: string | null
+  hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
+  hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
+  hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
+  subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
+  hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
+  MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
+  AttributeValue?: Prisma.AttributeValueCreateNestedManyWithoutEntryInput
+  AccessPoint?: Prisma.AccessPointCreateNestedManyWithoutEntryInput
+  Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
+  RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
+  EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
+  DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
+  ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
+  ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
+  Friendship?: Prisma.FriendshipCreateNestedManyWithoutEntryInput
+  OperationalBinding?: Prisma.OperationalBindingCreateNestedManyWithoutEntryInput
+  PasswordHistory?: Prisma.PasswordHistoryCreateNestedManyWithoutEntryInput
+  Entry?: Prisma.EntryCreateNestedManyWithoutHierarchyTopInput
+  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultCreateNestedManyWithoutEntryInput
+  EnqueuedListResult?: Prisma.EnqueuedListResultCreateNestedManyWithoutEntryInput
+  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteCreateNestedManyWithoutEntryInput
+  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionCreateNestedManyWithoutEntryInput
+  ObjectClassDescription?: Prisma.ObjectClassDescriptionCreateNestedManyWithoutEntryInput
+  NameForm?: Prisma.NameFormCreateNestedManyWithoutEntryInput
+  ContextDescription?: Prisma.ContextDescriptionCreateNestedManyWithoutEntryInput
+}
+
+export type EntryUncheckedCreateWithoutAliased_entryInput = {
+  id?: number
+  entryUUID?: string | null
+  dseUUID?: string
+  materialized_path: string
+  immediate_superior_id?: number | null
+  glue?: boolean
+  cp?: boolean
+  entry?: boolean
+  alias?: boolean
+  subr?: boolean
+  nssr?: boolean
+  xr?: boolean
+  admPoint?: boolean
+  subentry?: boolean
+  shadow?: boolean
+  immSupr?: boolean
+  rhob?: boolean
+  sa?: boolean
+  dsSubentry?: boolean
+  createTimestamp: Date | string
+  modifyTimestamp: Date | string
+  deleteTimestamp?: Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Date | string | null
+  modifyNameTimestamp?: Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: number | null
+  structuralObjectClass?: string | null
+  subordinate_completeness?: boolean | null
+  attribute_completeness?: boolean | null
+  lastShadowUpdate?: Date | string | null
+  keep_children_in_database?: boolean
+  may_add_top_level_dse?: boolean
+  hierarchyParent_id?: number | null
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: string | null
+  hierarchyTop_id?: number | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: string | null
+  hierarchyPath?: string | null
+  hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
+  subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
+  hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
+  MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
+  AttributeValue?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutEntryInput
+  AccessPoint?: Prisma.AccessPointUncheckedCreateNestedManyWithoutEntryInput
+  Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
+  RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
+  EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
+  DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
+  ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
+  ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
+  Friendship?: Prisma.FriendshipUncheckedCreateNestedManyWithoutEntryInput
+  OperationalBinding?: Prisma.OperationalBindingUncheckedCreateNestedManyWithoutEntryInput
+  PasswordHistory?: Prisma.PasswordHistoryUncheckedCreateNestedManyWithoutEntryInput
+  Entry?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyTopInput
+  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUncheckedCreateNestedManyWithoutEntryInput
+  EnqueuedListResult?: Prisma.EnqueuedListResultUncheckedCreateNestedManyWithoutEntryInput
+  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUncheckedCreateNestedManyWithoutEntryInput
+  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUncheckedCreateNestedManyWithoutEntryInput
+  ObjectClassDescription?: Prisma.ObjectClassDescriptionUncheckedCreateNestedManyWithoutEntryInput
+  NameForm?: Prisma.NameFormUncheckedCreateNestedManyWithoutEntryInput
+  ContextDescription?: Prisma.ContextDescriptionUncheckedCreateNestedManyWithoutEntryInput
+}
+
+export type EntryCreateOrConnectWithoutAliased_entryInput = {
+  where: Prisma.EntryWhereUniqueInput
+  create: Prisma.XOR<Prisma.EntryCreateWithoutAliased_entryInput, Prisma.EntryUncheckedCreateWithoutAliased_entryInput>
+}
+
+export type EntryCreateManyAliased_entryInputEnvelope = {
+  data: Prisma.EntryCreateManyAliased_entryInput | Prisma.EntryCreateManyAliased_entryInput[]
 }
 
 export type EntryCreateWithoutImmediate_superiorInput = {
@@ -2361,9 +2726,12 @@ export type EntryCreateWithoutImmediate_superiorInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -2372,8 +2740,6 @@ export type EntryCreateWithoutImmediate_superiorInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -2432,7 +2798,10 @@ export type EntryUncheckedCreateWithoutImmediate_superiorInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -2441,8 +2810,6 @@ export type EntryUncheckedCreateWithoutImmediate_superiorInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -2507,9 +2874,12 @@ export type EntryCreateWithoutHierarchyParentInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -2518,8 +2888,6 @@ export type EntryCreateWithoutHierarchyParentInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -2578,7 +2946,10 @@ export type EntryUncheckedCreateWithoutHierarchyParentInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -2587,8 +2958,6 @@ export type EntryUncheckedCreateWithoutHierarchyParentInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -2653,9 +3022,12 @@ export type EntryCreateWithoutHierarchyTopInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -2664,8 +3036,6 @@ export type EntryCreateWithoutHierarchyTopInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -2724,7 +3094,10 @@ export type EntryUncheckedCreateWithoutHierarchyTopInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -2733,8 +3106,6 @@ export type EntryUncheckedCreateWithoutHierarchyTopInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -2810,10 +3181,13 @@ export type EntryUpdateWithoutSubordinatesInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
   AttributeValue?: Prisma.AttributeValueUpdateManyWithoutEntryNestedInput
@@ -2821,8 +3195,6 @@ export type EntryUpdateWithoutSubordinatesInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -2882,7 +3254,10 @@ export type EntryUncheckedUpdateWithoutSubordinatesInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
   AttributeValue?: Prisma.AttributeValueUncheckedUpdateManyWithoutEntryNestedInput
@@ -2890,8 +3265,6 @@ export type EntryUncheckedUpdateWithoutSubordinatesInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -2958,10 +3331,13 @@ export type EntryUpdateWithoutHierarchicalChildrenInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
   AttributeValue?: Prisma.AttributeValueUpdateManyWithoutEntryNestedInput
@@ -2969,8 +3345,6 @@ export type EntryUpdateWithoutHierarchicalChildrenInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -3030,7 +3404,10 @@ export type EntryUncheckedUpdateWithoutHierarchicalChildrenInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
   AttributeValue?: Prisma.AttributeValueUncheckedUpdateManyWithoutEntryNestedInput
@@ -3038,8 +3415,6 @@ export type EntryUncheckedUpdateWithoutHierarchicalChildrenInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -3106,10 +3481,13 @@ export type EntryUpdateWithoutEntryInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -3118,8 +3496,6 @@ export type EntryUpdateWithoutEntryInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -3178,7 +3554,10 @@ export type EntryUncheckedUpdateWithoutEntryInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -3187,8 +3566,6 @@ export type EntryUncheckedUpdateWithoutEntryInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -3204,20 +3581,170 @@ export type EntryUncheckedUpdateWithoutEntryInput = {
   ContextDescription?: Prisma.ContextDescriptionUncheckedUpdateManyWithoutEntryNestedInput
 }
 
-export type EntryUpsertWithWhereUniqueWithoutImmediate_superiorInput = {
-  where: Prisma.EntryWhereUniqueInput
-  update: Prisma.XOR<Prisma.EntryUpdateWithoutImmediate_superiorInput, Prisma.EntryUncheckedUpdateWithoutImmediate_superiorInput>
-  create: Prisma.XOR<Prisma.EntryCreateWithoutImmediate_superiorInput, Prisma.EntryUncheckedCreateWithoutImmediate_superiorInput>
+export type EntryUpsertWithoutAliasesInput = {
+  update: Prisma.XOR<Prisma.EntryUpdateWithoutAliasesInput, Prisma.EntryUncheckedUpdateWithoutAliasesInput>
+  create: Prisma.XOR<Prisma.EntryCreateWithoutAliasesInput, Prisma.EntryUncheckedCreateWithoutAliasesInput>
+  where?: Prisma.EntryWhereInput
 }
 
-export type EntryUpdateWithWhereUniqueWithoutImmediate_superiorInput = {
-  where: Prisma.EntryWhereUniqueInput
-  data: Prisma.XOR<Prisma.EntryUpdateWithoutImmediate_superiorInput, Prisma.EntryUncheckedUpdateWithoutImmediate_superiorInput>
+export type EntryUpdateToOneWithWhereWithoutAliasesInput = {
+  where?: Prisma.EntryWhereInput
+  data: Prisma.XOR<Prisma.EntryUpdateWithoutAliasesInput, Prisma.EntryUncheckedUpdateWithoutAliasesInput>
 }
 
-export type EntryUpdateManyWithWhereWithoutImmediate_superiorInput = {
+export type EntryUpdateWithoutAliasesInput = {
+  entryUUID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dseUUID?: Prisma.StringFieldUpdateOperationsInput | string
+  materialized_path?: Prisma.StringFieldUpdateOperationsInput | string
+  glue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cp?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  entry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  alias?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nssr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  admPoint?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  shadow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  immSupr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  rhob?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sa?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dsSubentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifyTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deleteTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  lastShadowUpdate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keep_children_in_database?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  may_add_top_level_dse?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
+  hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
+  hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
+  hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
+  MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
+  AttributeValue?: Prisma.AttributeValueUpdateManyWithoutEntryNestedInput
+  AccessPoint?: Prisma.AccessPointUpdateManyWithoutEntryNestedInput
+  Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
+  RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
+  EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
+  DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
+  ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
+  ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
+  Friendship?: Prisma.FriendshipUpdateManyWithoutEntryNestedInput
+  OperationalBinding?: Prisma.OperationalBindingUpdateManyWithoutEntryNestedInput
+  PasswordHistory?: Prisma.PasswordHistoryUpdateManyWithoutEntryNestedInput
+  Entry?: Prisma.EntryUpdateManyWithoutHierarchyTopNestedInput
+  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUpdateManyWithoutEntryNestedInput
+  EnqueuedListResult?: Prisma.EnqueuedListResultUpdateManyWithoutEntryNestedInput
+  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUpdateManyWithoutEntryNestedInput
+  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUpdateManyWithoutEntryNestedInput
+  ObjectClassDescription?: Prisma.ObjectClassDescriptionUpdateManyWithoutEntryNestedInput
+  NameForm?: Prisma.NameFormUpdateManyWithoutEntryNestedInput
+  ContextDescription?: Prisma.ContextDescriptionUpdateManyWithoutEntryNestedInput
+}
+
+export type EntryUncheckedUpdateWithoutAliasesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  entryUUID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dseUUID?: Prisma.StringFieldUpdateOperationsInput | string
+  materialized_path?: Prisma.StringFieldUpdateOperationsInput | string
+  immediate_superior_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  glue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cp?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  entry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  alias?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nssr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  admPoint?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  shadow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  immSupr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  rhob?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sa?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dsSubentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifyTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deleteTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  lastShadowUpdate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keep_children_in_database?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  may_add_top_level_dse?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hierarchyParent_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyTop_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
+  hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
+  MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
+  AttributeValue?: Prisma.AttributeValueUncheckedUpdateManyWithoutEntryNestedInput
+  AccessPoint?: Prisma.AccessPointUncheckedUpdateManyWithoutEntryNestedInput
+  Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
+  RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
+  EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
+  DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
+  ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
+  ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
+  Friendship?: Prisma.FriendshipUncheckedUpdateManyWithoutEntryNestedInput
+  OperationalBinding?: Prisma.OperationalBindingUncheckedUpdateManyWithoutEntryNestedInput
+  PasswordHistory?: Prisma.PasswordHistoryUncheckedUpdateManyWithoutEntryNestedInput
+  Entry?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyTopNestedInput
+  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUncheckedUpdateManyWithoutEntryNestedInput
+  EnqueuedListResult?: Prisma.EnqueuedListResultUncheckedUpdateManyWithoutEntryNestedInput
+  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUncheckedUpdateManyWithoutEntryNestedInput
+  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUncheckedUpdateManyWithoutEntryNestedInput
+  ObjectClassDescription?: Prisma.ObjectClassDescriptionUncheckedUpdateManyWithoutEntryNestedInput
+  NameForm?: Prisma.NameFormUncheckedUpdateManyWithoutEntryNestedInput
+  ContextDescription?: Prisma.ContextDescriptionUncheckedUpdateManyWithoutEntryNestedInput
+}
+
+export type EntryUpsertWithWhereUniqueWithoutAliased_entryInput = {
+  where: Prisma.EntryWhereUniqueInput
+  update: Prisma.XOR<Prisma.EntryUpdateWithoutAliased_entryInput, Prisma.EntryUncheckedUpdateWithoutAliased_entryInput>
+  create: Prisma.XOR<Prisma.EntryCreateWithoutAliased_entryInput, Prisma.EntryUncheckedCreateWithoutAliased_entryInput>
+}
+
+export type EntryUpdateWithWhereUniqueWithoutAliased_entryInput = {
+  where: Prisma.EntryWhereUniqueInput
+  data: Prisma.XOR<Prisma.EntryUpdateWithoutAliased_entryInput, Prisma.EntryUncheckedUpdateWithoutAliased_entryInput>
+}
+
+export type EntryUpdateManyWithWhereWithoutAliased_entryInput = {
   where: Prisma.EntryScalarWhereInput
-  data: Prisma.XOR<Prisma.EntryUpdateManyMutationInput, Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorInput>
+  data: Prisma.XOR<Prisma.EntryUpdateManyMutationInput, Prisma.EntryUncheckedUpdateManyWithoutAliased_entryInput>
 }
 
 export type EntryScalarWhereInput = {
@@ -3266,7 +3793,25 @@ export type EntryScalarWhereInput = {
   hierarchyTopStr?: Prisma.StringNullableFilter<"Entry"> | string | null
   hierarchyPath?: Prisma.StringNullableFilter<"Entry"> | string | null
   hierarchyLevel?: Prisma.IntNullableFilter<"Entry"> | number | null
+  aliased_entry_name?: Prisma.JsonNullableFilter<"Entry">
+  aliased_entry_id?: Prisma.IntNullableFilter<"Entry"> | number | null
   otherData?: Prisma.JsonNullableFilter<"Entry">
+}
+
+export type EntryUpsertWithWhereUniqueWithoutImmediate_superiorInput = {
+  where: Prisma.EntryWhereUniqueInput
+  update: Prisma.XOR<Prisma.EntryUpdateWithoutImmediate_superiorInput, Prisma.EntryUncheckedUpdateWithoutImmediate_superiorInput>
+  create: Prisma.XOR<Prisma.EntryCreateWithoutImmediate_superiorInput, Prisma.EntryUncheckedCreateWithoutImmediate_superiorInput>
+}
+
+export type EntryUpdateWithWhereUniqueWithoutImmediate_superiorInput = {
+  where: Prisma.EntryWhereUniqueInput
+  data: Prisma.XOR<Prisma.EntryUpdateWithoutImmediate_superiorInput, Prisma.EntryUncheckedUpdateWithoutImmediate_superiorInput>
+}
+
+export type EntryUpdateManyWithWhereWithoutImmediate_superiorInput = {
+  where: Prisma.EntryScalarWhereInput
+  data: Prisma.XOR<Prisma.EntryUpdateManyMutationInput, Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorInput>
 }
 
 export type EntryUpsertWithWhereUniqueWithoutHierarchyParentInput = {
@@ -3340,10 +3885,13 @@ export type EntryCreateWithoutPasswordInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -3351,8 +3899,6 @@ export type EntryCreateWithoutPasswordInput = {
   AccessPoint?: Prisma.AccessPointCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -3412,7 +3958,10 @@ export type EntryUncheckedCreateWithoutPasswordInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -3420,8 +3969,6 @@ export type EntryUncheckedCreateWithoutPasswordInput = {
   AccessPoint?: Prisma.AccessPointUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -3493,10 +4040,13 @@ export type EntryUpdateWithoutPasswordInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -3504,8 +4054,6 @@ export type EntryUpdateWithoutPasswordInput = {
   AccessPoint?: Prisma.AccessPointUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -3565,7 +4113,10 @@ export type EntryUncheckedUpdateWithoutPasswordInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -3573,8 +4124,6 @@ export type EntryUncheckedUpdateWithoutPasswordInput = {
   AccessPoint?: Prisma.AccessPointUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -3630,10 +4179,13 @@ export type EntryCreateWithoutPasswordHistoryInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -3642,8 +4194,6 @@ export type EntryCreateWithoutPasswordHistoryInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -3702,7 +4252,10 @@ export type EntryUncheckedCreateWithoutPasswordHistoryInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -3711,8 +4264,6 @@ export type EntryUncheckedCreateWithoutPasswordHistoryInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -3783,10 +4334,13 @@ export type EntryUpdateWithoutPasswordHistoryInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -3795,8 +4349,6 @@ export type EntryUpdateWithoutPasswordHistoryInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -3855,7 +4407,10 @@ export type EntryUncheckedUpdateWithoutPasswordHistoryInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -3864,8 +4419,6 @@ export type EntryUncheckedUpdateWithoutPasswordHistoryInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -3920,10 +4473,13 @@ export type EntryCreateWithoutAttributeValueInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -3931,8 +4487,6 @@ export type EntryCreateWithoutAttributeValueInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -3992,7 +4546,10 @@ export type EntryUncheckedCreateWithoutAttributeValueInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -4000,8 +4557,6 @@ export type EntryUncheckedCreateWithoutAttributeValueInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -4073,10 +4628,13 @@ export type EntryUpdateWithoutAttributeValueInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -4084,8 +4642,6 @@ export type EntryUpdateWithoutAttributeValueInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -4145,7 +4701,10 @@ export type EntryUncheckedUpdateWithoutAttributeValueInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -4153,8 +4712,6 @@ export type EntryUncheckedUpdateWithoutAttributeValueInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -4210,10 +4767,13 @@ export type EntryCreateWithoutAccessPointInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -4221,8 +4781,6 @@ export type EntryCreateWithoutAccessPointInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -4282,7 +4840,10 @@ export type EntryUncheckedCreateWithoutAccessPointInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -4290,8 +4851,6 @@ export type EntryUncheckedCreateWithoutAccessPointInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -4363,10 +4922,13 @@ export type EntryUpdateWithoutAccessPointInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -4374,8 +4936,6 @@ export type EntryUpdateWithoutAccessPointInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -4435,7 +4995,10 @@ export type EntryUncheckedUpdateWithoutAccessPointInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -4443,8 +5006,6 @@ export type EntryUncheckedUpdateWithoutAccessPointInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -4500,10 +5061,13 @@ export type EntryCreateWithoutNameFormInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -4512,8 +5076,6 @@ export type EntryCreateWithoutNameFormInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -4572,7 +5134,10 @@ export type EntryUncheckedCreateWithoutNameFormInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -4581,8 +5146,6 @@ export type EntryUncheckedCreateWithoutNameFormInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -4653,10 +5216,13 @@ export type EntryUpdateWithoutNameFormInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -4665,8 +5231,6 @@ export type EntryUpdateWithoutNameFormInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -4725,7 +5289,10 @@ export type EntryUncheckedUpdateWithoutNameFormInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -4734,8 +5301,6 @@ export type EntryUncheckedUpdateWithoutNameFormInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -4790,10 +5355,13 @@ export type EntryCreateWithoutDITStructureRuleInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -4802,8 +5370,6 @@ export type EntryCreateWithoutDITStructureRuleInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
   Friendship?: Prisma.FriendshipCreateNestedManyWithoutEntryInput
@@ -4862,7 +5428,10 @@ export type EntryUncheckedCreateWithoutDITStructureRuleInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -4871,8 +5440,6 @@ export type EntryUncheckedCreateWithoutDITStructureRuleInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
   Friendship?: Prisma.FriendshipUncheckedCreateNestedManyWithoutEntryInput
@@ -4943,10 +5510,13 @@ export type EntryUpdateWithoutDITStructureRuleInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -4955,8 +5525,6 @@ export type EntryUpdateWithoutDITStructureRuleInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
   Friendship?: Prisma.FriendshipUpdateManyWithoutEntryNestedInput
@@ -5015,7 +5583,10 @@ export type EntryUncheckedUpdateWithoutDITStructureRuleInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -5024,8 +5595,6 @@ export type EntryUncheckedUpdateWithoutDITStructureRuleInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
   Friendship?: Prisma.FriendshipUncheckedUpdateManyWithoutEntryNestedInput
@@ -5080,10 +5649,13 @@ export type EntryCreateWithoutContentRuleInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -5092,8 +5664,6 @@ export type EntryCreateWithoutContentRuleInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
   Friendship?: Prisma.FriendshipCreateNestedManyWithoutEntryInput
@@ -5152,7 +5722,10 @@ export type EntryUncheckedCreateWithoutContentRuleInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -5161,8 +5734,6 @@ export type EntryUncheckedCreateWithoutContentRuleInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
   Friendship?: Prisma.FriendshipUncheckedCreateNestedManyWithoutEntryInput
@@ -5233,10 +5804,13 @@ export type EntryUpdateWithoutContentRuleInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -5245,8 +5819,6 @@ export type EntryUpdateWithoutContentRuleInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
   Friendship?: Prisma.FriendshipUpdateManyWithoutEntryNestedInput
@@ -5305,7 +5877,10 @@ export type EntryUncheckedUpdateWithoutContentRuleInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -5314,8 +5889,6 @@ export type EntryUncheckedUpdateWithoutContentRuleInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
   Friendship?: Prisma.FriendshipUncheckedUpdateManyWithoutEntryNestedInput
@@ -5370,10 +5943,13 @@ export type EntryCreateWithoutContextUseRuleInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -5382,8 +5958,6 @@ export type EntryCreateWithoutContextUseRuleInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   Friendship?: Prisma.FriendshipCreateNestedManyWithoutEntryInput
@@ -5442,7 +6016,10 @@ export type EntryUncheckedCreateWithoutContextUseRuleInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -5451,8 +6028,6 @@ export type EntryUncheckedCreateWithoutContextUseRuleInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   Friendship?: Prisma.FriendshipUncheckedCreateNestedManyWithoutEntryInput
@@ -5523,10 +6098,13 @@ export type EntryUpdateWithoutContextUseRuleInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -5535,8 +6113,6 @@ export type EntryUpdateWithoutContextUseRuleInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   Friendship?: Prisma.FriendshipUpdateManyWithoutEntryNestedInput
@@ -5595,7 +6171,10 @@ export type EntryUncheckedUpdateWithoutContextUseRuleInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -5604,8 +6183,6 @@ export type EntryUncheckedUpdateWithoutContextUseRuleInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   Friendship?: Prisma.FriendshipUncheckedUpdateManyWithoutEntryNestedInput
@@ -5660,10 +6237,13 @@ export type EntryCreateWithoutFriendshipInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -5672,8 +6252,6 @@ export type EntryCreateWithoutFriendshipInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -5732,7 +6310,10 @@ export type EntryUncheckedCreateWithoutFriendshipInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -5741,8 +6322,6 @@ export type EntryUncheckedCreateWithoutFriendshipInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -5813,10 +6392,13 @@ export type EntryUpdateWithoutFriendshipInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -5825,8 +6407,6 @@ export type EntryUpdateWithoutFriendshipInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -5885,7 +6465,10 @@ export type EntryUncheckedUpdateWithoutFriendshipInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -5894,8 +6477,6 @@ export type EntryUncheckedUpdateWithoutFriendshipInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -5950,10 +6531,13 @@ export type EntryCreateWithoutMatchingRuleUseInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   AttributeValue?: Prisma.AttributeValueCreateNestedManyWithoutEntryInput
@@ -5961,8 +6545,6 @@ export type EntryCreateWithoutMatchingRuleUseInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -6022,7 +6604,10 @@ export type EntryUncheckedCreateWithoutMatchingRuleUseInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   AttributeValue?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutEntryInput
@@ -6030,8 +6615,6 @@ export type EntryUncheckedCreateWithoutMatchingRuleUseInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -6103,10 +6686,13 @@ export type EntryUpdateWithoutMatchingRuleUseInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   AttributeValue?: Prisma.AttributeValueUpdateManyWithoutEntryNestedInput
@@ -6114,8 +6700,6 @@ export type EntryUpdateWithoutMatchingRuleUseInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -6175,7 +6759,10 @@ export type EntryUncheckedUpdateWithoutMatchingRuleUseInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   AttributeValue?: Prisma.AttributeValueUncheckedUpdateManyWithoutEntryNestedInput
@@ -6183,8 +6770,6 @@ export type EntryUncheckedUpdateWithoutMatchingRuleUseInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -6240,10 +6825,13 @@ export type EntryCreateWithoutAttributeTypeDescriptionInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -6252,8 +6840,6 @@ export type EntryCreateWithoutAttributeTypeDescriptionInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -6312,7 +6898,10 @@ export type EntryUncheckedCreateWithoutAttributeTypeDescriptionInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -6321,8 +6910,6 @@ export type EntryUncheckedCreateWithoutAttributeTypeDescriptionInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -6393,10 +6980,13 @@ export type EntryUpdateWithoutAttributeTypeDescriptionInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -6405,8 +6995,6 @@ export type EntryUpdateWithoutAttributeTypeDescriptionInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -6465,7 +7053,10 @@ export type EntryUncheckedUpdateWithoutAttributeTypeDescriptionInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -6474,8 +7065,6 @@ export type EntryUncheckedUpdateWithoutAttributeTypeDescriptionInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -6530,10 +7119,13 @@ export type EntryCreateWithoutObjectClassDescriptionInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -6542,8 +7134,6 @@ export type EntryCreateWithoutObjectClassDescriptionInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -6602,7 +7192,10 @@ export type EntryUncheckedCreateWithoutObjectClassDescriptionInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -6611,8 +7204,6 @@ export type EntryUncheckedCreateWithoutObjectClassDescriptionInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -6683,10 +7274,13 @@ export type EntryUpdateWithoutObjectClassDescriptionInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -6695,8 +7289,6 @@ export type EntryUpdateWithoutObjectClassDescriptionInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -6755,7 +7347,10 @@ export type EntryUncheckedUpdateWithoutObjectClassDescriptionInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -6764,8 +7359,6 @@ export type EntryUncheckedUpdateWithoutObjectClassDescriptionInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -6820,10 +7413,13 @@ export type EntryCreateWithoutContextDescriptionInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -6832,8 +7428,6 @@ export type EntryCreateWithoutContextDescriptionInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -6892,7 +7486,10 @@ export type EntryUncheckedCreateWithoutContextDescriptionInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -6901,8 +7498,6 @@ export type EntryUncheckedCreateWithoutContextDescriptionInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -6973,10 +7568,13 @@ export type EntryUpdateWithoutContextDescriptionInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -6985,8 +7583,6 @@ export type EntryUpdateWithoutContextDescriptionInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -7045,7 +7641,10 @@ export type EntryUncheckedUpdateWithoutContextDescriptionInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -7054,8 +7653,6 @@ export type EntryUncheckedUpdateWithoutContextDescriptionInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -7110,10 +7707,13 @@ export type EntryCreateWithoutOperationalBindingInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -7122,8 +7722,6 @@ export type EntryCreateWithoutOperationalBindingInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -7182,7 +7780,10 @@ export type EntryUncheckedCreateWithoutOperationalBindingInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -7191,8 +7792,6 @@ export type EntryUncheckedCreateWithoutOperationalBindingInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -7263,10 +7862,13 @@ export type EntryUpdateWithoutOperationalBindingInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -7275,8 +7877,6 @@ export type EntryUpdateWithoutOperationalBindingInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -7335,7 +7935,10 @@ export type EntryUncheckedUpdateWithoutOperationalBindingInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -7344,8 +7947,6 @@ export type EntryUncheckedUpdateWithoutOperationalBindingInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -7400,10 +8001,13 @@ export type EntryCreateWithoutRDNInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -7411,8 +8015,6 @@ export type EntryCreateWithoutRDNInput = {
   AccessPoint?: Prisma.AccessPointCreateNestedManyWithoutEntryInput
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -7472,7 +8074,10 @@ export type EntryUncheckedCreateWithoutRDNInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -7480,8 +8085,6 @@ export type EntryUncheckedCreateWithoutRDNInput = {
   AccessPoint?: Prisma.AccessPointUncheckedCreateNestedManyWithoutEntryInput
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -7553,10 +8156,13 @@ export type EntryUpdateWithoutRDNInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -7564,8 +8170,6 @@ export type EntryUpdateWithoutRDNInput = {
   AccessPoint?: Prisma.AccessPointUpdateManyWithoutEntryNestedInput
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -7625,7 +8229,10 @@ export type EntryUncheckedUpdateWithoutRDNInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -7633,8 +8240,6 @@ export type EntryUncheckedUpdateWithoutRDNInput = {
   AccessPoint?: Prisma.AccessPointUncheckedUpdateManyWithoutEntryNestedInput
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -7690,10 +8295,13 @@ export type EntryCreateWithoutEntryObjectClassInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -7701,8 +8309,6 @@ export type EntryCreateWithoutEntryObjectClassInput = {
   AccessPoint?: Prisma.AccessPointCreateNestedManyWithoutEntryInput
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -7762,7 +8368,10 @@ export type EntryUncheckedCreateWithoutEntryObjectClassInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -7770,8 +8379,6 @@ export type EntryUncheckedCreateWithoutEntryObjectClassInput = {
   AccessPoint?: Prisma.AccessPointUncheckedCreateNestedManyWithoutEntryInput
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -7843,10 +8450,13 @@ export type EntryUpdateWithoutEntryObjectClassInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -7854,8 +8464,6 @@ export type EntryUpdateWithoutEntryObjectClassInput = {
   AccessPoint?: Prisma.AccessPointUpdateManyWithoutEntryNestedInput
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -7915,7 +8523,10 @@ export type EntryUncheckedUpdateWithoutEntryObjectClassInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -7923,588 +8534,6 @@ export type EntryUncheckedUpdateWithoutEntryObjectClassInput = {
   AccessPoint?: Prisma.AccessPointUncheckedUpdateManyWithoutEntryNestedInput
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
-  DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
-  ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
-  ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
-  Friendship?: Prisma.FriendshipUncheckedUpdateManyWithoutEntryNestedInput
-  OperationalBinding?: Prisma.OperationalBindingUncheckedUpdateManyWithoutEntryNestedInput
-  PasswordHistory?: Prisma.PasswordHistoryUncheckedUpdateManyWithoutEntryNestedInput
-  Entry?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyTopNestedInput
-  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUncheckedUpdateManyWithoutEntryNestedInput
-  EnqueuedListResult?: Prisma.EnqueuedListResultUncheckedUpdateManyWithoutEntryNestedInput
-  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUncheckedUpdateManyWithoutEntryNestedInput
-  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUncheckedUpdateManyWithoutEntryNestedInput
-  ObjectClassDescription?: Prisma.ObjectClassDescriptionUncheckedUpdateManyWithoutEntryNestedInput
-  NameForm?: Prisma.NameFormUncheckedUpdateManyWithoutEntryNestedInput
-  ContextDescription?: Prisma.ContextDescriptionUncheckedUpdateManyWithoutEntryNestedInput
-}
-
-export type EntryCreateWithoutAliasEntryInput = {
-  entryUUID?: string | null
-  dseUUID?: string
-  materialized_path: string
-  glue?: boolean
-  cp?: boolean
-  entry?: boolean
-  alias?: boolean
-  subr?: boolean
-  nssr?: boolean
-  xr?: boolean
-  admPoint?: boolean
-  subentry?: boolean
-  shadow?: boolean
-  immSupr?: boolean
-  rhob?: boolean
-  sa?: boolean
-  dsSubentry?: boolean
-  createTimestamp: Date | string
-  modifyTimestamp: Date | string
-  deleteTimestamp?: Date | string | null
-  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  expiresTimestamp?: Date | string | null
-  modifyNameTimestamp?: Date | string | null
-  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
-  structuralObjectClass?: string | null
-  subordinate_completeness?: boolean | null
-  attribute_completeness?: boolean | null
-  lastShadowUpdate?: Date | string | null
-  keep_children_in_database?: boolean
-  may_add_top_level_dse?: boolean
-  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyParentStr?: string | null
-  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyTopStr?: string | null
-  hierarchyPath?: string | null
-  hierarchyLevel?: number | null
-  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
-  hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
-  hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
-  subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
-  hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
-  MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
-  AttributeValue?: Prisma.AttributeValueCreateNestedManyWithoutEntryInput
-  AccessPoint?: Prisma.AccessPointCreateNestedManyWithoutEntryInput
-  Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
-  RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
-  EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
-  DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
-  ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
-  ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
-  Friendship?: Prisma.FriendshipCreateNestedManyWithoutEntryInput
-  OperationalBinding?: Prisma.OperationalBindingCreateNestedManyWithoutEntryInput
-  PasswordHistory?: Prisma.PasswordHistoryCreateNestedManyWithoutEntryInput
-  Entry?: Prisma.EntryCreateNestedManyWithoutHierarchyTopInput
-  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultCreateNestedManyWithoutEntryInput
-  EnqueuedListResult?: Prisma.EnqueuedListResultCreateNestedManyWithoutEntryInput
-  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteCreateNestedManyWithoutEntryInput
-  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionCreateNestedManyWithoutEntryInput
-  ObjectClassDescription?: Prisma.ObjectClassDescriptionCreateNestedManyWithoutEntryInput
-  NameForm?: Prisma.NameFormCreateNestedManyWithoutEntryInput
-  ContextDescription?: Prisma.ContextDescriptionCreateNestedManyWithoutEntryInput
-}
-
-export type EntryUncheckedCreateWithoutAliasEntryInput = {
-  id?: number
-  entryUUID?: string | null
-  dseUUID?: string
-  materialized_path: string
-  immediate_superior_id?: number | null
-  glue?: boolean
-  cp?: boolean
-  entry?: boolean
-  alias?: boolean
-  subr?: boolean
-  nssr?: boolean
-  xr?: boolean
-  admPoint?: boolean
-  subentry?: boolean
-  shadow?: boolean
-  immSupr?: boolean
-  rhob?: boolean
-  sa?: boolean
-  dsSubentry?: boolean
-  createTimestamp: Date | string
-  modifyTimestamp: Date | string
-  deleteTimestamp?: Date | string | null
-  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  expiresTimestamp?: Date | string | null
-  modifyNameTimestamp?: Date | string | null
-  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
-  structuralObjectClass?: string | null
-  subordinate_completeness?: boolean | null
-  attribute_completeness?: boolean | null
-  lastShadowUpdate?: Date | string | null
-  keep_children_in_database?: boolean
-  may_add_top_level_dse?: boolean
-  hierarchyParent_id?: number | null
-  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyParentStr?: string | null
-  hierarchyTop_id?: number | null
-  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyTopStr?: string | null
-  hierarchyPath?: string | null
-  hierarchyLevel?: number | null
-  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
-  hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
-  MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
-  AttributeValue?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutEntryInput
-  AccessPoint?: Prisma.AccessPointUncheckedCreateNestedManyWithoutEntryInput
-  Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
-  RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
-  EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
-  DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
-  ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
-  ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
-  Friendship?: Prisma.FriendshipUncheckedCreateNestedManyWithoutEntryInput
-  OperationalBinding?: Prisma.OperationalBindingUncheckedCreateNestedManyWithoutEntryInput
-  PasswordHistory?: Prisma.PasswordHistoryUncheckedCreateNestedManyWithoutEntryInput
-  Entry?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyTopInput
-  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUncheckedCreateNestedManyWithoutEntryInput
-  EnqueuedListResult?: Prisma.EnqueuedListResultUncheckedCreateNestedManyWithoutEntryInput
-  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUncheckedCreateNestedManyWithoutEntryInput
-  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUncheckedCreateNestedManyWithoutEntryInput
-  ObjectClassDescription?: Prisma.ObjectClassDescriptionUncheckedCreateNestedManyWithoutEntryInput
-  NameForm?: Prisma.NameFormUncheckedCreateNestedManyWithoutEntryInput
-  ContextDescription?: Prisma.ContextDescriptionUncheckedCreateNestedManyWithoutEntryInput
-}
-
-export type EntryCreateOrConnectWithoutAliasEntryInput = {
-  where: Prisma.EntryWhereUniqueInput
-  create: Prisma.XOR<Prisma.EntryCreateWithoutAliasEntryInput, Prisma.EntryUncheckedCreateWithoutAliasEntryInput>
-}
-
-export type EntryCreateWithoutAliasedEntryInput = {
-  entryUUID?: string | null
-  dseUUID?: string
-  materialized_path: string
-  glue?: boolean
-  cp?: boolean
-  entry?: boolean
-  alias?: boolean
-  subr?: boolean
-  nssr?: boolean
-  xr?: boolean
-  admPoint?: boolean
-  subentry?: boolean
-  shadow?: boolean
-  immSupr?: boolean
-  rhob?: boolean
-  sa?: boolean
-  dsSubentry?: boolean
-  createTimestamp: Date | string
-  modifyTimestamp: Date | string
-  deleteTimestamp?: Date | string | null
-  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  expiresTimestamp?: Date | string | null
-  modifyNameTimestamp?: Date | string | null
-  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
-  structuralObjectClass?: string | null
-  subordinate_completeness?: boolean | null
-  attribute_completeness?: boolean | null
-  lastShadowUpdate?: Date | string | null
-  keep_children_in_database?: boolean
-  may_add_top_level_dse?: boolean
-  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyParentStr?: string | null
-  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyTopStr?: string | null
-  hierarchyPath?: string | null
-  hierarchyLevel?: number | null
-  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
-  hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
-  hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
-  subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
-  hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
-  MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
-  AttributeValue?: Prisma.AttributeValueCreateNestedManyWithoutEntryInput
-  AccessPoint?: Prisma.AccessPointCreateNestedManyWithoutEntryInput
-  Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
-  RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
-  EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
-  ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
-  ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
-  Friendship?: Prisma.FriendshipCreateNestedManyWithoutEntryInput
-  OperationalBinding?: Prisma.OperationalBindingCreateNestedManyWithoutEntryInput
-  PasswordHistory?: Prisma.PasswordHistoryCreateNestedManyWithoutEntryInput
-  Entry?: Prisma.EntryCreateNestedManyWithoutHierarchyTopInput
-  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultCreateNestedManyWithoutEntryInput
-  EnqueuedListResult?: Prisma.EnqueuedListResultCreateNestedManyWithoutEntryInput
-  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteCreateNestedManyWithoutEntryInput
-  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionCreateNestedManyWithoutEntryInput
-  ObjectClassDescription?: Prisma.ObjectClassDescriptionCreateNestedManyWithoutEntryInput
-  NameForm?: Prisma.NameFormCreateNestedManyWithoutEntryInput
-  ContextDescription?: Prisma.ContextDescriptionCreateNestedManyWithoutEntryInput
-}
-
-export type EntryUncheckedCreateWithoutAliasedEntryInput = {
-  id?: number
-  entryUUID?: string | null
-  dseUUID?: string
-  materialized_path: string
-  immediate_superior_id?: number | null
-  glue?: boolean
-  cp?: boolean
-  entry?: boolean
-  alias?: boolean
-  subr?: boolean
-  nssr?: boolean
-  xr?: boolean
-  admPoint?: boolean
-  subentry?: boolean
-  shadow?: boolean
-  immSupr?: boolean
-  rhob?: boolean
-  sa?: boolean
-  dsSubentry?: boolean
-  createTimestamp: Date | string
-  modifyTimestamp: Date | string
-  deleteTimestamp?: Date | string | null
-  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  expiresTimestamp?: Date | string | null
-  modifyNameTimestamp?: Date | string | null
-  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
-  structuralObjectClass?: string | null
-  subordinate_completeness?: boolean | null
-  attribute_completeness?: boolean | null
-  lastShadowUpdate?: Date | string | null
-  keep_children_in_database?: boolean
-  may_add_top_level_dse?: boolean
-  hierarchyParent_id?: number | null
-  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyParentStr?: string | null
-  hierarchyTop_id?: number | null
-  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyTopStr?: string | null
-  hierarchyPath?: string | null
-  hierarchyLevel?: number | null
-  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
-  hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
-  MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
-  AttributeValue?: Prisma.AttributeValueUncheckedCreateNestedManyWithoutEntryInput
-  AccessPoint?: Prisma.AccessPointUncheckedCreateNestedManyWithoutEntryInput
-  Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
-  RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
-  EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
-  ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
-  ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
-  Friendship?: Prisma.FriendshipUncheckedCreateNestedManyWithoutEntryInput
-  OperationalBinding?: Prisma.OperationalBindingUncheckedCreateNestedManyWithoutEntryInput
-  PasswordHistory?: Prisma.PasswordHistoryUncheckedCreateNestedManyWithoutEntryInput
-  Entry?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyTopInput
-  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUncheckedCreateNestedManyWithoutEntryInput
-  EnqueuedListResult?: Prisma.EnqueuedListResultUncheckedCreateNestedManyWithoutEntryInput
-  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUncheckedCreateNestedManyWithoutEntryInput
-  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUncheckedCreateNestedManyWithoutEntryInput
-  ObjectClassDescription?: Prisma.ObjectClassDescriptionUncheckedCreateNestedManyWithoutEntryInput
-  NameForm?: Prisma.NameFormUncheckedCreateNestedManyWithoutEntryInput
-  ContextDescription?: Prisma.ContextDescriptionUncheckedCreateNestedManyWithoutEntryInput
-}
-
-export type EntryCreateOrConnectWithoutAliasedEntryInput = {
-  where: Prisma.EntryWhereUniqueInput
-  create: Prisma.XOR<Prisma.EntryCreateWithoutAliasedEntryInput, Prisma.EntryUncheckedCreateWithoutAliasedEntryInput>
-}
-
-export type EntryUpsertWithoutAliasEntryInput = {
-  update: Prisma.XOR<Prisma.EntryUpdateWithoutAliasEntryInput, Prisma.EntryUncheckedUpdateWithoutAliasEntryInput>
-  create: Prisma.XOR<Prisma.EntryCreateWithoutAliasEntryInput, Prisma.EntryUncheckedCreateWithoutAliasEntryInput>
-  where?: Prisma.EntryWhereInput
-}
-
-export type EntryUpdateToOneWithWhereWithoutAliasEntryInput = {
-  where?: Prisma.EntryWhereInput
-  data: Prisma.XOR<Prisma.EntryUpdateWithoutAliasEntryInput, Prisma.EntryUncheckedUpdateWithoutAliasEntryInput>
-}
-
-export type EntryUpdateWithoutAliasEntryInput = {
-  entryUUID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dseUUID?: Prisma.StringFieldUpdateOperationsInput | string
-  materialized_path?: Prisma.StringFieldUpdateOperationsInput | string
-  glue?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  cp?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  entry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  alias?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  subr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  nssr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  xr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  admPoint?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  subentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  shadow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  immSupr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  rhob?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  sa?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  dsSubentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifyTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deleteTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  lastShadowUpdate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  keep_children_in_database?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  may_add_top_level_dse?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyParentStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
-  hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
-  hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
-  subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
-  hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
-  MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
-  AttributeValue?: Prisma.AttributeValueUpdateManyWithoutEntryNestedInput
-  AccessPoint?: Prisma.AccessPointUpdateManyWithoutEntryNestedInput
-  Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
-  RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
-  EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
-  DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
-  ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
-  ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
-  Friendship?: Prisma.FriendshipUpdateManyWithoutEntryNestedInput
-  OperationalBinding?: Prisma.OperationalBindingUpdateManyWithoutEntryNestedInput
-  PasswordHistory?: Prisma.PasswordHistoryUpdateManyWithoutEntryNestedInput
-  Entry?: Prisma.EntryUpdateManyWithoutHierarchyTopNestedInput
-  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUpdateManyWithoutEntryNestedInput
-  EnqueuedListResult?: Prisma.EnqueuedListResultUpdateManyWithoutEntryNestedInput
-  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUpdateManyWithoutEntryNestedInput
-  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUpdateManyWithoutEntryNestedInput
-  ObjectClassDescription?: Prisma.ObjectClassDescriptionUpdateManyWithoutEntryNestedInput
-  NameForm?: Prisma.NameFormUpdateManyWithoutEntryNestedInput
-  ContextDescription?: Prisma.ContextDescriptionUpdateManyWithoutEntryNestedInput
-}
-
-export type EntryUncheckedUpdateWithoutAliasEntryInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  entryUUID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dseUUID?: Prisma.StringFieldUpdateOperationsInput | string
-  materialized_path?: Prisma.StringFieldUpdateOperationsInput | string
-  immediate_superior_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  glue?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  cp?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  entry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  alias?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  subr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  nssr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  xr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  admPoint?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  subentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  shadow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  immSupr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  rhob?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  sa?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  dsSubentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifyTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deleteTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  lastShadowUpdate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  keep_children_in_database?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  may_add_top_level_dse?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hierarchyParent_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyParentStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyTop_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
-  hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
-  MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
-  AttributeValue?: Prisma.AttributeValueUncheckedUpdateManyWithoutEntryNestedInput
-  AccessPoint?: Prisma.AccessPointUncheckedUpdateManyWithoutEntryNestedInput
-  Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
-  RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
-  EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
-  DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
-  ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
-  ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
-  Friendship?: Prisma.FriendshipUncheckedUpdateManyWithoutEntryNestedInput
-  OperationalBinding?: Prisma.OperationalBindingUncheckedUpdateManyWithoutEntryNestedInput
-  PasswordHistory?: Prisma.PasswordHistoryUncheckedUpdateManyWithoutEntryNestedInput
-  Entry?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyTopNestedInput
-  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUncheckedUpdateManyWithoutEntryNestedInput
-  EnqueuedListResult?: Prisma.EnqueuedListResultUncheckedUpdateManyWithoutEntryNestedInput
-  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUncheckedUpdateManyWithoutEntryNestedInput
-  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUncheckedUpdateManyWithoutEntryNestedInput
-  ObjectClassDescription?: Prisma.ObjectClassDescriptionUncheckedUpdateManyWithoutEntryNestedInput
-  NameForm?: Prisma.NameFormUncheckedUpdateManyWithoutEntryNestedInput
-  ContextDescription?: Prisma.ContextDescriptionUncheckedUpdateManyWithoutEntryNestedInput
-}
-
-export type EntryUpsertWithoutAliasedEntryInput = {
-  update: Prisma.XOR<Prisma.EntryUpdateWithoutAliasedEntryInput, Prisma.EntryUncheckedUpdateWithoutAliasedEntryInput>
-  create: Prisma.XOR<Prisma.EntryCreateWithoutAliasedEntryInput, Prisma.EntryUncheckedCreateWithoutAliasedEntryInput>
-  where?: Prisma.EntryWhereInput
-}
-
-export type EntryUpdateToOneWithWhereWithoutAliasedEntryInput = {
-  where?: Prisma.EntryWhereInput
-  data: Prisma.XOR<Prisma.EntryUpdateWithoutAliasedEntryInput, Prisma.EntryUncheckedUpdateWithoutAliasedEntryInput>
-}
-
-export type EntryUpdateWithoutAliasedEntryInput = {
-  entryUUID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dseUUID?: Prisma.StringFieldUpdateOperationsInput | string
-  materialized_path?: Prisma.StringFieldUpdateOperationsInput | string
-  glue?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  cp?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  entry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  alias?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  subr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  nssr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  xr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  admPoint?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  subentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  shadow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  immSupr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  rhob?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  sa?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  dsSubentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifyTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deleteTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  lastShadowUpdate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  keep_children_in_database?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  may_add_top_level_dse?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyParentStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
-  hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
-  hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
-  subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
-  hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
-  MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
-  AttributeValue?: Prisma.AttributeValueUpdateManyWithoutEntryNestedInput
-  AccessPoint?: Prisma.AccessPointUpdateManyWithoutEntryNestedInput
-  Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
-  RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
-  EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
-  ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
-  ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
-  Friendship?: Prisma.FriendshipUpdateManyWithoutEntryNestedInput
-  OperationalBinding?: Prisma.OperationalBindingUpdateManyWithoutEntryNestedInput
-  PasswordHistory?: Prisma.PasswordHistoryUpdateManyWithoutEntryNestedInput
-  Entry?: Prisma.EntryUpdateManyWithoutHierarchyTopNestedInput
-  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUpdateManyWithoutEntryNestedInput
-  EnqueuedListResult?: Prisma.EnqueuedListResultUpdateManyWithoutEntryNestedInput
-  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUpdateManyWithoutEntryNestedInput
-  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUpdateManyWithoutEntryNestedInput
-  ObjectClassDescription?: Prisma.ObjectClassDescriptionUpdateManyWithoutEntryNestedInput
-  NameForm?: Prisma.NameFormUpdateManyWithoutEntryNestedInput
-  ContextDescription?: Prisma.ContextDescriptionUpdateManyWithoutEntryNestedInput
-}
-
-export type EntryUncheckedUpdateWithoutAliasedEntryInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  entryUUID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dseUUID?: Prisma.StringFieldUpdateOperationsInput | string
-  materialized_path?: Prisma.StringFieldUpdateOperationsInput | string
-  immediate_superior_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  glue?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  cp?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  entry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  alias?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  subr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  nssr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  xr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  admPoint?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  subentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  shadow?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  immSupr?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  rhob?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  sa?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  dsSubentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  modifyTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deleteTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  lastShadowUpdate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  keep_children_in_database?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  may_add_top_level_dse?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hierarchyParent_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyParentStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyTop_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
-  hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
-  MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
-  AttributeValue?: Prisma.AttributeValueUncheckedUpdateManyWithoutEntryNestedInput
-  AccessPoint?: Prisma.AccessPointUncheckedUpdateManyWithoutEntryNestedInput
-  Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
-  RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
-  EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -8560,10 +8589,13 @@ export type EntryCreateWithoutEntryAttributeValuesIncompleteInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -8572,8 +8604,6 @@ export type EntryCreateWithoutEntryAttributeValuesIncompleteInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -8632,7 +8662,10 @@ export type EntryUncheckedCreateWithoutEntryAttributeValuesIncompleteInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -8641,8 +8674,6 @@ export type EntryUncheckedCreateWithoutEntryAttributeValuesIncompleteInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -8713,10 +8744,13 @@ export type EntryUpdateWithoutEntryAttributeValuesIncompleteInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -8725,8 +8759,6 @@ export type EntryUpdateWithoutEntryAttributeValuesIncompleteInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -8785,7 +8817,10 @@ export type EntryUncheckedUpdateWithoutEntryAttributeValuesIncompleteInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -8794,8 +8829,6 @@ export type EntryUncheckedUpdateWithoutEntryAttributeValuesIncompleteInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -8850,10 +8883,13 @@ export type EntryCreateWithoutEnqueuedSearchResultInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -8862,8 +8898,6 @@ export type EntryCreateWithoutEnqueuedSearchResultInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -8922,7 +8956,10 @@ export type EntryUncheckedCreateWithoutEnqueuedSearchResultInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -8931,8 +8968,6 @@ export type EntryUncheckedCreateWithoutEnqueuedSearchResultInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -9003,10 +9038,13 @@ export type EntryUpdateWithoutEnqueuedSearchResultInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -9015,8 +9053,6 @@ export type EntryUpdateWithoutEnqueuedSearchResultInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -9075,7 +9111,10 @@ export type EntryUncheckedUpdateWithoutEnqueuedSearchResultInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -9084,8 +9123,6 @@ export type EntryUncheckedUpdateWithoutEnqueuedSearchResultInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -9140,10 +9177,13 @@ export type EntryCreateWithoutEnqueuedListResultInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryCreateNestedOneWithoutSubordinatesInput
   hierarchyParent?: Prisma.EntryCreateNestedOneWithoutHierarchicalChildrenInput
   hierarchyTop?: Prisma.EntryCreateNestedOneWithoutEntryInput
+  aliased_entry?: Prisma.EntryCreateNestedOneWithoutAliasesInput
+  aliases?: Prisma.EntryCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseCreateNestedManyWithoutEntryInput
@@ -9152,8 +9192,6 @@ export type EntryCreateWithoutEnqueuedListResultInput = {
   Password?: Prisma.PasswordCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleCreateNestedManyWithoutEntryInput
@@ -9212,7 +9250,10 @@ export type EntryUncheckedCreateWithoutEnqueuedListResultInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedCreateNestedManyWithoutAliased_entryInput
   subordinates?: Prisma.EntryUncheckedCreateNestedManyWithoutImmediate_superiorInput
   hierarchicalChildren?: Prisma.EntryUncheckedCreateNestedManyWithoutHierarchyParentInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedCreateNestedManyWithoutEntryInput
@@ -9221,8 +9262,6 @@ export type EntryUncheckedCreateWithoutEnqueuedListResultInput = {
   Password?: Prisma.PasswordUncheckedCreateNestedManyWithoutEntryInput
   RDN?: Prisma.DistinguishedValueUncheckedCreateNestedManyWithoutEntryInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedCreateNestedManyWithoutEntryInput
-  AliasEntry?: Prisma.AliasUncheckedCreateNestedManyWithoutAlias_entryInput
-  AliasedEntry?: Prisma.AliasUncheckedCreateNestedOneWithoutAliased_entryInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedCreateNestedManyWithoutEntryInput
   ContentRule?: Prisma.ContentRuleUncheckedCreateNestedManyWithoutEntryInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedCreateNestedManyWithoutEntryInput
@@ -9293,10 +9332,13 @@ export type EntryUpdateWithoutEnqueuedListResultInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -9305,8 +9347,6 @@ export type EntryUpdateWithoutEnqueuedListResultInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -9365,7 +9405,10 @@ export type EntryUncheckedUpdateWithoutEnqueuedListResultInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -9374,8 +9417,6 @@ export type EntryUncheckedUpdateWithoutEnqueuedListResultInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -9389,6 +9430,53 @@ export type EntryUncheckedUpdateWithoutEnqueuedListResultInput = {
   ObjectClassDescription?: Prisma.ObjectClassDescriptionUncheckedUpdateManyWithoutEntryNestedInput
   NameForm?: Prisma.NameFormUncheckedUpdateManyWithoutEntryNestedInput
   ContextDescription?: Prisma.ContextDescriptionUncheckedUpdateManyWithoutEntryNestedInput
+}
+
+export type EntryCreateManyAliased_entryInput = {
+  id?: number
+  entryUUID?: string | null
+  dseUUID?: string
+  materialized_path: string
+  immediate_superior_id?: number | null
+  glue?: boolean
+  cp?: boolean
+  entry?: boolean
+  alias?: boolean
+  subr?: boolean
+  nssr?: boolean
+  xr?: boolean
+  admPoint?: boolean
+  subentry?: boolean
+  shadow?: boolean
+  immSupr?: boolean
+  rhob?: boolean
+  sa?: boolean
+  dsSubentry?: boolean
+  createTimestamp: Date | string
+  modifyTimestamp: Date | string
+  deleteTimestamp?: Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Date | string | null
+  modifyNameTimestamp?: Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: number | null
+  structuralObjectClass?: string | null
+  subordinate_completeness?: boolean | null
+  attribute_completeness?: boolean | null
+  lastShadowUpdate?: Date | string | null
+  keep_children_in_database?: boolean
+  may_add_top_level_dse?: boolean
+  hierarchyParent_id?: number | null
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: string | null
+  hierarchyTop_id?: number | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: string | null
+  hierarchyPath?: string | null
+  hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type EntryCreateManyImmediate_superiorInput = {
@@ -9433,6 +9521,8 @@ export type EntryCreateManyImmediate_superiorInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
@@ -9478,6 +9568,8 @@ export type EntryCreateManyHierarchyParentInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
@@ -9523,6 +9615,194 @@ export type EntryCreateManyHierarchyTopInput = {
   hierarchyTopStr?: string | null
   hierarchyPath?: string | null
   hierarchyLevel?: number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: number | null
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+}
+
+export type EntryUpdateWithoutAliased_entryInput = {
+  entryUUID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dseUUID?: Prisma.StringFieldUpdateOperationsInput | string
+  materialized_path?: Prisma.StringFieldUpdateOperationsInput | string
+  glue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cp?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  entry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  alias?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nssr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  admPoint?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  shadow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  immSupr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  rhob?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sa?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dsSubentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifyTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deleteTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  lastShadowUpdate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keep_children_in_database?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  may_add_top_level_dse?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
+  hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
+  hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
+  subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
+  hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
+  MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
+  AttributeValue?: Prisma.AttributeValueUpdateManyWithoutEntryNestedInput
+  AccessPoint?: Prisma.AccessPointUpdateManyWithoutEntryNestedInput
+  Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
+  RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
+  EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
+  DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
+  ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
+  ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
+  Friendship?: Prisma.FriendshipUpdateManyWithoutEntryNestedInput
+  OperationalBinding?: Prisma.OperationalBindingUpdateManyWithoutEntryNestedInput
+  PasswordHistory?: Prisma.PasswordHistoryUpdateManyWithoutEntryNestedInput
+  Entry?: Prisma.EntryUpdateManyWithoutHierarchyTopNestedInput
+  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUpdateManyWithoutEntryNestedInput
+  EnqueuedListResult?: Prisma.EnqueuedListResultUpdateManyWithoutEntryNestedInput
+  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUpdateManyWithoutEntryNestedInput
+  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUpdateManyWithoutEntryNestedInput
+  ObjectClassDescription?: Prisma.ObjectClassDescriptionUpdateManyWithoutEntryNestedInput
+  NameForm?: Prisma.NameFormUpdateManyWithoutEntryNestedInput
+  ContextDescription?: Prisma.ContextDescriptionUpdateManyWithoutEntryNestedInput
+}
+
+export type EntryUncheckedUpdateWithoutAliased_entryInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  entryUUID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dseUUID?: Prisma.StringFieldUpdateOperationsInput | string
+  materialized_path?: Prisma.StringFieldUpdateOperationsInput | string
+  immediate_superior_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  glue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cp?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  entry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  alias?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nssr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  admPoint?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  shadow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  immSupr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  rhob?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sa?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dsSubentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifyTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deleteTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  lastShadowUpdate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keep_children_in_database?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  may_add_top_level_dse?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hierarchyParent_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyTop_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
+  subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
+  hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
+  MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
+  AttributeValue?: Prisma.AttributeValueUncheckedUpdateManyWithoutEntryNestedInput
+  AccessPoint?: Prisma.AccessPointUncheckedUpdateManyWithoutEntryNestedInput
+  Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
+  RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
+  EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
+  DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
+  ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
+  ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
+  Friendship?: Prisma.FriendshipUncheckedUpdateManyWithoutEntryNestedInput
+  OperationalBinding?: Prisma.OperationalBindingUncheckedUpdateManyWithoutEntryNestedInput
+  PasswordHistory?: Prisma.PasswordHistoryUncheckedUpdateManyWithoutEntryNestedInput
+  Entry?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyTopNestedInput
+  EnqueuedSearchResult?: Prisma.EnqueuedSearchResultUncheckedUpdateManyWithoutEntryNestedInput
+  EnqueuedListResult?: Prisma.EnqueuedListResultUncheckedUpdateManyWithoutEntryNestedInput
+  EntryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteUncheckedUpdateManyWithoutEntryNestedInput
+  AttributeTypeDescription?: Prisma.AttributeTypeDescriptionUncheckedUpdateManyWithoutEntryNestedInput
+  ObjectClassDescription?: Prisma.ObjectClassDescriptionUncheckedUpdateManyWithoutEntryNestedInput
+  NameForm?: Prisma.NameFormUncheckedUpdateManyWithoutEntryNestedInput
+  ContextDescription?: Prisma.ContextDescriptionUncheckedUpdateManyWithoutEntryNestedInput
+}
+
+export type EntryUncheckedUpdateManyWithoutAliased_entryInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  entryUUID?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dseUUID?: Prisma.StringFieldUpdateOperationsInput | string
+  materialized_path?: Prisma.StringFieldUpdateOperationsInput | string
+  immediate_superior_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  glue?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cp?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  entry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  alias?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  nssr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  admPoint?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  shadow?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  immSupr?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  rhob?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sa?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dsSubentry?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modifyTimestamp?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deleteTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creatorsName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  modifiersName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  lastShadowUpdate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keep_children_in_database?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  may_add_top_level_dse?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  hierarchyParent_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hierarchyParentDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyParentStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyTop_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hierarchyTopDN?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
@@ -9565,9 +9845,12 @@ export type EntryUpdateWithoutImmediate_superiorInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -9576,8 +9859,6 @@ export type EntryUpdateWithoutImmediate_superiorInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -9636,7 +9917,10 @@ export type EntryUncheckedUpdateWithoutImmediate_superiorInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -9645,8 +9929,6 @@ export type EntryUncheckedUpdateWithoutImmediate_superiorInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -9705,6 +9987,8 @@ export type EntryUncheckedUpdateManyWithoutImmediate_superiorInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
@@ -9747,9 +10031,12 @@ export type EntryUpdateWithoutHierarchyParentInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyTop?: Prisma.EntryUpdateOneWithoutEntryNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -9758,8 +10045,6 @@ export type EntryUpdateWithoutHierarchyParentInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -9818,7 +10103,10 @@ export type EntryUncheckedUpdateWithoutHierarchyParentInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -9827,8 +10115,6 @@ export type EntryUncheckedUpdateWithoutHierarchyParentInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -9887,6 +10173,8 @@ export type EntryUncheckedUpdateManyWithoutHierarchyParentInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
@@ -9929,9 +10217,12 @@ export type EntryUpdateWithoutHierarchyTopInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   immediate_superior?: Prisma.EntryUpdateOneWithoutSubordinatesNestedInput
   hierarchyParent?: Prisma.EntryUpdateOneWithoutHierarchicalChildrenNestedInput
+  aliased_entry?: Prisma.EntryUpdateOneWithoutAliasesNestedInput
+  aliases?: Prisma.EntryUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUpdateManyWithoutEntryNestedInput
@@ -9940,8 +10231,6 @@ export type EntryUpdateWithoutHierarchyTopInput = {
   Password?: Prisma.PasswordUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUpdateManyWithoutEntryNestedInput
@@ -10000,7 +10289,10 @@ export type EntryUncheckedUpdateWithoutHierarchyTopInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliases?: Prisma.EntryUncheckedUpdateManyWithoutAliased_entryNestedInput
   subordinates?: Prisma.EntryUncheckedUpdateManyWithoutImmediate_superiorNestedInput
   hierarchicalChildren?: Prisma.EntryUncheckedUpdateManyWithoutHierarchyParentNestedInput
   MatchingRuleUse?: Prisma.MatchingRuleUseUncheckedUpdateManyWithoutEntryNestedInput
@@ -10009,8 +10301,6 @@ export type EntryUncheckedUpdateWithoutHierarchyTopInput = {
   Password?: Prisma.PasswordUncheckedUpdateManyWithoutEntryNestedInput
   RDN?: Prisma.DistinguishedValueUncheckedUpdateManyWithoutEntryNestedInput
   EntryObjectClass?: Prisma.EntryObjectClassUncheckedUpdateManyWithoutEntryNestedInput
-  AliasEntry?: Prisma.AliasUncheckedUpdateManyWithoutAlias_entryNestedInput
-  AliasedEntry?: Prisma.AliasUncheckedUpdateOneWithoutAliased_entryNestedInput
   DITStructureRule?: Prisma.DITStructureRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContentRule?: Prisma.ContentRuleUncheckedUpdateManyWithoutEntryNestedInput
   ContextUseRule?: Prisma.ContextUseRuleUncheckedUpdateManyWithoutEntryNestedInput
@@ -10069,6 +10359,8 @@ export type EntryUncheckedUpdateManyWithoutHierarchyTopInput = {
   hierarchyTopStr?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hierarchyLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  aliased_entry_name?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  aliased_entry_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   otherData?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
@@ -10078,6 +10370,7 @@ export type EntryUncheckedUpdateManyWithoutHierarchyTopInput = {
  */
 
 export type EntryCountOutputType = {
+  aliases: number
   subordinates: number
   hierarchicalChildren: number
   MatchingRuleUse: number
@@ -10086,7 +10379,6 @@ export type EntryCountOutputType = {
   Password: number
   RDN: number
   EntryObjectClass: number
-  AliasEntry: number
   DITStructureRule: number
   ContentRule: number
   ContextUseRule: number
@@ -10104,6 +10396,7 @@ export type EntryCountOutputType = {
 }
 
 export type EntryCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  aliases?: boolean | EntryCountOutputTypeCountAliasesArgs
   subordinates?: boolean | EntryCountOutputTypeCountSubordinatesArgs
   hierarchicalChildren?: boolean | EntryCountOutputTypeCountHierarchicalChildrenArgs
   MatchingRuleUse?: boolean | EntryCountOutputTypeCountMatchingRuleUseArgs
@@ -10112,7 +10405,6 @@ export type EntryCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   Password?: boolean | EntryCountOutputTypeCountPasswordArgs
   RDN?: boolean | EntryCountOutputTypeCountRDNArgs
   EntryObjectClass?: boolean | EntryCountOutputTypeCountEntryObjectClassArgs
-  AliasEntry?: boolean | EntryCountOutputTypeCountAliasEntryArgs
   DITStructureRule?: boolean | EntryCountOutputTypeCountDITStructureRuleArgs
   ContentRule?: boolean | EntryCountOutputTypeCountContentRuleArgs
   ContextUseRule?: boolean | EntryCountOutputTypeCountContextUseRuleArgs
@@ -10137,6 +10429,13 @@ export type EntryCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extens
    * Select specific fields to fetch from the EntryCountOutputType
    */
   select?: Prisma.EntryCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * EntryCountOutputType without action
+ */
+export type EntryCountOutputTypeCountAliasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EntryWhereInput
 }
 
 /**
@@ -10193,13 +10492,6 @@ export type EntryCountOutputTypeCountRDNArgs<ExtArgs extends runtime.Types.Exten
  */
 export type EntryCountOutputTypeCountEntryObjectClassArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.EntryObjectClassWhereInput
-}
-
-/**
- * EntryCountOutputType without action
- */
-export type EntryCountOutputTypeCountAliasEntryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.AliasWhereInput
 }
 
 /**
@@ -10344,10 +10636,14 @@ export type EntrySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   hierarchyTopStr?: boolean
   hierarchyPath?: boolean
   hierarchyLevel?: boolean
+  aliased_entry_name?: boolean
+  aliased_entry_id?: boolean
   otherData?: boolean
   immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
   hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
   hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Entry$aliased_entryArgs<ExtArgs>
+  aliases?: boolean | Prisma.Entry$aliasesArgs<ExtArgs>
   subordinates?: boolean | Prisma.Entry$subordinatesArgs<ExtArgs>
   hierarchicalChildren?: boolean | Prisma.Entry$hierarchicalChildrenArgs<ExtArgs>
   MatchingRuleUse?: boolean | Prisma.Entry$MatchingRuleUseArgs<ExtArgs>
@@ -10356,8 +10652,6 @@ export type EntrySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   Password?: boolean | Prisma.Entry$PasswordArgs<ExtArgs>
   RDN?: boolean | Prisma.Entry$RDNArgs<ExtArgs>
   EntryObjectClass?: boolean | Prisma.Entry$EntryObjectClassArgs<ExtArgs>
-  AliasEntry?: boolean | Prisma.Entry$AliasEntryArgs<ExtArgs>
-  AliasedEntry?: boolean | Prisma.Entry$AliasedEntryArgs<ExtArgs>
   DITStructureRule?: boolean | Prisma.Entry$DITStructureRuleArgs<ExtArgs>
   ContentRule?: boolean | Prisma.Entry$ContentRuleArgs<ExtArgs>
   ContextUseRule?: boolean | Prisma.Entry$ContextUseRuleArgs<ExtArgs>
@@ -10418,10 +10712,13 @@ export type EntrySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   hierarchyTopStr?: boolean
   hierarchyPath?: boolean
   hierarchyLevel?: boolean
+  aliased_entry_name?: boolean
+  aliased_entry_id?: boolean
   otherData?: boolean
   immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
   hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
   hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Entry$aliased_entryArgs<ExtArgs>
 }, ExtArgs["result"]["entry"]>
 
 export type EntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -10467,10 +10764,13 @@ export type EntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   hierarchyTopStr?: boolean
   hierarchyPath?: boolean
   hierarchyLevel?: boolean
+  aliased_entry_name?: boolean
+  aliased_entry_id?: boolean
   otherData?: boolean
   immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
   hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
   hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Entry$aliased_entryArgs<ExtArgs>
 }, ExtArgs["result"]["entry"]>
 
 export type EntrySelectScalar = {
@@ -10516,14 +10816,18 @@ export type EntrySelectScalar = {
   hierarchyTopStr?: boolean
   hierarchyPath?: boolean
   hierarchyLevel?: boolean
+  aliased_entry_name?: boolean
+  aliased_entry_id?: boolean
   otherData?: boolean
 }
 
-export type EntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entryUUID" | "dseUUID" | "materialized_path" | "immediate_superior_id" | "glue" | "cp" | "entry" | "alias" | "subr" | "nssr" | "xr" | "admPoint" | "subentry" | "shadow" | "immSupr" | "rhob" | "sa" | "dsSubentry" | "createTimestamp" | "modifyTimestamp" | "deleteTimestamp" | "creatorsName" | "modifiersName" | "expiresTimestamp" | "modifyNameTimestamp" | "previousName" | "governingStructureRule" | "structuralObjectClass" | "subordinate_completeness" | "attribute_completeness" | "lastShadowUpdate" | "keep_children_in_database" | "may_add_top_level_dse" | "hierarchyParent_id" | "hierarchyParentDN" | "hierarchyParentStr" | "hierarchyTop_id" | "hierarchyTopDN" | "hierarchyTopStr" | "hierarchyPath" | "hierarchyLevel" | "otherData", ExtArgs["result"]["entry"]>
+export type EntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entryUUID" | "dseUUID" | "materialized_path" | "immediate_superior_id" | "glue" | "cp" | "entry" | "alias" | "subr" | "nssr" | "xr" | "admPoint" | "subentry" | "shadow" | "immSupr" | "rhob" | "sa" | "dsSubentry" | "createTimestamp" | "modifyTimestamp" | "deleteTimestamp" | "creatorsName" | "modifiersName" | "expiresTimestamp" | "modifyNameTimestamp" | "previousName" | "governingStructureRule" | "structuralObjectClass" | "subordinate_completeness" | "attribute_completeness" | "lastShadowUpdate" | "keep_children_in_database" | "may_add_top_level_dse" | "hierarchyParent_id" | "hierarchyParentDN" | "hierarchyParentStr" | "hierarchyTop_id" | "hierarchyTopDN" | "hierarchyTopStr" | "hierarchyPath" | "hierarchyLevel" | "aliased_entry_name" | "aliased_entry_id" | "otherData", ExtArgs["result"]["entry"]>
 export type EntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
   hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
   hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Entry$aliased_entryArgs<ExtArgs>
+  aliases?: boolean | Prisma.Entry$aliasesArgs<ExtArgs>
   subordinates?: boolean | Prisma.Entry$subordinatesArgs<ExtArgs>
   hierarchicalChildren?: boolean | Prisma.Entry$hierarchicalChildrenArgs<ExtArgs>
   MatchingRuleUse?: boolean | Prisma.Entry$MatchingRuleUseArgs<ExtArgs>
@@ -10532,8 +10836,6 @@ export type EntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   Password?: boolean | Prisma.Entry$PasswordArgs<ExtArgs>
   RDN?: boolean | Prisma.Entry$RDNArgs<ExtArgs>
   EntryObjectClass?: boolean | Prisma.Entry$EntryObjectClassArgs<ExtArgs>
-  AliasEntry?: boolean | Prisma.Entry$AliasEntryArgs<ExtArgs>
-  AliasedEntry?: boolean | Prisma.Entry$AliasedEntryArgs<ExtArgs>
   DITStructureRule?: boolean | Prisma.Entry$DITStructureRuleArgs<ExtArgs>
   ContentRule?: boolean | Prisma.Entry$ContentRuleArgs<ExtArgs>
   ContextUseRule?: boolean | Prisma.Entry$ContextUseRuleArgs<ExtArgs>
@@ -10554,11 +10856,13 @@ export type EntryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
   hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
   hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Entry$aliased_entryArgs<ExtArgs>
 }
 export type EntryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
   hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
   hierarchyTop?: boolean | Prisma.Entry$hierarchyTopArgs<ExtArgs>
+  aliased_entry?: boolean | Prisma.Entry$aliased_entryArgs<ExtArgs>
 }
 
 export type $EntryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -10567,6 +10871,8 @@ export type $EntryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     immediate_superior: Prisma.$EntryPayload<ExtArgs> | null
     hierarchyParent: Prisma.$EntryPayload<ExtArgs> | null
     hierarchyTop: Prisma.$EntryPayload<ExtArgs> | null
+    aliased_entry: Prisma.$EntryPayload<ExtArgs> | null
+    aliases: Prisma.$EntryPayload<ExtArgs>[]
     subordinates: Prisma.$EntryPayload<ExtArgs>[]
     hierarchicalChildren: Prisma.$EntryPayload<ExtArgs>[]
     MatchingRuleUse: Prisma.$MatchingRuleUsePayload<ExtArgs>[]
@@ -10575,8 +10881,6 @@ export type $EntryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     Password: Prisma.$PasswordPayload<ExtArgs>[]
     RDN: Prisma.$DistinguishedValuePayload<ExtArgs>[]
     EntryObjectClass: Prisma.$EntryObjectClassPayload<ExtArgs>[]
-    AliasEntry: Prisma.$AliasPayload<ExtArgs>[]
-    AliasedEntry: Prisma.$AliasPayload<ExtArgs> | null
     DITStructureRule: Prisma.$DITStructureRulePayload<ExtArgs>[]
     ContentRule: Prisma.$ContentRulePayload<ExtArgs>[]
     ContextUseRule: Prisma.$ContextUseRulePayload<ExtArgs>[]
@@ -10635,6 +10939,8 @@ export type $EntryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     hierarchyTopStr: string | null
     hierarchyPath: string | null
     hierarchyLevel: number | null
+    aliased_entry_name: runtime.JsonValue | null
+    aliased_entry_id: number | null
     otherData: runtime.JsonValue | null
   }, ExtArgs["result"]["entry"]>
   composites: {}
@@ -11033,6 +11339,8 @@ export interface Prisma__EntryClient<T, Null = never, ExtArgs extends runtime.Ty
   immediate_superior<T extends Prisma.Entry$immediate_superiorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$immediate_superiorArgs<ExtArgs>>): Prisma.Prisma__EntryClient<runtime.Types.Result.GetResult<Prisma.$EntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   hierarchyParent<T extends Prisma.Entry$hierarchyParentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$hierarchyParentArgs<ExtArgs>>): Prisma.Prisma__EntryClient<runtime.Types.Result.GetResult<Prisma.$EntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   hierarchyTop<T extends Prisma.Entry$hierarchyTopArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$hierarchyTopArgs<ExtArgs>>): Prisma.Prisma__EntryClient<runtime.Types.Result.GetResult<Prisma.$EntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  aliased_entry<T extends Prisma.Entry$aliased_entryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$aliased_entryArgs<ExtArgs>>): Prisma.Prisma__EntryClient<runtime.Types.Result.GetResult<Prisma.$EntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  aliases<T extends Prisma.Entry$aliasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$aliasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   subordinates<T extends Prisma.Entry$subordinatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$subordinatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   hierarchicalChildren<T extends Prisma.Entry$hierarchicalChildrenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$hierarchicalChildrenArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   MatchingRuleUse<T extends Prisma.Entry$MatchingRuleUseArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$MatchingRuleUseArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MatchingRuleUsePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -11041,8 +11349,6 @@ export interface Prisma__EntryClient<T, Null = never, ExtArgs extends runtime.Ty
   Password<T extends Prisma.Entry$PasswordArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$PasswordArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   RDN<T extends Prisma.Entry$RDNArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$RDNArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DistinguishedValuePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   EntryObjectClass<T extends Prisma.Entry$EntryObjectClassArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$EntryObjectClassArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EntryObjectClassPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  AliasEntry<T extends Prisma.Entry$AliasEntryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$AliasEntryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AliasPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  AliasedEntry<T extends Prisma.Entry$AliasedEntryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$AliasedEntryArgs<ExtArgs>>): Prisma.Prisma__AliasClient<runtime.Types.Result.GetResult<Prisma.$AliasPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   DITStructureRule<T extends Prisma.Entry$DITStructureRuleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$DITStructureRuleArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DITStructureRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ContentRule<T extends Prisma.Entry$ContentRuleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$ContentRuleArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContentRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ContextUseRule<T extends Prisma.Entry$ContextUseRuleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Entry$ContextUseRuleArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContextUseRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -11128,6 +11434,8 @@ export interface EntryFieldRefs {
   readonly hierarchyTopStr: Prisma.FieldRef<"Entry", 'String'>
   readonly hierarchyPath: Prisma.FieldRef<"Entry", 'String'>
   readonly hierarchyLevel: Prisma.FieldRef<"Entry", 'Int'>
+  readonly aliased_entry_name: Prisma.FieldRef<"Entry", 'Json'>
+  readonly aliased_entry_id: Prisma.FieldRef<"Entry", 'Int'>
   readonly otherData: Prisma.FieldRef<"Entry", 'Json'>
 }
     
@@ -11580,6 +11888,49 @@ export type Entry$hierarchyTopArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
+ * Entry.aliased_entry
+ */
+export type Entry$aliased_entryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Entry
+   */
+  select?: Prisma.EntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Entry
+   */
+  omit?: Prisma.EntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EntryInclude<ExtArgs> | null
+  where?: Prisma.EntryWhereInput
+}
+
+/**
+ * Entry.aliases
+ */
+export type Entry$aliasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Entry
+   */
+  select?: Prisma.EntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Entry
+   */
+  omit?: Prisma.EntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EntryInclude<ExtArgs> | null
+  where?: Prisma.EntryWhereInput
+  orderBy?: Prisma.EntryOrderByWithRelationInput | Prisma.EntryOrderByWithRelationInput[]
+  cursor?: Prisma.EntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EntryScalarFieldEnum | Prisma.EntryScalarFieldEnum[]
+}
+
+/**
  * Entry.subordinates
  */
 export type Entry$subordinatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -11769,49 +12120,6 @@ export type Entry$EntryObjectClassArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.EntryObjectClassScalarFieldEnum | Prisma.EntryObjectClassScalarFieldEnum[]
-}
-
-/**
- * Entry.AliasEntry
- */
-export type Entry$AliasEntryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Alias
-   */
-  select?: Prisma.AliasSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Alias
-   */
-  omit?: Prisma.AliasOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.AliasInclude<ExtArgs> | null
-  where?: Prisma.AliasWhereInput
-  orderBy?: Prisma.AliasOrderByWithRelationInput | Prisma.AliasOrderByWithRelationInput[]
-  cursor?: Prisma.AliasWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.AliasScalarFieldEnum | Prisma.AliasScalarFieldEnum[]
-}
-
-/**
- * Entry.AliasedEntry
- */
-export type Entry$AliasedEntryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Alias
-   */
-  select?: Prisma.AliasSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Alias
-   */
-  omit?: Prisma.AliasOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.AliasInclude<ExtArgs> | null
-  where?: Prisma.AliasWhereInput
 }
 
 /**

@@ -35,7 +35,8 @@
                     "footer": {
                         "js": "// Minified Meerkat DSA Javascript Source - Copyright (c) Wildboar Software 2025 - MIT License"
                     },
-                    "keepNames": true
+                    "keepNames": true,
+                    "sourcemap": true
                 },
                 "assets": [
                     {

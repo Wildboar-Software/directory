@@ -112,6 +112,11 @@ model Entry {
   hierarchyPath      String? // Period-delimited database IDs
   hierarchyLevel     Int?
 
+  aliased_entry_name Json?
+  aliased_entry_id   Int?
+  aliased_entry      Entry? @relation(name: "aliasing", fields: [aliased_entry_id], references: [id])
+  aliases            Entry[] @relation("aliasing")
+
   // For storing other arbitrary data in the entry.
   otherData Json?
 
@@ -123,8 +128,6 @@ model Entry {
   Password             Password[]
   RDN                  DistinguishedValue[]
   EntryObjectClass     EntryObjectClass[]
-  AliasEntry           Alias[]                @relation("alias_entry")
-  AliasedEntry         Alias?                 @relation("aliased_entry")
   DITStructureRule     DITStructureRule[]
   ContentRule          ContentRule[]
   ContextUseRule       ContextUseRule[]
@@ -676,20 +679,6 @@ model EntryObjectClass {
   object_class String // OID
 
   @@unique([entry_id, object_class])
-}
-
-model Alias {
-  id                 Int      @id @default(autoincrement())
-  alias_entry_id     Int
-  alias_entry        Entry    @relation(name: "alias_entry", fields: [alias_entry_id], references: [id], onDelete: Cascade)
-  aliased_entry_id   Int?     @unique
-  aliased_entry      Entry?   @relation(name: "aliased_entry", fields: [aliased_entry_id], references: [id], onDelete: SetNull)
-  aliased_entry_name Json?
-  created_at         DateTime @default(now())
-  updated_at         DateTime @default(now()) @updatedAt
-
-  @@unique([alias_entry_id])
-  @@index([aliased_entry_id])
 }
 
 model EntryAttributeValuesIncomplete {

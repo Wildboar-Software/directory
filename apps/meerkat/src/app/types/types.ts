@@ -470,9 +470,13 @@ interface EntryDSE {
 export
 interface AliasDSE {
 
-    /** The single value of the `aliasedEntryName` operational attribute */
-    aliasedEntryName: DistinguishedName;
-    // Implied to be of objectClass "alias"
+    /**
+     * The single value of the `aliasedEntryName` operational attribute
+     * This can be undefined because, in the presence of shadowing, a shadow
+     * supplier could supply the fact that an entry is an alias without
+     * providing what it is an alias to.
+     **/
+    aliasedEntryName?: DistinguishedName;
 
 }
 

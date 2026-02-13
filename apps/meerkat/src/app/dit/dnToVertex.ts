@@ -46,7 +46,7 @@ async function dnToVertex (
             return undefined;
         }
         currentRoot = vertex;
-        if (currentRoot.dse.alias && derefedAliases) {
+        if (currentRoot.dse.alias?.aliasedEntryName && derefedAliases) {
             return dnToVertex(ctx, ctx.dit.root, currentRoot.dse.alias.aliasedEntryName, derefedAliases);
         }
     }

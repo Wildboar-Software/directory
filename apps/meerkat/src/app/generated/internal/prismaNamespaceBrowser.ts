@@ -73,7 +73,6 @@ export const ModelName = {
   NamedObjectIdentifier: 'NamedObjectIdentifier',
   DistinguishedValue: 'DistinguishedValue',
   EntryObjectClass: 'EntryObjectClass',
-  Alias: 'Alias',
   EntryAttributeValuesIncomplete: 'EntryAttributeValuesIncomplete',
   AltServer: 'AltServer',
   InstalledVersions: 'InstalledVersions',
@@ -141,6 +140,8 @@ export const EntryScalarFieldEnum = {
   hierarchyTopStr: 'hierarchyTopStr',
   hierarchyPath: 'hierarchyPath',
   hierarchyLevel: 'hierarchyLevel',
+  aliased_entry_name: 'aliased_entry_name',
+  aliased_entry_id: 'aliased_entry_id',
   otherData: 'otherData'
 } as const
 
@@ -495,18 +496,6 @@ export const EntryObjectClassScalarFieldEnum = {
 } as const
 
 export type EntryObjectClassScalarFieldEnum = (typeof EntryObjectClassScalarFieldEnum)[keyof typeof EntryObjectClassScalarFieldEnum]
-
-
-export const AliasScalarFieldEnum = {
-  id: 'id',
-  alias_entry_id: 'alias_entry_id',
-  aliased_entry_id: 'aliased_entry_id',
-  aliased_entry_name: 'aliased_entry_name',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
-} as const
-
-export type AliasScalarFieldEnum = (typeof AliasScalarFieldEnum)[keyof typeof AliasScalarFieldEnum]
 
 
 export const EntryAttributeValuesIncompleteScalarFieldEnum = {

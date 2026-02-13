@@ -98,7 +98,6 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
                 },
             }),
             // DSE types that are calculated.
-            alias: await ctx.db.alias.count(),
             // admPoint: await ctx.db.entryAdministrativeRole.count({
             //     // Unsupported: See: https://github.com/prisma/prisma/issues/4228
             //     // distinct: ["entry_id"],

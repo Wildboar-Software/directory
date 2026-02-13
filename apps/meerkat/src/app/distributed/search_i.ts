@@ -14,6 +14,7 @@ import * as crypto from "node:crypto";
 import { DER } from "@wildboar/asn1/functional";
 import {
     SearchArgument,
+    ServiceProblem_ditError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchArgumentData,
@@ -2203,6 +2204,26 @@ async function search_i_ex (
     }
 
     if (target.dse.alias && searchAliases) {
+        if (!target.dse.alias.aliasedEntryName) {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:alias_but_no_aen"),
+                new ServiceErrorData(
+                    ServiceProblem_ditError,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_serviceError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
         if (accessControlScheme) {
             const authorizedToReadEntry: boolean = authorized([
                 PERMISSION_CATEGORY_READ,

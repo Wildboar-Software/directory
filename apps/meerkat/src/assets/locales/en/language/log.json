@@ -26,7 +26,6 @@
     "patch_update_available": "A patch update ({{version}}) is available for Meerkat DSA.",
     "terminating_ob": "Terminating operational binding {{id}} at {{time}}.",
     "connection_unbound": "{{ctype}} {{cid}}: {{protocol}} association unbound.",
-    "alias_but_no_aen": "Alias entry {{id}} had no aliasedEntryName attribute.",
     "subr_for_hob_not_found": "Subordinate entry for agreement {{obid}} (version {{version}}) not found.",
     "failed_to_update_hob": "Failed to update HOB for agreement {{obid}} (version {{version}}): {{e}}",
     "failed_to_update_nhob": "Failed to update NHOB for agreement {{obid}} (version {{version}}): {{e}}",

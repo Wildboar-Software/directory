@@ -128,11 +128,6 @@ export type DistinguishedValue = Prisma.DistinguishedValueModel
  */
 export type EntryObjectClass = Prisma.EntryObjectClassModel
 /**
- * Model Alias
- * 
- */
-export type Alias = Prisma.AliasModel
-/**
  * Model EntryAttributeValuesIncomplete
  * 
  */

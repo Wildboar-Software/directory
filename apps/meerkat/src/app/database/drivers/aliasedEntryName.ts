@@ -19,6 +19,9 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson.js";
 import dnToID from "../../dit/dnToID.js";
+import { DbNull } from "../../generated/internal/prismaNamespace.js";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import { compareDistinguishedName } from "@wildboar/x500";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -50,15 +53,18 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             id: vertex.dse.uuid ?? vertex.dse.id,
         }));
     }
-    pendingUpdates.otherWrites.push(ctx.db.alias.create({
-        data: {
-            alias_entry_id: vertex.dse.id,
-            aliased_entry_name: decodedName.map(rdnToJson),
-            aliased_entry_id: aliasedEntryId,
-        },
-        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-    }));
+    vertex.dse.alias = {
+        aliasedEntryName: decodedName,
+    };
     pendingUpdates.entryUpdate.alias = true;
+    pendingUpdates.entryUpdate.aliased_entry_name = decodedName.map(rdnToJson);
+    if (typeof aliasedEntryId === "number") {
+        pendingUpdates.entryUpdate.aliased_entry = {
+            connect: {
+                id: aliasedEntryId,
+            },
+        };
+    }
 };
 
 export
@@ -68,25 +74,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    const decodedName = _decode_DistinguishedName(value.value);
-    const aliasedEntryId = await dnToID(ctx, ctx.dit.root.dse.id, decodedName);
-    if (aliasedEntryId) {
-        pendingUpdates.otherWrites.push(ctx.db.alias.delete({
-            where: {
-                alias_entry_id: vertex.dse.id,
-                aliased_entry_id: aliasedEntryId,
-            },
-        }));
-    } else {
-        pendingUpdates.otherWrites.push(ctx.db.alias.deleteMany({
-            where: {
-                alias_entry_id: vertex.dse.id,
-                aliased_entry_name: {
-                    equals: decodedName.map(rdnToJson),
-                },
-            },
-        }));
-    }
+    return removeAttribute(ctx, vertex, pendingUpdates);
 };
 
 export
@@ -95,11 +83,10 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     vertex: Vertex,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    pendingUpdates.otherWrites.push(ctx.db.alias.deleteMany({
-        where: {
-            alias_entry_id: vertex.dse.id,
-        },
-    }));
+    pendingUpdates.entryUpdate.aliased_entry_name = DbNull;
+    pendingUpdates.entryUpdate.aliased_entry = {
+        disconnect: true,
+    };
 };
 
 export
@@ -107,11 +94,9 @@ const countValues: SpecialAttributeCounter = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<number> => {
-    return ctx.db.alias.count({
-        where: {
-            alias_entry_id: vertex.dse.id,
-        },
-    });
+    return vertex.dse.alias?.aliasedEntryName
+        ? 1
+        : 0;
 };
 
 export
@@ -119,11 +104,7 @@ const isPresent: SpecialAttributeDetector = async (
     ctx: Readonly<Context>,
     vertex: Vertex,
 ): Promise<boolean> => {
-    return !!(await ctx.db.alias.findFirst({
-        where: {
-            alias_entry_id: vertex.dse.id,
-        },
-    }));
+    return !!vertex.dse.alias?.aliasedEntryName;
 };
 
 export
@@ -132,25 +113,13 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
-    const decodedName = _decode_DistinguishedName(value.value);
-    const aliasedEntryId = await dnToID(ctx, ctx.dit.root.dse.id, decodedName);
-    if (aliasedEntryId) {
-        return !!(await ctx.db.alias.findFirst({
-            where: {
-                alias_entry_id: vertex.dse.id,
-                aliased_entry_id: aliasedEntryId,
-            },
-        }))
-    } else {
-        return !!(await ctx.db.alias.findFirst({
-            where: {
-                alias_entry_id: vertex.dse.id,
-                aliased_entry_name: {
-                    equals: decodedName.map(rdnToJson),
-                },
-            },
-        }))
+    if (!vertex.dse.alias?.aliasedEntryName) {
+        return false;
     }
+    const storedName = vertex.dse.alias?.aliasedEntryName;
+    const assertedName = _decode_DistinguishedName(value.value);
+    const namingMatcher = getNamingMatcherGetter(ctx);
+    return compareDistinguishedName(assertedName, storedName, namingMatcher);
 };
 
 export

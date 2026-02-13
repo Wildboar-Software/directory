@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.4.0
- * Query Engine version: ab56fe763f921d033a6c195e7ddeb3e255bdbb57
+ * Prisma Client JS version: 7.3.0
+ * Query Engine version: 9d6ad21cbbceab97458517b147a6a09ff43aa735
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.4.0",
-  engine: "ab56fe763f921d033a6c195e7ddeb3e255bdbb57"
+  client: "7.3.0",
+  engine: "9d6ad21cbbceab97458517b147a6a09ff43aa735"
 }
 
 /**
@@ -406,7 +406,6 @@ export const ModelName = {
   NamedObjectIdentifier: 'NamedObjectIdentifier',
   DistinguishedValue: 'DistinguishedValue',
   EntryObjectClass: 'EntryObjectClass',
-  Alias: 'Alias',
   EntryAttributeValuesIncomplete: 'EntryAttributeValuesIncomplete',
   AltServer: 'AltServer',
   InstalledVersions: 'InstalledVersions',
@@ -431,7 +430,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "entry" | "password" | "passwordHistory" | "passwordDictionaryItem" | "attributeValue" | "contextValue" | "accessPoint" | "networkServiceAccessPoint" | "ditBridgeKnowledge" | "nameForm" | "dITStructureRule" | "contentRule" | "contextUseRule" | "friendship" | "matchingRuleUse" | "attributeTypeDescription" | "objectClassDescription" | "contextDescription" | "operationalBinding" | "namedObjectIdentifier" | "distinguishedValue" | "entryObjectClass" | "alias" | "entryAttributeValuesIncomplete" | "altServer" | "installedVersions" | "enqueuedSearchResult" | "enqueuedListResult" | "accessPointCredentials" | "postalCodesGazetteEntry" | "postalCodeBoundaryPoints" | "pendingShadowIncrementalStepRefresh"
+    modelProps: "entry" | "password" | "passwordHistory" | "passwordDictionaryItem" | "attributeValue" | "contextValue" | "accessPoint" | "networkServiceAccessPoint" | "ditBridgeKnowledge" | "nameForm" | "dITStructureRule" | "contentRule" | "contextUseRule" | "friendship" | "matchingRuleUse" | "attributeTypeDescription" | "objectClassDescription" | "contextDescription" | "operationalBinding" | "namedObjectIdentifier" | "distinguishedValue" | "entryObjectClass" | "entryAttributeValuesIncomplete" | "altServer" | "installedVersions" | "enqueuedSearchResult" | "enqueuedListResult" | "accessPointCredentials" | "postalCodesGazetteEntry" | "postalCodeBoundaryPoints" | "pendingShadowIncrementalStepRefresh"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2063,80 +2062,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    Alias: {
-      payload: Prisma.$AliasPayload<ExtArgs>
-      fields: Prisma.AliasFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.AliasFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.AliasFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload>
-        }
-        findFirst: {
-          args: Prisma.AliasFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.AliasFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload>
-        }
-        findMany: {
-          args: Prisma.AliasFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload>[]
-        }
-        create: {
-          args: Prisma.AliasCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload>
-        }
-        createMany: {
-          args: Prisma.AliasCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.AliasCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload>[]
-        }
-        delete: {
-          args: Prisma.AliasDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload>
-        }
-        update: {
-          args: Prisma.AliasUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload>
-        }
-        deleteMany: {
-          args: Prisma.AliasDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.AliasUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.AliasUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload>[]
-        }
-        upsert: {
-          args: Prisma.AliasUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AliasPayload>
-        }
-        aggregate: {
-          args: Prisma.AliasAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateAlias>
-        }
-        groupBy: {
-          args: Prisma.AliasGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AliasGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.AliasCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AliasCountAggregateOutputType> | number
-        }
-      }
-    }
     EntryAttributeValuesIncomplete: {
       payload: Prisma.$EntryAttributeValuesIncompletePayload<ExtArgs>
       fields: Prisma.EntryAttributeValuesIncompleteFieldRefs
@@ -2882,6 +2807,8 @@ export const EntryScalarFieldEnum = {
   hierarchyTopStr: 'hierarchyTopStr',
   hierarchyPath: 'hierarchyPath',
   hierarchyLevel: 'hierarchyLevel',
+  aliased_entry_name: 'aliased_entry_name',
+  aliased_entry_id: 'aliased_entry_id',
   otherData: 'otherData'
 } as const
 
@@ -3236,18 +3163,6 @@ export const EntryObjectClassScalarFieldEnum = {
 } as const
 
 export type EntryObjectClassScalarFieldEnum = (typeof EntryObjectClassScalarFieldEnum)[keyof typeof EntryObjectClassScalarFieldEnum]
-
-
-export const AliasScalarFieldEnum = {
-  id: 'id',
-  alias_entry_id: 'alias_entry_id',
-  aliased_entry_id: 'aliased_entry_id',
-  aliased_entry_name: 'aliased_entry_name',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
-} as const
-
-export type AliasScalarFieldEnum = (typeof AliasScalarFieldEnum)[keyof typeof AliasScalarFieldEnum]
 
 
 export const EntryAttributeValuesIncompleteScalarFieldEnum = {
@@ -3636,7 +3551,6 @@ export type GlobalOmitConfig = {
   namedObjectIdentifier?: Prisma.NamedObjectIdentifierOmit
   distinguishedValue?: Prisma.DistinguishedValueOmit
   entryObjectClass?: Prisma.EntryObjectClassOmit
-  alias?: Prisma.AliasOmit
   entryAttributeValuesIncomplete?: Prisma.EntryAttributeValuesIncompleteOmit
   altServer?: Prisma.AltServerOmit
   installedVersions?: Prisma.InstalledVersionsOmit

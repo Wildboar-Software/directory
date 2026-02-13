@@ -108,7 +108,6 @@ async function dseFromDatabaseEntry (
             value_el,
         );
     }) ?? await getRDNFromEntryId(ctx, dbe.id);
-    //
     const objectClasses = dbe.EntryObjectClass ?? (await ctx.db.entryObjectClass.findMany({
         where: {
             entry_id: dbe.id,
@@ -258,27 +257,12 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    if (ret.objectClass.has(ALIAS)) {
-        const alias_ = await ctx.db.alias.findUnique({
-            where: {
-                alias_entry_id: dbe.id,
-            },
-            select: {
-                aliased_entry_name: true,
-            },
-        });
-        // We check that it is an array just to avoid any problems with this
-        // value being malformed in the database.
-        if (Array.isArray(alias_?.aliased_entry_name)) {
-            ret.alias = {
-                aliasedEntryName: alias_!.aliased_entry_name
-                    .map((rdn: Record<string, string>) => rdnFromJson(rdn)),
-            };
-        } else {
-            ctx.log.warn(ctx.i18n.t("log:alias_but_no_aen", {
-                id: dbe.entryUUID,
-            }));
-        }
+    if (ret.objectClass.has(ALIAS) || ret.alias) {
+        ret.alias = ret.alias ?? {
+            aliasedEntryName: Array.isArray(dbe.aliased_entry_name)
+                ? dbe.aliased_entry_name?.map((rdn: Record<string, string>) => rdnFromJson(rdn))
+                : undefined,
+        };
     }
 
     if (dbe.subr) {
