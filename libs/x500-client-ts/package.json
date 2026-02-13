@@ -12,6 +12,8 @@
         "@wildboar/ldap": "npm:@jsr/wildboar__ldap@^2.0.1",
         "@wildboar/idm": "npm:@jsr/wildboar__idm@^3.1.2",
         "@wildboar/pki-stub": "npm:@jsr/wildboar__pki-stub@^2.0.2",
-        "@wildboar/safecurves-pkix-18": "npm:@jsr/wildboar__safecurves-pkix-18@^2.0.0"
+        "@wildboar/safecurves-pkix-18": "npm:@jsr/wildboar__safecurves-pkix-18@^2.0.0",
+        "@wildboar/pem": "npm:@jsr/wildboar__pem@^4.0.2",
+        "date-fns": "^4.1.0"
     }
 }
