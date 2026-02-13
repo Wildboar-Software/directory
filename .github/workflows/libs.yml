@@ -23,6 +23,15 @@ jobs:
           - x500-client-ts
     steps:
       - uses: actions/checkout@v6
-      - name: Publish ${{ matrix.library }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '25'
+      - name: Install dependencies for ${{ matrix.library }}
         working-directory: libs/${{ matrix.library }}
-        run: npx jsr publish
+        run: npm install
+      - name: Publish package ${{ matrix.library }}
+        working-directory: libs/${{ matrix.library }}
+        # --allow-slow-types: because the generate code has way too many examples
+        # --verbose: for some reason, it hangs without this.
+        # --allow-dirty: just because of package-lock.json
+        run: npx jsr publish --allow-slow-types --verbose --allow-dirty
