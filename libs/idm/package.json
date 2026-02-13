@@ -1,5 +1,9 @@
 {
     "name": "@wildboar/idm",
     "version": "3.1.2",
-    "license": "MIT"
+    "license": "MIT",
+    "dependencies": {
+        "@wildboar/acse": "npm:@jsr/wildboar__acse@^2.0.0",
+        "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4"
+    }
 }
