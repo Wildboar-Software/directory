@@ -11,6 +11,7 @@ jobs:
       contents: read
       id-token: write
     strategy:
+      fail-fast: false
       matrix:
         library:
           - idm
@@ -26,6 +27,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '25'
+      - name: Use .npmrc file
+        run: cp .npmrc libs/${{ matrix.library }}/.npmrc
       - name: Install dependencies for ${{ matrix.library }}
         working-directory: libs/${{ matrix.library }}
         run: npm install
