@@ -211,12 +211,14 @@ function postHTTPS (
             ...(tlsOptions ?? {}),
             timeout: timeoutInMilliseconds,
         }, (res) => {
+            const timeout = setTimeout(reject, timeoutInMilliseconds);
             const onResFail = (e?: Error) => {
                 reject(e);
                 res.removeAllListeners();
                 httpReq.removeAllListeners();
                 httpReq.destroy();
                 res.destroy();
+                clearTimeout(timeout);
             };
             const resContentType = res.headers["content-type"]?.toLowerCase();
             if (
@@ -244,8 +246,8 @@ function postHTTPS (
                 el.fromBytes(responseBytes);
                 const ocspResponse = _decode_OCSPResponse(el);
                 resolve(ocspResponse);
+                clearTimeout(timeout);
             });
-            setTimeout(reject, timeoutInMilliseconds);
         });
         httpReq.once("error", onReqFail);
         httpReq.once("timeout", onReqFail);
@@ -293,7 +295,8 @@ interface CheckResponse {
  * @param timeoutInMilliseconds The timeout in milliseconds before this operation is abandoned
  * @param sign A function that can be used to digitally sign outbound OCSP requests
  * @param sizeLimit The maximum tolerated size (in bytes) of an OCSP response
- * @returns A promise that resolves to information about the OCSP response
+ * @returns A promise that resolves to information about the OCSP response, or `null`
+ *  if the URL is not for HTTP or HTTPS.
  *
  * @async
  * @function

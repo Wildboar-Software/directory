@@ -1,6 +1,6 @@
 {
   "name": "@wildboar/ocsp-client",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts"
@@ -13,7 +13,8 @@
     ],
     "exclude": [
       "src/**/*.test.ts",
-      "src/**/*.spec.ts"
+      "src/**/*.spec.ts",
+      "src/**/*.denotest.ts"
     ]
   }
 }

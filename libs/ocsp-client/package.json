@@ -1,14 +1,11 @@
 {
     "name": "@wildboar/ocsp-client",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "license": "MIT",
     "dependencies": {
         "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.4",
         "@wildboar/ocsp": "npm:@jsr/wildboar__ocsp@^2.0.1",
         "@wildboar/pki-stub": "npm:@jsr/wildboar__pki-stub@^2.0.2",
         "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4"
-    },
-    "devDependencies": {
-        "@wildboar/pem": "npm:@jsr/wildboar__pem@^4.0.2"
     }
 }
