@@ -1,5 +1,9 @@
 {
     "name": "@wildboar/ldap-socket",
     "version": "1.0.0",
-    "license": "MIT"
+    "license": "MIT",
+    "dependencies": {
+        "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.4",
+        "@wildboar/ldap": "npm:@jsr/wildboar__ldap@^2.0.1"
+    }
 }

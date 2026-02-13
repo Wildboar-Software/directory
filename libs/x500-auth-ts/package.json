@@ -1,5 +1,10 @@
 {
     "name": "@wildboar/x500-auth",
     "version": "0.2.1",
-    "license": "MIT"
+    "license": "MIT",
+    "dependencies": {
+        "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.4",
+        "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4",
+        "@wildboar/rose-transport": "npm:@jsr/wildboar__rose-transport@^1.2.0"
+    }
 }

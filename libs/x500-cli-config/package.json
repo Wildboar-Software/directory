@@ -1,4 +1,9 @@
 {
     "name": "@wildboar/x500-cli-config",
-    "version": "1.2.0"
+    "version": "1.2.0",
+    "license": "MIT",
+    "dependencies": {},
+    "devDependencies": {
+        "@types/json-schema": "^7.0.11"
+    }
 }

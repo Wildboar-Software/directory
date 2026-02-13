@@ -3,7 +3,7 @@
     "version": "3.1.2",
     "license": "MIT",
     "dependencies": {
-        "@wildboar/acse": "npm:@jsr/wildboar__acse@^2.0.0",
+        "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.4",
         "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4"
     }
 }
