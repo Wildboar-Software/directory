@@ -1,3 +1,4 @@
+import pkg from "../../../package.json" with { type: "json" };
 import process from "node:process";
 import { Buffer } from "node:buffer";
 import type { Request, Response, NextFunction } from "express";
@@ -2876,8 +2877,7 @@ function getHelp(req: MeerkatReq, res: Response): void {
 
 function getAbout(req: MeerkatReq, res: Response): void {
     res.render("about", {
-        version: "TODO", // FIXME:
-        hash: "TODO", // FIXME:
+        version: pkg.version ?? "UNKNOWN",
         os_arch: canFail(() => os.arch()),
         os_cpus: canFail(() => os.cpus().length.toString()),
         os_endianness: canFail(() => os.endianness()),
