@@ -18,7 +18,7 @@ import {
 import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants.js";
 
 export const VT_RETURN_CODE_OK: number = 0;
-export const VT_RETURN_CODE_UNTRUSTED: number = 1;
+// export const VT_RETURN_CODE_UNTRUSTED: number = 1; (Not used. This is already covered by the return code from verifyAnyCertPath.)
 export const VT_RETURN_CODE_INVALID_SIG: number = 2;
 export const VT_RETURN_CODE_MALFORMED: number = 3;
 export const VT_RETURN_CODE_KEY_USAGE: number = 4;

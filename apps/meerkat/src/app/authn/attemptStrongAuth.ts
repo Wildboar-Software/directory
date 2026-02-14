@@ -43,7 +43,9 @@ import {
     VT_RETURN_CODE_OK,
     VT_RETURN_CODE_MALFORMED,
     VT_RETURN_CODE_INVALID_SIG,
-    VT_RETURN_CODE_UNTRUSTED, // FIXME: Why is this not used?
+    VT_RETURN_CODE_KEY_USAGE,
+    VT_RETURN_CODE_PKUP,
+    VT_RETURN_CODE_VERIFY_DISABLED,
 } from "../pki/verifyToken.js";
 import { strict as assert } from "node:assert";
 import {
@@ -87,6 +89,32 @@ import {
     VAC_OCSP_OTHER,
     VAC_OCSP_REVOKED,
 } from "../pki/verifyAttrCertPath.js";
+import {
+    VCP_RETURN_INVALID_SIG,
+    VCP_RETURN_MALFORMED,
+    VCP_RETURN_BAD_KEY_USAGE,
+    VCP_RETURN_BAD_EXT_KEY_USAGE,
+    VCP_RETURN_UNKNOWN_CRIT_EXT,
+    VCP_RETURN_DUPLICATE_EXT,
+    VCP_RETURN_AKI_SKI_MISMATCH,
+    VCP_RETURN_PKU_PERIOD,
+    VCP_RETURN_BASIC_CONSTRAINTS_CA,
+    VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+    VCP_RETURN_INVALID_EXT_CRIT,
+    VCP_RETURN_UNTRUSTED_ANCHOR,
+    VCP_RETURN_INVALID_TIME,
+    VCP_RETURN_ISSUER_SUBJECT_MISMATCH,
+    VCP_RETURN_NAME_NOT_PERMITTED,
+    VCP_RETURN_NAME_EXCLUDED,
+    VCP_RETURN_PROHIBITED_SIG_ALG,
+    VCP_RETURN_POLICY_NOT_ACCEPTABLE,
+    VCP_RETURN_NO_AUTHORIZED_POLICIES,
+    VCP_RETURN_NO_BASIC_CONSTRAINTS_CA,
+    VCP_RETURN_OCSP_REVOKED,
+    VCP_RETURN_OCSP_OTHER,
+    VCP_RETURN_CRL_REVOKED,
+    VCP_RETURN_CRL_UNREACHABLE,
+} from "../pki/verifyCertPath.js";
 import { Clearance } from "@wildboar/x500/EnhancedSecurity";
 import { subjectDirectoryAttributes } from "@wildboar/x500/CertificateExtensions";
 import { DERElement, unpackBits } from "@wildboar/asn1";
@@ -98,6 +126,67 @@ import { DER } from "@wildboar/asn1/functional";
 import { SIGNED } from "@wildboar/pki-stub";
 import { sign, createSign } from "node:crypto";
 import { DistinguishedName } from "@wildboar/x500/InformationFramework";
+
+const verifyTokenToLogMessageContext: Map<number, string> = new Map([
+    [VT_RETURN_CODE_INVALID_SIG, "invalid_sig"],
+    [VT_RETURN_CODE_MALFORMED, "malformed"],
+    [VT_RETURN_CODE_KEY_USAGE, "key_usage"],
+    [VT_RETURN_CODE_PKUP, "pkup"],
+    [VT_RETURN_CODE_VERIFY_DISABLED, "disabled"],
+    [VCP_RETURN_INVALID_SIG, "invalid_sig"],
+    [VCP_RETURN_MALFORMED, "malformed"],
+    [VCP_RETURN_BAD_KEY_USAGE, "key_usage"],
+    [VCP_RETURN_BAD_EXT_KEY_USAGE, "key_usage"],
+    [VCP_RETURN_UNKNOWN_CRIT_EXT, "crit_ext"],
+    [VCP_RETURN_DUPLICATE_EXT, "duplicate_ext"],
+    [VCP_RETURN_AKI_SKI_MISMATCH, "aki_ski_mismatch"],
+    [VCP_RETURN_PKU_PERIOD, "pkup"],
+    [VCP_RETURN_BASIC_CONSTRAINTS_CA, "basic_constraints_ca"],
+    [VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN, "basic_constraints_path_len"],
+    [VCP_RETURN_INVALID_EXT_CRIT, "invalid_ext_crit"],
+    [VCP_RETURN_UNTRUSTED_ANCHOR, "untrusted"],
+    [VCP_RETURN_INVALID_TIME, "invalid_time"],
+    [VCP_RETURN_ISSUER_SUBJECT_MISMATCH, "issuer_subject_mismatch"],
+    [VCP_RETURN_NAME_NOT_PERMITTED, "name_not_permitted"],
+    [VCP_RETURN_NAME_EXCLUDED, "name_excluded"],
+    [VCP_RETURN_PROHIBITED_SIG_ALG, "prohibited_sig_alg"],
+    [VCP_RETURN_POLICY_NOT_ACCEPTABLE, "policy_not_acceptable"],
+    [VCP_RETURN_NO_AUTHORIZED_POLICIES, "no_authorized_policies"],
+    [VCP_RETURN_NO_BASIC_CONSTRAINTS_CA, "no_basic_constraints_ca"],
+    [VCP_RETURN_OCSP_REVOKED, "ocsp_revoked"],
+    [VCP_RETURN_OCSP_OTHER, "ocsp_other"],
+    [VCP_RETURN_CRL_REVOKED, "crl_revoked"],
+    [VCP_RETURN_CRL_UNREACHABLE, "crl_unreachable"],
+]);
+
+const verifyAttrCertPathToLogMessageContext: Map<number, string> = new Map([
+    [VAC_NOT_BEFORE, "not_before"],
+    [VAC_NOT_AFTER, "not_after"],
+    [VAC_MISSING_BASE_CERT, "missing_base_cert"],
+    [VAC_HOLDER_MISMATCH, "holder_mismatch"],
+    [VAC_UNSUPPORTED_HOLDER_DIGEST, "unsupported_holder_digest"],
+    [VAC_UNSUPPORTED_HOLDER_DIGESTED_OBJECT, "unsupported_holder_digested_object"],
+    [VAC_NO_ASSERTION, "no_assertion"],
+    [VAC_NO_SOA_CERT, "no_soa_cert"],
+    [VAC_UNTRUSTED_SOA, "untrusted_soa"],
+    [VAC_INTERNAL_ERROR, "internal_error"],
+    [VAC_UNUSABLE_AC_PATH, "unusable_ac_path"],
+    [VAC_INVALID_DELEGATION, "invalid_delegation"],
+    [VAC_UNSUPPORTED_SIG_ALG, "unsupported_sig_alg"],
+    [VAC_INVALID_SIGNATURE, "invalid_signature"],
+    [VAC_SINGLE_USE, "single_use"],
+    [VAC_ACERT_REVOKED, "acert_revoked"],
+    [VAC_INVALID_TARGET, "invalid_target"],
+    [VAC_INVALID_TIME_SPEC, "invalid_time_spec"],
+    [VAC_AMBIGUOUS_GROUP, "ambiguous_group"],
+    [VAC_NOT_GROUP_MEMBER, "not_group_member"],
+    [VAC_DUPLICATE_EXT, "duplicate_ext"],
+    [VAC_UNKNOWN_CRIT_EXT, "unknown_crit_ext"],
+    [VAC_INVALID_EXT_CRIT, "invalid_ext_crit"],
+    [VAC_CRL_REVOKED, "crl_revoked"],
+    [VAC_OCSP_OTHER, "ocsp_other"],
+    [VAC_OCSP_REVOKED, "ocsp_revoked"],
+]);
 
 const ID_OC_PKI_CERT_PATH: string = id_oc_pkiCertPath.toString();
 
@@ -148,34 +237,7 @@ async function clearancesFromAttrCertPath (
             .flatMap((attr) => attr.values)
             .map((value) => clearance.decoderFor["&Type"]!(value));
     }
-    const logMessageContext = ({
-        [VAC_NOT_BEFORE]: "not_before",
-        [VAC_NOT_AFTER]: "not_after",
-        [VAC_MISSING_BASE_CERT]: "missing_base_cert",
-        [VAC_HOLDER_MISMATCH]: "holder_mismatch",
-        [VAC_UNSUPPORTED_HOLDER_DIGEST]: "unsupported_holder_digest",
-        [VAC_UNSUPPORTED_HOLDER_DIGESTED_OBJECT]: "unsupported_holder_digested_object",
-        [VAC_NO_ASSERTION]: "no_assertion",
-        [VAC_NO_SOA_CERT]: "no_soa_cert",
-        [VAC_UNTRUSTED_SOA]: "untrusted_soa",
-        [VAC_INTERNAL_ERROR]: "internal_error",
-        [VAC_UNUSABLE_AC_PATH]: "unusable_ac_path",
-        [VAC_INVALID_DELEGATION]: "invalid_delegation",
-        [VAC_UNSUPPORTED_SIG_ALG]: "unsupported_sig_alg",
-        [VAC_INVALID_SIGNATURE]: "invalid_signature",
-        [VAC_SINGLE_USE]: "single_use",
-        [VAC_ACERT_REVOKED]: "acert_revoked",
-        [VAC_INVALID_TARGET]: "invalid_target",
-        [VAC_INVALID_TIME_SPEC]: "invalid_time_spec",
-        [VAC_AMBIGUOUS_GROUP]: "ambiguous_group",
-        [VAC_NOT_GROUP_MEMBER]: "not_group_member",
-        [VAC_DUPLICATE_EXT]: "duplicate_ext",
-        [VAC_UNKNOWN_CRIT_EXT]: "unknown_crit_ext",
-        [VAC_INVALID_EXT_CRIT]: "invalid_ext_crit",
-        [VAC_CRL_REVOKED]: "crl_revoked",
-        [VAC_OCSP_OTHER]: "ocsp_other",
-        [VAC_OCSP_REVOKED]: "ocsp_revoked",
-    })[attr_cert_verif_code];
+    const logMessageContext = verifyAttrCertPathToLogMessageContext.get(attr_cert_verif_code);
     ctx.log.debug(ctx.i18n.t("log:verify_attr_cert", {
         ...logInfo,
         context: logMessageContext,
@@ -377,11 +439,7 @@ async function attemptStrongAuth (
 
         const effectiveName = name ?? certification_path.userCertificate.toBeSigned.subject.rdnSequence;
         const tokenResult = await verifyToken(ctx, certification_path, bind_token);
-        const logMessageContext = ({
-            [VT_RETURN_CODE_MALFORMED]: "malformed",
-            [VT_RETURN_CODE_INVALID_SIG]: "invalid_sig",
-            // [VT_RETURN_CODE_UNTRUSTED]: "untrusted",
-        })[tokenResult];
+        const logMessageContext = verifyTokenToLogMessageContext.get(tokenResult);
         if (logMessageContext) {
             ctx.log.debug(ctx.i18n.t("log:strong_cred_error", {
                 ...logInfo,
