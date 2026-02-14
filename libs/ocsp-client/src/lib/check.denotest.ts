@@ -105,9 +105,12 @@ Deno.test({
             cert.toBeSigned.issuer.rdnSequence,
             issuerCert.toBeSigned.subjectPublicKeyInfo,
             cert.toBeSigned.serialNumber,
-        ], undefined, 5000);
-        assert(resp);
-        const { res: result } = resp;
+        ], {
+            signal: AbortSignal.timeout(5000),
+        });
+        assert(resp?.httpResponse);
+        assert(resp?.ocspResponse);
+        const { ocspResponse: result } = resp;
         assertEqual(result.responseStatus, OCSPResponseStatus_successful);
         assert(result.responseBytes);
         assert(result.responseBytes.responseType.isEqualTo(id_pkix_ocsp_basic));

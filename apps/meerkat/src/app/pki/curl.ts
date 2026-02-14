@@ -2,37 +2,24 @@ import { Buffer } from "node:buffer";
 import { BERElement, ASN1TruncationError } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import { URL } from "node:url";
-import * as http from "node:http";
-import * as https from "node:https";
 import * as net from "node:net";
 import { randomInt, randomUUID } from "node:crypto";
 import { connect, TlsOptions } from "node:tls";
 import {
-    LDAPMessage, _decode_LDAPMessage, _encode_LDAPMessage,
-} from "@wildboar/ldap";
-import {
+    LDAPMessage,
+    _decode_LDAPMessage,
+    _encode_LDAPMessage,
     BindRequest,
-} from "@wildboar/ldap";
-import {
     SearchRequest,
-} from "@wildboar/ldap";
-import {
     SearchRequest_scope_baseObject,
-} from "@wildboar/ldap";
-import {
     SearchRequest_derefAliases_derefFindingBaseObj,
-} from "@wildboar/ldap";
-import type {
     SearchResultEntry,
-} from "@wildboar/ldap";
-import {
     resultCodes,
 } from "@wildboar/ldap";
 import * as ftp from "basic-ftp";
 import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
-import * as http2 from "node:http2";
 
 const { success } = resultCodes;
 
@@ -43,125 +30,6 @@ function getReceivedDataSize (chunks: Buffer[]) {
         sum += chunk.length;
     }
     return sum;
-}
-
-/**
- * @summary Fetch a blob using HTTP
- * @description
- *
- * Fetches a blob using the HyperText Transport Protocol (HTTP).
- *
- * @param url The URL of the thing to be fetched using a GET request
- * @param tlsOptions Options pertaining to TLS, if it is used
- * @param timeoutInMilliseconds The number of milliseconds before the fetch times out
- * @param sizeLimit The maximum size of the body, beyond which this fetch will be abandoned.
- * @returns A buffer representing the fetched blob, or `null` if it could not be obtained.
- *
- * @async
- * @function
- */
-export
-async function curlHTTP (
-    url: URL,
-    tlsOptions?: TlsOptions,
-    timeoutInMilliseconds: number = 5000,
-    sizeLimit: number = 1_000_000,
-): Promise<Buffer | null> {
-    const transportClient = (url.protocol.toLowerCase() === "https:")
-        ? https
-        : http;
-    return new Promise((resolve, reject) => {
-        const onFail = () => {
-            reject();
-            httpReq.removeAllListeners();
-            httpReq.destroy();
-        };
-        const httpReq = transportClient.request(url, {
-            ...(tlsOptions ?? {}),
-            timeout: timeoutInMilliseconds,
-        }, (res) => {
-            if (
-                res.headers["content-length"]
-                && (Number.parseInt(res.headers["content-length"]) > sizeLimit)
-            ) {
-                onFail();
-                return;
-            }
-            const chunks: Buffer[] = [];
-            res.on("data", (chunk: Buffer) => {
-                chunks.push(chunk);
-                const receivedBytes = getReceivedDataSize(chunks);
-                if (receivedBytes > sizeLimit) {
-                    onFail();
-                }
-            });
-            res.once("error", onFail);
-            res.once("timeout", onFail);
-            res.once("pause", onFail); // This should not happen.
-            res.once("end", () => {
-                resolve(Buffer.concat(chunks));
-            });
-            setTimeout(onFail, timeoutInMilliseconds);
-        });
-        httpReq.once("error", onFail);
-        httpReq.once("timeout", onFail);
-        httpReq.end();
-    });
-}
-
-/**
- * @summary Fetch a blob using HTTP/2
- * @description
- *
- * Fetches a blob using the HyperText Transport Protocol, version 2 (HTTP/2).
- * HTTP/2 is desirable primarily because it is faster.
- *
- * @param url The URL of the thing to be fetched using a GET request
- * @param tlsOptions Options pertaining to TLS, if it is used
- * @param timeoutInMilliseconds The number of milliseconds before the fetch times out
- * @param sizeLimit The maximum size of the body, beyond which this fetch will be abandoned.
- * @returns A buffer representing the fetched blob, or `null` if it could not be obtained.
- *
- * @async
- * @function
- */
-export
-function curlHTTP2 (
-    url: URL,
-    tlsOptions?: TlsOptions,
-    timeoutInMilliseconds: number = 5000,
-    sizeLimit: number = 1_000_000,
-): Promise<Buffer | null> {
-    const authority: string = `https://${url.hostname}:${url.port ?? 443}`;
-    const client = http2.connect(authority, {
-        ...(tlsOptions ? { ...tlsOptions, pskCallback: undefined } : {}),
-        timeout: timeoutInMilliseconds,
-    });
-    const chunks: Buffer[] = [];
-    const req = client.request({
-        ":path": url.pathname,
-    });
-    req.end();
-    return new Promise((resolve, reject) => {
-        const onFail = () => {
-            reject();
-            req.removeAllListeners();
-            req.close();
-        };
-        req.on("data", (chunk: Buffer) => {
-            chunks.push(chunk);
-            const receivedBytes = getReceivedDataSize(chunks);
-            if (receivedBytes > sizeLimit) {
-                onFail();
-            }
-        });
-        req.once("end", () => {
-            resolve(Buffer.concat(chunks));
-            client.close();
-        });
-        req.once("error", onFail);
-        client.once("error", onFail);
-    });
 }
 
 /**

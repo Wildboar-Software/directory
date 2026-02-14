@@ -1,73 +1,47 @@
-import { Buffer } from "node:buffer";
 import {
     OCSPRequest,
     _encode_OCSPRequest,
-} from "@wildboar/ocsp";
-import {
     TBSRequest,
     _encode_TBSRequest,
-} from "@wildboar/ocsp";
-import {
     Request,
-} from "@wildboar/ocsp";
-import {
     CertID,
-} from "@wildboar/ocsp";
-import {
     OCSPResponse,
     _decode_OCSPResponse,
-} from "@wildboar/ocsp";
-import type {
     BasicOCSPResponse,
-} from "@wildboar/ocsp";
-import type {
     SingleResponse,
+    id_pkix_ocsp_basic,
+    _decode_BasicOCSPResponse,
+    Signature,
 } from "@wildboar/ocsp";
 import { DER } from "@wildboar/asn1/functional";
-import { URL } from "node:url";
-import * as http from "node:http";
-import * as https from "node:https";
-import { TlsOptions } from "node:tls";
-import { BERElement, unpackBits, ASN1TagClass, ASN1Construction, ASN1UniversalType } from "@wildboar/asn1";
+import {
+    BERElement,
+    unpackBits,
+    ASN1TagClass,
+    ASN1Construction,
+    ASN1UniversalType,
+} from "@wildboar/asn1";
 import {
     id_sha1,
 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
 import {
     AlgorithmIdentifier,
-} from "@wildboar/x500/AuthenticationFramework";
-import {
     SubjectPublicKeyInfo,
     _encode_SubjectPublicKeyInfo,
+    PkiPath,
 } from "@wildboar/x500/AuthenticationFramework";
 import {
     DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { createHash } from "node:crypto";
-import {
-    id_pkix_ocsp_basic,
-} from "@wildboar/ocsp";
-import {
-    _decode_BasicOCSPResponse,
-} from "@wildboar/ocsp";
-import type {
-    PkiPath,
-} from "@wildboar/x500/AuthenticationFramework";
-import {
-    Signature,
-} from "@wildboar/ocsp";
 import { CertificateSerialNumber } from "@wildboar/pki-stub";
 
-// Yes, I realize I could have done this with .reduce(), but for loops are more performant.
-function getReceivedDataSize (chunks: Buffer[]) {
-    let sum: number = 0;
-    for (const chunk in chunks) {
-        sum += chunk.length;
-    }
-    return sum;
-}
-
-const HASH_BASICALLY_REQUIRED_BY_ALL_RESPONDERS = "sha1" as const;
+/**
+ * This is the hash algorithm that is basically required by all responders.
+ * Even though OCSP is supposed to be flexible as to what hash algorithm is
+ * used, all responders seem to require SHA-1.
+ */
+const HASH_STR = "SHA-1" as const;
 
 /**
  * @summary A function that digitally signs arbitrary data
@@ -79,7 +53,7 @@ const HASH_BASICALLY_REQUIRED_BY_ALL_RESPONDERS = "sha1" as const;
  * respectively otherwise.
  */
 export
-type SignFunction = (data: Uint8Array) => [ PkiPath, AlgorithmIdentifier, Buffer ] | null;
+type SignFunction = (data: Uint8Array) => [ PkiPath, AlgorithmIdentifier, Uint8Array ] | null;
 
 /**
  * The MIME types that are acceptable responses to an OCSP request.
@@ -88,6 +62,32 @@ const ACCEPTABLE_RESPONSE_MIME_TYPES: string[] = [
     "application/ocsp-response",
     "application/octet-stream",
 ];
+
+/**
+ * @summary A function that limits the size of a response
+ * @description
+ *
+ * This function returns a transform stream that limits the size of a response
+ * to the maximum number of bytes specified.
+ *
+ * @param maxBytes The maximum number of bytes to allow in the response
+ * @returns A transform stream that limits the response to the maximum number of bytes
+ *
+ * @function
+ */
+function limitBytes(maxBytes: number) {
+    let total = 0;
+    return new TransformStream({
+        transform(chunk, controller) {
+            total += chunk.byteLength;
+            if (total > maxBytes) {
+                controller.error(new Error("Response too large"));
+                return;
+            }
+            controller.enqueue(chunk);
+        }
+    });
+}
 
 /**
  * @summary Generates an OCSP request from a certificate
@@ -103,22 +103,16 @@ const ACCEPTABLE_RESPONSE_MIME_TYPES: string[] = [
  * @function
  */
 export
-function convertCertAndSerialToOCSPRequest (
+async function convertCertAndSerialToOCSPRequest (
     issuerDN: DistinguishedName,
     issuerSPKI: SubjectPublicKeyInfo,
     subjectSerial: Uint8Array,
     sign?: SignFunction,
-): OCSPRequest {
+): Promise<OCSPRequest> {
     const dnBytes = _encode_DistinguishedName(issuerDN, DER).toBytes();
     const spkiElement = _encode_SubjectPublicKeyInfo(issuerSPKI, DER);
-    const dnHasher = createHash(HASH_BASICALLY_REQUIRED_BY_ALL_RESPONDERS);
-    const spkHasher = createHash(HASH_BASICALLY_REQUIRED_BY_ALL_RESPONDERS);
-    dnHasher.update(dnBytes);
-    // This hash is over the subjectPublicKey field, not the whole SPKI. It is
-    // not calculated over tag, length, or first byte of the bit string.
-    spkHasher.update(spkiElement.sequence[1].value.subarray(1));
-    const dnHash = dnHasher.digest();
-    const spkHash = spkHasher.digest();
+    const dnHash = await crypto.subtle.digest(HASH_STR, dnBytes);
+    const spkHash = await crypto.subtle.digest(HASH_STR, spkiElement.sequence[1].value.subarray(1));
     const tbs = new TBSRequest(
         undefined,
         undefined,
@@ -133,8 +127,8 @@ function convertCertAndSerialToOCSPRequest (
                             ASN1UniversalType.nill,
                         ),
                     ),
-                    dnHash,
-                    spkHash,
+                    new Uint8Array(dnHash),
+                    new Uint8Array(spkHash),
                     subjectSerial,
                 ),
                 undefined,
@@ -170,103 +164,27 @@ function convertCertAndSerialToOCSPRequest (
 }
 
 /**
- * @summary Submits an OCSP request to an OCSP responder using HTTPS
- * @description
- *
- * This function submits an Online Certificate Status Protocol (OCSP) request to
- * an OCSP responder using HTTPS.
- *
- * @param url The URL against which to `POST` the OCSP request
- * @param ocspReq The OCSP request that is to be `POST`ed
- * @param tlsOptions Options relating to TLS, if it is used
- * @param timeoutInMilliseconds The timeout in milliseconds, after which, this operation is abandoned
- * @param sizeLimit The maximum size tolerated for an OCSP response
- * @returns A promise that resolves to an OCSP response
- *
- * @function
- */
-export
-function postHTTPS (
-    url: URL,
-    ocspReq: OCSPRequest,
-    tlsOptions?: TlsOptions,
-    timeoutInMilliseconds: number = 5000,
-    sizeLimit: number = 10_000,
-): Promise<OCSPResponse> {
-    const transportClient = (url.protocol.toLowerCase() === "https:")
-        ? https
-        : http;
-    return new Promise((resolve, reject) => {
-        const onReqFail = (e?: Error) => {
-            reject(e);
-            httpReq.removeAllListeners();
-            httpReq.destroy();
-        };
-        const httpReq = transportClient.request(url, {
-            method: "POST",
-            headers: {
-                "Accept": ACCEPTABLE_RESPONSE_MIME_TYPES.join(", "),
-                "Content-Type": "application/ocsp-request",
-            },
-            ...(tlsOptions ?? {}),
-            timeout: timeoutInMilliseconds,
-        }, (res) => {
-            const timeout = setTimeout(reject, timeoutInMilliseconds);
-            const onResFail = (e?: Error) => {
-                reject(e);
-                res.removeAllListeners();
-                httpReq.removeAllListeners();
-                httpReq.destroy();
-                res.destroy();
-                clearTimeout(timeout);
-            };
-            const resContentType = res.headers["content-type"]?.toLowerCase();
-            if (
-                resContentType
-                && !ACCEPTABLE_RESPONSE_MIME_TYPES
-                    .some((amt) => resContentType.startsWith(amt))
-            ) {
-                onResFail();
-                return;
-            }
-            const chunks: Buffer[] = [];
-            res.on("data", (chunk: Buffer) => {
-                chunks.push(chunk);
-                const receivedBytes = getReceivedDataSize(chunks);
-                if (receivedBytes > sizeLimit) {
-                    onResFail();
-                }
-            });
-            res.once("error", onResFail);
-            res.once("timeout", onResFail);
-            res.once("pause", onResFail); // This should not happen.
-            res.once("end", () => {
-                const responseBytes = Buffer.concat(chunks);
-                const el = new BERElement();
-                el.fromBytes(responseBytes);
-                const ocspResponse = _decode_OCSPResponse(el);
-                resolve(ocspResponse);
-                clearTimeout(timeout);
-            });
-        });
-        httpReq.once("error", onReqFail);
-        httpReq.once("timeout", onReqFail);
-        httpReq.write(_encode_OCSPRequest(ocspReq, DER).toBytes());
-        httpReq.end();
-    });
-}
-
-/**
  * The return type of the `check()` function. This conveniently extracts the
  * deeply-embedded status of the single certificate for which the status was
  * requested.
  */
 export
 interface CheckResponse {
+
+    /**
+     * The raw response
+     */
+    httpResponse: Response;
+
+    /**
+     * The raw response bytes.
+     */
+    rawResponseBytes?: Uint8Array;
+    
     /**
      * The actual OCSP response
      */
-    res: OCSPResponse;
+    ocspResponse?: OCSPResponse;
 
     /**
      * The embedded Basic OCSP response, if used
@@ -287,16 +205,36 @@ interface CheckResponse {
  *
  * This function submits an Online Certificate Status Protocol (OCSP) request
  * to an OCSP responder to obtain an OCSP result.
+ * 
+ * This function's `sign` parameter is expected to take a `Uint8Array` and
+ * produce a tuple of:
+ * 
+ * 1. The PKI Path (the certificate chain starting with the root down to the
+ *    subject), which is an array of `Certificate` objects.
+ * 2. The algorithm identifier for the signature (an `AlgorithmIdentifier` object)
+ * 3. The signature value (a `Uint8Array`)
+ * 
+ * The `sign` function may return `null` if it cannot sign the request.
+ * 
+ * If the `sign` function is not provided, or if it returns `null`, the request
+ * will be sent unsigned.
+ * 
+ * The `sizeLimit` parameter was implemented because `fetch()` (which this
+ * function uses under the hood) does not impose any size limit on the response
+ * body innately; we need this because OCSP URLs are likely to be supplied by
+ * third parties or users, so they cannot be trusted entirely. If the size limit
+ * is exceeded, an `Error` will be thrown.
  *
  * @param url The URL of the OCSP responder to query
  * @param req The OCSP request to send, or the issuer's DN, the issuer's public
  *  key, and the serial number of the certificate to be checked
- * @param tlsOptions Options relating to TLS, if it is used
- * @param timeoutInMilliseconds The timeout in milliseconds before this operation is abandoned
- * @param sign A function that can be used to digitally sign outbound OCSP requests
- * @param sizeLimit The maximum tolerated size (in bytes) of an OCSP response
- * @returns A promise that resolves to information about the OCSP response, or `null`
- *  if the URL is not for HTTP or HTTPS.
+ * @param fetchOptions {RequestInit} Options for the underlying fetch() request
+ * @param sign {Function} A function that can be used to digitally sign
+ *  outbound OCSP requests
+ * @param sizeLimit {number} The maximum tolerated size (in bytes) of an OCSP
+ *  response. Defaults to a sensible limit.
+ * @returns A promise that resolves to information about the OCSP response, or
+ *  `null` if the URL is not for HTTP or HTTPS.
  *
  * @async
  * @function
@@ -305,39 +243,55 @@ export
 async function getOCSPResponse (
     url: URL,
     req: OCSPRequest | [ DistinguishedName, SubjectPublicKeyInfo, CertificateSerialNumber ],
-    tlsOptions?: TlsOptions,
-    timeoutInMilliseconds: number = 5000,
+    fetchOptions?: RequestInit,
     sign?: SignFunction,
-    sizeLimit: number = 10_000,
+    sizeLimit: number = 1000000, // One megabyte should be enough for any OCSP response.
 ): Promise<CheckResponse | null> {
     if (!["http:", "https:"].includes(url.protocol.toLowerCase())) {
         return null;
     }
     const ocspReq = (req instanceof OCSPRequest)
         ? req
-        : convertCertAndSerialToOCSPRequest(req[0], req[1], req[2], sign);
-    const result = await postHTTPS(
-        url,
-        ocspReq,
-        tlsOptions,
-        timeoutInMilliseconds,
-        sizeLimit,
-    );
+        : await convertCertAndSerialToOCSPRequest(req[0], req[1], req[2], sign);
+    const httpResponse = await fetch(url, {
+        ...fetchOptions,
+        method: "POST",
+        headers: {
+            ...fetchOptions?.headers ?? {},
+            "Accept": ACCEPTABLE_RESPONSE_MIME_TYPES.join(", "),
+            "Content-Type": "application/ocsp-request",
+        },
+        body: _encode_OCSPRequest(ocspReq, DER).toBytes(),
+    });
+    if (!httpResponse.ok || !httpResponse.body) {
+        return {
+            httpResponse,
+        };
+    }
+    // fetch() response bodies don't have any innate size limit.
+    const sizeLimitedBody = httpResponse.body.pipeThrough(limitBytes(sizeLimit));
+    const sizeLimitedBytes = await new Response(sizeLimitedBody).arrayBuffer();
+    const rawResponseBytes = new Uint8Array(sizeLimitedBytes);
+    const el = new BERElement();
+    el.fromBytes(new Uint8Array(sizeLimitedBytes));
+    const ocspResponse = _decode_OCSPResponse(el);
     const nonBasicResponse: CheckResponse = {
-        res: result,
+        httpResponse,
+        rawResponseBytes,
+        ocspResponse,
     };
-    if (!result.responseBytes) {
+    if (!ocspResponse.responseBytes) {
         return nonBasicResponse;
     }
-    if (!result.responseBytes.responseType.isEqualTo(id_pkix_ocsp_basic)) {
+    if (!ocspResponse.responseBytes.responseType.isEqualTo(id_pkix_ocsp_basic)) {
         return nonBasicResponse;
     }
-    const resBytes = result.responseBytes.response;
+    const resBytes = ocspResponse.responseBytes.response;
     const resEl = new BERElement();
     resEl.fromBytes(resBytes);
     const basicRes = _decode_BasicOCSPResponse(resEl);
     return {
-        res: result,
+        ...nonBasicResponse,
         basicRes,
         singleRes: basicRes.tbsResponseData.responses[0],
     };

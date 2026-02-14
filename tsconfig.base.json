@@ -33,9 +33,7 @@
             "@wildboar/x500-client-ts": ["libs/x500-client-ts/src/index.ts"],
             "x500-functional-tests": [
                 "libs/x500-functional-tests/src/index.ts"
-            ],
-            "@meerkat/db": ["./libs/meerkatdb/src/index.ts"],
-            "@meerkat/db2": ["meerkatdb2/src/index.ts"]
+            ]
         }
     },
     "exclude": ["node_modules", "tmp"]

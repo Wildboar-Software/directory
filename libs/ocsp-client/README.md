@@ -26,15 +26,18 @@ const url = new URL(PUBLIC_OCSP_RESPONDER_URL);
 // Query the responder
 // This uses HTTP or HTTPS depending on what URL protocol you use.
 // If you supply a URL that doesn't start with http: or https:, this returns `null`.
-const resp = await getOCSPResponse(url, [
+const resp = await check(url, [
     cert.toBeSigned.issuer.rdnSequence,
     issuerCert.toBeSigned.subjectPublicKeyInfo,
     cert.toBeSigned.serialNumber,
-], undefined, 5000);
+], {
+    signal: AbortSignal.timeout(5000),
+});
 
 // Everything below here just showcases decoding and using the response.
-assert(resp);
-const { res: result } = resp;
+assert(resp?.httpResponse);
+assert(resp?.ocspResponse);
+const { ocspResponse: result } = resp;
 assertEqual(result.responseStatus, OCSPResponseStatus_successful);
 assert(result.responseBytes);
 assert(result.responseBytes.responseType.isEqualTo(id_pkix_ocsp_basic));

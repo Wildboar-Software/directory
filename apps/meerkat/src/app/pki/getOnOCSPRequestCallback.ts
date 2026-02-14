@@ -1,4 +1,4 @@
-import type { Buffer } from "node:buffer";
+import { Buffer } from "node:buffer";
 import type { Context, OCSPOptions } from "../types/index.js";
 import { getOCSPResponse, SignFunction } from "@wildboar/ocsp-client";
 import {
@@ -6,7 +6,6 @@ import {
     _decode_Certificate,
 } from "@wildboar/x500/AuthenticationFramework";
 import { BERElement } from "@wildboar/asn1";
-import { DER } from "@wildboar/asn1/functional";
 import {
     authorityInfoAccess,
 } from "@wildboar/x500/PkiPmiExternalDataTypes";
@@ -124,20 +123,22 @@ function getOnOCSPRequestCallback (
                         issuerCert.toBeSigned.subjectPublicKeyInfo,
                         serverCert.toBeSigned.serialNumber,
                     ],
-                    undefined,
-                    (options.ocspTimeout * 1000),
+                    {
+                        signal: AbortSignal.timeout(options.ocspTimeout * 1000),
+                    },
                     signFunction,
                     options.ocspResponseSizeLimit,
                 );
-                if (!ocspResponse) {
+                if (
+                    !ocspResponse
+                    || !ocspResponse.httpResponse.ok
+                    || !ocspResponse.rawResponseBytes
+                    || ocspResponse.ocspResponse?.responseStatus !== OCSPResponseStatus_successful
+                ) {
                     continue;
                 }
-                const { res } = ocspResponse;
-                if (res.responseStatus !== OCSPResponseStatus_successful) {
-                    continue;
-                }
-                const responseBytes = _encode_OCSPResponse(res, DER).toBytes() as Buffer;
-                callback(null, responseBytes);
+                const responseBytes = ocspResponse.rawResponseBytes;
+                callback(null, Buffer.from(responseBytes));
                 return;
             } catch {
                 continue;

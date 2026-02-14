@@ -1,5 +1,5 @@
 import type { RemoteCRLOptions } from "../types/index.js";
-import { curlHTTP, curlHTTP2, curlFTP, curlLDAP } from "./curl.js";
+import { curlFTP, curlLDAP } from "./curl.js";
 import { BERElement, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     DistributionPoint,
@@ -74,6 +74,32 @@ const CACHE_SIZE_LIMIT: number = 1000;
  */
 export
 const crlCache: Map<string, [ Date, CertificateList[] ]> = new Map();
+
+/**
+ * @summary A function that limits the size of a response
+ * @description
+ *
+ * This function returns a transform stream that limits the size of a response
+ * to the maximum number of bytes specified.
+ *
+ * @param maxBytes The maximum number of bytes to allow in the response
+ * @returns A transform stream that limits the response to the maximum number of bytes
+ *
+ * @function
+ */
+function limitBytes(maxBytes: number) {
+    let total = 0;
+    return new TransformStream({
+        transform(chunk, controller) {
+            total += chunk.byteLength;
+            if (total > maxBytes) {
+                controller.error(new Error("Response too large"));
+                return;
+            }
+            controller.enqueue(chunk);
+        }
+    });
+}
 
 /**
  * @summary A function that will perform a local `read` operation.
@@ -255,42 +281,26 @@ async function crlCurl (
             ) { // If there is a cached result and the result is not expired.
                 return cachedResult[1];
             }
+            const sizeLimit = options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT;
             try {
                 switch (url.protocol.toLowerCase()) {
                     case ("http:"):
                     case ("https:"): {
-                        const res = await curlHTTP(
-                            url,
-                            ctx.config.tls,
-                            (options.remoteCRLTimeout * 1000),
-                            options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
-                        );
-                        if (!res) {
-                            return res;
+                        const res = await fetch(url.toString(), {
+                            method: "GET",
+                            headers: {
+                                "Accept": "application/pkix-crl",
+                            },
+                            signal: AbortSignal.timeout(options.remoteCRLTimeout * 1000),
+                        });
+                        if (!res.ok || !res.body) {
+                            return null;
                         }
+                        // fetch() response bodies don't have any innate size limit.
+                        const sizeLimitedBody = res.body.pipeThrough(limitBytes(sizeLimit));
+                        const sizeLimitedBytes = await new Response(sizeLimitedBody).arrayBuffer();
                         const crlEl = new BERElement();
-                        crlEl.fromBytes(res);
-                        const ret = [ _decode_CertificateList(crlEl) ];
-                        if (crlCache.size > CACHE_SIZE_LIMIT) {
-                            crlCache.clear();
-                        }
-                        crlCache.set(urlStr, [ new Date(), ret ]);
-                        return ret;
-                    }
-                    // Technically, HTTP/2 should just use a http:// URL scheme.
-                    case ("http2:"):
-                    case ("http2s:"): {
-                        const res = await curlHTTP2(
-                            url,
-                            ctx.config.tls,
-                            (options.remoteCRLTimeout * 1000),
-                            options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
-                        );
-                        if (!res) {
-                            return res;
-                        }
-                        const crlEl = new BERElement();
-                        crlEl.fromBytes(res);
+                        crlEl.fromBytes(new Uint8Array(sizeLimitedBytes));
                         const ret = [ _decode_CertificateList(crlEl) ];
                         if (crlCache.size > CACHE_SIZE_LIMIT) {
                             crlCache.clear();
@@ -304,7 +314,7 @@ async function crlCurl (
                             url,
                             ctx.config.tls,
                             (options.remoteCRLTimeout * 1000),
-                            options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
+                            sizeLimit,
                             ctx.log.debug,
                         );
                         if (!res) {
@@ -326,7 +336,7 @@ async function crlCurl (
                             [ "certificateRevocationList;binary" ],
                             ctx.config.tls,
                             (options.remoteCRLTimeout * 1000),
-                            options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
+                            sizeLimit,
                         );
                         if (!res) {
                             return res;

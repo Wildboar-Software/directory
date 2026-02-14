@@ -93,14 +93,18 @@ describe("check", () => {
         const certEl = new BERElement();
         certEl.fromBytes(certPem.data);
         const cert = _decode_Certificate(certEl);
+
         const url = new URL(PUBLIC_OCSP_RESPONDER_URL);
         const resp = await check(url, [
             cert.toBeSigned.issuer.rdnSequence,
             issuerCert.toBeSigned.subjectPublicKeyInfo,
             cert.toBeSigned.serialNumber,
-        ], undefined, 5000);
-        assert(resp);
-        const { res: result } = resp;
+        ], {
+            signal: AbortSignal.timeout(5000),
+        });
+        assert(resp?.httpResponse);
+        assert(resp?.ocspResponse);
+        const { ocspResponse: result } = resp;
         assertEqual(result.responseStatus, OCSPResponseStatus_successful);
         assert(result.responseBytes);
         assert(result.responseBytes.responseType.isEqualTo(id_pkix_ocsp_basic));
@@ -120,6 +124,33 @@ describe("check", () => {
             assert("revoked" in response.certStatus);
         } else {
             assert("good" in response.certStatus);
+        }
+    });
+
+    it("enforces size limits", async () => {
+        const issuerCertPem = PEMObject.parse(ISSUER_CERT_PEM)[0];
+        const issuerCertEl = new BERElement();
+        issuerCertEl.fromBytes(issuerCertPem.data);
+        const issuerCert = _decode_Certificate(issuerCertEl);
+
+        const certPem = PEMObject.parse(CERT_PEM)[0];
+        const certEl = new BERElement();
+        certEl.fromBytes(certPem.data);
+        const cert = _decode_Certificate(certEl);
+    
+        const url = new URL(PUBLIC_OCSP_RESPONDER_URL);
+        try {
+            const resp = await check(url, [
+                cert.toBeSigned.issuer.rdnSequence,
+                issuerCert.toBeSigned.subjectPublicKeyInfo,
+                cert.toBeSigned.serialNumber,
+            ], {
+                signal: AbortSignal.timeout(5000),
+            }, undefined, 10); // Way too small size limit: guaranteed to fail.
+            assert(false); // Should not reach here.
+        } catch (e) {
+            assert(e instanceof Error);
+            assertEqual(e.message, "Response too large");
         }
     });
 });

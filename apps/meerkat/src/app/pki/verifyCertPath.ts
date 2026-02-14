@@ -214,6 +214,7 @@ import {
 } from "./verifyOCSPResponse.js";
 import _ from "lodash";
 import { Name } from "@wildboar/x500/InformationFramework";
+import { OCSPResponseStatus_successful } from "@wildboar/ocsp";
 
 // So that arguments can be modified by reference.
 type Box<T> = {
@@ -891,15 +892,20 @@ async function checkOCSP (
                 issuer[1],
                 serialNumber,
             ],
-            undefined,
-            (options.ocspTimeout * 1000),
+            {
+                signal: AbortSignal.timeout(options.ocspTimeout * 1000),
+            },
             signFunction,
             options.ocspResponseSizeLimit,
-        );
-        if (!ocspResponse) {
+        ).catch(() => null); // Errors can happen on size limit exceeded.
+        if (
+            !ocspResponse
+            || !ocspResponse.httpResponse.ok
+            || ocspResponse.ocspResponse?.responseStatus !== OCSPResponseStatus_successful
+        ) {
             return VCP_RETURN_OCSP_OTHER;
         }
-        const { res } = ocspResponse;
+        const { ocspResponse: res } = ocspResponse;
         const verifyResult = await verifyOCSPResponse(ctx, res);
         if (verifyResult === VOR_RETURN_OK) {
             return VCP_RETURN_OK;
