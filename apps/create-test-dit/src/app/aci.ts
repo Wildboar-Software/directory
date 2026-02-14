@@ -53,9 +53,6 @@ import { OBJECT_IDENTIFIER, TRUE_BIT, ObjectIdentifier } from "@wildboar/asn1";
 import { _encodeUTF8String, DER } from "@wildboar/asn1/functional";
 import { attributes as at } from "@wildboar/x500";
 import { objectClasses as oc } from "@wildboar/x500";
-import { // FIXME: This is not in oc!!!
-    subentry,
-} from "@wildboar/x500/InformationFramework";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
@@ -300,7 +297,7 @@ const AUTHENTICATED_USER_BASELINE: ACIItem = new ACIItem(
                         {
                             or: [
                                 {
-                                    item: subentry["&id"],
+                                    item: oc.subentry["&id"],
                                 },
                             ],
                         },

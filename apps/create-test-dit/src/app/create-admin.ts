@@ -224,7 +224,7 @@ async function createAdmin (
             process.exit(787);
         }
     }
-    // FIXME: You MUST add access controls to prevent others from modifying this entry.
+    // TODO: You MUST add access controls to prevent others from modifying this entry.
     return {
         password: TEMPORARY_PASSWORD,
     };

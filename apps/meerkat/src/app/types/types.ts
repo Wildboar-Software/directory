@@ -3519,11 +3519,12 @@ abstract class ClientAssociation implements WithIntegerProtocolVersion, WithSube
      * expected to handle sending the bind response.
      *
      * @param arg The encoded bind argument
+     * @param protocol_id The protocol ID of the bind attempt
      *
      * @abstract
      * @function
      */
-    public abstract attemptBind (arg: ASN1Element): Promise<void>;
+    public abstract attemptBind (arg: ASN1Element, protocol_id: OBJECT_IDENTIFIER): Promise<void>;
 
     /**
      * @summary Whether the user must change their password

@@ -783,7 +783,6 @@ const baseObject: DistinguishedName = [
     ],
 ];
 
-// FIXME: This needs to be changed or removed once testing is done.
 const issuerName: Name = {
     rdnSequence: [
         [

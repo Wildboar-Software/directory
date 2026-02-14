@@ -61,7 +61,7 @@ import {
     changePassword,
 } from "@wildboar/x500/DirectoryAbstractService";
 import printCode from "../utils/printCode.js";
-import { ASN1Element, FALSE } from "@wildboar/asn1";
+import { ASN1Element, FALSE, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -613,16 +613,12 @@ class DAPAssociation extends ClientAssociation {
      * @function
      * @async
      */
-    public async attemptBind (arg: ASN1Element): Promise<void> {
+    public async attemptBind (arg: ASN1Element, protocol_id: OBJECT_IDENTIFIER): Promise<void> {
         const arg_ = _decode_DirectoryBindArgument(arg);
         const ctx = this.ctx;
         const remoteHostIdentifier = `${this.socket.remoteFamily}://${this.socket.remoteAddress}/${this.socket.remotePort}`;
         const telemetryProperties = {
-            remoteFamily: this.socket.remoteFamily,
-            remoteAddress: this.socket.remoteAddress,
-            remotePort: this.socket.remotePort,
-            protocol: dap_ip["&id"]!.toString(),
-            administratorEmail: ctx.config.administratorEmail,
+            protocol: protocol_id.toString(),
         };
         const extraLogData = {
             remoteFamily: this.socket.remoteFamily,
@@ -676,7 +672,7 @@ class DAPAssociation extends ClientAssociation {
                     : err;
                 const error = directoryBindError.encoderFor["&ParameterType"]!(payload, DER);
                 this.rose.write_bind_error({
-                    protocol_id: dap_ip["&id"]!, // FIXME:
+                    protocol_id,
                     parameter: error,
                     responding_ae_title: ctx.dsa.accessPoint.ae_title.rdnSequence.length
                         ? {
@@ -786,7 +782,7 @@ class DAPAssociation extends ClientAssociation {
             outcome.pwdResponse,
         );
         this.rose.write_bind_result({
-            protocol_id: dap_ip["&id"]!,
+            protocol_id,
             parameter: _encode_DirectoryBindResult(bindResult, BER),
             responding_ae_title: ctx.dsa.accessPoint.ae_title.rdnSequence.length
                 ? {

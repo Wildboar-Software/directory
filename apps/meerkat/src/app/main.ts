@@ -389,7 +389,7 @@ function attachUnboundEventListenersToIDMConnection (
         }
         const startTime = Date.now();
         try {
-            await conn.attemptBind(idmBind.argument);
+            await conn.attemptBind(idmBind.argument, idmBind.protocolID);
             ctx.associations.set(originalSocket, conn);
             ctx.telemetry.trackRequest({
                 name: "BIND",
@@ -883,7 +883,7 @@ function attachUnboundEventListenersToITOTConnection (
         }
         const startTime = Date.now();
         try {
-            await conn.attemptBind(bind.parameter);
+            await conn.attemptBind(bind.parameter, bind.protocol_id);
             ctx.associations.set(originalSocket, conn);
             ctx.telemetry.trackRequest({
                 name: "BIND",

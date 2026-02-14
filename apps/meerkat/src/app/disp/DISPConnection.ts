@@ -10,7 +10,7 @@ import {
 } from "../types/index.js";
 import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
-import { ASN1Element } from "@wildboar/asn1";
+import { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import {
     DSABindArgument,
@@ -522,16 +522,12 @@ class DISPAssociation extends ClientAssociation {
      * @function
      * @async
      */
-    public async attemptBind (arg: ASN1Element): Promise<void> {
+    public async attemptBind (arg: ASN1Element, protocol_id: OBJECT_IDENTIFIER): Promise<void> {
         const arg_ = _decode_DSABindArgument(arg);
         const ctx = this.ctx;
         const remoteHostIdentifier = `${this.socket.remoteFamily}://${this.socket.remoteAddress}/${this.socket.remotePort}`;
         const telemetryProperties = {
-            remoteFamily: this.socket.remoteFamily,
-            remoteAddress: this.socket.remoteAddress,
-            remotePort: this.socket.remotePort,
-            protocol: disp_ip["&id"]!.toString(),
-            administratorEmail: ctx.config.administratorEmail,
+            protocol: protocol_id.toString(),
         };
         const extraLogData = {
             remoteFamily: this.socket.remoteFamily,
@@ -585,7 +581,7 @@ class DISPAssociation extends ClientAssociation {
                     : err;
                 const error = directoryBindError.encoderFor["&ParameterType"]!(payload, DER);
                 this.rose.write_bind_error({
-                    protocol_id: this.rose.protocol ?? disp_ip["&id"]!,
+                    protocol_id,
                     parameter: error,
                     responding_ae_title: ctx.dsa.accessPoint.ae_title.rdnSequence.length
                         ? {
@@ -692,7 +688,7 @@ class DISPAssociation extends ClientAssociation {
             versions,
         );
         this.rose.write_bind_result({
-            protocol_id: this.rose.protocol ?? disp_ip["&id"]!,
+            protocol_id,
             parameter: _encode_DSABindResult(bindResult, DER),
             responding_ae_title: ctx.dsa.accessPoint.ae_title.rdnSequence.length
                 ? {
