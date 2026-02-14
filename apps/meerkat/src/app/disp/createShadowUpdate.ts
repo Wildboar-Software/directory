@@ -95,7 +95,7 @@ async function _updateShadowConsumer (
     agreementElement.fromBytes(ob.agreement_ber);
     const agreement = _decode_ShadowingAgreementInfo(agreementElement);
     const updateMode = agreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
-    // const performTotalRefresh: boolean = true; // FIXME: Just set for testing.
+    // const performTotalRefresh: boolean = true;
     const performTotalRefresh: boolean = (
         forceTotalRefresh
         || !ob.local_last_update // If this DSA never replicated to this consumer at all,

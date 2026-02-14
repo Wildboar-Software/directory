@@ -277,7 +277,10 @@ async function bind (
                 }
             }
             default: {
-                ctx.log.warn(ctx.i18n.t("err:unsupported_auth_method"));
+                const s: string = ctx.i18n.t("err:unsupported_sasl_auth_method", {
+                    mechanism: saslMechanism,
+                });
+                ctx.log.debug(s);
                 return {
                     ...ret,
                     authLevel: {
@@ -290,7 +293,7 @@ async function bind (
                     result: new BindResponse(
                         LDAPResult_resultCode_authMethodNotSupported,
                         req.name,
-                        Buffer.from(`SASL Mechanism ${saslMechanism} not supported.`, "utf-8"), // FIXME: i18n
+                        Buffer.from(s, "utf-8"),
                         undefined,
                         undefined,
                     ),
@@ -298,7 +301,8 @@ async function bind (
             }
         }
     } else {
-        ctx.log.warn(ctx.i18n.t("err:unsupported_auth_method"));
+        const s: string = ctx.i18n.t("err:unsupported_auth_method");
+        ctx.log.debug(s);
         return {
             ...ret,
             authLevel: {
@@ -311,7 +315,7 @@ async function bind (
             result: new BindResponse(
                 LDAPResult_resultCode_authMethodNotSupported,
                 req.name,
-                Buffer.from("Only simple or SASL authentication permitted.", "utf-8"), // FIXME: i18n
+                Buffer.from(s, "utf-8"),
                 undefined,
                 undefined,
             ),

@@ -1,8 +1,10 @@
 name: Publish Libraries
 on:
   push:
-    branches:
-      - master
+    tags:
+      - v2.*
+      - v3.*
+      - v4.*
 
 jobs:
   publish:

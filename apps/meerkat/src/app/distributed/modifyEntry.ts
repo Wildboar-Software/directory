@@ -3241,8 +3241,9 @@ async function modifyEntry (
         if (missingRequiredAttributeTypes.size > 0) {
             const missing: string[] = Array.from(missingRequiredAttributeTypes);
             throw new errors.UpdateError(
-                // FIXME: i18n
-                `Missing required attribute types: ${missing.join(" ")}`,
+                ctx.i18n.t("err:missing_mandatory_attributes", {
+                    oids: missing.join(", "),
+                }),
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
                     missing
