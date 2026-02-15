@@ -27,7 +27,7 @@ import {
 import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { OpBindingErrorParam } from "@wildboar/x500/OperationalBindingManagement";
+import { OpBindingErrorParam, OpBindingErrorParam_problem_invalidAgreement, OperationalBindingID } from "@wildboar/x500/OperationalBindingManagement";
 import {
     OpBindingErrorParam_problem_roleAssignment,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -60,6 +60,7 @@ import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttribut
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate.js";
 import stringifyDN from "../../x500/stringifyDN.js";
+import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 
 /**
  * @summary Create a new subr reference, thereby becoming a superior DSA
@@ -78,6 +79,8 @@ import stringifyDN from "../../x500/stringifyDN.js";
  * @param agreement The hierarchical agreement
  * @param sub2sup The `SubordinateToSuperior` argument of the HOB
  * @param signErrors Whether to cryptographically sign errors
+ * @param opBindingType The operational binding type that prompted becoming a
+ *  superior DSA, if any.
  * @returns A `SuperiorToSubordinate` that can be returned to the superior DSA
  *  in a Directory Operational Binding Management Protocol (DOP) result
  *
@@ -92,6 +95,7 @@ async function becomeSuperior (
     agreement: HierarchicalAgreement,
     sub2sup: SubordinateToSuperior,
     signErrors: boolean,
+    opBindingType?: OBJECT_IDENTIFIER,
 ): Promise<SuperiorToSubordinate> {
     const superior = await dnToVertex(ctx, ctx.dit.root, agreement.immediateSuperior);
     if (!superior) {
@@ -164,27 +168,49 @@ async function becomeSuperior (
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
     const existing = await dnToVertex(ctx, ctx.dit.root, itinerantDN);
     if (existing) {
-        // FIXME: This function gets called from DAP and DOP. If DOP, this needs
-        // to be an `operationalBindingError`.
-        throw new errors.UpdateError(
-            ctx.i18n.t("err:entry_already_exists"),
-            new UpdateErrorData(
-                UpdateProblem_entryAlreadyExists,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    signErrors,
-                    assn.boundNameAndUID?.dn,
+        if (assn instanceof DOPAssociation || opBindingType) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:entry_already_exists"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    opBindingType,
                     undefined,
-                    updateError["&errorCode"],
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        operationalBindingError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
                 ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
-                undefined,
-            ),
-            signErrors,
-        );
+                signErrors,
+            );
+        } else {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:entry_already_exists"),
+                new UpdateErrorData(
+                    UpdateProblem_entryAlreadyExists,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
     }
 
     if (superior.dse.nssr) {

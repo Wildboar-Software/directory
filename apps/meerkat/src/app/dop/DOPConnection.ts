@@ -806,8 +806,6 @@ class DOPAssociation extends ClientAssociation {
         }
     }
 
-    // FIXME: Check use of Number() to index outstanding operations.
-
     /**
      * @summary Handle a request
      * @description

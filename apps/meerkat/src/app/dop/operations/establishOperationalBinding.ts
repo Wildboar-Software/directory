@@ -963,6 +963,7 @@ async function relayedEstablishOperationalBinding (
                         agr,
                         sub2sup,
                         signErrors,
+                        bindingType,
                     );
                 }
                 else {
@@ -2047,7 +2048,15 @@ async function establishOperationalBinding (
                 );
             }
             try {
-                const reply = await becomeSuperior(ctx, assn, { present: invokeId }, agreement, init, signErrors);
+                const reply = await becomeSuperior(
+                    ctx,
+                    assn,
+                    { present: invokeId },
+                    agreement,
+                    init,
+                    signErrors,
+                    data.bindingType,
+                );
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
                     type: data.bindingType.toString(),
