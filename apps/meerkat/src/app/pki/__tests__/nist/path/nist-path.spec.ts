@@ -1903,7 +1903,6 @@ describe("NIST PKITS 4.8.10 Cert Path", () => {
         },
     ));
 });
-// FIXME:
 describe("NIST PKITS 4.8.11 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [

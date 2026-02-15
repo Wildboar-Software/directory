@@ -45,7 +45,9 @@ function verifyAnyCertPath (
         certPath: [
             certPath.userCertificate,
             ...certPath.theCACertificates
-                ?.map((pair) => pair.issuedToThisCA!) // FIXME: What to do about this non-null assertion?
+                // This is kind of the best thing I can do in this case.
+                ?.filter((pair) => !!pair.issuedToThisCA)
+                .map((pair) => pair.issuedToThisCA!)
                 ?? [],
         ],
         initial_permitted_subtrees_set: [],

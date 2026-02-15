@@ -2711,11 +2711,11 @@ async function verifyCertPath (
         // We should just return now if there is only one cert in the chain.
         return {
             returnCode: state.returnCode ?? 0,
-            authorities_constrained_policies: [], // FIXME:
+            authorities_constrained_policies: [],
             explicit_policy_indicator: state.explicit_policy_indicator,
-            policy_mappings_that_occurred: [], // FIXME:
-            user_constrained_policies: [], // FIXME:
-            warnings: [], // FIXME:
+            policy_mappings_that_occurred: [],
+            user_constrained_policies: [],
+            warnings: [],
             endEntityPrivateKeyNotBefore: state.endEntityPrivateKeyNotBefore,
             endEntityPrivateKeyNotAfter: state.endEntityPrivateKeyNotAfter,
             userNotices: [],
