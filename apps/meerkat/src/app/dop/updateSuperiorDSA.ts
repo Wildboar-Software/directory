@@ -84,7 +84,7 @@ import type {
 import { compareCode } from "@wildboar/x500";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { sleep } from "../utils/sleep.js";
-import { ResultParameters } from "@wildboar/rose-transport";
+import { abortReasonToString, rejectReasonToString, ResultParameters } from "@wildboar/rose-transport";
 import {
     ModifyOperationalBindingResult,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -94,6 +94,7 @@ import {
     id_pr_targetDsaUnavailable,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/DirectoryOperationalBindingTypes";
+import stringifyDN from "../x500/stringifyDN.js";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -179,6 +180,14 @@ async function updateSuperiorDSA (
         const accessPointElement = new BERElement();
         accessPointElement.fromBytes(hob.access_point.ber);
         const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
+
+        const logInfo = {
+            aetitle: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+            oldcp: stringifyDN(ctx, agreementDN),
+            newcp: stringifyDN(ctx, [...agreement.immediateSuperior, newCP.dse.rdn]),
+            obtype: hob.binding_type,
+            obid: hob.binding_identifier,
+        };
 
         try {
             const subr = await dnToVertex(ctx, ctx.dit.root, agreementDN);
@@ -370,7 +379,9 @@ async function updateSuperiorDSA (
                         const obError = operationalBindingError.decoderFor["&ParameterType"]!(response.error.parameter);
                         const obErrorData = getOptionallyProtectedValue(obError);
                         if (obErrorData.problem === OpBindingErrorParam_problem_invalidNewID) {
-                            ctx.log.warn(ctx.i18n.t("log:invalid_new_id"));
+                            ctx.log.warn(ctx.i18n.t("log:invalid_new_id", {
+                                aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                            }));
                             // TODO: Review why I had to increment by two.
                             // I almost think it was a race condition where multiple calls to this function
                             // were interleaved.
@@ -381,21 +392,52 @@ async function updateSuperiorDSA (
                             ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
                                 context: "oberror",
                                 problem: obErrorData.problem,
-                            }));
+                                aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                            }), logInfo);
                             break;
                         }
                     } else {
                         ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
                             context: "errcode",
                             code: codeToString(response.error.code),
-                        }));
+                            aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                        }), logInfo);
                         break;
                     }
-                // FIXME: Handle reject, abort, timeout, etc.
+                } else if ("reject" in response) {
+                    ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
+                        context: "reject",
+                        reason: rejectReasonToString(response.reject.problem),
+                        aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                    }), logInfo);
+                    break;
+                } else if ("abort" in response) {
+                    ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
+                        context: "abort",
+                        reason: abortReasonToString(response.abort),
+                        aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                    }), logInfo);
+                    break;
+                } else if ("timeout" in response) {
+                    ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
+                        context: "timeout",
+                        aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                    }), logInfo);
+                    break;
+                } else if ("other" in response) {
+                    ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
+                        context: "other",
+                        aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                    }), {
+                        ...response.other,
+                        ...logInfo,
+                    });
+                    break;
                 } else {
                     ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
                         context: "nocode",
-                    }));
+                        aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                    }), logInfo);
                     break;
                 }
             }
