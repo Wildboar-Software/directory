@@ -1544,7 +1544,7 @@ export
                 ?? dse_i.dse.xr?.specificKnowledge
                 ?? dse_i.dse.immSupr?.specificKnowledge
                 ?? dse_i.dse.ditBridge?.ditBridgeKnowledge.flatMap((dbk) => dbk.accessPoints);
-            const referenceType: ReferenceType = ((): ReferenceType => {
+            let referenceType: ReferenceType = ((): ReferenceType => {
                 if (dse_i.dse.subr) {
                     return ReferenceType_subordinate;
                 }
@@ -1556,23 +1556,40 @@ export
                 }
                 return ReferenceType_cross;
             })();
-            // TODO: splitIntoMastersAndShadows()
-            const masters: MasterOrShadowAccessPoint[] = [];
-            const shadows: MasterOrShadowAccessPoint[] = [];
-            knowledges!.forEach((mosap) => {
-                if (mosap.category === MasterOrShadowAccessPoint_category_master) {
-                    masters.push(mosap);
-                } else if (mosap.category === MasterOrShadowAccessPoint_category_shadow) {
-                    shadows.push(mosap);
-                }
-            });
+            const [masters, shadows] = splitIntoMastersAndShadows(knowledges!);
             const mainAP = masters.pop() ?? shadows.pop();
             if (!mainAP) {
-                // FIXME: Do something here. I actually had a bug because of this before.
-                // I think the more appropriate thing would be to log an
-                // error, remove the invalid reference, and use whatever
-                // superior knowledge or entries have been found, if that's possible.
-                return;
+                // NOTE: I originally planned to fall back on superior
+                // knowledge if the reference type was immediate superior, but
+                // the problem with this is that the superior knowledge
+                // attribute does not have sufficient information to replace a
+                // value of the specificKnowledge attribute.
+                // So now, we just return an error.
+                ctx.log.error(ctx.i18n.t("log:superior_knowledge_empty", {
+                    dn: getDistinguishedName(dse_i),
+                    uuid: dse_i.dse.uuid,
+                }));
+                /* ITU-T Recommendation X.518 (2019), Section 20.3.3, seems to
+                indicate that `ditError` is the correct `ServiceProblem` to use
+                when a knowledge reference is malformed. */
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:superior_knowledge_empty"),
+                    new ServiceErrorData(
+                        ServiceProblem_ditError,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn?.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                    signErrors,
+                );
             }
             const cr = new ContinuationReference(
                 {
