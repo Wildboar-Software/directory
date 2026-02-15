@@ -3,6 +3,8 @@ import { MeerkatContext } from "../../ctx.js";
 import { ShadowError, UnknownError } from "../../types/index.js";
 import {
     RequestShadowUpdateArgument,
+    ShadowProblem_fullUpdateRequired,
+    RequestShadowUpdateArgumentData_requestedStrategy_standard_incremental as incremental,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     RequestShadowUpdateResult,
@@ -28,7 +30,7 @@ import { updateShadowConsumer } from "../createShadowUpdate.js";
 import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { addSeconds } from "date-fns";
 import { UpdateWindow } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { OperationalBindingInitiator } from "../../generated/client.js";
+import { OperationalBindingInitiator, ShadowUpdateStrategy } from "../../generated/client.js";
 import * as util from "node:util";
 
 /**
@@ -136,6 +138,8 @@ async function requestShadowUpdate (
             requested_time: true,
             responded_time: true,
             local_last_update: true,
+            remote_last_update: true,
+            requested_strategy: true,
             outbound: true,
             initiator: true,
             access_point: {
@@ -339,6 +343,38 @@ async function requestShadowUpdate (
                 signErrors,
             );
         }
+    }
+
+    /* This condition was taken from elsewhere and needs to remain consistent
+    with the code there. Search for 0ada5782-556a-4b6f-b3bc-b19f7fe26387. */
+    const needTotalRefresh: boolean = (
+        !ob.local_last_update // If this DSA never replicated to this consumer at all,
+        // ...or, the reported last update time is behind the local last update time.
+        || (ob.remote_last_update && (ob.remote_last_update < ob.local_last_update))
+        || (ob.requested_strategy === ShadowUpdateStrategy.TOTAL)
+    );
+
+    if (needTotalRefresh && data.requestedStrategy.standard !== incremental) {
+        throw new ShadowError(
+            ctx.i18n.t("err:full_update_required", { obid: ob.id.toString() }),
+            new ShadowErrorData(
+                ShadowProblem_fullUpdateRequired,
+                ob.local_last_update ?? undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_shadowError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
     }
 
     /* Bind and send shadow update. We schedule this update for one second in
