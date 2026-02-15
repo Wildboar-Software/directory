@@ -276,5 +276,6 @@
     "alias_but_no_aen": "Alias entry is missing the aliasedEntryName attribute.",
     "shadow_update_non_empty_root_dse": "Shadow update attempted to modify the root DSE, which is not permitted.",
     "full_update_required": "Full update required for shadow operational binding {{obid}}, but an incremental update was requested.",
-    "superior_knowledge_empty": "Superior knowledge attribute was empty. Cannot route this request."
+    "superior_knowledge_empty": "Superior knowledge attribute was empty. Cannot route this request.",
+    "ob_missing_initiator": "Missing initiator parameters."
 }

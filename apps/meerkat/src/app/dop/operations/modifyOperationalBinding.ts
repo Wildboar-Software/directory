@@ -14,6 +14,7 @@ import type {
 } from "@wildboar/x500/OperationalBindingManagement";
 import {
     ModifyOperationalBindingResultData,
+    OpBindingErrorParam_problem_parametersMissing,
     _encode_ModifyOperationalBindingResultData,
 } from "@wildboar/x500/OperationalBindingManagement";
 import {
@@ -1007,10 +1008,9 @@ async function modifyOperationalBinding (
     } else if (data.bindingType.isEqualTo(id_op_binding_non_specific_hierarchical)) {
         if (!data.initiator) {
             throw new OperationalBindingError(
-                // FIXME: How does this error message make sense?
-                ctx.i18n.t("err:cannot_reverse_roles_in_hob"),
+                ctx.i18n.t("err:ob_missing_initiator"),
                 new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_roleAssignment,
+                    OpBindingErrorParam_problem_parametersMissing,
                     id_op_binding_hierarchical,
                     undefined,
                     undefined,
