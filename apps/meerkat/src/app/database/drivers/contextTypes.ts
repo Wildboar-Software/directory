@@ -210,7 +210,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 assertionSyntax: decoded.information.assertionSyntax
                     ? directoryStringToString(decoded.information.assertionSyntax)
                     : undefined,
-                matcher: compareElements, // FIXME:
+                matcher: compareElements,
             };
             ctx.contextTypes.set(OID, info);
             let longestName: number = 0;

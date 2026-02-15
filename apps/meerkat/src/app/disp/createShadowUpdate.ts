@@ -95,7 +95,9 @@ async function _updateShadowConsumer (
     agreementElement.fromBytes(ob.agreement_ber);
     const agreement = _decode_ShadowingAgreementInfo(agreementElement);
     const updateMode = agreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
-    // const performTotalRefresh: boolean = true;
+
+    /* This condition was copied elsewhere and needs to remain consistent
+    with the code there. Search for 0ada5782-556a-4b6f-b3bc-b19f7fe26387. */
     const performTotalRefresh: boolean = (
         forceTotalRefresh
         || !ob.local_last_update // If this DSA never replicated to this consumer at all,
@@ -145,6 +147,9 @@ async function _updateShadowConsumer (
         return;
     }
 
+    // NOTE: You do not need to check if the consumer requested a shadow update.
+    // This function is initiated either by schedule or by the consumer doing that.
+    // And the errors returned by this function are not returned to the consumer.
     const disp_client = await bindForDISP(
         ctx,
         undefined,
@@ -261,8 +266,6 @@ async function _updateShadowConsumer (
                 await disp_client.unbind({ disconnectSocket: true });
                 return;
             }
-        } else {
-            // FIXME: Check if requestShadowUpdate request has been sent.
         }
         /* This is done because shadow updates can take a long time to prepare,
         transmit and apply, since they can contain a lot of data. This is not
