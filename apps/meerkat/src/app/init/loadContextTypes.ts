@@ -1,7 +1,7 @@
 import type { Context } from "../types/index.js";
 import { BERElement, ObjectIdentifier } from "@wildboar/asn1";
 import contextTypeFromInformationObject from "./contextTypeFromInformationObject.js";
-import { contexts as x500c } from "@wildboar/x500";
+import { EqualityMatcher, contexts as x500c } from "@wildboar/x500";
 import type {
     CONTEXT,
 } from "@wildboar/x500/InformationFramework";
@@ -10,6 +10,10 @@ import { evaluateLanguageContext } from "@wildboar/x500/matching/context";
 import { evaluateLDAPAttributeOptionContext } from "@wildboar/x500/matching/context";
 import { evaluateLocaleContext } from "@wildboar/x500/matching/context";
 import { evaluateTemporalContext } from "@wildboar/x500/matching/context";
+import {
+    distinguishedNameMatch as distinguishedNameMatcher,
+    caseIgnoreMatch as caseIgnoreMatcher,
+} from "@wildboar/x500/matching/equality";
 import { compareElements } from "@wildboar/x500";
 import {
     dl_administrator_annotation,
@@ -40,6 +44,7 @@ import {
 import {
     getAssignmentContext as getAssignmentContextMatcher,
 } from "../matching/context/assignmentContext.js";
+import { timeSpecificationMatch } from "../matching/timespec.js";
 
 const basicServiceContextSyntax = `BasicService ::= INTEGER {
     telephony(1), faxGroup2-3(2), faxGroup4(3), teletexBasicAndMixed(4),
@@ -63,11 +68,11 @@ IsdnAddress{SCF-SSF-BOUNDS:b2} ::= Digits{b2}`;
  */
 export
 async function loadContextTypes (ctx: Context): Promise<void> {
-    const contextTypes: [ CONTEXT, ContextMatcher, string, string? ][] = [
+    const contextTypes: [ CONTEXT, ContextMatcher, string, string?, EqualityMatcher? ][] = [
         [ x500c.languageContext, evaluateLanguageContext, "LanguageContextSyntax" ],
         [ x500c.ldapAttributeOptionContext, evaluateLDAPAttributeOptionContext, "AttributeOptionList" ],
         [ x500c.localeContext, evaluateLocaleContext, "LocaleContextSyntax" ],
-        [ x500c.temporalContext, evaluateTemporalContext, "TimeSpecification", "TimeAssertion" ],
+        [ x500c.temporalContext, evaluateTemporalContext, "TimeSpecification", "TimeAssertion", timeSpecificationMatch ],
         [
             dl_administrator_annotation,
             evaluateDLAdministratorAnnotationContext,
@@ -77,10 +82,10 @@ async function loadContextTypes (ctx: Context): Promise<void> {
         [ dl_reset_originator, () => true, "NULL" ],
         [ basicServiceContext, basicServiceContextMatcher, basicServiceContextSyntax ],
         [ lineIdentityContext, lineIdentityContextMatcher, lineIdentityContextSyntax ],
-        [ assignmentContext, getAssignmentContextMatcher(ctx), "DistinguishedName" ],
+        [ assignmentContext, getAssignmentContextMatcher(ctx), "DistinguishedName", undefined, distinguishedNameMatcher ],
     ];
     contextTypes
-        .forEach(([ ct, matcher, valueSyntax, assertionSyntax ]) => {
+        .forEach(([ ct, matcher, valueSyntax, assertionSyntax, assertionMatcher ]) => {
             ctx.contextTypes.set(
                 ct["&id"].toString(),
                 contextTypeFromInformationObject(
@@ -88,6 +93,7 @@ async function loadContextTypes (ctx: Context): Promise<void> {
                     matcher,
                     valueSyntax,
                     assertionSyntax,
+                    assertionMatcher,
                 ),
             );
         });

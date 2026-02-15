@@ -1,6 +1,6 @@
 import type { ContextTypeInfo } from "../types/index.js";
 import { ASN1Element, TRUE } from "@wildboar/asn1";
-import { type ContextMatcher } from "@wildboar/x500";
+import { EqualityMatcher, type ContextMatcher } from "@wildboar/x500";
 import type {
     CONTEXT,
 } from "@wildboar/x500/InformationFramework";
@@ -30,6 +30,7 @@ function contextTypeFromInformationObject (
     matcher: ContextMatcher,
     valueSyntax: string,
     assertionSyntax?: string,
+    assertionMatcher?: EqualityMatcher,
 ): ContextTypeInfo {
     return {
         id: io["&id"],
@@ -40,6 +41,7 @@ function contextTypeFromInformationObject (
         validator: io.decoderFor["&Type"]
             ? (value: ASN1Element) => io.decoderFor["&Type"]!(value)
             : undefined,
+        assertionMatcher,
     };
 }
 

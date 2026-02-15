@@ -2980,6 +2980,12 @@ extends UniquelyIdentifiedByObjectIdentifier, Partial<MultiNamed>, Partial<Descr
     /** A function that evaluates values of this context type against an assertion */
     matcher: ContextMatcher;
 
+    /** A function that compares two values for equality. */
+    valueMatcher?: EqualityMatcher;
+
+    /** A function that compares two assertions for equality. */
+    assertionMatcher?: EqualityMatcher;
+
     /**
      * A function that validates values of this context type for correct syntax.
      */

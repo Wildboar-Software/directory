@@ -94,12 +94,11 @@ export function check_for_disallowed_contexts(
                 continue;
             }
             if (profile.contextValue) {
-                const matcher = ctx.contextTypes.get(context_type)?.matcher ?? compareElements;
+                const ct = ctx.contextTypes.get(context_type);
+                const matcher = ct?.assertionMatcher ?? ct?.matcher ?? compareElements;
                 for (const asserted_value of asserted.contextValues) {
                     let matched: boolean = false;
                     for (const allowed_value of profile.contextValue) {
-                        // FIXME: This matcher has the wrong type. It compares an assertion and value, rather than
-                        // two assertions.
                         if (matcher(asserted_value, allowed_value)) {
                             matched = true;
                             break;
