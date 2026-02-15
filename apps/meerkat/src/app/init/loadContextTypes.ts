@@ -121,7 +121,7 @@ async function loadContextTypes (ctx: Context): Promise<void> {
             validator: undefined,
             syntax: ct.syntax,
             assertionSyntax: ct.assertionSyntax ?? undefined,
-            matcher: compareElements, // FIXME:
+            matcher: compareElements,
         });
     }
 }

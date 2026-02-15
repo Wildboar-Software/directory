@@ -1006,25 +1006,13 @@ function compareBuiltInStandardAttributes (
         if (!b.administration_domain_name) {
             return false;
         }
-        // FIXME: You can compare numeric to printable.
-        if ("numeric" in a.administration_domain_name) {
-            if (!("numeric" in b.administration_domain_name)) {
-                return false;
-            }
-            const aadn = a.administration_domain_name.numeric.trim().replace(/\s+/g, "");
-            const badn = b.administration_domain_name.numeric.trim().replace(/\s+/g, "");
-            if (aadn !== badn) {
-                return false;
-            }
-        } else if ("printable" in b.administration_domain_name) {
-            const aadn = a.administration_domain_name.printable.trim().toUpperCase();
-            const badn = b.administration_domain_name.printable.trim().toUpperCase();
-            if (aadn !== badn) {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        const astr = ("numeric" in a.administration_domain_name)
+            ? a.administration_domain_name.numeric.trim().replace(/\s+/g, "")
+            : a.administration_domain_name.printable.trim().toUpperCase();
+        const bstr = ("numeric" in b.administration_domain_name)
+            ? b.administration_domain_name.numeric.trim().replace(/\s+/g, "")
+            : b.administration_domain_name.printable.trim().toUpperCase();
+        return (astr === bstr);
     }
     if (a.network_address) {
         if (!b.network_address) {
@@ -1050,28 +1038,13 @@ function compareBuiltInStandardAttributes (
         if (!b.private_domain_name) {
             return false;
         }
-        // FIXME: You can compare numeric to printable.
-        if ("numeric" in a.private_domain_name) {
-            if (!("numeric" in b.private_domain_name)) {
-                return false;
-            }
-            const apdn = a.private_domain_name.numeric.trim().replace(/\s+/g, "");
-            const bpdn = b.private_domain_name.numeric.trim().replace(/\s+/g, "");
-            if (apdn !== bpdn) {
-                return false;
-            }
-        } else if ("printable" in a.private_domain_name) {
-            if (!("printable" in b.private_domain_name)) {
-                return false;
-            }
-            const apdn = a.private_domain_name.printable.toUpperCase();
-            const bpdn = b.private_domain_name.printable.toUpperCase();
-            if (apdn !== bpdn) {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        const astr = ("numeric" in a.private_domain_name)
+            ? a.private_domain_name.numeric.trim().replace(/\s+/g, "")
+            : a.private_domain_name.printable.trim().toUpperCase();
+        const bstr = ("numeric" in b.private_domain_name)
+            ? b.private_domain_name.numeric.trim().replace(/\s+/g, "")
+            : b.private_domain_name.printable.trim().toUpperCase();
+        return (astr === bstr);
     }
     if (a.organization_name) {
         if (!b.organization_name) {
