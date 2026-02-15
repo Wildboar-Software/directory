@@ -480,5 +480,6 @@
     "terminate_repl_everything_abort": "Failed to terminate replicate-everything shadow operational binding: aborted with code {{code}}",
     "terminate_repl_everything_timeout": "Timed out trying to terminate replicate-everything shadow operational binding.",
     "terminate_repl_everything_other": "Other error when trying to terminate replicate-everything shadow operational binding: {{e}}",
-    "invalid_signed_error": "Invalid signed error: {{e}}"
+    "invalid_signed_error": "Invalid signed error: {{e}}",
+    "superior_knowledge_empty": "Superior knowledge for DSE {{dn}} (dse UUID {{uuid}}) is empty (no access points). This means it is malformed and cannot be used for routing requests."
 }

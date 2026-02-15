@@ -1913,7 +1913,28 @@ async function updateShadow (
     }
     else if ("total" in data.updatedInfo) {
         const refresh = data.updatedInfo.total;
-        // FIXME: Validate that the root SDSE is empty. This is required in X.525, Section 7.2.2.1.c.
+        if (refresh.sDSE?.attributes.length) {
+            throw new ShadowError(
+                ctx.i18n.t("err:shadow_update_non_empty_root_dse"),
+                new ShadowErrorData(
+                    ShadowProblem_invalidInformationReceived,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
         await applyTotalRefresh(
             ctx,
             assn,
@@ -1929,12 +1950,47 @@ async function updateShadow (
         );
     }
     else if ("incremental" in data.updatedInfo) {
+        /*
+        It is not made obvious by the specification, but it seems that
+        incremental refresh steps are relative to the Root DSE.
+
+        ITU-T Recommendation X.525 (2019), Section 7.2.2.1, seems to suggest
+        this applies to all update types, but it is only said explicitly for
+        the total refresh. I found a diagram in David Chadwick's
+        _Understanding X.500: The Directory_ on page 206 that seems to visually
+        show an incremental update extending from the root DSE. This also makes
+        sense so that changes to prefix information, such as administrative points
+        or subentries in the prefix can be replicated.
+        */
         const refresh = data.updatedInfo.incremental;
-        // FIXME: Validate that the root SDSE is empty. This is required in X.525, Section 7.2.2.1.c.
         ctx.log.debug(ctx.i18n.t("log:shadow_incremental_steps_count", {
             obid: data.agreementID.identifier.toString(),
             steps: refresh.length,
         }));
+        for (const step of refresh) {
+            if (step.sDSEChanges) {
+                throw new ShadowError(
+                    ctx.i18n.t("err:shadow_update_non_empty_root_dse"),
+                    new ShadowErrorData(
+                        ShadowProblem_invalidInformationReceived,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_shadowError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        FALSE,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+        }
         for (const step of refresh) {
             await applyIncrementalRefreshStep(
                 ctx,

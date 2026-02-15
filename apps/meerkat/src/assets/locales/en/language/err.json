@@ -273,5 +273,7 @@
     "spkm_untrusted_cert_path": "SPKM token had an untrusted certification path.",
     "unrecognized_external_auth_proc": "Unrecognized externalProcedure authentication mechanism.",
     "ext_auth_invalid_peer_cert": "Invalid peer certificate: {{e}}",
-    "alias_but_no_aen": "Alias entry is missing the aliasedEntryName attribute."
+    "alias_but_no_aen": "Alias entry is missing the aliasedEntryName attribute.",
+    "shadow_update_non_empty_root_dse": "Shadow update attempted to modify the root DSE, which is not permitted.",
+    "full_update_required": "Full update required for shadow operational binding {{obid}}, but an incremental update was requested."
 }
