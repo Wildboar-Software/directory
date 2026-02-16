@@ -99,7 +99,14 @@ function decodeInt (row?: DBAttributeValue): number | undefined {
         return undefined;
     }
     const el = attributeValueFromDB(row);
-    return Number(_decodeInteger(el));
+    const int = _decodeInteger(el);
+    if (int > Number.MAX_SAFE_INTEGER) {
+        return Number.MAX_SAFE_INTEGER;
+    }
+    if (int < -Number.MAX_SAFE_INTEGER) {
+        return -Number.MAX_SAFE_INTEGER;
+    }
+    return Number(int);
 }
 
 async function compareUserPwd (a: UserPwd, b: UserPwd): Promise<boolean | undefined> {
@@ -266,13 +273,6 @@ interface AttemptPasswordReturn {
     unbind?: boolean;
 }
 
-/* TODO: When this is re-written, it should return an enum instead.
-- Valid
-- Invalid
-- Expired
-- Ended
-- Blocked
-*/
 /**
  * @summary Attempts a password for a bind operation.
  * @description
@@ -389,7 +389,6 @@ async function attemptPassword (
     const graces = subentry_attrs[ID_GRACES]
         ?.map((row) => decodeInt(row)).sort()[0] // Lowest number of graces.
         ?? 0;
-    // TODO: Cautiously check for overflow.
     const lockout_duration = subentry_attrs[ID_LOCKOUT_DURATION]
         ?.map((row) => decodeInt(row)).sort().pop() // Highest lockout duration
         ?? Number.MAX_SAFE_INTEGER; // Default is infinity, but this is effectively close enough.

@@ -46,7 +46,7 @@ export interface CheckRequestAttributeState {
      * doing so was forbidden, such as when using a `contextsPresent` filter
      * item.
      */
-    searchValuesRequired: AttributeType[], // FIXME: Change to a set
+    searchValuesRequired: AttributeType[],
 
     /**
      * The filter items that contain assertions of values that were not
@@ -66,7 +66,7 @@ export interface CheckRequestAttributeState {
      * by the governing search rule, in a filter item whose attribute type is
      * identified by `missingSearchContextAttr`.
      */
-    missingSearchContexts: OBJECT_IDENTIFIER[], // FIXME: Change to a set
+    missingSearchContexts: OBJECT_IDENTIFIER[],
 
     /**
      * The attribute type of a filter item that contained an invalid context

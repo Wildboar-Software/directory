@@ -647,7 +647,6 @@ function printDseType (bits: BIT_STRING): string[] {
     return ret;
 }
 
-// TODO: Dedupe
 function breakIntoLines (str: string, lineLength: number): string[] {
     const lines: string[] = [];
     for (let i = 0; i < str.length; i = i + lineLength) {
@@ -1672,10 +1671,6 @@ function renderAttributeCert (
         key: "Serial Number",
         value: Buffer.from(tbs.serialNumber).toString("hex"),
     });
-    // values.push({
-    //     key: "Issuer Name",
-    //     value: stringifyDN(ctx, tbs.issuer.rdnSequence),
-    // });
     values.push({
         key: "Validity Start",
         value: tbs.attrCertValidityPeriod.notBeforeTime.toISOString(),
@@ -1842,7 +1837,7 @@ function securityMiddleware (req: MeerkatReq, res: Response, next: NextFunction)
     res.set("X-Content-Type-Options", "nosniff");
     res.set("Referrer-Policy", "no-referrer");
     res.set("X-Content-Type-Options", "nosniff");
-    res.set("Cache-Control", "no-store");
+    // res.set("Cache-Control", "no-store");
     res.set("X-Robots-Tag", "noindex");
     // res.set("Clear-Site-Data", "*");
     // Uncomment if this is ever supported: https://github.com/w3c/webappsec-permissions-policy/issues/189
@@ -1864,9 +1859,10 @@ function loggingMiddleware (req: MeerkatReq, res: Response, next: NextFunction):
     next();
 }
 
-// TODO: Caching?
 function getHomePage (req: MeerkatReq, res: Response): void {
-    res.render('index', {
+    res
+    .set('Cache-Control', 'private, max-age=60')
+    .render('index', {
         dsa: req.ctx.dsa.accessPoint.ae_title.rdnSequence.length
             ? stringifyDN(req.ctx, req.ctx.dsa.accessPoint.ae_title.rdnSequence)
             : "<UNSET> (Consider configuring signing PKI)",
@@ -1875,13 +1871,14 @@ function getHomePage (req: MeerkatReq, res: Response): void {
     });
 }
 
-// TODO: Caching
 function getConformance (req: MeerkatReq, res: Response): void {
     fs.readFile(conformancePath, { encoding: "utf-8" })
-        .then((content) => res.render('markdown', {
-            title: "Conformance",
-            content
-        }))
+        .then((content) => res
+            .set('Cache-Control', 'private, max-age=60')
+            .render('markdown', {
+                title: "Conformance",
+                content
+            }))
         .catch((e) => res.status(500).send(e));
 }
 
@@ -2317,22 +2314,25 @@ async function deleteDseById(req: MeerkatReq, res: Response, next: NextFunction)
     res.redirect("/");
 }
 
-// TODO: Caching
 function getRobotsTXT(req: MeerkatReq, res: Response): void {
     res.contentType("text/plain; charset=utf-8");
-    res.send(ROBOTS);
+    res
+        .set('Cache-Control', 'private, max-age=60')
+        .send(ROBOTS);
 }
 
-// TODO: Caching
 function getWellKnownSecurityTXT(req: MeerkatReq, res: Response): void {
     res.contentType("text/plain; charset=utf-8");
-    res.send(SECURITY_TXT);
+    res
+        .set('Cache-Control', 'private, max-age=60')
+        .send(SECURITY_TXT);
 }
 
-// TODO: Caching
 function getSecurityTXT(req: MeerkatReq, res: Response): void {
     res.contentType("text/plain; charset=utf-8");
-    res.send(SECURITY_TXT);
+    res
+        .set('Cache-Control', 'private, max-age=60')
+        .send(SECURITY_TXT);
 }
 
 function getAttributeCerts(req: MeerkatReq, res: Response): void {

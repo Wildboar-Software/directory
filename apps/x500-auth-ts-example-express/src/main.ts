@@ -245,7 +245,7 @@ async function main () {
                 },
             },
             subentries: false,
-            timeLimit: 15, // FIXME:
+            timeLimit: 15,
         }),
 
         // Step 3: Use the compare operation to assert the password.

@@ -935,8 +935,6 @@ Do not enable this unless:
 2. You _need_ to debug TLS-encrypted traffic.
 3. The traffic being decrypted is not sensitive at all.
 
-For a more secure alternative, consider FIXME
-
 :::
 
 ## MEERKAT_LOOKUP_UNCERT_STRONG_AUTH

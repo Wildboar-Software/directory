@@ -90,9 +90,7 @@ In the above type, `name` is the distinguished name to which the user is
 attempting to bind, `time1` is a time a few seconds into the future, `random1`
 is a sequence of randomly-generated bits of any length (preferrably at least 64
 bits), and `password` is the `UserPwd` construction of the user's password,
-which _must_ use the `encrypted` alternative, and
-
-<!-- FIXME: Terminated sentence here. -->
+which _must_ use the `encrypted` alternative.
 
 :::tip
 
