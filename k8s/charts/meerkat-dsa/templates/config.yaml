@@ -19,6 +19,7 @@ data:
   chaining_check_sig: {{ .Values.chaining_check_sig | default true | ternary 1 0 | quote }}
   chaining_sign_requests: {{ .Values.chaining_sign_requests | default true | ternary 1 0 | quote }}
   chaining_tls_optional: {{ .Values.chaining_tls_optional | ternary 1 0 | quote }}
+  chaining_strong_creds_ttl: {{ .Values.chaining_strong_creds_ttl | default "60" | quote }}
   {{- if .Values.clearance_authorities }}
   clearance_authorities: {{ .Values.clearance_authorities | quote }}
   {{- end }}

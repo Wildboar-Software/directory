@@ -200,6 +200,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: chaining_sign_requests
                   optional: true
+            - name: MEERKAT_CHAINING_STRONG_CREDS_TTL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: chaining_strong_creds_ttl
+                  optional: true
             - name: MEERKAT_CHAINING_TLS_OPTIONAL
               valueFrom:
                 configMapKeyRef:

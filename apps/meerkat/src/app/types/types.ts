@@ -2039,6 +2039,12 @@ interface Configuration {
          */
         itot: boolean;
 
+        /**
+         * The number of seconds from the moment of creation that strong
+         * credentials created by this DSA will be valid.
+         */
+        strongCredentialsTimeToLiveInSeconds: number;
+
     };
 
     /**

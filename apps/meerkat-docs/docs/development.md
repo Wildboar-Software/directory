@@ -5,6 +5,15 @@
 Note that for all changes you make to `meerkat-docs`, there may be equivalent
 documentation in `docs`.
 
+## Adding a New Configuration Option / Environment Variable
+
+In no particular order:
+
+- Update `apps/meerkat-docs/docs/env.md`.
+- Update the Helm chart, starting with `values.yaml`.
+- Update `pkg/meerkat_in_snap.sh`.
+- Update `doc/man/man5/meerkat.env.5`.
+
 ## Building
 
 Very soon, Meerkat DSA will build these packages in CI/CD. A lot of these

@@ -1032,6 +1032,9 @@ const config: Configuration = {
         signChainedRequests: (process.env.MEERKAT_CHAINING_SIGN_REQUESTS !== "0"),
         checkSignaturesOnResponses: (process.env.MEERKAT_CHAINING_CHECK_SIG !== "0"),
         itot: (process.env.MEERKAT_ITOT_CHAINING !== "0"),
+        strongCredentialsTimeToLiveInSeconds: process.env.MEERKAT_CHAINING_STRONG_CREDS_TTL
+            ? Number.parseInt(process.env.MEERKAT_CHAINING_STRONG_CREDS_TTL, 10)
+            : 60,
     },
     ob: {
         minAuthRequired: parseAuthLevel(

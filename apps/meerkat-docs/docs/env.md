@@ -370,6 +370,23 @@ credentials, etc. are susceptible to inspection by intermediaries, which is a
 security problem. These operations may not be susceptible to tampering (other
 than by omission) if cryptographic signing is used.
 
+## MEERKAT_CHAINING_STRONG_CREDS_TTL
+
+When strong credentials are created by a party wishing to strongly prove its
+authenticity, the cryptographic signature is generated over a field that
+indicates how long the signed "token" will be valid for; after this time,
+relying parties are expected to reject the token. This is a security measure to
+prevent replay attacks.
+
+One downside of this is that it is theoretically possible for legitimate
+authentication to fail simply because it takes too long for the relying party to
+receive the signed token (for whatever reason).
+
+This option is a decimal number of seconds after the moment of creation that
+will be imbued to the signed tokens used for strong authentication by this DSA.
+If not supplied, this defaults to `60` (one minute), which is reasonable for the
+vast majority of cases.
+
 ## MEERKAT_DEFAULT_ENTRY_TTL
 
 The default value of the `entryTtl` operational attribute, if an entry

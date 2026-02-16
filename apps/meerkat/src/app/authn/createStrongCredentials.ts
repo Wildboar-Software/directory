@@ -84,7 +84,10 @@ function createStrongCredentials (
         algID,
         intendedRecipient,
         {
-            generalizedTime: addSeconds(new Date(), 60), // TODO: Make this time configurable.
+            generalizedTime: addSeconds(
+                new Date(),
+                ctx.config.chaining.strongCredentialsTimeToLiveInSeconds,
+            ),
         },
         unpackBits(randomBytes(4)),
         undefined,
