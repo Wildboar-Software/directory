@@ -1,20 +1,14 @@
 import type { Context } from "../types/index.js";
-import {
-    SecurityParameters,
-} from "@wildboar/x500/DirectoryAbstractService";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import {
     CertificationPath,
-} from "@wildboar/x500/AuthenticationFramework";
-import {
     CertificatePair,
 } from "@wildboar/x500/AuthenticationFramework";
 import {
+    SecurityParameters,
     ProtectionRequest_signed,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
 import type {
@@ -23,6 +17,7 @@ import type {
 import { unpackBits } from "@wildboar/asn1";
 import { randomBytes } from "node:crypto";
 
+// TODO: Document
 // TODO: Convert to native function?
 export
 function createSecurityParameters (

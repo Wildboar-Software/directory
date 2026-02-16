@@ -485,5 +485,11 @@
     "terminate_repl_everything_timeout": "Timed out trying to terminate replicate-everything shadow operational binding.",
     "terminate_repl_everything_other": "Other error when trying to terminate replicate-everything shadow operational binding: {{e}}",
     "invalid_signed_error": "Invalid signed error: {{e}}",
-    "superior_knowledge_empty": "Superior knowledge for DSE {{dn}} (dse UUID {{uuid}}) is empty (no access points). This means it is malformed and cannot be used for routing requests."
+    "superior_knowledge_empty": "Superior knowledge for DSE {{dn}} (dse UUID {{uuid}}) is empty (no access points). This means it is malformed and cannot be used for routing requests.",
+    "failed_to_get_remote_security_info": "Failed to obtain remote security info (clearances, uniqueIdentifier, etc.) because of error: {{e}}",
+    "failed_to_get_remote_security_info@with_dn": "Failed to obtain remote security info (clearances, uniqueIdentifier, etc.) for {{dn}} because of error: {{e}}",
+    "got_remote_security_info": "Obtained remote security info (clearances, uniqueIdentifier, etc.)",
+    "got_remote_security_info@with_dn": "Obtained remote security info (clearances, uniqueIdentifier, etc.) for {{dn}}.",
+    "no_time_for_remote_security_info": "Did not fetch remote security info (clearances, uniqueIdentifier, etc.).",
+    "no_time_for_remote_security_info@with_dn": "Did not fetch remote security info (clearances, uniqueIdentifier, etc.) for {{dn}}."
 }
