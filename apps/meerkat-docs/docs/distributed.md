@@ -256,3 +256,79 @@ If the access point named in a cross reference becomes unreachable, Meerkat DSA
 will remove the cross reference. A future version of Meerkat DSA will
 periodically ignore cross references to ensure that directory routing is still
 valid.
+
+## Local Scope
+
+The `ServiceControlOptions` defined in ITU-T Recommendation X.511, Section
+7.5, defines a `localScope` option that prevents distributed operations from
+propagating outside of a defined "local scope," the precise meaning of which
+is left up to the implementation.
+
+In Meerkat DSA, "local scope" exclusively means a country. The rationale for
+this is usefulness: when data crosses national boundaries, there can be legal
+concerns or national security concerns that do not apply otherwise. Some
+countries have cryptography export laws. Smaller scopes simply tend not to
+matter as much.
+
+Further, within the scope of a country (or even smaller polity), things like
+organization names or DMD names can get re-used, so comparing two directory
+names for merely having the same organization name or DMD name is not great for
+concluding that these names fall within the same local scope. Only the country
+is an objective, unambiguous fact.
+
+The country of a DSA is determined by its Application Entity (AE) Title (which
+is a directory name and usually a distinguished name). Other DSAs within your
+"local scope" will fall within the same country as determined by their AE
+titles.
+
+So for example, if your DSA is `c=US,st=FL,o=Wildboar,cn=DSA 01` and a search
+operation is about to result in chained requests to
+`c=US,st=NY,o=Goldman Sachs,cn=DSA 06` and another to
+`c=CA,o=Tim Hortons,cn=Bathroom DSA`, the first DSA would be a recipient of a
+chained request and the second would not be contacted.
+
+Meerkat DSA's implementation only compares the first RDN of the directory names,
+because (1) it is generally expected that the country will be a top-level entry
+in the directory and (2) an RDN with a country-related attribute value deeper in
+the directory might not itself refer to a country; it could refer to something
+else, like a relationship between countries or it could be part of a mailing
+address. For example, `c=US` is definitely the United States, but
+`o=Oracle,cn=Customers,c=US` might describe Oracle Corporation's United
+States-based customers, but Oracle itself might be based out of a different
+country.
+
+It is not a requirement that the country-related attribute type be the only
+attribute type in the first RDN. This is to accommodate strange top-level
+directory naming, such as things like `c=US+o=Microsoft`.
+This implementation uses the `countryName`, `countryCode3c`, and
+`countryCode3n` attributes for identifying countries, and it translates
+between them.
+
+This implementation does not handle ccTLDs used in `domainComponent` values.
+The reason for this is that a lot of ccTLDs do not require residency or do
+not verify residency; further, domain hacks are widespread in practice, so
+a domain like watch.tv would be considered "local" to Tuvalu mistakenly. If
+not for the widespread use of domain hacks--if the ccTLD reliably reflected
+the true country--this would be different.
+
+Note that this technique is not immune to lying: DSAs can choose their own AE
+title, and can therefore lie about what country they are from. The more certain
+way to ensure that distributed operations do not leak out into other countries
+is to check the country associated with that IP, which is a feature planned for
+a future release of Meerkat DSA.
+
+:::note
+
+I am reconsidering this approach: generally requests within a country can
+simply be constrained by doing a subtree search under that country's vertex in
+the DIT (e.g. `c=UA`), and some countries like China, Russia, India, and the
+United States are so huge that even constraining a request within them would
+hardly fit one's definition of "local." I wonder if there is a better
+distinction; within-a-DMD seems useful owing precisely to the fact that it is
+not easily selected by merely keeping a query within the same DIT.
+
+Maybe I could make this scheme more flexible: maybe it could read all but the
+last RDN in the AE title to determine the scope, which might be an organization,
+DMD, or country.
+
+:::

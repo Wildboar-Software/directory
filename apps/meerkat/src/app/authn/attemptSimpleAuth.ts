@@ -40,6 +40,7 @@ import {
     ServiceControlOptions_preferChaining,
     ServiceControlOptions_dontMatchFriends,
     ServiceControlOptions_copyShallDo,
+    ServiceControlOptions_localScope,
 } from "@wildboar/x500/DirectoryAbstractService";
 import versions from "../versions.js";
 import { read_unique_id, read_clearance } from "../database/utils.js";
@@ -109,7 +110,9 @@ async function getRemoteSecurityInfo(
         );
         const sco: ServiceControlOptions = new Uint8ClampedArray(13);
         sco[ServiceControlOptions_preferChaining] = TRUE_BIT;
-        // TODO: Option to use localScope only
+        if (ctx.config.authn.remotePasswordLocalScopeOnly) {
+            sco[ServiceControlOptions_localScope] = TRUE_BIT;
+        }
         sco[ServiceControlOptions_copyShallDo] = TRUE_BIT;
         sco[ServiceControlOptions_dontSelectFriends] = TRUE_BIT;
         const readArgData = new ReadArgumentData(
@@ -247,7 +250,9 @@ async function remotePasswordCheckingProcedure(
     ctx.log.debug(ctx.i18n.t("log:checking_remote_pwd", { source }), logInfo);
     const sco: ServiceControlOptions = new Uint8ClampedArray(14);
     sco[ServiceControlOptions_preferChaining] = TRUE_BIT;
-    // TODO: Option to use localScope only
+    if (ctx.config.authn.remotePasswordLocalScopeOnly) {
+        sco[ServiceControlOptions_localScope] = TRUE_BIT;
+    }
     sco[ServiceControlOptions_copyShallDo] = TRUE_BIT;
     sco[ServiceControlOptions_dontMatchFriends] = TRUE_BIT;
     const startTime = new Date();
@@ -349,8 +354,9 @@ async function remotePasswordCheckingProcedure(
     }
 
     const timeLeft = differenceInSeconds(new Date(), startTime);
-    // TODO: Make whether to do this configurable.
-    const [ clearances, unique_id ] = await getRemoteSecurityInfo(ctx, credentials.name, timeLeft);
+    const [ clearances, unique_id ] = ctx.config.authn.fetchRemoteAuthorizationAttributes
+        ? await getRemoteSecurityInfo(ctx, credentials.name, timeLeft)
+        : [ [], undefined ];
     return {
         boundVertex: undefined,
         boundNameAndUID: new NameAndOptionalUID(

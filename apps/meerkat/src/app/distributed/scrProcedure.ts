@@ -12,8 +12,9 @@ import { DER } from "@wildboar/asn1/functional";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
+    ServiceControlOptions_localScope as localScopeBit,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { compareAuthenticationLevel, ChainedRequest, getOptionallyProtectedValue, compareCode } from "@wildboar/x500";
+import { compareAuthenticationLevel, ChainedRequest, getOptionallyProtectedValue, compareCode, getDateFromTime } from "@wildboar/x500";
 import { apinfoProcedure } from "./apinfoProcedure.js";
 import {
     ErrorProtectionRequest_signed,
@@ -70,6 +71,7 @@ async function scrProcedure (
         (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
         || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
     );
+    const localScope: boolean = (data.serviceControls?.options?.[localScopeBit] === TRUE_BIT);
     // const results_count = getCurrentNumberOfResults(searchState);
     // If we already have more results than the user wants, there is no point in chaining.
     /**
@@ -149,9 +151,24 @@ async function scrProcedure (
                 opCode: id_opcode_search,
                 argument: _encode_SearchArgument(arg, DER),
             };
-            const response = await apinfoProcedure(ctx, api, req, assn, state, signErrors, chainingProhibited, cr);
+            const deadline = state.chainingArguments.timeLimit
+                ? getDateFromTime(state.chainingArguments.timeLimit)
+                : undefined;
+            const response = await apinfoProcedure(
+                ctx,
+                api,
+                req,
+                assn,
+                state,
+                signErrors,
+                chainingProhibited,
+                cr,
+                deadline,
+                localScope,
+            );
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:scr_null_response", logMsgInfo), logInfo);
+                // TODO: Add continuation reference to POQ
                 continue;
             }
             if ("error" in response) {

@@ -11,10 +11,11 @@ import {
     ServiceControls_priority_high,
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
+    ServiceControlOptions_localScope as localScopeBit,
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { chainedList } from "@wildboar/x500/DistributedOperations";
-import { compareAuthenticationLevel, ChainedRequest, getOptionallyProtectedValue, compareCode } from "@wildboar/x500";
+import { compareAuthenticationLevel, ChainedRequest, getOptionallyProtectedValue, compareCode, getDateFromTime } from "@wildboar/x500";
 import { apinfoProcedure } from "./apinfoProcedure.js";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { id_opcode_list } from "@wildboar/x500/CommonProtocolSpecification";
@@ -64,6 +65,7 @@ async function lcrProcedure (
         (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
         || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
     );
+    const localScope: boolean = (data.serviceControls?.options?.[localScopeBit] === TRUE_BIT);
     const insufficientAuthForChaining = assn && (
         (
             ("basicLevels" in assn.authLevel)
@@ -164,10 +166,24 @@ async function lcrProcedure (
                 opCode: id_opcode_list,
                 argument: _encode_ListArgument(arg, DER),
             };
-            const response = await apinfoProcedure(ctx, api, req, assn, state, signErrors, chainingProhibited, cr);
+            const deadline = state.chainingArguments.timeLimit
+                ? getDateFromTime(state.chainingArguments.timeLimit)
+                : undefined;
+            const response = await apinfoProcedure(
+                ctx,
+                api,
+                req,
+                assn,
+                state,
+                signErrors,
+                chainingProhibited,
+                cr,
+                deadline,
+                localScope,
+            );
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:lcr_null_response", logMsgInfo), logInfo);
-                unexplore();
+                unexplore(); // TODO: Copy this over to SCR as well
                 continue;
             }
             if ("error" in response) {

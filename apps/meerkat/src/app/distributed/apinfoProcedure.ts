@@ -91,6 +91,8 @@ import { CrossReference } from "@wildboar/x500/DistributedOperations";
 import { signChainedResult } from "../pki/signChainedResult.js";
 import deleteEntry from "../database/deleteEntry.js";
 import DAPAssociation from "../dap/DAPConnection.js";
+import isLocalScope from "../x500/isLocalScope.js";
+import printCode from "../utils/printCode.js";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -107,6 +109,8 @@ import DAPAssociation from "../dap/DAPConnection.js";
  * @param signErrors Whether to cryptographically sign errors
  * @param chainingProhibited Whether chaining was prohibited
  * @param cref The continuation reference
+ * @param deadline The deadline for the APInfo procedure to return
+ * @param localScope Whether to restrict chaining to a local scope
  * @returns An operation outcome, or null if chaining is prohibited.
  *
  * @function
@@ -123,6 +127,7 @@ async function apinfoProcedure (
     chainingProhibited: boolean,
     cref: ContinuationReference,
     deadline?: Date,
+    localScope?: boolean,
 ): Promise<OperationOutcome | null> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
@@ -130,6 +135,19 @@ async function apinfoProcedure (
     if (chainingProhibited) {
         return null;
     }
+    const logInfo = {
+        clientFamily: assn?.socket.remoteFamily,
+        clientAddress: assn?.socket.remoteAddress,
+        clientPort: assn?.socket.remotePort,
+        association_id: assn?.id,
+        opid: req.chaining.operationIdentifier,
+        iid: printInvokeId(req.invokeId),
+        opcode: printCode(req.opCode),
+        signErrors,
+        chainingProhibited,
+        deadline,
+        localScope,
+    };
     const namingMatcher = getNamingMatcherGetter(ctx);
     const excludeShadows: BOOLEAN = req.chaining.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows;
     const nameResolveOnMaster: BOOLEAN = req.chaining.nameResolveOnMaster
@@ -272,7 +290,6 @@ async function apinfoProcedure (
                 signErrors,
             );
         }
-        // TODO: Check if localScope.
         if (
             (ap.category === MasterOrShadowAccessPoint_category_shadow)
             && (
@@ -282,6 +299,26 @@ async function apinfoProcedure (
             )
         ) {
             continue;
+        }
+        if (localScope) {
+            /* This is chosen to be "local" relative to the current DSA, rather
+            than the requester / originator. The rationale for this is that the
+            requester has already sent this request to this DSA, so the
+            presumption is that the requester is accepts data transfer to and
+            from this DSA's country. It also makes the DSA more "deterministic"
+            from the perspective of the user: two users will get treated the
+            same by this DSA, even if they are from two different countries. */
+            if (!isLocalScope(ctx.dsa.accessPoint.ae_title, ap.ae_title)) {
+                ctx.log.trace(ctx.i18n.t("log:not_chaining_out_of_local_scope", {
+                    opid: req.chaining.operationIdentifier,
+                    aet: stringifyDN(ctx, ap.ae_title.rdnSequence),
+                }), logInfo);
+                continue;
+            }
+            // TODO: if configured, perform IP lookup to ascertain no further propagation.
+            // Using country.is seems viable.
+            // But ChatGPT recommends just using the MaxMind DB
+            // There's a good package for it: https://jsr.io/@josh-hemphill/maxminddb-wasm
         }
         timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
         let connected: boolean = false;
@@ -304,7 +341,7 @@ async function apinfoProcedure (
                     iid: "present" in req.invokeId
                         ? req.invokeId.present.toString()
                         : "ABSENT",
-                }));
+                }), logInfo);
                 continue;
             }
             connected = true;
@@ -348,18 +385,14 @@ async function apinfoProcedure (
                     && (response.result.code.local !== chainedAbandon["&operationCode"]!.local)
                 ) {
                     if (resultData.chainedResult.securityParameters?.errorCode) {
-                        ctx.log.warn(ctx.i18n.t("log:dsp_result_error_code"), {
-                            opid: chainingArgs.operationIdentifier ?? "ABSENT",
-                        });
+                        ctx.log.warn(ctx.i18n.t("log:dsp_result_error_code", logInfo), logInfo);
                         dsp_signature_valid = false;
                     }
                     if (dsp_signature_valid && resultData.chainedResult.securityParameters?.time) {
                         const secureTime = getDateFromTime(resultData.chainedResult.securityParameters.time);
                         const now = new Date();
                         if (now > secureTime) {
-                            ctx.log.warn(ctx.i18n.t("log:dsp_result_time"), {
-                                opid: chainingArgs.operationIdentifier ?? "ABSENT",
-                            });
+                            ctx.log.warn(ctx.i18n.t("log:dsp_result_time", logInfo), logInfo);
                             dsp_signature_valid = false;
                         }
                     }
@@ -373,9 +406,7 @@ async function apinfoProcedure (
                             namingMatcher,
                         )
                     ) {
-                        ctx.log.warn(ctx.i18n.t("log:dsp_result_name"), {
-                            opid: chainingArgs.operationIdentifier ?? "ABSENT",
-                        });
+                        ctx.log.warn(ctx.i18n.t("log:dsp_result_name", logInfo), logInfo);
                         dsp_signature_valid = false;
                     }
                     if (
@@ -383,9 +414,7 @@ async function apinfoProcedure (
                         && resultData.chainedResult.securityParameters?.operationCode
                         && !compareCode(resultData.chainedResult.securityParameters.operationCode, req.opCode)
                     ) {
-                        ctx.log.warn(ctx.i18n.t("log:dsp_result_op_code"), {
-                            opid: chainingArgs.operationIdentifier ?? "ABSENT",
-                        });
+                        ctx.log.warn(ctx.i18n.t("log:dsp_result_op_code", logInfo), logInfo);
                         dsp_signature_valid = false;
                     }
                     if (dsp_signature_valid && ("signed" in decoded)) {
@@ -404,10 +433,10 @@ async function apinfoProcedure (
                             );
                         } catch (e) {
                             dsp_signature_valid = false;
-                            ctx.log.warn(ctx.i18n.t("log:dsp_result_invalid_sig"), {
-                                opid: chainingArgs.operationIdentifier ?? "ABSENT",
+                            ctx.log.warn(ctx.i18n.t("log:dsp_result_invalid_sig", {
+                                ...logInfo,
                                 e,
-                            });
+                            }), logInfo);
                         }
                     }
                     const returned_cross_refs = resultData.chainedResult.crossReferences ?? [];
@@ -433,9 +462,9 @@ async function apinfoProcedure (
 
                     if (returned_cross_refs.length !== acceptableCrossReferences.length) {
                         ctx.log.warn(ctx.i18n.t("log:filtered_cross_refs", {
+                            ...logInfo,
                             count: acceptableCrossReferences.length - returned_cross_refs.length,
-                            opid: chainingArgs.operationIdentifier ?? "ABSENT",
-                        }));
+                        }), logInfo);
                     }
 
                     if (
@@ -455,9 +484,9 @@ async function apinfoProcedure (
                         ) // INTENTIONAL_NO_AWAIT
                         .catch((e) => {
                             ctx.log.warn(ctx.i18n.t("log:failed_to_apply_xr", {
-                                opid: chainingArgs.operationIdentifier ?? "ABSENT",
+                                ...logInfo,
                                 e,
-                            }));
+                            }), logInfo);
                         });
                     }
                     // Even if the received signature is invalid, we can apply
@@ -602,24 +631,16 @@ async function apinfoProcedure (
         } catch (e) {
             if (!connected) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
+                    ...logInfo,
                     context: "with_error",
                     ae: stringifyDN(ctx, ap.ae_title.rdnSequence),
-                    iid: "present" in req.invokeId
-                        ? req.invokeId.present.toString()
-                        : "ABSENT",
                     e,
                 }));
             } else {
                 ctx.log.warn(ctx.i18n.t("log:could_not_write_operation_to_dsa", {
                     ae: stringifyDN(ctx, api.ae_title.rdnSequence),
                     e,
-                }), {
-                    remoteFamily: assn?.socket.remoteFamily,
-                    remoteAddress: assn?.socket.remoteAddress,
-                    remotePort: assn?.socket.remotePort,
-                    association_id: assn?.id,
-                    invokeID: printInvokeId(state.invokeId),
-                });
+                }), logInfo);
             }
             continue;
         }

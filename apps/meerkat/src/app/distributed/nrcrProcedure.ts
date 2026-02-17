@@ -120,6 +120,7 @@ async function nrcrProcedure (
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
     signErrors: boolean,
+    localScope: boolean = false,
 ): Promise<OperationOutcome<OPCR>> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
@@ -338,12 +339,14 @@ async function nrcrProcedure (
                     chainingProhibited,
                     cref,
                     timeLimitEndTime,
+                    localScope,
                 );
             } catch (e) {
                 ctx.log.debug(ctx.i18n.t("log:ap_info_procedure_error", { e }));
                 continue;
             }
             if (!outcome) {
+                // TODO: Log this? I don't think you have to do anything beyond this.
                 continue;
             }
             if ("result" in outcome) {

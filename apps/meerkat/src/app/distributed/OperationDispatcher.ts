@@ -47,6 +47,7 @@ import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
+    ServiceControlOptions_localScope as localScopeBit,
     ServiceControlOptions,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { compareCode } from "@wildboar/x500";
@@ -1279,6 +1280,7 @@ class OperationDispatcher {
                 (scoBitField?.[chainingProhibitedBit] === TRUE_BIT)
                 || (scoBitField?.[manageDSAITBit] === TRUE_BIT)
             );
+            const localScope: boolean = (scoBitField?.[localScopeBit] === TRUE_BIT);
             const partialNameResolution = (scoBitField?.[partialNameResolutionBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
@@ -1288,6 +1290,7 @@ class OperationDispatcher {
                 chainingProhibited,
                 partialNameResolution,
                 signErrors,
+                localScope,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1667,6 +1670,7 @@ class OperationDispatcher {
                 || (serviceControlOptions?.[manageDSAITBit] === TRUE_BIT)
             );
             const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
+            const localScope: boolean = (serviceControlOptions?.[localScopeBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
                 assn,
@@ -1678,6 +1682,7 @@ class OperationDispatcher {
                 chainingProhibited,
                 partialNameResolution,
                 signErrors,
+                localScope,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1811,6 +1816,7 @@ class OperationDispatcher {
                 || (serviceControlOptions?.[manageDSAITBit] === TRUE_BIT)
             );
             const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
+            const localScope: boolean = (serviceControlOptions?.[localScopeBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
                 undefined,
@@ -1822,6 +1828,7 @@ class OperationDispatcher {
                 chainingProhibited,
                 partialNameResolution,
                 signErrors,
+                localScope,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1942,6 +1949,7 @@ class OperationDispatcher {
                 || (serviceControlOptions?.[manageDSAITBit] === TRUE_BIT)
             );
             const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
+            const localScope: boolean = (serviceControlOptions?.[localScopeBit] === TRUE_BIT);
             const nrcrResult = await nrcrProcedure(
                 ctx,
                 undefined,
@@ -1953,6 +1961,7 @@ class OperationDispatcher {
                 chainingProhibited,
                 partialNameResolution,
                 signErrors,
+                localScope,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(

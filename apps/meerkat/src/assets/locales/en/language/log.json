@@ -491,5 +491,6 @@
     "got_remote_security_info": "Obtained remote security info (clearances, uniqueIdentifier, etc.)",
     "got_remote_security_info@with_dn": "Obtained remote security info (clearances, uniqueIdentifier, etc.) for {{dn}}.",
     "no_time_for_remote_security_info": "Did not fetch remote security info (clearances, uniqueIdentifier, etc.).",
-    "no_time_for_remote_security_info@with_dn": "Did not fetch remote security info (clearances, uniqueIdentifier, etc.) for {{dn}}."
+    "no_time_for_remote_security_info@with_dn": "Did not fetch remote security info (clearances, uniqueIdentifier, etc.) for {{dn}}.",
+    "not_chaining_out_of_local_scope": "Not chaining locally-scoped request with operation ID {{opid}} to DSA {{aet}} in another country."
 }

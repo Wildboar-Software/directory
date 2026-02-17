@@ -48,6 +48,7 @@
     "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.4",
     "@wildboar/cms": "npm:@jsr/wildboar__cms@^2.0.0",
     "@wildboar/copp": "npm:@jsr/wildboar__copp@^2.0.0",
+    "@wildboar/iso3166": "npm:@jsr/wildboar__iso3166@^1.0.1",
     "@wildboar/ldap": "npm:@jsr/wildboar__ldap@^2.0.1",
     "@wildboar/ocsp": "npm:@jsr/wildboar__ocsp@^2.0.1",
     "@wildboar/pem": "npm:@jsr/wildboar__pem@^4.0.2",

@@ -1425,6 +1425,19 @@ interface AuthenticationConfiguration extends PrivilegeManagementInfrastructureC
     remotePaswordCompareTimeLimit: number;
 
     /**
+     * If `true`, remote password checking will only be applied to a local
+     * scope.
+     */
+    remotePasswordLocalScopeOnly: boolean;
+
+    /**
+     * If `true`, then `clearance`, `uniqueIdentifier`, and other
+     * authorization-related attributes will be queried from the remote DSA
+     * during the remote password checking procedure.
+     */
+    fetchRemoteAuthorizationAttributes: boolean;
+
+    /**
      * If set to `*`, all remote DSAs will be trusted for Identity-Based
      * Requester Authentication (IBRA), as described in
      * [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.518/en),
