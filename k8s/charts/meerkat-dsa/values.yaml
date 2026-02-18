@@ -118,6 +118,7 @@ enable_disp: true
 enable_dop: true
 enable_dsp: true
 entries_per_subordinates_page: 100
+fetch_remote_authz_attrs: true
 forbid_anonymous_bind: false
 get_clearances_from_attr_certs: true
 get_clearances_from_dsait: true
@@ -182,6 +183,7 @@ open_top_level: false
 principled_service_admin: false
 # private_key_engine: pkcs11
 prohibit_chaining: false
+remote_pwd_local_scope: false
 remote_pwd_time_limit: 0
 # replicate_everything_from: idm://meerkat-dsa-0.meerkat-dsa-headless.default.svc:4632
 request_cross_references: false

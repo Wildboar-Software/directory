@@ -262,6 +262,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: entries_per_subordinates_page
                   optional: true
+            - name: MEERKAT_FETCH_REMOTE_AUTHZ_ATTRS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: fetch_remote_authz_attrs
+                  optional: true
             - name: MEERKAT_FORBID_ANONYMOUS_BIND
               valueFrom:
                 configMapKeyRef:
@@ -593,6 +599,12 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: prohibit_chaining
+                  optional: true
+            - name: MEERKAT_REMOTE_PWD_LOCAL_SCOPE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: remote_pwd_local_scope
                   optional: true
             - name: MEERKAT_REMOTE_PWD_TIME_LIMIT
               valueFrom:

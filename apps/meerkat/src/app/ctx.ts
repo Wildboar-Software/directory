@@ -586,7 +586,7 @@ const config: Configuration = {
             ? Number.parseInt(process.env.MEERKAT_REMOTE_PWD_TIME_LIMIT, 10)
             : 0, // 0 disables this procedure.
         remotePasswordLocalScopeOnly: (process.env.MEERKAT_REMOTE_PWD_LOCAL_SCOPE === "1"),
-        fetchRemoteAuthorizationAttributes: (process.env.MEERKAT_FETCH_REMOTE_AUTHZ_ATTRS === "1"),
+        fetchRemoteAuthorizationAttributes: (process.env.MEERKAT_FETCH_REMOTE_AUTHZ_ATTRS !== "0"),
         automaticallyTrustForIBRA: process.env.MEERKAT_TRUST_FOR_IBRA?.toUpperCase(),
     },
     rbac: {

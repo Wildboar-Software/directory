@@ -429,6 +429,19 @@ being that larger IDs are entries that have been recently added, and recently
 added entries are more likely to be requested than older entries. That said,
 this can generally be set to a fairly low number for optimal results.
 
+## MEERKAT_FETCH_REMOTE_AUTHZ_ATTRS
+
+By default, when performing the remote password checking procedure (meaning
+authenticating a user whose password lies in another DSA), Meerkat DSA will
+also subsequently query that DSA for the `clearance` and `uniqueIdentifier`
+attributes, which will help with determining the authorizations of the user.
+In the future, this read may include more attributes.
+
+If this variable is set to `0`, Meerkat DSA will not perform this second read.
+There is little reason to do this except for performance concerns (since this
+can slow down log-ins that use passwords in another DSA) or network congestion
+concerns.
+
 ## MEERKAT_FORBID_ANONYMOUS_BIND
 
 If set to `1`, anonymous binds are declined entirely.
@@ -1322,6 +1335,32 @@ OpenSSL can use to obtain a private key.
 If set to `1`, Meerkat DSA will not chain any requests. If you expect to operate
 your DSA instance in isolation from all other DSAs, it is recommended to enable
 this (meaning that chaining would be disabled).
+
+## MEERKAT_REMOTE_PWD_LOCAL_SCOPE
+
+If set to `1`, Meerkat DSA will only check remote passwords within a "local
+scope." In other words, if a user attempts to authenticate with a password, and
+the entry containing that password does not reside in this DSA, this DSA might
+attempt to check the asserted password with the correct DSA; in this case, if
+"locally-scoped" Meerkat DSA will only forward this password to the correct DSA
+if the correct DSA is "local" to this DSA.
+
+In Meerkat DSA, "local scope" is defined as the same country, DMD, or
+organization, as determined by the correspondent DSAs' Application Entity (AE)
+titles (for your DSA, this is determined by your
+[signing certificate](./signing.md#configuring-signing)).
+
+There is a somewhat complicated algorithm described
+[here](./distributed.md#local-scope) for determining what counts as "local,"
+but in brief summary:
+
+| If you're DSA's AE title is...  | Then "local" will be any DSA under... |
+|---------------------------------|---------------------------------------|
+| `c=US,o=Burger King,cn=DSA 01`  | `c=US,o=Burger King`                  |
+| `c=US,dmdName=Sears,cn=DSA 01`  | `c=US,dmdName=Sears`                  |
+| `c=US,st=FL,cn=DSA 01`          | `c=US` or `c3=USA` or `n3=840`        |
+| `c=US,l=Tampa,cn=DSA 01`        | `c=US` or `c3=USA` or `n3=840`        |
+| `c=US,cn=DSA 01`                | `c=US` or `c3=USA` or `n3=840`        |
 
 ## MEERKAT_REMOTE_PWD_TIME_LIMIT
 
