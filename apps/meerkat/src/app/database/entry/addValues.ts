@@ -5,8 +5,9 @@ import {
     PendingUpdates,
     AttributeError,
     AttributeTypeDatabaseDriver,
+    IndexableOID,
 } from "../../types/index.js";
-import { ASN1Construction } from "@wildboar/asn1";
+import { ASN1Construction, ASN1TagClass, ASN1UniversalType } from "@wildboar/asn1";
 import type { Prisma } from "../../generated/client.js";
 import type { AttributeValueCreateManyInput } from "../../generated/models/AttributeValue.js";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
@@ -32,6 +33,15 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import hasValueWithoutDriver from "./hasValueWithoutDriver.js";
+import {
+    oid,
+    integer,
+    countryString,
+    boolean_,
+} from "@wildboar/x500/SelectedAttributeTypes";
+
+// TODO: I think you would benefit from just having a second implementation for addAttributes()
+// it could query all attribute values for that type and check for duplicates in one pass
 
 /**
  * @summary Validate the values to be added to the entry
@@ -56,9 +66,27 @@ async function validateValues(
     checkForExisting: boolean = true,
     signErrors: boolean = false,
 ): Promise<void> {
+    const encounteredSingleValueTypes: Set<IndexableOID> = new Set();
+    const addedSingleFormValues: Set<string> = new Set();
     for (const value of values) {
         const TYPE_OID = value.type.toBytes();
-        const attrSpec = ctx.attributeTypes.get(value.type.toString());
+        const TYPE_STR = value.type.toString();
+        const attrSpec = ctx.attributeTypes.get(TYPE_STR);
+
+        // Whether a value of this attribute type is encoded using a single
+        // byte-for-byte comparable encoding. This is a shortcut to avoid
+        // further database queries.
+        const isSingleFormEncoding: boolean = attrSpec?.ldapSyntax
+            ? (
+                // boolean is not really single-form encoding, but we handle
+                // this below. Search for ca6c009c-f5da-4fa2-a3d6-3791353c3fbe.
+                attrSpec.ldapSyntax.isEqualTo(boolean_["&id"])
+                || attrSpec.ldapSyntax.isEqualTo(oid["&id"])
+                || attrSpec.ldapSyntax.isEqualTo(integer["&id"])
+                || attrSpec.ldapSyntax.isEqualTo(countryString["&id"])
+            )
+            : false;
+
         if (attrSpec?.validator) {
             try {
                 attrSpec.validator(value.value);
@@ -96,17 +124,23 @@ async function validateValues(
         }
         if (checkForExisting) {
             if (attrSpec?.singleValued) {
-                const attributeExists = attrSpec?.driver?.isPresent
-                    ? await attrSpec.driver.isPresent(ctx, entry)
-                    : !!(await ctx.db.attributeValue.findFirst({
-                        where: {
-                            entry_id: entry.dse.id,
-                            type_oid: TYPE_OID,
-                        },
-                        select: {
-                            id: true,
-                        },
-                    }));
+                let attributeExists = false;
+                if (encounteredSingleValueTypes.has(TYPE_STR)) {
+                    attributeExists = true;
+                } else {
+                    attributeExists = attrSpec?.driver?.isPresent
+                        ? await attrSpec.driver.isPresent(ctx, entry)
+                        : !!(await ctx.db.attributeValue.findFirst({
+                            where: {
+                                entry_id: entry.dse.id,
+                                type_oid: TYPE_OID,
+                            },
+                            select: {
+                                id: true,
+                            },
+                        }));
+                }
+                encounteredSingleValueTypes.add(TYPE_STR);
                 if (attributeExists) {
                     throw new AttributeError(
                         ctx.i18n.t("err:single_valued", {
@@ -139,6 +173,7 @@ async function validateValues(
                     );
                 }
             }
+
             /**
              * As I interpret it, the duplicate values checking does not have to
              * consider contexts. This is a fortuitous conclusion to come to, since
@@ -146,21 +181,33 @@ async function validateValues(
              * concept of contexts, so preventing duplicate values regardless of
              * their contexts is valuable here.
              */
-            let valueExists: boolean = attrSpec?.driver?.hasValue
-                ? await attrSpec.driver.hasValue(ctx, entry, value)
-                : !!(await ctx.db.attributeValue.findFirst({
+            let valueExists: boolean = await attrSpec?.driver?.hasValue(ctx, entry, value) ?? false;
+            if (isSingleFormEncoding && !attrSpec?.driver?.hasValue) {
+                valueExists = !!(await ctx.db.attributeValue.findFirst({
                     where: {
                         entry_id: entry.dse.id,
                         type_oid: value.type.toBytes(),
                         tag_class: value.value.tagClass,
                         constructed: (value.value.construction === ASN1Construction.constructed),
                         tag_number: value.value.tagNumber,
-                        content_octets: value.value.value as Uint8Array<ArrayBuffer>, // Lol. Sorry.
+                        content_octets: (
+                            (value.value.tagClass === ASN1TagClass.universal)
+                            && (value.value.tagNumber === ASN1UniversalType.boolean)
+                        )
+                            ? (value.value.boolean // ca6c009c-f5da-4fa2-a3d6-3791353c3fbe
+                                ? {
+                                    not: new Uint8Array([0])
+                                }
+                                : new Uint8Array([0])
+                            )
+                            : value.value.value as Uint8Array<ArrayBuffer>, // Lol. Sorry.
                     },
                     select: {
                         id: true,
                     },
                 }));
+            }
+
             // We use the naming matcher getter because it is symmetrical.
             // Equality matching rules are not required to be.
             const emr = attrSpec?.equalityMatchingRule
@@ -171,7 +218,8 @@ async function validateValues(
             // possible matches and use the equality matcher to check for
             // duplicates
             if (
-                !attrSpec?.driver?.hasValue // this value is not handled exceptionally, and...
+                !isSingleFormEncoding
+                && !attrSpec?.driver?.hasValue // this value is not handled exceptionally, and...
                 && !valueExists // a byte-for-byte database query did not identity any matches, and...
                 && emr // there is an equality matching rule
                 && (await hasValueWithoutDriver(ctx, entry.dse.id, value, emr))
@@ -250,6 +298,47 @@ async function validateValues(
                     }
                 }
             }
+        }
+
+        if (isSingleFormEncoding) {
+            const key = (
+                    (value.value.tagClass === ASN1TagClass.universal)
+                    && (value.value.tagNumber === ASN1UniversalType.boolean)
+                )
+                ? `${TYPE_STR}:${value.value.boolean}`
+                : `${TYPE_STR}:${Buffer.from(value.value.toBytes()).toString("base64")}`;
+            if (addedSingleFormValues.has(key)) {
+                throw new AttributeError(
+                    ctx.i18n.t("err:value_already_exists", {
+                        type: value.type.toString(),
+                    }),
+                    new AttributeErrorData(
+                        {
+                            rdnSequence: getDistinguishedName(entry),
+                        },
+                        [
+                            new AttributeErrorData_problems_Item(
+                                AttributeProblem_attributeOrValueAlreadyExists,
+                                value.type,
+                                value.value,
+                            ),
+                        ],
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            undefined,
+                            undefined,
+                            attributeError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            addedSingleFormValues.add(key);
         }
     }
 }

@@ -51,7 +51,6 @@ async function addAttributes (
     addingEntry: boolean = false,
 ): Promise<Prisma.PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
-        // TODO: Change the function signature to use attributes directly.
         await validateValues(
             ctx,
             entry,
@@ -60,7 +59,6 @@ async function addAttributes (
             signErrors,
         );
     }
-    const normalizerGetter = getEqualityNormalizer(ctx);
     const pendingUpdates: PendingUpdates = {
         entryUpdate: addingEntry
             ? {}
