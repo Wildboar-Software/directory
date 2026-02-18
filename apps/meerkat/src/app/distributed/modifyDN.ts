@@ -477,7 +477,6 @@ async function modifyDN (
     const relevantACIItems = await getACIItems(
         ctx,
         accessControlScheme,
-        target.immediateSuperior,
         target,
         relevantSubentries,
         Boolean(target.dse.subentry),
@@ -733,7 +732,6 @@ async function modifyDN (
             const relevantACIItems = await getACIItems(
                 ctx,
                 accessControlScheme,
-                superior,
                 undefined,
                 relevantSubentries,
                 Boolean(target.dse.subentry),
@@ -915,7 +913,6 @@ async function modifyDN (
             const relevantACIItemsForSuperior = await getACIItems(
                 ctx,
                 accessControlScheme,
-                superior.immediateSuperior,
                 superior,
                 relevantSubentries,
                 !!superior.dse.subentry,

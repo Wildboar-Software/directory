@@ -360,7 +360,6 @@ async function addEntry (
     const relevantACIItems = await getACIItems(
         ctx,
         accessControlScheme,
-        immediateSuperior,
         undefined,
         relevantSubentries,
         isSubentry,
@@ -449,7 +448,6 @@ async function addEntry (
             const relevantACIItemsForSuperior = await getACIItems(
                 ctx,
                 accessControlScheme,
-                immediateSuperior.immediateSuperior,
                 immediateSuperior,
                 relevantSubentries,
                 !!immediateSuperior.dse.subentry,
@@ -781,7 +779,6 @@ async function addEntry (
             const subordinateACI = await getACIItems(
                 ctx,
                 effectiveAccessControlScheme,
-                existing.immediateSuperior,
                 existing,
                 effectiveRelevantSubentries,
                 Boolean(existing.dse.subentry),

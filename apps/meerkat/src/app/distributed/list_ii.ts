@@ -576,7 +576,6 @@ async function list_ii (
                 const subordinateACI = await getACIItems(
                     ctx,
                     effectiveAccessControlScheme,
-                    subordinate.immediateSuperior,
                     subordinate,
                     effectiveRelevantSubentries,
                     Boolean(subordinate.dse.subentry),

@@ -682,7 +682,6 @@ async function searchRuleCheckProcedure_i (
             const relevantACIItems = await getACIItems(
                 ctx,
                 accessControlScheme,
-                subentry.immediateSuperior,
                 subentry,
                 relevantSubentries,
                 Boolean(target.dse.subentry),

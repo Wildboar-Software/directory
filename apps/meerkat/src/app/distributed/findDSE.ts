@@ -144,6 +144,7 @@ import stringifyDN from "../x500/stringifyDN.js";
 import { acdf } from "../authz/acdf.js";
 import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC.js";
 import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn.js";
+import printCode from "../utils/printCode.js";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -309,6 +310,7 @@ export
         state.foundDSE = ctx.dit.root;
         return;
     }
+
     let i: number = 0;
     let dse_i: Vertex = haystackVertex;
     let nssrEncountered: boolean = false;
@@ -356,6 +358,28 @@ export
         )
         : undefined;
 
+    const logInfo = {
+        clientFamily: assn?.socket.remoteFamily,
+        clientAddress: assn?.socket.remoteAddress,
+        clientPort: assn?.socket.remotePort,
+        association_id: assn?.id,
+        iid: printInvokeId(state.invokeId),
+        opid: state.chainingArguments.operationIdentifier,
+        opcode: printCode(state.operationCode),
+        signErrors,
+        manageDSAIT,
+        dontDereferenceAliases,
+        partialNameResolution,
+        dontUseCopy,
+        copyShallDo,
+        errorProtection,
+        targetDNLength: needleDN.length,
+        requestor: (ctx.config.log.boundDN && requestor)
+            ? stringifyDN(ctx, requestor).slice(0, 1024)
+            : undefined,
+        timeLimitEndTime,
+    };
+
     const node_candidateRefs_empty_2 = async (): Promise<void> => {
         if (candidateRefs.length) {
             // Add CR from candidateRefs to NRContinuationList
@@ -372,11 +396,11 @@ export
                 ctx.log.warn(ctx.i18n.t("log:shadow_not_under_cp", {
                     id: dse_i.dse.uuid,
                 }), {
-                    remoteFamily: assn?.socket.remoteFamily,
-                    remoteAddress: assn?.socket.remoteAddress,
-                    remotePort: assn?.socket.remotePort,
-                    association_id: assn?.id,
-                    invokeID: printInvokeId(state.invokeId),
+                    ...logInfo,
+                    dse_id: dse_i.dse.id,
+                    dse_uuid: dse_i.dse.uuid,
+                    entry_uuid: dse_i.dse.entryUUID,
+                    dse_dn: stringifyDN(ctx, getDistinguishedName(dse_i)),
                 });
                 return undefined;
             }
@@ -442,11 +466,12 @@ export
         if (partialNameResolution === FALSE) {
             const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
             if (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate) {
+                const n = nextRDNToBeResolved?.toString();
                 ctx.log.debug(ctx.i18n.t("log:entry_not_found", {
                     context: "nssr",
                     i,
-                    n: nextRDNToBeResolved?.toString(),
-                }));
+                    n,
+                }), { ...logInfo, i, n });
             }
             /* DEVIATION: Search for bd34be10-ce99-4d0a-9385-d993a53f3fd9. Same
             condition as used there so as to avoid disclosing the presence of
@@ -743,15 +768,12 @@ export
                 );
             }
             default: {
-                ctx.log.error(ctx.i18n.t("log:operation_progress_not_understood", {
+                ctx.log.warn(ctx.i18n.t("log:operation_progress_not_understood", {
                     value: nameResolutionPhase,
                     cid: assn?.id ?? "INTERNAL",
                 }), {
-                    remoteFamily: assn?.socket.remoteFamily,
-                    remoteAddress: assn?.socket.remoteAddress,
-                    remotePort: assn?.socket.remotePort,
-                    association_id: assn?.id,
-                    invokeID: printInvokeId(state.invokeId),
+                    ...logInfo,
+                    nameResolutionPhase,
                 });
                 throw new MistypedArgumentError();
             }
@@ -1010,7 +1032,6 @@ export
                     const targetACI = await getACIItems(
                         ctx,
                         accessControlScheme,
-                        matchedVertex.immediateSuperior,
                         matchedVertex,
                         relevantSubentries,
                         Boolean(matchedVertex.dse.subentry),
@@ -1199,7 +1220,6 @@ export
                         const targetACI = await getACIItems(
                             ctx,
                             accessControlScheme,
-                            dse_i,
                             child,
                             relevantSubentries,
                             Boolean(child.dse.subentry),
@@ -1246,10 +1266,18 @@ export
                         );
 
                         if (!authorizedToDiscover) {
-                            ctx.log.info(ctx.i18n.t("log:not_authz_discover", {
+                            ctx.log.trace(ctx.i18n.t("log:not_authz_discover", {
                                 aid: assn?.id ?? "INTERNAL",
                                 dn: stringifyDN(ctx, needleDN).slice(0, 1024),
-                            }));
+                            }), {
+                                ...logInfo,
+                                accessControlScheme: accessControlScheme.toString(),
+                                relevantTuplesLength: relevantTuples.length,
+                                dse_id: child.dse.id,
+                                dse_uuid: child.dse.uuid,
+                                entry_uuid: child.dse.entryUUID,
+                                dse_dn: stringifyDN(ctx, getDistinguishedName(child)),
+                            });
                             const authorizedToDiscoverOnError: boolean = acdf(
                                 ctx,
                                 accessControlScheme,
@@ -1375,7 +1403,6 @@ export
             const targetACI = await getACIItems(
                 ctx,
                 accessControlScheme,
-                dse_i.immediateSuperior,
                 dse_i,
                 relevantSubentries,
                 Boolean(dse_i.dse.subentry),
@@ -1559,6 +1586,7 @@ export
             const [masters, shadows] = splitIntoMastersAndShadows(knowledges!);
             const mainAP = masters.pop() ?? shadows.pop();
             if (!mainAP) {
+                const dse_i_dn = stringifyDN(ctx, getDistinguishedName(dse_i));
                 // NOTE: I originally planned to fall back on superior
                 // knowledge if the reference type was immediate superior, but
                 // the problem with this is that the superior knowledge
@@ -1566,9 +1594,15 @@ export
                 // value of the specificKnowledge attribute.
                 // So now, we just return an error.
                 ctx.log.error(ctx.i18n.t("log:superior_knowledge_empty", {
-                    dn: getDistinguishedName(dse_i),
+                    dn: dse_i_dn,
                     uuid: dse_i.dse.uuid,
-                }));
+                }), {
+                    ...logInfo,
+                    dse_id: dse_i.dse.id,
+                    dse_uuid: dse_i.dse.uuid,
+                    entry_uuid: dse_i.dse.entryUUID,
+                    dse_dn: dse_i_dn,
+                });
                 /* ITU-T Recommendation X.518 (2019), Section 20.3.3, seems to
                 indicate that `ditError` is the correct `ServiceProblem` to use
                 when a knowledge reference is malformed. */

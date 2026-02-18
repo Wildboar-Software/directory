@@ -232,7 +232,6 @@ async function changePassword (
         const relevantACIItems = await getACIItems(
             ctx,
             accessControlScheme,
-            target.immediateSuperior,
             target,
             relevantSubentries,
             Boolean(target.dse.subentry),

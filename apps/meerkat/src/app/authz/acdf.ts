@@ -74,8 +74,6 @@ function acdf (
         accessControlSchemesThatUseRBAC.has(acs)
         && assn
         && !addingEntry // RBAC basically has no effect on adding entries unless the superior is hidden.
-        // TODO: Find DSE basically runs this same code twice. I want to find some optimization to avoid that.
-        // && (permissions.length !== 1 || permissions[0] !== PERMISSION_CATEGORY_DISCLOSE_ON_ERROR)
     ) {
         if (
             ("value" in request)
@@ -85,7 +83,6 @@ function acdf (
             const labelContext = request.contexts
                 ?.find((c) => c.contextType.isEqualTo(avslc));
             if (labelContext?.contextValues.length) {
-                // return true; // If there is no label, access is allowed.
                 const label = _decode_SignedSecurityLabel(labelContext.contextValues[0]);
                 const authorized: boolean = rbacACDF(
                     ctx,

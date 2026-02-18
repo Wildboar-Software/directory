@@ -1625,7 +1625,6 @@ async function search_i_ex (
     const targetACI = await getACIItems(
         ctx,
         accessControlScheme,
-        target.immediateSuperior,
         target,
         relevantSubentries,
         Boolean(target.dse.subentry),
@@ -3236,7 +3235,6 @@ async function search_i_ex (
                     const targetACI = await getACIItems(
                         ctx,
                         subAccessControlScheme,
-                        target,
                         subordinate,
                         relevantSubentries,
                         Boolean(subordinate.dse.subentry),

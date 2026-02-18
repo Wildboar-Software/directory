@@ -39,8 +39,6 @@ function aciFrom (row: DBAttributeValue): ACIItem {
  *
  * @param accessControlScheme The access control scheme in place for the
  *  applicable access control administrative area
- * @param immediateSuperior The DSE that is immediately superior to `vertex`,
- *  supplied as a separate argument for when `vertex` does not exist yet
  * @param vertex The DSE whose relevant ACI items are to be determined. This
  *  may be `undefined` if the target entry does not exist yet, as will happen
  *  when using the `addEntry` operation.
@@ -57,7 +55,6 @@ export
 async function getACIItems (
     ctx: Context,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
-    immediateSuperior: Vertex | undefined, // TODO: Remove unused argument.
     vertex: Vertex | undefined,
     relevantSubentries: Vertex[],
     isSubentry: boolean,

@@ -308,7 +308,7 @@ async function apinfoProcedure (
             from this DSA's country. It also makes the DSA more "deterministic"
             from the perspective of the user: two users will get treated the
             same by this DSA, even if they are from two different countries. */
-            if (!isLocalScope(ctx.dsa.accessPoint.ae_title, ap.ae_title)) {
+            if (!isLocalScope(ctx, ctx.dsa.accessPoint.ae_title, ap.ae_title)) {
                 ctx.log.trace(ctx.i18n.t("log:not_chaining_out_of_local_scope", {
                     opid: req.chaining.operationIdentifier,
                     aet: stringifyDN(ctx, ap.ae_title.rdnSequence),

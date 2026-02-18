@@ -119,7 +119,6 @@ async function permittedToFindDSE (
             const targetACI = await getACIItems(
                 ctx,
                 accessControlScheme,
-                dse_i.immediateSuperior,
                 dse_i,
                 relevantSubentries,
                 Boolean(dse_i.dse.subentry),
