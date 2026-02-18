@@ -36,6 +36,9 @@ function attributeFromDatabaseAttribute (
                     el.fromBytes(v.ber);
                     return el;
                 }),
+                // Yes this is fine. ITU-T X.501 requires there to be only one
+                // context of each context type, which means only one fallback
+                // value is legitimate for a context.
                 value[0].fallback,
             )),
     };

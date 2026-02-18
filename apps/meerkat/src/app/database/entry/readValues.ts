@@ -75,35 +75,6 @@ interface ReadValuesReturn {
     attValIncomplete: Set<IndexableOID>;
 };
 
-// EntryInformationSelection ::= SET {
-//     attributes                     CHOICE {
-//       allUserAttributes         [0]  NULL,
-//       select                    [1]  SET OF AttributeType
-//       -- empty set implies no attributes are requested -- } DEFAULT allUserAttributes:NULL,
-//     infoTypes               [2]  INTEGER {
-//       attributeTypesOnly        (0),
-//       attributeTypesAndValues   (1)} DEFAULT attributeTypesAndValues,
-//     extraAttributes                CHOICE {
-//       allOperationalAttributes  [3]  NULL,
-//       select                    [4]  SET SIZE (1..MAX) OF AttributeType } OPTIONAL,
-//     contextSelection               ContextSelection OPTIONAL,
-//     returnContexts                 BOOLEAN DEFAULT FALSE,
-//     familyReturn                   FamilyReturn DEFAULT
-//                                      {memberSelect contributingEntriesOnly} }
-
-// ContextSelection ::= CHOICE {
-//     allContexts       NULL,
-//     selectedContexts  SET SIZE (1..MAX) OF TypeAndContextAssertion,
-//     ... }
-
-// TypeAndContextAssertion ::= SEQUENCE {
-//     type               AttributeType,
-//     contextAssertions  CHOICE {
-//       preference         SEQUENCE OF ContextAssertion,
-//       all                SET OF ContextAssertion,
-//       ...},
-//     ... }
-
 /**
  * @summary Add friend attribute types to the selected attribute types
  * @description
@@ -536,6 +507,7 @@ async function readValues (
         })).map((a) => attributeFromDatabaseAttribute(ctx, a)
     );
 
+    // TODO: Do these concurrently? Wouldn't this speed things up a lot?
     for (const reader of userAttributeReaderToExecute) {
         try {
             userValues.push(...await reader(ctx, entry, options?.relevantSubentries));
@@ -557,6 +529,7 @@ async function readValues (
      * values listed as both its collective values and user values.
      */
     let collectiveValues: Value[] = ((options?.relevantSubentries && entry.dse.entry && !entry.dse.subentry)
+        // This does not perform a database query if there are no CA subentries
         ? await readCollectiveValues(ctx, entry, options?.relevantSubentries)
         : [])
             .filter((attr) => {

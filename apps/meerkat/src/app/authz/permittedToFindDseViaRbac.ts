@@ -9,6 +9,11 @@ import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 import { rbacACDF } from "./rbacACDF.js";
 import { _decode_SignedSecurityLabel } from "@wildboar/x500/EnhancedSecurity";
 import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
+import stringifyDN from "../x500/stringifyDN.js";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
+import attributeFromDatabaseAttribute from "../database/attributeFromDatabaseAttribute.js";
+
+const SEC_LABEL_CTX = attributeValueSecurityLabelContext["&id"].toString();
 
 /**
  * @summary Whether a user is permitted to find a given DSE under RBAC.
@@ -64,23 +69,21 @@ async function permittedToFindDseViaRbac (
             constructed: true,
             content_octets: true,
             ContextValue: {
-                where: {
-                    type: attributeValueSecurityLabelContext["&id"].toString(),
-                },
                 select: {
+                    type: true,
                     ber: true,
+                    fallback: true,
                 },
             },
         },
     });
 
-    const noSecurityLabels = allValuesOfDistinguishedTypes
-        .every((v) => v.ContextValue.length === 0);
-    if (noSecurityLabels) {
+    const hasSecurityLabels = allValuesOfDistinguishedTypes
+        .some((v) => v.ContextValue.some((cv) => cv.type === SEC_LABEL_CTX));
+    if (!hasSecurityLabels) {
         return true;
     }
 
-    // const namingMatcher = getNamingMatcherGetter(ctx);
     const rdnSet: Set<string> = new Set();
     for (const atav of vertex.dse.rdn) {
         const normalizer = getNormalizer(atav.type_);
@@ -114,26 +117,36 @@ async function permittedToFindDseViaRbac (
         }
     }
     if (rdnSet.size > 0) {
+        const dnstr = stringifyDN(ctx, getDistinguishedName(vertex));
+        ctx.log.warn(ctx.i18n.t("log:rdn_has_values_entry_does_not", {
+            dn: dnstr,
+            uuid: vertex.dse.uuid,
+        }), {
+            association_id: assn.id,
+            dse_id: vertex.dse.id,
+            dse_uuid: vertex.dse.uuid,
+            entry_uuid: vertex.dse.entryUUID,
+            dse_dn: dnstr,
+            unmatchedRDNs: rdnSet.size,
+            rdnsLength: vertex.dse.rdn.length,
+        });
         // We return "false" because we could not relate attribute values to
         // the distinguished ones stored in the database.
-        // TODO: Log
         return false;
     }
 
+    // All of the above code is basically just to get the `AttributeValue`s that
+    // correspond to the `DistinguishedValue`s.
     for (const dv of dvs) {
-        if (dv.ContextValue.length === 0) {
+        const sec_label_ctx = dv.ContextValue
+            .find((cv) => cv.type.toString() === SEC_LABEL_CTX);
+        if (!sec_label_ctx) {
             continue;
         }
-        const value_el = new BERElement();
-        value_el.tagClass = dv.tag_class;
-        value_el.tagNumber = dv.tag_number;
-        value_el.construction = dv.constructed
-            ? ASN1Construction.constructed
-            : ASN1Construction.primitive;
-        value_el.value = dv.content_octets;
 
+        const v = attributeFromDatabaseAttribute(ctx, dv);
         const cval_el = new BERElement();
-        cval_el.fromBytes(dv.ContextValue[0].ber);
+        cval_el.fromBytes(sec_label_ctx.ber);
         const label = _decode_SignedSecurityLabel(cval_el);
         const type = ObjectIdentifier.fromBytes(dv.type_oid);
         const authorized = rbacACDF(
@@ -142,8 +155,8 @@ async function permittedToFindDseViaRbac (
             vertex,
             label,
             type,
-            value_el,
-            [], // TODO: Document this discrepancy.
+            v.value,
+            v.contexts ?? [],
             [ PERMISSION_CATEGORY_BROWSE, PERMISSION_CATEGORY_RETURN_DN ],
         );
         if (!authorized) {
