@@ -5,20 +5,12 @@ import type {
 } from "../../types/index.js";
 import {
     Attribute,
-} from "@wildboar/x500/InformationFramework";
-import {
     id_oa_excludeAllCollectiveAttributes,
-} from "@wildboar/x500/InformationFramework";
-import {
     collectiveAttributeSubentry,
-} from "@wildboar/x500/InformationFramework";
-import {
     id_ar_collectiveAttributeSpecificArea,
-} from "@wildboar/x500/InformationFramework";
-import {
     id_ar_collectiveAttributeInnerArea,
+    collectiveExclusions,
 } from "@wildboar/x500/InformationFramework";
-import { collectiveExclusions } from "@wildboar/x500/InformationFramework";
 import { _decodeObjectIdentifier } from "@wildboar/asn1/functional";
 import { attributeValueFromDB } from "../attributeValueFromDB.js";
 
@@ -48,6 +40,12 @@ async function readCollectiveAttributes (
     vertex: Vertex,
     relevantSubentries: Vertex[],
 ): Promise<Attribute[]> {
+    const collectiveAttributeSubentries = relevantSubentries
+        .filter((sub) => sub.dse.objectClass.has(CA_SUBENTRY))
+        .reverse();
+    if (collectiveAttributeSubentries.length === 0) {
+        return []; // To avoid an unnecessary database query.
+    }
     const collex: Set<IndexableOID> = new Set(
         (await ctx.db.attributeValue.findMany({
             where: {
@@ -68,9 +66,7 @@ async function readCollectiveAttributes (
     if (collex.has(EXCLUDE_ALL)) {
         return [];
     }
-    const collectiveAttributeSubentries = relevantSubentries
-        .filter((sub) => sub.dse.objectClass.has(CA_SUBENTRY))
-        .reverse();
+
     /**
      * It is not enough to simply stop once we've encountered the first subentry
      * whose immediate superior DSE has a CASA administrative role, because
