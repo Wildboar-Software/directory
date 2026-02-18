@@ -493,5 +493,14 @@
     "no_time_for_remote_security_info": "Did not fetch remote security info (clearances, uniqueIdentifier, etc.).",
     "no_time_for_remote_security_info@with_dn": "Did not fetch remote security info (clearances, uniqueIdentifier, etc.) for {{dn}}.",
     "not_chaining_out_of_local_scope": "Not chaining locally-scoped request with operation ID {{opid}} to DSA {{aet}} in another country.",
-    "rdn_has_values_entry_does_not": "The RDN for DSE {{dn}} (dse UUID {{uuid}}) has attribute values that are not present in the entry itself. It is therefore malformed."
+    "rdn_has_values_entry_does_not": "The RDN for DSE {{dn}} (dse UUID {{uuid}}) has attribute values that are not present in the entry itself. It is therefore malformed.",
+    "secpol_not_recognized": "Security policy {{oid}} is not understood, but used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}). Fallback behavior will apply.",
+    "sec_label_hash_not_recognized": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) used an unrecognized hashing algorithm {{algid}}. Fallback behavior will apply.",
+    "sec_label_hash_invalid": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) had an invalid hash. Fallback behavior will apply.",
+    "sec_label_unknown_authority": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) was signed by a labelling authority with an unrecognized key identifier 0x{{hex}}. Fallback behavior will apply.",
+    "sec_label_unknown_authority@with_ladn": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) was signed by a labelling authority {{ladn}} with an unrecognized key identifier 0x{{hex}}. Fallback behavior will apply.",
+    "sec_label_invalid_authority": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) was signed by an unauthorized labelling authority {{ladn}} with key identifier 0x{{hex}}. Fallback behavior will apply.",
+    "sec_label_invalid_authority@with_ladn": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) was signed by an unauthorized labelling authority with key identifier 0x{{hex}}. Fallback behavior will apply.",
+    "sec_label_no_key": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) referred to a public key that could not be located. Fallback behavior will apply.",
+    "sec_label_invalid_sig": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) had an invalid signature. Fallback behavior will apply."
 }

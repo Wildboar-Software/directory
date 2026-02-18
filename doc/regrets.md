@@ -22,3 +22,51 @@ Evidence in favor:
 
 I had to hard-code a lot of exceptions into my codebase to make this work, and
 even then, I'm not certain this isn't going to cause a ton of problems.
+
+## Structured Logging
+
+My current belief around logging is: all logging should be structured, the
+actual log message itself should be extremely succinct and (usually) in
+all-lowercased, minimally-punctuated English with no interpolated data, and
+there should be a log message identifier / event type that never changes.
+
+So a good log message would look like this:
+
+```json
+{
+  "event_type": 1,
+  "ts": 2479759222,
+  "msg_en": "access denied to read attribute type",
+  "dse_id": 123,
+  "dse_uuid": "29e22186-e1b7-4e8d-aa78-21f6d80fe50e",
+  "attr_type": "2.5.4.10"
+}
+```
+
+I think the timestamp should be a Unix Epoch, but that comes at the cost of
+readability to humans. I kind of think there should be an option to choose, but
+it maybe makes more sense to have an option like `log_for_humans` that makes
+log output more human-friendly in general.
+
+In Meerkat DSA, these interpolated messages get huge, and I often end up logging
+the same exact things in the structured data as I do in the messages. Making
+these internationalized also introduced huge overhead. Using English-only
+strings means that error messages can be looked up online. If you really want
+to support different languages in these messages, you can use conditional
+compilation to pick the hard-coded language: the event identifier stays the same
+so the event can be looked up online regardless of language.
+
+There's only one thing I'm not entirely clear on: how to handle journald.
+If you're writing structured log messages like this, journald is going to be
+littered with vague messages like "access denied" unless the user drills into
+the structured data. Maybe this is still fine...
+
+## Database
+
+I should have used a key-value store instead.
+
+## Other Things
+
+- Separate classes for each connection type `DAPClient`, `DOPClient`, etc.
+  - This is all basically copied code with just a few differences between them,
+    and it has been such a nightmare maintaining all these classes.

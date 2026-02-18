@@ -45,8 +45,9 @@ import {
     PERMISSION_CATEGORY_MODIFY,
     PERMISSION_CATEGORY_REMOVE,
 } from "@wildboar/x500";
+import stringifyDN from "../x500/stringifyDN.js";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 
-// TODO: Add this to the registry.
 export const id_simpleSecurityPolicy = ObjectIdentifier.fromParts([ 403, 1 ], ds);
 
 const modification_permissions: number[] = [
@@ -149,8 +150,6 @@ const simple_rbac_acdf: RBAC_ACDF = (
     );
 };
 
-// TODO: Log invalid hashes and such so admins can know if they are locked out of values.
-
 /**
  * @summary Rule-Based Access Control Decision Function
  * @description
@@ -186,11 +185,29 @@ export function rbacACDF (
     }
     const policyId = label.toBeSigned.securityLabel.security_policy_identifier
         ?? id_simpleSecurityPolicy;
-    const acdf = ctx.rbacPolicies.get(policyId.toString());
+    const policyStr = policyId.toString();
+    const acdf = ctx.rbacPolicies.get(policyStr);
     const relevantClearances = assn.clearances.filter((c) => c.policyId.isEqualTo(policyId));
     const userHasTopSecretClearance: boolean = relevantClearances
         .some((c) => (c.classList?.[ClassList_topSecret] === TRUE_BIT));
+
+    const dnstr = stringifyDN(ctx, getDistinguishedName(target));
+    const typestr = attributeType.toString();
+    const logInfo = {
+        association_id: assn.id,
+        dse_id: target.dse.id,
+        dse_uuid: target.dse.uuid,
+        entry_uuid: target.dse.entryUUID,
+        dse_dn: dnstr,
+        attr_type: typestr,
+    };
     if (!acdf) {
+        ctx.log.trace(ctx.i18n.t("log:secpol_not_recognized", {
+            oid: policyStr,
+            type: typestr,
+            dn: dnstr,
+            uuid: target.dse.uuid,
+        }), logInfo);
         /* If the policy is not understood, allow the request if unclassified or
         if the user has top-secret clearance for that policy. Otherwise, deny
         access. */
@@ -200,8 +217,15 @@ export function rbacACDF (
         );
     }
 
-    const atav_hash_alg = digestOIDToNodeHash.get(label.toBeSigned.attHash.algorithmIdentifier.algorithm.toString());
+    const algstr = label.toBeSigned.attHash.algorithmIdentifier.algorithm.toString();
+    const atav_hash_alg = digestOIDToNodeHash.get(algstr);
     if (!atav_hash_alg) {
+        ctx.log.trace(ctx.i18n.t("log:sec_label_hash_not_recognized", {
+            algid: algstr,
+            type: typestr,
+            dn: dnstr,
+            uuid: target.dse.uuid,
+        }), logInfo);
         return userHasTopSecretClearance; // Hash algorithm not understood.
     }
     const atav = new AttributeTypeAndValue(attributeType, value);
@@ -213,6 +237,11 @@ export function rbacACDF (
     const provided_digest = provided_digest_bytes;
 
     if (Buffer.compare(calculated_digest, provided_digest)) {
+        ctx.log.trace(ctx.i18n.t("log:sec_label_hash_invalid", {
+            type: typestr,
+            dn: dnstr,
+            uuid: target.dse.uuid,
+        }), logInfo);
         return userHasTopSecretClearance; // The hashes don't match up.
     }
 
@@ -231,9 +260,22 @@ export function rbacACDF (
     ) { // Then we validate the signature against this DSA's signing key.
         publicKey = ctx.config.signing.key;
     } else if (label.toBeSigned.keyIdentifier) {
-        const key_id = Buffer.from(label.toBeSigned.keyIdentifier).toString("base64");
+        const buf = Buffer.from(label.toBeSigned.keyIdentifier);
+        const key_id = buf.toString("base64");
         const authority = ctx.labellingAuthorities.get(key_id);
         if (authority === null) {
+            ctx.log.trace(ctx.i18n.t("log:no_such_labelling_authority", {
+                context: label.toBeSigned.issuer?.rdnSequence
+                    ? "with_ladn"
+                    : undefined,
+                type: typestr,
+                dn: dnstr,
+                uuid: target.dse.uuid,
+                hex: buf.toString("hex"),
+                ladn: label.toBeSigned.issuer?.rdnSequence
+                    ? stringifyDN(ctx, label.toBeSigned.issuer?.rdnSequence)
+                    : undefined,
+            }), logInfo);
             return userHasTopSecretClearance;
         }
         const issuer = label.toBeSigned.issuer;
@@ -250,6 +292,18 @@ export function rbacACDF (
             )
         );
         if (!authority_is_valid) {
+            ctx.log.trace(ctx.i18n.t("log:sec_label_invalid_authority", {
+                context: label.toBeSigned.issuer?.rdnSequence
+                    ? "with_ladn"
+                    : undefined,
+                type: typestr,
+                dn: dnstr,
+                uuid: target.dse.uuid,
+                hex: buf.toString("hex"),
+                ladn: label.toBeSigned.issuer?.rdnSequence
+                    ? stringifyDN(ctx, label.toBeSigned.issuer?.rdnSequence)
+                    : undefined,
+            }), logInfo);
             return userHasTopSecretClearance;
         }
         publicKey = authority?.publicKey;
@@ -273,12 +327,13 @@ export function rbacACDF (
             }
             publicKey = authority.publicKey;
         }
-    } else { // This should actually be unreachable.
-        // We grant access for only top-secret clearance, just to ensure that
-        // problems can be rectified.
-        return userHasTopSecretClearance;
     }
     if (!publicKey) {
+        ctx.log.trace(ctx.i18n.t("log:sec_label_no_key", {
+            type: typestr,
+            dn: dnstr,
+            uuid: target.dse.uuid,
+        }), logInfo);
         return userHasTopSecretClearance;
     }
     const tbs_bytes = label.originalDER
@@ -297,6 +352,11 @@ export function rbacACDF (
         publicKey,
     );
     if (!sig_valid) {
+        ctx.log.trace(ctx.i18n.t("log:sec_label_invalid_sig", {
+            type: typestr,
+            dn: dnstr,
+            uuid: target.dse.uuid,
+        }), logInfo);
         return userHasTopSecretClearance;
     }
     // At this point, we know that the label is correctly bound to the value,
