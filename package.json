@@ -45,7 +45,7 @@
     "@std/yaml": "npm:@jsr/std__yaml@^1.0.11",
     "@tyler/duckhawk": "npm:@jsr/tyler__duckhawk@^0.3.4",
     "@wildboar/acse": "npm:@jsr/wildboar__acse@^2.0.0",
-    "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.4",
+    "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.6",
     "@wildboar/cms": "npm:@jsr/wildboar__cms@^2.0.0",
     "@wildboar/copp": "npm:@jsr/wildboar__copp@^2.0.0",
     "@wildboar/iso3166": "npm:@jsr/wildboar__iso3166@^1.0.1",

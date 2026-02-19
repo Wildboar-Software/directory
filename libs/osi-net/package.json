@@ -1,9 +1,9 @@
 {
     "name": "@wildboar/osi-net",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "license": "MIT",
     "dependencies": {
-        "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.4",
+        "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.6",
         "@wildboar/acse": "npm:@jsr/wildboar__acse@^2.0.0",
         "@wildboar/copp": "npm:@jsr/wildboar__copp@^2.0.0",
         "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4",
