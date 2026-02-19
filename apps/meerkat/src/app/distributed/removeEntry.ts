@@ -582,11 +582,10 @@ async function removeEntry (
     if (op) {
         op.pointOfNoReturnTime = new Date();
     }
-    /** Remove the `hierarchyParent` attribute so hierarchical children are updated */
-    ctx.db.$transaction(await removeAttribute(ctx, target, hierarchyParent["&id"]))
-        .then()
-        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_remove_hp"), e));
-    await deleteEntry(ctx, target, alsoDeleteFamily);
+    /* Remove the `hierarchyParent` attribute so hierarchical children are
+    updated. This must complete before the entry as a whole is deleted. */
+    await ctx.db.$transaction(await removeAttribute(ctx, target, hierarchyParent["&id"]));
+    await deleteEntry(ctx, target);
 
     if (target.dse.subentry) {
         // 1. Remove the subentry.
