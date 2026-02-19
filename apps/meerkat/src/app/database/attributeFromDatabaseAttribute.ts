@@ -6,10 +6,6 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB.js";
 
-// TODO: Use the Node-API to speed up this function a lot.
-// - Create BERElement even faster.
-// - Parse Object Identifier even faster.
-// - Single-pass context creation
 /**
  * @summary Converts a value from the database into an in-memory value
  * @param ctx The context object

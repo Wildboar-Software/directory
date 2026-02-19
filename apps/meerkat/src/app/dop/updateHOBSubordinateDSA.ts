@@ -90,7 +90,7 @@ async function updateHOBSubordinateDSA (
         ob_identifier: Number(currentBindingID.identifier),
         ob_version: Number(currentBindingID.version),
         ob_type: id_op_binding_hierarchical.toString(),
-        cp,
+        cp: stringifyDN(ctx, cp),
         ap,
         aliasDereferenced,
         signErrors,
@@ -412,7 +412,7 @@ async function updateHOBSubordinateDSA (
     }
     assn
         .unbind() // INTENTIONAL NO AWAIT
-        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_unbind"), e));
+        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_unbind", { e }), logInfo));
 }
 
 export default updateHOBSubordinateDSA;

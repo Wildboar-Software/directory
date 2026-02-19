@@ -229,6 +229,14 @@ async function addEntry (
         ?? data.requestor
         ?? assn.boundNameAndUID?.dn;
 
+    const logInfo = {
+        aid: assn.id,
+        iid: printInvokeId(state.invokeId),
+        requestor: requestor ? stringifyDN(ctx, requestor) : undefined,
+        signErrors,
+        target: stringifyDN(ctx, data.object.rdnSequence),
+    };
+
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -250,17 +258,15 @@ async function addEntry (
         && ("basicLevels" in state.chainingArguments.authenticationLevel)
         && !state.chainingArguments.authenticationLevel.basicLevels.signed
     ) {
-        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
-        const logInfo = {
+        ctx.log.warn(ctx.i18n.t("log:invalid_signature", {
             context: "arg",
-            host: remoteHostIdentifier,
-            aid: assn.id,
-            iid: printInvokeId(state.invokeId),
-            ap: stringifyDN(ctx, requestor ?? []),
-        };
-        ctx.log.warn(ctx.i18n.t("log:invalid_signature", logInfo), logInfo);
+            ...logInfo,
+        }), logInfo);
         throw new errors.SecurityError(
-            ctx.i18n.t("err:invalid_signature", logInfo),
+            ctx.i18n.t("err:invalid_signature", {
+                context: "arg",
+                ...logInfo,
+            }),
             new SecurityErrorData(
                 SecurityProblem_invalidSignature,
                 undefined,
@@ -1344,7 +1350,10 @@ async function addEntry (
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             })
                 .then()
-                .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
+                .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob", { e }), {
+                    ...logInfo,
+                    ...((typeof e === "object" && e) ? e : {}),
+                }));
             throw e;
         }
         /**
@@ -1367,7 +1376,10 @@ async function addEntry (
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             })
                 .then()
-                .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
+                .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob", { e }), {
+                    ...logInfo,
+                    ...((typeof e === "object" && e) ? e : {}),
+                }));
             throw new errors.UnknownError(ctx.i18n.t("err:could_not_find_new_subr"));
         }
         await ctx.db.operationalBinding.update({
@@ -1667,7 +1679,10 @@ async function addEntry (
                     governingStructureRule: Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier),
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-            }).catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_update_gsr"), e));
+            }).catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_update_gsr", { e }), {
+                ...logInfo,
+                new_gsr: structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier,
+            }));
             immediateSuperior.dse.governingStructureRule = Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier);
         }
     }

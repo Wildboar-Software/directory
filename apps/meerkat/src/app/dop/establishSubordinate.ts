@@ -60,6 +60,7 @@ import getSubschemaSubentry from "../dit/getSubschemaSubentry.js";
 import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass.js";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding.js";
+import stringifyDN from "../x500/stringifyDN.js";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -207,12 +208,21 @@ async function establishSubordinate (
 ): Promise<EstablishSubordinateReturn> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
+    // TODO: Why is this unused?
     const timeoutTime: Date | undefined = connectionTimeout
         ? addMilliseconds(startTime, connectionTimeout)
         : undefined;
+    const logInfo = {
+        immediateSuperior: stringifyDN(ctx, getDistinguishedName(immediateSuperior)),
+        newEntryRDN: stringifyDN(ctx, [ newEntryRDN ]),
+        targetSystem: stringifyDN(ctx, targetSystem.ae_title.rdnSequence),
+        signErrors,
+        aliasDereferenced,
+        deadline: options?.endTime ?? timeoutTime,
+    };
     ctx.log.info(ctx.i18n.t("log:establishing_hob_via_add_entry", {
         uuid: immediateSuperior.dse.uuid,
-    }));
+    }), logInfo);
     const assn = await bindForOBM(ctx, undefined, undefined, targetSystem, aliasDereferenced, signErrors);
     if (!assn) {
         throw new ServiceError(
@@ -380,23 +390,21 @@ async function establishSubordinate (
         getDistinguishedName(immediateSuperior),
     );
 
-    // const timeRemainingForOperation: number | undefined = timeoutTime
-    //     ? differenceInMilliseconds(timeoutTime, new Date())
-    //     : undefined;
-
     try {
         const opts: CommonEstablishOptions<HierarchicalAgreement, SuperiorToSubordinate> = {
             accessPoint: ctx.dsa.accessPoint,
             initiator: sup2sub,
             agreement,
-            valid: options?.endTime
+            valid: (options?.endTime ?? timeoutTime)
                 ? new Validity(
                     {
                         now: null,
                     },
                     {
                         time: {
-                            generalizedTime: options.endTime,
+                            // I don't get why I have to use the non-null assertion here.
+                            // Why doesn't the condition above know that this is truthy?
+                            generalizedTime: (options?.endTime ?? timeoutTime)!,
                         },
                     },
                 )
@@ -413,7 +421,10 @@ async function establishSubordinate (
         const response = await assn.establishHOBWithSubordinate(opts);
         assn.unbind({ disconnectSocket: true }) // INTENTIONAL_NO_AWAIT
             .then()
-            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_unbind"), e));
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_unbind", { e }), {
+                ...logInfo,
+                ...((typeof e === "object" && e) ? e : {}),
+            }));
         if ("result" in response && response.result) {
             const result = response.result.parameter;
             if ("signed" in result) {

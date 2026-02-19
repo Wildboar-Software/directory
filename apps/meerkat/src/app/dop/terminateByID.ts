@@ -21,6 +21,7 @@ import {
 import { removeConsumer } from "./terminate/removeConsumer.js";
 import { removeSupplier } from "./terminate/removeSupplier.js";
 import { clearSafeTimeout } from "@wildboar/safe-timers";
+import stringifyDN from "../x500/stringifyDN.js";
 
 /**
  * @summary Terminates an operational binding by its database ID.
@@ -49,6 +50,7 @@ async function terminate (
             outbound: true,
             binding_type: true,
             binding_identifier: true,
+            binding_version: true,
         },
     });
     if (!ob) {
@@ -68,7 +70,14 @@ async function terminate (
             if (iAmSuperior) {
                 removeSubordinate(ctx, agreement)
                     .then()
-                    .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_remove_subordinate"), e))
+                    .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_remove_subordinate", { e }), {
+                        obid: id,
+                        ob_identifier: Number(ob.binding_identifier),
+                        ob_version: Number(ob.binding_version),
+                        ob_type: ob.binding_type,
+                        subordinate: stringifyDN(ctx, [ ...agreement.immediateSuperior, agreement.rdn ]),
+                        ...((typeof e === "object" && e) ? e : {}),
+                    }))
                     ; // Async, but we do not need to await.
             }
             /*

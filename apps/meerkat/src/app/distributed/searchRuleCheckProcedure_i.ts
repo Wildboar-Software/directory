@@ -955,6 +955,8 @@ async function searchRuleCheckProcedure_i (
         }
     }
 
+    // TODO: Also report that in ITU-T X.511, Section 7.3.2, only removing
+    // family members doesn't make sense. If the entry is removed, all of its descendants are removed too.
     // WARNING: Step 9 is unreachable. I will report this defect.
     // if (BadPermittedSR.length === 0) {
     //     throw new ServiceError(
