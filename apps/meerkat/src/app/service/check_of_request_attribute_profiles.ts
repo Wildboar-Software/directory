@@ -267,7 +267,7 @@ export function check_of_request_attribute_profile_in_filter(
                 const profile = context_map.get(key);
                 if (!profile) {
                     state.searchContextViolationsAttr = type_oid;
-                    state.searchContextViolations.push(asserted_context.contextType); // TODO: Change to a set.
+                    state.searchContextViolations.push(asserted_context.contextType);
                 } else if (profile.contextValue) {
                     // Step 6
                     const matcher = ctx.contextTypes.get(key)?.matcher ?? compareElements;

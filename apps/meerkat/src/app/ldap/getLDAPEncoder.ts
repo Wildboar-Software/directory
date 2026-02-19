@@ -6,6 +6,8 @@ import type {
 } from "@wildboar/x500/InformationFramework";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes.js";
 
+// TODO: This is unused.
+
 /**
  * @summary Returns a function that can encode an X.500 directory value into an LDAP value
  * @description

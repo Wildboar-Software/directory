@@ -27,7 +27,6 @@ import type { AttributeType } from "@wildboar/x500/InformationFramework";
  * @see {@link general_check_of_search_filter}
  */
 export interface SearchRuleGeneralCheckState {
-    // TODO: Make more of these sets instead of arrays.
 
     /**
      * Attribute types that were not permitted by the `inputAttributeTypes`

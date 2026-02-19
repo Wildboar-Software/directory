@@ -169,17 +169,7 @@ import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/Directory
 import { cacheNamingContexts } from "../../dit/cacheNamingContexts.js";
 import { clearSafeTimeout } from "@wildboar/safe-timers";
 import isAutoApproved from "../isAutoApproved.js";
-
-// TODO: Use printCode()
-function codeToString (code?: Code): string | undefined {
-    return (code
-        ? ("global" in code)
-            ? code.global.toString()
-            : ("local" in code)
-                ? code.local.toString()
-                : undefined
-        : undefined);
-}
+import { printCode } from "../../utils/printCode.js";
 
 // This is just for testing purposes and should be deleted.
 async function modifySOB_delete_me (
@@ -321,11 +311,11 @@ async function modifySOB_delete_me (
             security_target: (sp?.target !== undefined)
                 ? Number (sp.target)
                 : undefined,
-            security_operationCode: codeToString(sp?.operationCode),
+            security_operationCode: sp?.operationCode ? printCode(sp?.operationCode) : undefined,
             security_errorProtection: (sp?.errorProtection !== undefined)
                 ? Number(sp.errorProtection)
                 : undefined,
-            security_errorCode: codeToString(sp?.errorCode),
+            security_errorCode: sp?.errorCode ? printCode(sp?.errorCode) : undefined,
             requested_time: new Date(),
             previous: {
                 connect: {
@@ -815,11 +805,11 @@ async function relayedEstablishOperationalBinding (
                 security_target: (sp?.target !== undefined)
                     ? Number(sp.target)
                     : undefined,
-                security_operationCode: codeToString(sp?.operationCode),
+                security_operationCode: sp?.operationCode ? printCode(sp?.operationCode) : undefined,
                 security_errorProtection: (sp?.errorProtection !== undefined)
                     ? Number(sp.errorProtection)
                     : undefined,
-                security_errorCode: codeToString(sp?.errorCode),
+                security_errorCode: sp?.errorCode ? printCode(sp?.errorCode) : undefined,
                 source_ip: assn.socket.remoteAddress,
                 source_tcp_port: assn.socket.remotePort,
                 source_credentials_type: 1,
@@ -1569,11 +1559,11 @@ async function establishOperationalBinding (
         security_target: (sp?.target !== undefined)
             ? Number(sp.target)
             : undefined,
-        security_operationCode: codeToString(sp?.operationCode),
+        security_operationCode: sp?.operationCode ? printCode(sp?.operationCode) : undefined,
         security_errorProtection: (sp?.errorProtection !== undefined)
             ? Number(sp.errorProtection)
             : undefined,
-        security_errorCode: codeToString(sp?.errorCode),
+        security_errorCode: sp?.errorCode ? printCode(sp?.errorCode) : undefined,
         source_ip: assn.socket.remoteAddress,
         source_tcp_port: assn.socket.remotePort,
         source_credentials_type: ((): number | null => {
