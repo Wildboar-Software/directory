@@ -6,7 +6,7 @@ import type {
     SpecialAttributeDatabaseReader,
 } from "../../types/index.js";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
-import type {
+import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
@@ -44,8 +44,10 @@ import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults.j
 import { ContextProfile, ResultAttribute } from "@wildboar/x500/ServiceAdministration";
 import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter.js";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import { temporalContext } from "@wildboar/x500/SelectedAttributeTypes";
+import { BER } from "@wildboar/asn1/functional";
 
-// TODO: Explore making this a temporalContext
+// TODO: Explore making this a temporalContext unless returnContexts is true
 const DEFAULT_CAD: ContextSelection = {
     allContexts: null,
 };
@@ -328,18 +330,42 @@ async function readValues (
         ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
 
+    const returnContexts: boolean = options?.selection?.returnContexts
+        ?? EntryInformationSelection._default_value_for_returnContexts;
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
      * Per ITU X.501 (2016), Section 8.9.2.2.
      */
     let contextSelection: ContextSelection = options?.selection?.contextSelection
-        ?? options?.operationContexts
-        ?? (cads.length
-            ? {
-                selectedContexts: cads,
+        || options?.operationContexts
+        || (cads.length && { selectedContexts: cads })
+        /* If no contexts are specified, and no contexts are requested for
+        return, we inject a "now" temporal assertion, because we do not want
+        past or future values of an entry to be returned to a user and therefore
+        potentially mislead them as to what values the entry has. It is fine to
+        return all values if the contexts are requested, because then it is
+        clear what values are past or future values. This is also really
+        important for LDAP users, who cannot see or use contexts at all. */
+        || (returnContexts
+            ? { allContexts: null }
+            : {
+                selectedContexts: [
+                    new TypeAndContextAssertion(
+                        id_oa_allAttributeTypes,
+                        {
+                            all: [
+                                new ContextAssertion(
+                                    temporalContext["&id"],
+                                    [
+                                        temporalContext.encoderFor["&Assertion"]!({ now: null }, BER),
+                                    ],
+                                ),
+                            ],
+                        },
+                    ),
+                ],
             }
-            : undefined)
-        ?? DEFAULT_CAD;
+        );
     let selectedUserAttributes: Set<IndexableOID> | null = (
         options?.selection?.attributes
         && ("select" in options.selection.attributes)
@@ -446,11 +472,7 @@ async function readValues (
                 constructed: true,
                 tag_number: true,
                 content_octets: true,
-                ContextValue: (
-                    contextSelection
-                    || options?.selection?.returnContexts
-                    // || ("selectedContexts" in contextSelection) // Why was this condition ever here?
-                )
+                ContextValue: (contextSelection || returnContexts)
                     ? {
                         select: {
                             type: true,
@@ -507,21 +529,17 @@ async function readValues (
         })).map((a) => attributeFromDatabaseAttribute(ctx, a)
     );
 
-    // TODO: Do these concurrently? Wouldn't this speed things up a lot?
-    for (const reader of userAttributeReaderToExecute) {
-        try {
-            userValues.push(...await reader(ctx, entry, options?.relevantSubentries));
-        } catch (e) {
-            continue;
-        }
-    }
-    for (const reader of operationalAttributeReadersToExecute) {
-        try {
-            operationalValues.push(...await reader(ctx, entry, options?.relevantSubentries));
-        } catch (e) {
-            continue;
-        }
-    }
+    userValues.push(
+        ...(await Promise.all(userAttributeReaderToExecute
+            .map((reader) => reader(ctx, entry, options?.relevantSubentries).catch(() => []))))
+            .flat()
+    );
+
+    operationalValues.push(
+        ...(await Promise.all(operationalAttributeReadersToExecute
+            .map((reader) => reader(ctx, entry, options?.relevantSubentries).catch(() => []))))
+            .flat()
+    );
 
     /**
      * NOTE: Only an entry should have collective values. If collective values
