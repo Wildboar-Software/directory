@@ -317,7 +317,7 @@ async function getSDSEContent (
             }
         }
         else {
-            // TODO:
+            ctx.log.trace(ctx.i18n.t("log:unrecognized_class_attrs_shadowing"));
         }
     }
 

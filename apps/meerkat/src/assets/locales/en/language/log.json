@@ -501,5 +501,6 @@
     "sec_label_invalid_authority": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) was signed by an unauthorized labelling authority {{ladn}} with key identifier 0x{{hex}}. Fallback behavior will apply.",
     "sec_label_invalid_authority@with_ladn": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) was signed by an unauthorized labelling authority with key identifier 0x{{hex}}. Fallback behavior will apply.",
     "sec_label_no_key": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) referred to a public key that could not be located. Fallback behavior will apply.",
-    "sec_label_invalid_sig": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) had an invalid signature. Fallback behavior will apply."
+    "sec_label_invalid_sig": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) had an invalid signature. Fallback behavior will apply.",
+    "unrecognized_class_attrs_shadowing": "Unrecognized alternative in ClassAttributes in shadowing agreement."
 }
