@@ -1,55 +1,29 @@
 import type { Context, Vertex } from "../types/index.js";
-import {
-    id_oc_child,
-} from "@wildboar/x500/InformationFramework";
-
-const CHILD: string = id_oc_child.toString();
 
 /**
- * @summary Delete children within a compound entry
- * @description
- *
- * Deletes children from a compound entry
- *
+ * @summary Delete subordinates of a DSE, then the DSE itself
  * @param ctx The context object
  * @param id the ID of the immediate superior whose children are to be deleted
  *
  * @function
  * @async
  */
-async function deleteChildren (ctx: Context, id: number): Promise<void> {
+async function deleteDSE (ctx: Context, id: number): Promise<void> {
     const children = await ctx.db.entry.findMany({
         where: {
             immediate_superior_id: id,
-            EntryObjectClass: {
-                some: {
-                    object_class: CHILD,
-                },
-            },
         },
         select: {
             id: true,
         },
     });
-    await Promise.all(children.map((child) => deleteChildren(ctx, child.id)));
-    await ctx.db.$transaction([
-        ctx.db.attributeValue.deleteMany({
-            where: {
-                entry_id: id,
-            },
-        }),
-        ctx.db.entry.updateMany({
-            where: {
-                id: id,
-            },
-            data: {
-                deleteTimestamp: new Date(),
-            },
-        }),
-    ]);
+    await Promise.all(children.map((child) => deleteDSE(ctx, child.id)));
+    // This _should_ cascade into deleting basically everything else.
+    await ctx.db.entry.delete({
+        where: { id },
+    });
 }
 
-// TODO: Make this recursively delete all entries beneath it?
 /**
  * @summary Delete a DSE
  * @description
@@ -68,37 +42,16 @@ export
 async function deleteEntry (
     ctx: Context,
     entry: Vertex,
-    alsoDeleteFamily: boolean = false,
 ): Promise<void> {
     if (entry.dse.root && !entry.immediateSuperior) {
         return; // Protects us from accidentally deleting the Root DSE.
     }
-    if (alsoDeleteFamily) {
-        await deleteChildren(ctx, entry.dse.id);
-    } else {
-        await ctx.db.$transaction([
-            ctx.db.attributeValue.deleteMany({
-                where: {
-                    entry_id: entry.dse.id,
-                },
-            }),
-            ctx.db.entry.update({
-                where: {
-                    id: entry.dse.id,
-                },
-                data: {
-                    deleteTimestamp: new Date(),
-                },
-                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-            }),
-        ]);
-        if (entry.immediateSuperior?.subordinates?.length) {
-            const entryIndex = entry.immediateSuperior.subordinates
-                .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
-            entry.immediateSuperior.subordinates.splice(entryIndex, 1);
-        }
+    await deleteDSE(ctx, entry.dse.id);
+    if (entry.immediateSuperior?.subordinates?.length) {
+        const entryIndex = entry.immediateSuperior.subordinates
+            .findIndex((child) => (child.dse.uuid === entry.dse.uuid));
+        entry.immediateSuperior.subordinates.splice(entryIndex, 1);
     }
 }
 
 export default deleteEntry;
-

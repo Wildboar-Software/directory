@@ -389,8 +389,6 @@ async function removeEntry (
             signErrors,
         );
     }
-    const alsoDeleteFamily: boolean = (isAncestor && (data.familyGrouping === FamilyGrouping_compoundEntry));
-
     checkTimeLimit();
     if (target.dse.subentry) { // Go to step 5.
         // Steps moved to run _after_ the local deletion of the DSE.

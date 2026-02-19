@@ -561,7 +561,7 @@ async function applyTotalRefresh (
 
     if (!refresh.sDSE && !refresh.subtree?.length) {
         if (vertex.dse.shadow || vertex.dse.glue) {
-            await deleteEntry(ctx, vertex, true);
+            await deleteEntry(ctx, vertex);
         }
         return;
     }
@@ -1506,7 +1506,7 @@ async function applyIncrementalRefreshStep (
             const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
             if (!refinement || !objectClassesWithinRefinement(objectClasses, refinement)) {
                 if (vertex.dse.shadow || vertex.dse.glue) {
-                    await deleteEntry(ctx, vertex, true);
+                    await deleteEntry(ctx, vertex);
                 }
                 return; // If the SDSE is removed, there cannot be any subordinates!
             }
