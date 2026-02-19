@@ -47,11 +47,6 @@ import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import { temporalContext } from "@wildboar/x500/SelectedAttributeTypes";
 import { BER } from "@wildboar/asn1/functional";
 
-// TODO: Explore making this a temporalContext unless returnContexts is true
-const DEFAULT_CAD: ContextSelection = {
-    allContexts: null,
-};
-
 export
 interface ReadValuesOptions {
     readonly selection?: EntryInformationSelection;
