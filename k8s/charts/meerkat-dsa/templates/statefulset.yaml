@@ -372,6 +372,12 @@ spec:
                   key: labelling_authorities
                   optional: true
             {{- end }}
+            - name: MEERKAT_LAST_UPDATE_DISPUTE_THRESHOLD
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: last_update_dispute_threshold
+                  optional: true
             - name: MEERKAT_LCR_PARALLELISM
               valueFrom:
                 configMapKeyRef:

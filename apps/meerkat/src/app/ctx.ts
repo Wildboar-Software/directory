@@ -1056,6 +1056,7 @@ const config: Configuration = {
             ? URL.parse(process.env.MEERKAT_REPLICATE_EVERYTHING_FROM)
             : undefined,
         replicateEverythingFromAETitle: undefined,
+        lastUpdateDisputeThreshold: Number.parseInt(process.env.MEERKAT_LAST_UPDATE_DISPUTE_THRESHOLD ?? "60", 10),
     },
     sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
     administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,

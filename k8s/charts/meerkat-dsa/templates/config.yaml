@@ -61,6 +61,7 @@ data:
   {{- if .Values.labelling_authorities }}
   labelling_authorities: {{ .Values.labelling_authorities | quote }}
   {{- end }}
+  last_update_dispute_threshold: {{ .Values.last_update_dispute_threshold | default 60 | quote }}
   lcr_parallelism: {{ .Values.lcr_parallelism | default 0 | quote }}
   ldap_buffer_size: {{ .Values.ldap_buffer_size | default "1000000" | quote }}
   ldap_port: {{ .Values.ldap_port | default 389 | quote }}

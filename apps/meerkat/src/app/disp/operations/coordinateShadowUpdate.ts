@@ -264,18 +264,20 @@ async function coordinateShadowUpdate (
     }
     if (data.lastUpdate) {
         if (!ob.last_update) {
-            ctx.log.warn(ctx.i18n.t("log:no_last_update", {
+            const logInfo = {
                 aid: assn.id,
                 obid: data.agreementID.identifier.toString(),
                 time: data.lastUpdate.toISOString(),
-            }));
-        } else if (Math.abs(differenceInSeconds(data.lastUpdate, ob.last_update)) > 60) { // TODO: Make this configurable.
-            ctx.log.warn(ctx.i18n.t("log:last_shadow_update_disputed", {
+            };
+            ctx.log.warn(ctx.i18n.t("log:no_last_update", logInfo), logInfo);
+        } else if (Math.abs(differenceInSeconds(data.lastUpdate, ob.last_update)) > ctx.config.shadowing.lastUpdateDisputeThreshold) {
+            const logInfo = {
                 aid: assn.id,
                 obid: data.agreementID.identifier.toString(),
                 req_time: data.lastUpdate.toISOString(),
                 local_time: ob.last_update.toISOString(),
-            }));
+            };
+            ctx.log.warn(ctx.i18n.t("log:last_shadow_update_disputed", logInfo), logInfo);
         }
     }
     const agreementElement = new BERElement();

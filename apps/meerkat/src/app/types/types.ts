@@ -2160,6 +2160,15 @@ interface Configuration {
          */
         replicateEverythingFromAETitle?: Name;
 
+        /**
+         * The number of seconds of difference between a shadowing peer's
+         * indicated `lastUpdate` time and the local DSA's `lastUpdate` time
+         * greater or equal to which is considered a dispute. At the time of
+         * writing, nothing is done other than that a warning is logged if the
+         * `lastUpdate` time between the correspondent DSAs is disputed.
+         */
+        lastUpdateDisputeThreshold: number;
+
     };
 
     /**

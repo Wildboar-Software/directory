@@ -139,6 +139,7 @@ itot_max_presentation_contexts: 10
 # itot_acse_password: banana
 disable_itot_chaining: false
 # labelling_authorities: /path/to/trust-anchor-list.pem
+last_update_dispute_threshold: 60
 lcr_parallelism: 0
 ldap_buffer_size: "1000000"
 ldap_port: 389
