@@ -7,6 +7,9 @@ import {
 } from "@wildboar/x500/DistributedOperations";
 import {
     _decode_SupplierInformation,
+    ConsumerInformation,
+    SupplierAndConsumers,
+    SupplierInformation,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     _decode_ConsumerInformation,
@@ -189,15 +192,23 @@ async function dseFromDatabaseEntry (
     }
 
     if (dbe.cp) {
-        // TODO: Do these in parallel
-        const supplierRows = await ctx.db.accessPoint.findMany({
+        // We do one query to find all, then separate them by type in memory.
+        // Yes, this is faster than three queries.
+        const knowledges = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.SUPPLIER,
+                knowledge_type: {
+                    in: [
+                        Knowledge.SUPPLIER,
+                        Knowledge.CONSUMER,
+                        Knowledge.SECONDARY_SUPPLIER,
+                    ],
+                },
                 active: true,
             },
             select: {
                 ber: true,
+                knowledge_type: true,
             },
         });
         /* When using replicate everything shadowing, we store the supplier
@@ -211,45 +222,27 @@ async function dseFromDatabaseEntry (
                 },
                 select: {
                     ber: true,
+                    knowledge_type: true,
                 },
             });
-            supplierRows.push(...supplierRows2);
+            knowledges.push(...supplierRows2);
         }
-        const consumerRows = await ctx.db.accessPoint.findMany({
-            where: {
-                entry_id: dbe.id,
-                knowledge_type: Knowledge.CONSUMER,
-                active: true,
-            },
-            select: {
-                ber: true,
-            },
-        });
-        const secondaryRows = await ctx.db.accessPoint.findMany({
-            where: {
-                entry_id: dbe.id,
-                knowledge_type: Knowledge.SECONDARY_SUPPLIER,
-                active: true,
-            },
-        });
-        const supplierKnowledge = supplierRows
-            .map((s) => {
-                const el = new BERElement();
-                el.fromBytes(s.ber);
-                return _decode_SupplierInformation(el);
-            });
-        const consumerKnowledge = consumerRows
-            .map((c) => {
-                const el = new BERElement();
-                el.fromBytes(c.ber);
-                return _decode_ConsumerInformation(el);
-            });
-        const secondaryShadows = secondaryRows
-            .map((s) => {
-                const el = new BERElement();
-                el.fromBytes(s.ber);
-                return _decode_SupplierAndConsumers(el);
-            });
+        const supplierKnowledge: SupplierInformation[] = [];
+        const consumerKnowledge: ConsumerInformation[] = [];
+        const secondaryShadows: SupplierAndConsumers[] = [];
+        for (const knowledge of knowledges) {
+            const el = new BERElement();
+            el.fromBytes(knowledge.ber);
+            if (knowledge.knowledge_type === Knowledge.CONSUMER) {
+                consumerKnowledge.push(_decode_ConsumerInformation(el));
+            }
+            else if (knowledge.knowledge_type === Knowledge.SUPPLIER) {
+                supplierKnowledge.push(_decode_SupplierInformation(el));
+            }
+            else if (knowledge.knowledge_type === Knowledge.SECONDARY_SUPPLIER) {
+                secondaryShadows.push(_decode_SupplierAndConsumers(el));
+            }
+        }
         ret.cp = {
             consumerKnowledge,
             supplierKnowledge,
