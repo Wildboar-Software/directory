@@ -4,7 +4,6 @@ import type { DistinguishedValueCreateManyInput } from "../generated/models/Dist
 import { ASN1Construction, INTEGER } from "@wildboar/asn1";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 
-// TODO: Use this in modifyDN
 export
 async function renameEntry (
     ctx: Context,

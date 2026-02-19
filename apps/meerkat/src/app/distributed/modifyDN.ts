@@ -187,6 +187,7 @@ import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs.js";
 import { SubordinateChanges } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh.js";
 import { acdf } from "../authz/acdf.js";
+import { renameEntry } from "../database/renameEntry.js";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -1934,72 +1935,8 @@ async function modifyDN (
         target.immediateSuperior.subordinates.splice(entryIndex, 1); // Remove from the current parent.
         superior?.subordinates?.push(target); // Move to the new parent.
     }
-    const oldMaterializedPathPrefix: string = target.immediateSuperior.dse.root
-        ? (target.dse.id.toString() + ".")
-        : `${target.dse.materializedPath}.${target.dse.id}.`;
-    const newMaterializedPath: string = superior.dse.root
-        ? ""
-        : (superior.dse.materializedPath.length
-            ? `${superior.dse.materializedPath}${superior.dse.id.toString() + "."}`
-            : superior.dse.id.toString() + ".");
-    const materializedPathsToUpdate = await ctx.db.entry.findMany({
-        where: {
-            materialized_path: {
-                startsWith: oldMaterializedPathPrefix,
-            },
-        },
-        select: {
-            id: true,
-            materialized_path: true,
-        },
-    });
     try {
-        await ctx.db.$transaction([
-            ctx.db.entry.update({
-                where: {
-                    id: target.dse.id,
-                },
-                data: {
-                    immediate_superior_id: superior.dse.id,
-                    governingStructureRule: Number.isSafeInteger(Number(newGoverningStructureRule))
-                        ? Number(newGoverningStructureRule)
-                        : undefined,
-                    materialized_path: newMaterializedPath,
-                },
-                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-            }),
-            ctx.db.distinguishedValue.deleteMany({
-                where: {
-                    entry_id: target.dse.id,
-                },
-            }),
-            ctx.db.distinguishedValue.createMany({
-                data: newRDN.map((atav, i): DistinguishedValueCreateManyInput => ({
-                    entry_id: target.dse.id,
-                    type_oid: atav.type_.toBytes(),
-                    tag_class: atav.value.tagClass,
-                    constructed: (atav.value.construction === ASN1Construction.constructed),
-                    tag_number: atav.value.tagNumber,
-                    content_octets: atav.value.value as Uint8Array<ArrayBuffer>,
-                    order_index: i,
-                    normalized_str: getEqualityNormalizer(ctx)?.(atav.type_)?.(ctx, atav.value),
-                })),
-            }),
-            ...materializedPathsToUpdate.map((mp) => ctx.db.entry.update({
-                where: {
-                    id: mp.id,
-                },
-                data: {
-                    materialized_path: mp.materialized_path.replace(
-                        oldMaterializedPathPrefix,
-                        newMaterializedPath.length
-                            ? `${newMaterializedPath}.${target.dse.id}.`
-                            : target.dse.id.toString() + ".",
-                    ),
-                },
-                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-            })),
-        ]);
+        await renameEntry(ctx, target, superior, newRDN, newGoverningStructureRule);
     } catch (e) {
         // If the update failed, reload the entry to negate any in-memory
         // changes that took place. This same code exists in modifyEntry.
