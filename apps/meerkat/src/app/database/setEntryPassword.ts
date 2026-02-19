@@ -34,6 +34,7 @@ import {
     ObjectIdentifier,
 } from "@wildboar/asn1";
 import { attributeValueFromDB } from "./attributeValueFromDB.js";
+import { ID_PWD_ADMIN_SUB } from "../../oidstr.js";
 
 /**
  * @summary Set the password of an entry
@@ -116,41 +117,52 @@ async function setEntryPassword (
         admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap)),
     )).flat();
 
-    // TODO: Combine the two into a single query.
-    const expiryAge: number | undefined = (await ctx.db.attributeValue.findMany({
-        where: {
-            entry_id: {
-                in: relevantSubentries.map((s) => s.dse.id),
+    const passwordSubentryIds = relevantSubentries
+        .filter((sub) => sub.dse.objectClass.has(ID_PWD_ADMIN_SUB))
+        .map((s) => s.dse.id);
+
+    const [
+        expiryAgeValues,
+        maxAgeValues,
+    ] = await Promise.all([
+        ctx.db.attributeValue.findMany({
+            where: {
+                entry_id: {
+                    in: passwordSubentryIds,
+                },
+                type_oid: pwdExpiryAge["&id"].toBytes(),
+                operational: true,
             },
-            type_oid: pwdExpiryAge["&id"].toBytes(),
-            operational: true,
-        },
-        select: {
-            tag_class: true,
-            tag_number: true,
-            constructed: true,
-            content_octets: true,
-        },
-    }))
+            select: {
+                tag_class: true,
+                tag_number: true,
+                constructed: true,
+                content_octets: true,
+            },
+        }),
+        ctx.db.attributeValue.findMany({
+            where: {
+                entry_id: {
+                    // TODO: Filter out non-password subentries
+                    in: passwordSubentryIds,
+                },
+                type_oid: pwdMaxAge["&id"].toBytes(),
+                operational: true,
+            },
+            select: {
+                tag_class: true,
+                tag_number: true,
+                constructed: true,
+                content_octets: true,
+            },
+        }),
+    ]);
+    const expiryAge: number | undefined = expiryAgeValues
         .map((dbv) => Number(attributeValueFromDB(dbv).integer))
         // Do not reduce with initialValue = 0! Use undefined, then default to 0.
         .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
 
-    const maxAge: number | undefined = (await ctx.db.attributeValue.findMany({
-        where: {
-            entry_id: {
-                in: relevantSubentries.map((s) => s.dse.id),
-            },
-            type_oid: pwdMaxAge["&id"].toBytes(),
-            operational: true,
-        },
-        select: {
-            tag_class: true,
-            tag_number: true,
-            constructed: true,
-            content_octets: true,
-        },
-    }))
+    const maxAge: number | undefined = maxAgeValues
         .map((dbv) => Number(attributeValueFromDB(dbv).integer))
         // Do not reduce with initialValue = 0! Use undefined, then default to 0.
         .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
