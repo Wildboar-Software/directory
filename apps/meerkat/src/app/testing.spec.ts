@@ -33,6 +33,9 @@ import {
 } from "./constants.js";
 import type { SecureVersion } from "node:tls";
 import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { execSync } from "node:child_process";
 import { PEMObject } from "@wildboar/pem";
 import { BERElement, DERElement, ObjectIdentifier } from "@wildboar/asn1";
 import {
@@ -92,6 +95,8 @@ import { strict as assert } from "node:assert";
 import { attributes as x500at } from "@wildboar/x500";
 import { attributeFromInformationObject } from "./init/attributeFromInformationObject.js";
 import { loadMatchingRules } from "./init/loadMatchingRules.js";
+import { PrismaClient } from "./generated/client.js";
+import { PrismaLibSql } from '@prisma/adapter-libsql';
 
 export
 interface MeerkatTelemetryClient {
@@ -485,6 +490,8 @@ const config: Configuration = {
             ? Number.parseInt(process.env.MEERKAT_REMOTE_PWD_TIME_LIMIT, 10)
             : 0, // 0 disables this procedure.
         automaticallyTrustForIBRA: process.env.MEERKAT_TRUST_FOR_IBRA?.toUpperCase(),
+        fetchRemoteAuthorizationAttributes: false,
+        remotePasswordLocalScopeOnly: false,
     },
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
@@ -850,6 +857,7 @@ const config: Configuration = {
         signChainedRequests: (process.env.MEERKAT_CHAINING_SIGN_REQUESTS !== "0"),
         checkSignaturesOnResponses: (process.env.MEERKAT_CHAINING_CHECK_SIG !== "0"),
         itot: (process.env.MEERKAT_ITOT_CHAINING !== "0"),
+        strongCredentialsTimeToLiveInSeconds: 60,
     },
     ob: {
         minAuthRequired: parseAuthLevel(
@@ -985,14 +993,9 @@ const ctx: MeerkatContext = {
     jobQueue: [],
 };
 
-// export default ctx;
-
 let cached_ctx: Context | undefined;
 
 export function getMockCtx (): Context {
-    if (cached_ctx) {
-        return cached_ctx;
-    }
     loadMatchingRules(ctx);
     Object.entries(x500at)
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
@@ -1011,8 +1014,31 @@ export function getMockCtx (): Context {
                 ctx.ldapSyntaxes.set(ldapName, oidSyntax);
             });
         });
-    cached_ctx = ctx;
-    return cached_ctx;
+    const newCtx: Context = {
+        ...ctx,
+    };
+    const dbfile = path.join(
+        fs.mkdtempSync(path.join(os.tmpdir(), 'meerkat-test-')),
+        "meerkat.db",
+    );
+    const dburl = `file:${dbfile}`;
+    execSync("npx prisma migrate deploy --schema apps/meerkat/src/prisma/schema.prisma", {
+        env: {
+            DATABASE_URL: dburl,
+            PATH: process.env.PATH,
+        },
+    });
+    const adapter = new PrismaLibSql({
+        url: dburl,
+    }, {
+        // Recommended choice here: https://www.prisma.io/docs/orm/overview/databases/sqlite#3-configure-timestamp-format-for-backward-compatibility
+        timestampFormat: 'iso8601',
+    });
+    const db = new PrismaClient({
+        adapter,
+    });
+    newCtx.db = db;
+    return newCtx;
 }
 
 // This is just put here to prevent `Your test suite must contain at least one test.`

@@ -16,14 +16,8 @@ import {
     AttributeProblem_attributeOrValueAlreadyExists,
     AttributeProblem_contextViolation,
     AttributeProblem_invalidAttributeSyntax,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     AttributeErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     AttributeErrorData_problems_Item,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     attributeError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import getDistinguishedName from "../../x500/getDistinguishedName.js";
@@ -40,8 +34,11 @@ import {
     boolean_,
 } from "@wildboar/x500/SelectedAttributeTypes";
 
-// TODO: I think you would benefit from just having a second implementation for addAttributes()
-// it could query all attribute values for that type and check for duplicates in one pass
+/*
+I thought about making an analog of the function for addAttributes, but I don't
+think that's viable: all values have to be validated together to check for
+duplicates: it cannot be one-attribute at a time.
+*/
 
 /**
  * @summary Validate the values to be added to the entry
@@ -208,11 +205,6 @@ async function validateValues(
                 }));
             }
 
-            // We use the naming matcher getter because it is symmetrical.
-            // Equality matching rules are not required to be.
-            const emr = attrSpec?.equalityMatchingRule
-                ? getNamingMatcherGetter(ctx)(attrSpec.equalityMatchingRule)
-                : undefined;
             // If a simple binary comparison of all `ber` values for that type
             // did not turn up any matches, we now have to read all the
             // possible matches and use the equality matcher to check for
@@ -221,8 +213,7 @@ async function validateValues(
                 !isSingleFormEncoding
                 && !attrSpec?.driver?.hasValue // this value is not handled exceptionally, and...
                 && !valueExists // a byte-for-byte database query did not identity any matches, and...
-                && emr // there is an equality matching rule
-                && (await hasValueWithoutDriver(ctx, entry.dse.id, value, emr))
+                && (await hasValueWithoutDriver(ctx, entry.dse.id, value, attrSpec))
             ) {
                 valueExists = true;
             }

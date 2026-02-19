@@ -1,28 +1,37 @@
-import {
+import type {
+    AttributeInfo,
     Context,
     Value,
 } from "../../types/index.js";
-import { type EqualityMatcher } from "@wildboar/x500";
-import { attributeValueFromDB } from "../attributeValueFromDB.js";
+import { directoryStringToString, prepString } from "@wildboar/x500";
+import {
+    _decode_UnboundedDirectoryString,
+    caseExactIA5Match,
+    caseExactMatch,
+    caseIgnoreIA5Match,
+    caseIgnoreMatch,
+    numericStringMatch,
+    telephoneNumberMatch
+} from "@wildboar/x500/SelectedAttributeTypes";
+import { ASN1Construction } from "@wildboar/asn1";
+import {
+    numericStringMatch as numericStringMatchNormalizer,
+} from "../../matching/normalizers.js";
 
 /**
  * @summary A default hasValue() function for attribute types without a driver
  * @description
  *
- * ## Implementation
- *
- * Multiple database trips will take a toll on performance. However, it is not
- * safe to load all values for a given attribute type all at once. There could
- * be thousands, if not millions, and each could be millions of bytes in size.
- * The balance between these two contending desires is that we read multiple
- * values in at a time, and if their total size falls below a target number, we
- * increase the page size; if their total size goes above this target number,
- * we decrease the page size.
+ * Because this function is invoked in a loop for each value, we cannot perform
+ * any multi-valued queries or do anything in a loop: this would result in
+ * O(n^2) performance, which could produce denial-of-service (quite easily, in
+ * fact). As such, this implementation just compares the values in the database
+ * with the asserted value
  *
  * @param ctx The context object
  * @param entry_id The database ID of the entry that is to be checked
  * @param value The value whose existence is to be checked
- * @param matcher The equality matcher
+ * @param attrSpec The attribute type information
  * @returns A boolean indicating whether the entry has the inquired value
  *
  * @function
@@ -33,49 +42,94 @@ async function hasValueWithoutDriver (
     ctx: Context,
     entry_id: number,
     value: Value,
-    matcher: EqualityMatcher,
+    attrSpec?: AttributeInfo,
 ): Promise<boolean> {
-    const TYPE_OID = value.type.toBytes();
-    let cursorId: number | undefined;
-    let i = 0;
-    let take: number = 100;
-    while (i < 100) {
-        const results = await ctx.db.attributeValue.findMany({
-            take,
-            skip: ((cursorId !== undefined) ? 1 : 0),
-            cursor: (cursorId !== undefined)
-                ? {
-                    id: cursorId,
-                }
-                : undefined,
-            where: {
-                entry_id,
-                type_oid: TYPE_OID,
-            },
-            orderBy: {
-                id: "asc",
-            },
-            select: {
-                id: true,
-                tag_class: true,
-                constructed: true,
-                tag_number: true,
-                content_octets: true,
-            },
-        });
-        if (results.length === 0) {
-            break;
-        }
-        for (const result of results) {
-            const el = attributeValueFromDB(result);
-            if (matcher(el, value.value)) {
-                return true;
-            }
-        }
-        cursorId = results[results.length - 1].id;
-        i++;
+    const emr = attrSpec?.equalityMatchingRule;
+    if (!emr) {
+        // If no EMR is defined for the type, uniqueness is not checked.
+        return false;
     }
-    return false;
+    const typestr = value.type.toBytes();
+    if (
+        emr.isEqualTo(caseIgnoreMatch["&id"])
+        || emr.isEqualTo(caseIgnoreIA5Match["&id"])
+    ) {
+        const ds = _decode_UnboundedDirectoryString(value.value);
+        const s = directoryStringToString(ds);
+        const ps = prepString(s) ?? s;
+        const result = await ctx.db.$queryRaw<{ id: number }[]>`
+            SELECT id
+            FROM AttributeValue
+            WHERE
+                entry_id = ${entry_id}
+                AND type_oid = ${typestr}
+                AND constructed = FALSE
+                AND UPPER(TRIM(content_octets)) = UPPER(${ps})
+        `;
+        return !!result[0];
+    }
+    if (
+        emr.isEqualTo(caseExactMatch["&id"])
+        || emr.isEqualTo(caseExactIA5Match["&id"])
+    ) {
+        const ds = _decode_UnboundedDirectoryString(value.value);
+        const s = directoryStringToString(ds);
+        const ps = prepString(s) ?? s;
+        const result = await ctx.db.$queryRaw<{ id: number }[]>`
+            SELECT id
+            FROM AttributeValue
+            WHERE
+                entry_id = ${entry_id}
+                AND type_oid = ${typestr}
+                AND constructed = FALSE
+                AND TRIM(content_octets) = ${ps}
+        `;
+        return !!result[0];
+    }
+    if (emr.isEqualTo(numericStringMatch["&id"])) {
+        const ns = numericStringMatchNormalizer(ctx, value.value);
+        const result = await ctx.db.$queryRaw<{ id: number }[]>`
+            SELECT id
+            FROM AttributeValue
+            WHERE
+                entry_id = ${entry_id}
+                AND type_oid = ${typestr}
+                AND tag_class = ${value.value.tagClass}
+                AND constructed = FALSE
+                AND tag_number = ${value.value.tagNumber}
+                AND REPLACE(TRIM(content_octets), ' ', '') = ${ns}
+        `;
+        return !!result[0];
+    }
+    if (emr.isEqualTo(telephoneNumberMatch["&id"])) {
+        const s = value.value.printableString;
+        const result = await ctx.db.$queryRaw<{ id: number }[]>`
+            SELECT id
+            FROM AttributeValue
+            WHERE
+                entry_id = ${entry_id}
+                AND type_oid = ${typestr}
+                AND tag_class = ${value.value.tagClass}
+                AND constructed = FALSE
+                AND tag_number = ${value.value.tagNumber}
+                AND REPLACE(TRIM(content_octets), '-', ' ') = REPLACE(TRIM(${s}), '-', ' ')
+        `;
+        return !!result[0];
+    }
+    // If none of the above matching rules are used, we compare byte-for-byte.
+    const constructed = (value.value.construction === ASN1Construction.constructed);
+    const result = await ctx.db.$queryRaw<{ id: number }[]>`
+        SELECT id
+        FROM AttributeValue
+        WHERE
+            entry_id = ${entry_id}
+            AND type_oid = ${typestr}
+            AND tag_class = ${value.value.tagClass}
+            AND constructed = ${constructed}
+            AND tag_number = ${value.value.tagNumber}
+            AND content_octets = ${value.value.value}
+    `;
+    return !!result[0];
 }
 
 export default hasValueWithoutDriver;

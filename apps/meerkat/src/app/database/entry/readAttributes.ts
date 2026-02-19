@@ -107,6 +107,11 @@ function getAttributeMap (
  * Reads the attributes of an entry, grouped into user attributes, operational
  * attributes, and collective attributes.
  *
+ * When using output attribute types to filter the attributes, this deviates
+ * slightly from the spec by not eliminating attributes that have no values.
+ * This is because `readEntryInformation` uses empty attributes by converting
+ * them to an `attributeType` info item in a returned entry.
+ *
  * @param ctx The context object
  * @param vertex The DSE whose attributes are to be read
  * @param options Options
@@ -144,7 +149,6 @@ async function readAttributes (
 
     const outputTypes = options?.outputAttributeTypes;
     if (outputTypes) {
-        // TODO: Document this.
         // DEVIATION: This deviates slightly from the spec by not eliminating
         // attributes that have no values. This is because readEntryInformation
         // uses empty attributes by converting them to attributeTypes.

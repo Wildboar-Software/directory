@@ -70,3 +70,5 @@ I should have used a key-value store instead.
 - Separate classes for each connection type `DAPClient`, `DOPClient`, etc.
   - This is all basically copied code with just a few differences between them,
     and it has been such a nightmare maintaining all these classes.
+- I wish I had just used the `Attribute` construct instead, or something like
+  it, since directories do seem to operate on whole attributes at a time.

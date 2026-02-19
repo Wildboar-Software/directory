@@ -6,6 +6,6 @@ export default defineConfig({
         path: 'apps/meerkat/src/prisma/migrations',
     },
     datasource: {
-        url: 'file:./dev.db',
+        url: process.env.DATABASE_URL ?? 'file:./dev.db',
     },
 });
