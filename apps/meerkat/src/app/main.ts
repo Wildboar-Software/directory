@@ -46,12 +46,9 @@ import * as dns from "node:dns/promises";
 import {
     updatesDomain,
 } from "./constants.js";
-import createDatabaseReport from "./telemetry/createDatabaseReport.js";
 import { parse as parseSemver, greaterThan as semverGreaterThan } from "@std/semver";
 import { setSafeTimeout } from "@wildboar/safe-timers";
 import { randomUUID } from "node:crypto";
-import { flatten } from "flat";
-import { getServerStatistics } from "./telemetry/getServerStatistics.js";
 import { naddrToURI } from "@wildboar/x500";
 import { getOnOCSPRequestCallback } from "./pki/getOnOCSPRequestCallback.js";
 import cookieParser from "cookie-parser";
@@ -1447,23 +1444,6 @@ async function main (): Promise<void> {
     }
 
     cacheNamingContexts(ctx); // INTENTIONAL_NO_AWAIT
-
-    setInterval(() => {
-        const dbReportPromise = createDatabaseReport(ctx);
-        dbReportPromise.catch(() => {});
-        dbReportPromise.then((report) => {
-            ctx.telemetry.trackEvent({
-                name: "dbreport",
-                properties: {
-                    ...flatten<any, object>({
-                        server: getServerStatistics(ctx),
-                    }),
-                    ...report,
-                    administratorEmail: ctx.config.administratorEmail,
-                },
-            });
-        }).catch(() => {}); // This handles the new promise returned by .then().
-    }, 604_800_000); // Weekly
 
     /**
      * This section handles the delayed termination of operational bindings that
