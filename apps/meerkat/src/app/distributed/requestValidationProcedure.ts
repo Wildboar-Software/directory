@@ -173,8 +173,8 @@ function createChainingArgumentsFromDUA (
     assn: ClientAssociation,
     operationCode: Code,
     operationArgument: ASN1Element,
-    authenticationLevel: AuthenticationLevel, // TODO: Unnecessary argument.
-    uniqueIdentifier?: UniqueIdentifier, // TODO: Unnecessary argument.
+    authenticationLevel: AuthenticationLevel,
+    uniqueIdentifier?: UniqueIdentifier,
 ): ChainingArguments {
     let originator: OPTIONAL<DistinguishedName> = assn.boundNameAndUID?.dn;
     let targetObject: OPTIONAL<DistinguishedName>;
@@ -658,8 +658,8 @@ async function requestValidationProcedure (
     assn: ClientAssociation,
     req: Request,
     alreadyChained: boolean,
-    authenticationLevel: AuthenticationLevel, // TODO: Unnecessary argument.
-    uniqueIdentifier?: UniqueIdentifier, // TODO: Unnecessary argument.
+    authenticationLevel: AuthenticationLevel,
+    uniqueIdentifier?: UniqueIdentifier,
 ): Promise<[ Chain, CommonArguments? ]> {
     if (!req.opCode) {
         throw new UnknownOperationError();

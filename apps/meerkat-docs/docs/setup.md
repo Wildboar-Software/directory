@@ -2,9 +2,14 @@
 
 ## System Requirements
 
-Meerkat DSA requires NodeJS version 25 or higher. With heavy usage, you can
-expect Meerkat DSA's memory usage to get up to 300MB. It would be wise to
-anticipate the extreme and ensure that Meerkat DSA has at least 500MB of memory.
+Meerkat DSA requires NodeJS version 24.7.0 or higher, in particular because it
+uses the Argon2 cryptographic hashing algorithm that is only available in that
+version or higher. Meerkat DSA once worked on Bun and Deno, does not currently,
+but will likely work in future versions of these runtimes.
+
+With heavy usage, you can expect Meerkat DSA's memory usage to get up to 500MB.
+It would be wise to anticipate the extreme and ensure that Meerkat DSA has at
+least one gigabyte of memory.
 
 In addition to this, Meerkat DSA needs a database (as detailed below), which may
 take a lot more memory. You may also wish to set up a reverse HTTP proxy for the

@@ -1,15 +1,16 @@
-import type {
-    Context,
-    Vertex,
-    Value,
-    PendingUpdates,
-    AttributeTypeDatabaseDriver,
-    SpecialAttributeDatabaseReader,
-    SpecialAttributeDatabaseEditor,
-    SpecialAttributeDatabaseRemover,
-    SpecialAttributeCounter,
-    SpecialAttributeDetector,
-    SpecialAttributeValueDetector,
+import {
+    type Context,
+    type Vertex,
+    type Value,
+    type PendingUpdates,
+    type AttributeTypeDatabaseDriver,
+    type SpecialAttributeDatabaseReader,
+    type SpecialAttributeDatabaseEditor,
+    type SpecialAttributeDatabaseRemover,
+    type SpecialAttributeCounter,
+    type SpecialAttributeDetector,
+    type SpecialAttributeValueDetector,
+    MistypedArgumentError,
 } from "../../types/index.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
@@ -73,7 +74,8 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     if (("encrypted" in decoded) && !validateAlgorithmParameters(decoded.encrypted.algorithmIdentifier)) {
         // The algorithm parameters are unacceptable. This is to prevent
         // denial of service by chosen algorithm attacks.
-        throw new Error("9e441c6c-5399-4b42-9558-9de30598fedb");
+        const oidstr = decoded.encrypted.algorithmIdentifier.algorithm.toString();
+        throw new MistypedArgumentError(ctx.i18n.t("err:bad_algorithm_parameters", { oid: oidstr }));
     }
     pendingUpdates.otherWrites.push(...await setEntryPassword(ctx, undefined, vertex, decoded));
 };

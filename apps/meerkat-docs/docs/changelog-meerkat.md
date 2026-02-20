@@ -76,6 +76,17 @@ Recognized subcommands are:
 This means that, if you want to start Meerkat DSA, you now need to run:
 `<your meerkat dsa command> start`. Currently, none of these take any arguments.
 
+### Local Scope Control
+
+The `ServiceControlOptions` defined in ITU-T Recommendation X.511, Section
+7.5, defines a `localScope` option that prevents distributed operations from
+propagating outside of a defined "local scope," the precise meaning of which
+is left up to the implementation. Meerkat DSA now supports this control.
+
+In Meerkat DSA, "local scope" means the same organization or DMD or country
+depending on the Application Entity (AE) title of the correspondent DSAs. The
+details of this algorith are documented [here](./distributed.md#local-scope).
+
 ### Other Changes
 
 - New "Replicate Everything" shadowing configuration
@@ -91,7 +102,48 @@ This means that, if you want to start Meerkat DSA, you now need to run:
 - Added `man` pages for Meerkat DSA and its `.env` configuration
 - Special log handling when running on a system with `journald` to preserve the
   severity levels
-- TODO: What is 7af8973bcaa39a78b27ef07328206a962ce571d5?
+- Make `lastUpdate` dispute threshold among shadowing peers configurable
+- Speed up password setting
+- Fix buffer leak when decoding some integers (Sorry!)
+  - See [the security advisory](https://github.com/JonathanWilbur/asn1-ts/security/advisories/GHSA-h5rw-vxjr-8q79)
+- Faster loading of `cp` DSEs
+- Hard-delete entries when using `removeEntry` (and their subordinates)
+- Fix an issue with calling `removeEntry`
+- Assert a `temporalContext` of "now" when no contexts are asserted or defaulted
+  and when `returnContexts` is absent or `FALSE`.
+  - The rationale for this is that we don't want past or future values to get
+    returned to the user without some explicit indication that they are past or
+    future values. This is especially important for LDAP users, since they
+    cannot assert or see contexts at all!
+- Much faster (but sloppier) duplicate-value checking.
+  - It is possible in some cases for the algorithm to miss some values that are
+    duplicates.
+  - The previous algorithm would require loading every value of that type for
+    that entry from the database and comparing them one-by-one. The new
+    algorithm does an efficient (but sloppy) comparison against values in the
+    database. Duplicate values aren't really much of a problem; modifications
+    being slow is.
+- Much faster validation of new entries.
+- Much better and informative logging. Tons of logging bugs fixed.
+- Better Rule-Based Access Control (RBAC) checks for discoverability of RDNs
+- Fetch authorization-related attributes when performing remote password checks
+  - If a user authenticates against a DSA, but their entry / password is in
+    another DSA, the bound DSA will not only send a `compare` request containing
+    the password to the other DSA, but also a `read` request for the
+    `clearance` and `uniqueIdentifier` attributes if the user's password is
+    correct. These are used for Meerkat DSA's access control evaluations.
+- The time-to-live for cryptographic tokens produced by Meerkat DSA when
+  performing strong authentication to other DSAs is now configurable. By default
+  it is 60 seconds, which is a reasonable default.
+- Some pages in the web administration console are now cached.
+- Checking that the Root DSE is empty in shadow updates.
+- Use of the `fullUpdateRequired` `shadowError` problem
+- Display Meerkat DSA's version in `/about` in the web administration console
+- Fix: responding to bind operations with the wrong protocol identifier
+- Use `fetch` instead of NodeJS's `http` and `https` modules.
+- More efficient alias creation, reading, etc.
+- Much faster bulk entry creation
+- TODO: What is `7af8973bcaa39a78b27ef07328206a962ce571d5`?
 
 ### Other Projects
 
@@ -99,6 +151,13 @@ This means that, if you want to start Meerkat DSA, you now need to run:
   - This should have always been the case
 - Option to close the underlying TCP or TLS socket when unbinding in
   `rose-transport`
+
+### Non-Features
+
+I tried to upgrade Meerkat DSA's password hashing algorithm to Argon2, which is
+generally regarded as better than Scrypt. However, Argon2 does not yet have an
+ASN.1 algorithm identifier defined, so there is no way to represent it over our
+protocol. Maybe next major release!
 
 ## Version 3.3.0
 

@@ -29,6 +29,7 @@ function validateAlgorithmParameters (alg: AlgorithmIdentifier): boolean {
         return validateScryptAlgorithmParameters(params);
     }
     else {
-        return false;
+        // If we don't recognize the algorithm, assume it is well-formed.
+        return true;
     }
 }

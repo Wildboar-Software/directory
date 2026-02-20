@@ -465,7 +465,14 @@ async function administerPassword (
     } // If there is no password admin point defined, you can do whatever you want.
     // #endregion Password Policy Verification
 
-    const promises = await setEntryPassword(ctx, assn, target, data.newPwd);
+    const promises = await setEntryPassword(
+        ctx,
+        assn,
+        target,
+        data.newPwd,
+        signErrors,
+        state.chainingArguments.aliasDereferenced,
+    );
     await ctx.db.$transaction([
         ...promises,
         ctx.db.attributeValue.deleteMany({

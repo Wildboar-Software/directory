@@ -35,6 +35,15 @@ import {
 } from "@wildboar/asn1";
 import { attributeValueFromDB } from "./attributeValueFromDB.js";
 import { ID_PWD_ADMIN_SUB } from "../../oidstr.js";
+import { id_scrypt } from "@wildboar/scrypt-0";
+import { SecurityError } from "../types/errors.js";
+import {
+    SecurityErrorData,
+    SecurityProblem_inappropriateAlgorithms,
+    securityError,
+    EncPwdInfo,
+} from "@wildboar/x500/DirectoryAbstractService";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 
 /**
  * @summary Set the password of an entry
@@ -59,6 +68,8 @@ async function setEntryPassword (
     assn: ClientAssociation | undefined,
     vertex: Vertex,
     pwd: UserPwd,
+    signErrors: boolean = false,
+    aliasDereferenced: boolean = false,
 ): Promise<Prisma.PrismaPromise<any>[]> {
     /* If the entry is a shadow, we just want to create the userPwd attribute
     value only. Note that we still do not preserve the exact encoding of the
@@ -143,7 +154,6 @@ async function setEntryPassword (
         ctx.db.attributeValue.findMany({
             where: {
                 entry_id: {
-                    // TODO: Filter out non-password subentries
                     in: passwordSubentryIds,
                 },
                 type_oid: pwdMaxAge["&id"].toBytes(),
@@ -312,6 +322,7 @@ async function setEntryPassword (
         const clear = Buffer.from(pwd.clear, "utf-8");
         const encrypted = encryptPassword(encAlg, clear);
         if (!encrypted) {
+            // This should never happen.
             throw new Error("fc8872c3-067e-4d91-995a-28c94ed8ec08");
         }
         if (assn) {
@@ -372,7 +383,35 @@ async function setEntryPassword (
             ...otherUpdates,
         ];
     } else if ("encrypted" in pwd) {
-        // TODO: Error if the algorithm is not scrypt, and return a notification parameter, if possible.
+        if (!pwd.encrypted.algorithmIdentifier.algorithm.isEqualTo(id_scrypt)) {
+            // This error type is valid for all directory protocols.
+            throw new SecurityError(
+                ctx.i18n.t("err:inappropriate_algs"),
+                new SecurityErrorData(
+                    SecurityProblem_inappropriateAlgorithms,
+                    undefined,
+                    new EncPwdInfo(
+                        [
+                            getScryptAlgorithmIdentifier(),
+                        ],
+                        undefined,
+                        undefined,
+                    ),
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
         if (assn) {
             ctx.log.info(ctx.i18n.t("log:password_changed", {
                 cid: assn.id,

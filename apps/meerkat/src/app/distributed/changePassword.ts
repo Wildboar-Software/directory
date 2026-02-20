@@ -500,7 +500,14 @@ async function changePassword (
     } // If there is no password admin point defined, you can do whatever you want.
     // #endregion Password Policy Verification
 
-    const promises = await setEntryPassword(ctx, assn, target, data.newPwd);
+    const promises = await setEntryPassword(
+        ctx,
+        assn,
+        target,
+        data.newPwd,
+        signErrors,
+        state.chainingArguments.aliasDereferenced,
+    );
     await ctx.db.$transaction(promises);
     /* Note that the specification says that we should update hierarchical
     operational bindings, but really, no other DSA should have the passwords for
