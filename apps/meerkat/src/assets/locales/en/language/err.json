@@ -278,5 +278,6 @@
     "full_update_required": "Full update required for shadow operational binding {{obid}}, but an incremental update was requested.",
     "superior_knowledge_empty": "Superior knowledge attribute was empty. Cannot route this request.",
     "ob_missing_initiator": "Missing initiator parameters.",
-    "bad_algorithm_parameters": "Malformed or unacceptable parameters for algorithm with object identifier {{oid}}."
+    "bad_algorithm_parameters": "Malformed or unacceptable parameters for algorithm with object identifier {{oid}}.",
+    "missing_cp_shadowing": "Failed to find context prefix used in shadowing."
 }

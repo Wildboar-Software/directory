@@ -468,7 +468,7 @@ async function getShadowIncrementalSteps (
                     }
                 }
                 else {
-                    // TODO:
+                    ctx.log.trace(ctx.i18n.t("log:unrecognized_class_attrs_shadowing"));
                 }
             }
             const attr_mods = change.modify

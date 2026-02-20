@@ -1,3 +1,4 @@
+import * as os from "node:os";
 import { MeerkatContext } from "../../ctx.js";
 import { Vertex, Context, ShadowError, Value, UnknownError, IndexableOID } from "../../types/index.js";
 import {
@@ -123,6 +124,8 @@ import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import { stripEntry } from "../../database/stripEntry.js";
 import getDistinguishedName from "../../x500/getDistinguishedName.js";
 import { child } from "@wildboar/x500/InformationFramework";
+
+const OID_STR_SHADOW_OP_BIND = id_op_binding_shadow.toString();
 
 /**
  * @summary Convert an SDSEType into its equivalent DSEType
@@ -310,7 +313,7 @@ function checkPermittedAttributeTypes (
             }
         }
         else {
-            // TODO:
+            ctx.log.trace(ctx.i18n.t("log:unrecognized_class_attrs_shadowing"));
         }
     }
     for (const attr of attributes) {
@@ -420,8 +423,6 @@ function checkPermittedAttributeTypes (
     }
 }
 
-// TODO: Collect statistics to report in logging.
-// TODO: It may be possible to separate the validation from the update.
 // NOTE: minimum of subtree does not need to be checked. It is forbidden in shadowing subtrees.
 
 /**
@@ -494,10 +495,10 @@ async function applyTotalRefresh (
     let created_dse_database_id: number | undefined;
 
     // Skip over everything up until we reach the base of the shadowed subtree.
-    const cp_length = agreement.shadowSubject.area.contextPrefix.length;
+    const cp = agreement.shadowSubject.area.contextPrefix;
+    const cp_length = cp.length;
     const base = agreement.shadowSubject.area.replicationArea.base ?? [];
 
-    // TODO: This could be put before the subordinates loop to benefit from tail recursion.
     if (depth < (cp_length + base.length)) {
         // In the future, this may be relaxed.
         if (!refresh.subtree || (refresh.subtree.length !== 1)) {
@@ -701,7 +702,6 @@ async function applyTotalRefresh (
         created_dse_database_id = vertex.dse.id;
     }
     else if (refresh.sDSE) { // The subordinate exists already, and we have sDSE content defined, wipe it out and replace it.
-        // TODO: Check if there is no conflict. If not, just add values.
         // This alone results in support for overlapping shadowed areas.
         const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
         const selectedByRefinement: boolean = !refinement || objectClassesWithinRefinement(objectClasses, refinement);
@@ -718,7 +718,7 @@ async function applyTotalRefresh (
                     dseType["&id"],
                     [dseType.encoderFor["&Type"]!(dse_type, DER)],
                 ),
-            ], undefined, false, signErrors);
+            ], undefined, false, signErrors, true); // Effectively adding entry
             const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
             const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
             const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT)
@@ -736,7 +736,6 @@ async function applyTotalRefresh (
             const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
             const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
             const isGlue: boolean       = (dse_type[DSEType_glue] === TRUE_BIT);
-            // TODO: Can I put the promises from stripEntry() in the transaction below?
             await ctx.db.$transaction([
                 ...promises,
                 ctx.db.entry.update({
@@ -1129,7 +1128,7 @@ async function applyContentChange (
         }
         const new_superior = await dnToVertex(ctx, ctx.dit.root, newDN.slice(0, -1));
         if (!new_superior) {
-            throw new Error();
+            throw new Error(); // FIXME: Maybe just log an error and bail?
         }
         const existingEntry = await rdnToID(ctx, new_superior.dse.id, newRDN);
         if (existingEntry) {
@@ -1180,10 +1179,15 @@ async function applyContentChange (
         } else {
             const modifications = change.attributeChanges.changes;
             if (modifications.length === 0) {
-                ctx.log.warn(ctx.i18n.t("log:shadow_increment_zero_length_mods", {
+                const logInfo = {
                     obid: obid.identifier.toString(),
+                    obver: obid.version.toString(),
+                    obtype: OID_STR_SHADOW_OP_BIND,
+                    cp: stringifyDN(ctx, cp),
                     dn: stringifyDN(ctx, oldDN),
-                }));
+                    signErrors,
+                };
+                ctx.log.warn(ctx.i18n.t("log:shadow_increment_zero_length_mods", logInfo), logInfo);
             }
             for (const mod of modifications) {
                 await applyEntryModification(
@@ -1252,7 +1256,6 @@ async function applyContentChange (
     ]);
 }
 
-// TODO: Collect statistics to report in logging.
 // Also note: this function was partly copied from `applyTotalRefresh()`.
 /**
  * @summary Apply an incremental refresh step to an SDSE
@@ -1330,10 +1333,10 @@ async function applyIncrementalRefreshStep (
 ): Promise<void> {
 
     // Skip over everything up until we reach the base of the shadowed subtree.
-    const cp_length = agreement.shadowSubject.area.contextPrefix.length;
+    const cp = agreement.shadowSubject.area.contextPrefix;
+    const cp_length = cp.length;
     const base = agreement.shadowSubject.area.replicationArea.base ?? [];
 
-    // TODO: This could be put before the subordinates loop to benefit from tail recursion.
     if (depth < (cp_length + base.length)) {
         // In the future, this may be relaxed.
         if (!refresh.subordinateUpdates || (refresh.subordinateUpdates.length !== 1)) {
@@ -1520,9 +1523,15 @@ async function applyIncrementalRefreshStep (
         }
         else {
             const dn = [ ...agreement.shadowSubject.area.contextPrefix, ...localName ];
-            ctx.log.warn(ctx.i18n.t("log:sdse_incremental_change_not_understood", {
+            const logInfo = {
+                obid: obid.identifier.toString(),
+                obver: obid.version.toString(),
+                obtype: OID_STR_SHADOW_OP_BIND,
+                cp: stringifyDN(ctx, cp),
                 dn: stringifyDN(ctx, dn),
-            }));
+                signErrors,
+            };
+            ctx.log.warn(ctx.i18n.t("log:sdse_incremental_change_not_understood", logInfo), logInfo);
         }
     }
 
@@ -1632,7 +1641,7 @@ async function updateShadow (
             next_version: {
                 none: {},
             },
-            binding_type: id_op_binding_shadow.toString(),
+            binding_type: OID_STR_SHADOW_OP_BIND,
             binding_identifier: Number(data.agreementID.identifier),
             accepted: true,
             terminated_time: null,
@@ -1872,6 +1881,17 @@ async function updateShadow (
     }
 
     const cp_dn = agreement.shadowSubject.area.contextPrefix;
+
+    const logInfo = {
+        obid: ob.binding_identifier,
+        obver: ob.binding_version,
+        obtype: OID_STR_SHADOW_OP_BIND,
+        last_update: ob.last_update?.toISOString(),
+        cp: stringifyDN(ctx, cp_dn),
+        local_is_supplier: iAmSupplier,
+        signErrors,
+    };
+
     let cpVertex = await dnToVertex(ctx, ctx.dit.root, cp_dn);
     if (!cpVertex) {
         const ob_time: Date = ob.responded_time
@@ -1881,11 +1901,11 @@ async function updateShadow (
         cpVertex = await dnToVertex(ctx, ctx.dit.root, cp_dn);
         ctx.log.info(ctx.i18n.t("log:shadow_cp_created", {
             dn: stringifyDN(ctx, cp_dn),
-        }));
+        }), logInfo);
     }
     if (!cpVertex) {
         // This should never happen. We create the CP if it does not exist.
-        throw new Error("730902b2-bc68-4fbd-8e71-3f301c1c0ccd");
+        throw new UnknownError(ctx.i18n.t("err:missing_cp_shadowing"));
     }
     /* We remove the timeout on the socket altogether and set a keep-alive so
     that the socket is not closed just because the updateShadow operation takes
@@ -1895,7 +1915,7 @@ async function updateShadow (
         assn.rose.socket.setKeepAlive(true, 5000);
     }
     if ("noRefresh" in data.updatedInfo) {
-        ctx.log.info(ctx.i18n.t("log:shadow_update_no_refresh", { obid: ob.binding_identifier.toString() }));
+        ctx.log.info(ctx.i18n.t("log:shadow_update_no_refresh", logInfo), logInfo);
         const update_complete_time = new Date();
         await ctx.db.operationalBinding.update({
             where: {
@@ -1945,7 +1965,7 @@ async function updateShadow (
             0,
             signErrors,
             [],
-            64, // TODO: Make configurable.
+            os.availableParallelism(),
             100, // TODO: Make configurable.
         );
     }
@@ -1966,7 +1986,10 @@ async function updateShadow (
         ctx.log.debug(ctx.i18n.t("log:shadow_incremental_steps_count", {
             obid: data.agreementID.identifier.toString(),
             steps: refresh.length,
-        }));
+        }), {
+            ...logInfo,
+            steps_count: refresh.length,
+        });
         for (const step of refresh) {
             if (step.sDSEChanges) {
                 throw new ShadowError(
@@ -2129,6 +2152,11 @@ async function updateShadow (
             continue; // There is no overlap in the subtree specifications. Check the next SOB for overlap.
         }
         // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
+        // This will be insanely hard to do, but a hack that would work
+        // sometimes is to send incremental updates if and only if the
+        // secondary's last update time and update periods are the same as from
+        // the supplier. Then we can just forward all of these incremental steps
+        // to the supplier.
         await updateShadowConsumer(ctx, sob.id, true);
     }
 
