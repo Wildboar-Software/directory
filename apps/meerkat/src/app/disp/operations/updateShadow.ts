@@ -1,4 +1,5 @@
 import * as os from "node:os";
+import * as util from "node:util";
 import { MeerkatContext } from "../../ctx.js";
 import { Vertex, Context, ShadowError, Value, UnknownError, IndexableOID } from "../../types/index.js";
 import {
@@ -85,7 +86,7 @@ import { Attribute } from "@wildboar/pki-stub";
 import { dseType } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { DER, _decodeObjectIdentifier } from "@wildboar/asn1/functional";
 import addAttributes from "../../database/entry/addAttributes.js";
-import { map } from "@tyler/duckhawk";
+import { map, mapSeries } from "@tyler/duckhawk";
 import {
     LocalName,
     createTimestamp,
@@ -2138,6 +2139,7 @@ async function updateShadow (
         "Overlapping" should ignore object classes, since these cannot be known
         from the subtree specification alone.
     */
+    const sobs_to_update: number[] = [];
     for (const sob of possibly_related_sobs) {
         const el = new BERElement();
         el.fromBytes(sob.agreement_ber);
@@ -2151,14 +2153,35 @@ async function updateShadow (
         if (!intersection) {
             continue; // There is no overlap in the subtree specifications. Check the next SOB for overlap.
         }
-        // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
-        // This will be insanely hard to do, but a hack that would work
-        // sometimes is to send incremental updates if and only if the
-        // secondary's last update time and update periods are the same as from
-        // the supplier. Then we can just forward all of these incremental steps
-        // to the supplier.
-        await updateShadowConsumer(ctx, sob.id, true);
+
+        sobs_to_update.push(sob.id);
     }
+
+    /* I wish I could make this cascade the incremental updates to secondary
+    shadows instead of performing a total refresh, but that would require
+    an absurdly complicated comparison of the supplier and consumer
+    agreements. We would have to assess what incremental steps from the
+    supplier apply to the consumer, and modify those steps to contain only
+    the consumer's choice of replicated information. All of this assumes
+    that the have the same exact update frequency and last update times. */
+
+    // We do not wait for these updates to return.
+    map(sobs_to_update, (sob_id) => updateShadowConsumer(ctx, sob_id, true).catch((e) => {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
+        ctx.log.error(ctx.i18n.t("err:shadow_update_failure", {
+            e,
+            obid: sob_id,
+        }), {
+            obid: sob_id,
+            obtype: OID_STR_SHADOW_OP_BIND,
+        });
+    }), {
+        concurrency: 2, // TODO: Make configurable
+    })
+        .then()
+        .catch((e) => console.error(e));
 
     return {
         null_: null,

@@ -61,6 +61,23 @@ If you're writing structured log messages like this, journald is going to be
 littered with vague messages like "access denied" unless the user drills into
 the structured data. Maybe this is still fine...
 
+## Shadowing and Change Logging
+
+I think if you were to store every modification operation in a change log whose
+data structures are DISP incremental steps, the problem of having to send total
+refreshes to secondary consumers would be fixed. Then again, maybe you don't
+want to store this data exactly like the DISP incremental step, because that is
+specific to SDSEs and all shadowing agreements are going to request different
+information, so you would probably have to modify these incremental steps with
+each shadow update anyway.
+
+These may only be stored if there are any active shadowing agreements, and maybe
+only the changes in the shadowed areas could be stored to this log.
+
+Separately from this, I think there is a place for having an audit log, which
+would store the entire requests from users, along with IP addresses, invoke IDs,
+etc. But this sounds like a hell of a lot of logging.
+
 ## Database
 
 I should have used a key-value store instead.
