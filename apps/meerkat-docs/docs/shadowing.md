@@ -78,6 +78,11 @@ incremental updates, with a few exceptions:
 - Secondary shadows always receive total refreshes for every update.
 - If a previous total refresh did not succeed, another one will be performed.
 
+Shadow update precision is limited to ten seconds or so: Meerkat DSA
+intentionally only issues shadow updates every ten seconds or so, because it
+allows for multiple entry modifications to be batched into a single shadow
+update.
+
 ## Secondary Shadows
 
 Meerkat DSA supports secondary shadows, however, secondary consumers will only

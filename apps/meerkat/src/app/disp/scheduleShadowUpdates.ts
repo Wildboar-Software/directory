@@ -49,10 +49,10 @@ function scheduleShadowUpdates (
             ctx.log.debug(ctx.i18n.t("log:sob_no_schedule", { obid: ob_id }));
             return;
         }
-        /* TODO: Document the rationale for this: by running every five seconds
+        /* Document the rationale for this: by running every few seconds
         instead of immediately, you can batch a large number of incremental
         changes together. */
-        setInterval(async () => updateShadowConsumer(ctx, ob_db_id, false), 5000);
+        setInterval(async () => updateShadowConsumer(ctx, ob_db_id, false), 10000);
         return;
     }
     const supplierInitiated: boolean = ("supplierInitiated" in updateMode);
@@ -117,16 +117,11 @@ function scheduleShadowUpdates (
     };
 
     let period_start = schedule.periodic.beginTime ?? ob_time;
-    let next_period_start = period_start;
-    let i = 0;
-    while (i++ < 1_000_000) {
-        // TODO: Use a better algorithm to identify the next update time.
-        next_period_start = addSeconds(period_start, Number(schedule.periodic.updateInterval));
-        if (next_period_start.valueOf() > now.valueOf()) {
-            break;
-        }
-        period_start = next_period_start;
-    }
+    const offsetFromFirstPeriodInSeconds = Math.floor((now.valueOf() - period_start.valueOf()) / 1000);
+    const intervalInSeconds = Number(schedule.periodic.updateInterval);
+    const offsetInIntervalCount = Math.floor(offsetFromFirstPeriodInSeconds.valueOf() / intervalInSeconds.valueOf());
+    period_start = addSeconds(period_start, offsetInIntervalCount * intervalInSeconds);
+    const next_period_start = addSeconds(period_start, intervalInSeconds);
     const end_of_period = addSeconds(period_start, Number(schedule.periodic.windowSize));
     if (now.valueOf() < end_of_period.valueOf()) {
         // If we are within the window, we can just schedule the shadowing cycle now.
