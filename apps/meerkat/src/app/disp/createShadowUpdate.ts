@@ -464,7 +464,6 @@ async function _updateShadowConsumer (
             }));
         }
     } catch (e) {
-        // TODO: Do this in a lot of other places. It would really help to have the stacktrace.
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         }

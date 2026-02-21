@@ -1490,6 +1490,20 @@ database: with multiple shadowing agreements or parallel update processing, the
 effective number of concurrent database pages can be this value times the
 concurrency factor.
 
+## MEERKAT_SHADOW_TOTAL_REFRESH_VERTEX_CONCURRENCY
+
+The maximum number of subordinate vertexes that can be processed concurrently
+when building a total refresh tree to send in a shadow update. When constructing
+a total refresh, Meerkat DSA recurses through the DIT; at each vertex, it
+processes subordinates in parallel. This value limits how many of those
+subordinate recursions run at once.
+
+This defaults to `4`. Higher values can speed up total refresh construction but
+may consume more CPU and memory. Lower values reduce resource usage but may slow
+down shadow updates. Setting this to `1` processes subordinates sequentially.
+Setting this to `0` or a negative value is not recommended and may cause
+unexpected behavior.
+
 ## MEERKAT_REQUEST_CROSS_REFERENCES
 
 If set to `1`, Meerkat DSA will request cross references from other DSAs, and,

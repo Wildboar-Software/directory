@@ -140,6 +140,7 @@ data:
   scr_parallelism: {{ .Values.scr_parallelism | default 0 | quote }}
   shadow_secondary_replica_update_concurrency: {{ .Values.shadow_secondary_replica_update_concurrency | default 2 | quote }}
   shadow_total_refresh_deletion_page_size: {{ .Values.shadow_total_refresh_deletion_page_size | default 100 | quote }}
+  shadow_total_refresh_vertex_concurrency: {{ .Values.shadow_total_refresh_vertex_concurrency | default 4 | quote }}
   {{- if .Values.scvp_attr_cert_checks }}
   # NOTE: The `join` function is not documented currently.
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list

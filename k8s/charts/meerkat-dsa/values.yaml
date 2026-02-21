@@ -193,6 +193,7 @@ reveal_user_pwd: false
 scr_parallelism: 0
 shadow_secondary_replica_update_concurrency: 2
 shadow_total_refresh_deletion_page_size: 100
+shadow_total_refresh_vertex_concurrency: 4
 # scvp_attr_cert_checks:
 #   - "2.5.4.3"
 # scvp_attr_cert_want_backs:

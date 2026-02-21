@@ -14,7 +14,7 @@ import {
     UnitOfReplication,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { BERElement, packBits } from "@wildboar/asn1";
-import { _decode_AccessPoint, AccessPoint, DSABindArgument } from "@wildboar/x500/DistributedOperations";
+import { _decode_AccessPoint, AccessPoint } from "@wildboar/x500/DistributedOperations";
 import { becomeShadowConsumer } from "../dop/establish/becomeShadowConsumer.js";
 import { establishOperationalBinding, modifyOperationalBinding, operationalBindingError, OperationalBindingID, terminateOperationalBinding } from "@wildboar/x500/OperationalBindingManagement";
 import { SubtreeSpecification } from "@wildboar/x500/InformationFramework";

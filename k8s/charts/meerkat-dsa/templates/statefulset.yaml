@@ -665,6 +665,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: shadow_total_refresh_deletion_page_size
                   optional: true
+            - name: MEERKAT_SHADOW_TOTAL_REFRESH_VERTEX_CONCURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: shadow_total_refresh_vertex_concurrency
+                  optional: true
             - name: MEERKAT_SCVP_ATTR_CERT_CHECKS
               valueFrom:
                 configMapKeyRef:

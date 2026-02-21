@@ -40,7 +40,7 @@ import type {
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { ASN1Element, BERElement, FALSE, packBits, unpackBits } from "@wildboar/asn1";
 import { Knowledge, OperationalBindingInitiator } from "../../generated/client.js";
-import { getDateFromTime } from "@wildboar/x500";
+import { getDateFromTime, codeToString } from "@wildboar/x500";
 import {
     _encode_CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";
@@ -161,17 +161,7 @@ function getInitiatorParam (init: Initiator): ASN1Element {
         return init.roleB_initiates;
     }
 }
-
 // TODO: Use printCode()
-function codeToString (code?: Code): string | undefined {
-    return (code
-        ? ("global" in code)
-            ? code.global.toString()
-            : ("local" in code)
-                ? code.local.toString()
-                : undefined
-        : undefined);
-}
 
 /**
  * @summary Modifies an operational binding, as described in ITU Recommendation X.501.
@@ -514,11 +504,11 @@ async function modifyOperationalBinding (
             security_target: (sp?.target !== undefined)
                 ? Number (sp.target)
                 : undefined,
-            security_operationCode: codeToString(sp?.operationCode),
+            security_operationCode: sp?.operationCode ? codeToString(sp.operationCode) : undefined,
             security_errorProtection: (sp?.errorProtection !== undefined)
                 ? Number(sp.errorProtection)
                 : undefined,
-            security_errorCode: codeToString(sp?.errorCode),
+            security_errorCode: sp?.errorCode ? codeToString(sp.errorCode) : undefined,
             // new_context_prefix_rdn: set below.
             // immediate_superior: set below.
             source_ip: assn.socket.remoteAddress,

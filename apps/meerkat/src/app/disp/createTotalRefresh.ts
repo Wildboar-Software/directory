@@ -188,7 +188,7 @@ async function createTotalRefreshFromVertex (
                 extended && getExtendedKnowledge,
                 extended && getSubordinateInfo,
             ), {
-                concurrency: 4, // TODO: Make configurable
+                concurrency: ctx.config.shadowing.totalRefreshVertexConcurrency,
             });
         const last_subordinate = subordinates[subordinates.length - 1];
         cursorId = last_subordinate?.dse.id;

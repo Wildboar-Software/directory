@@ -2186,6 +2186,15 @@ interface Configuration {
          */
         totalRefreshDeletionPageSize: number;
 
+        /**
+         * The maximum number of subordinate vertexes that can be processed
+         * concurrently when building a total refresh tree in
+         * `createTotalRefreshFromVertex`. For each vertex, subordinates are
+         * recursively turned into total refresh subtrees; this value limits how
+         * many of those subordinate recursions run in parallel.
+         */
+        totalRefreshVertexConcurrency: number;
+
     };
 
     /**
