@@ -78,10 +78,7 @@ import {
 } from "@wildboar/x500/AuthenticationFramework";
 import { getDateFromTime } from "@wildboar/x500";
 import { rdnToJson } from "../x500/rdnToJson.js";
-import type {
-    Code,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import { compareCode } from "@wildboar/x500";
+import { compareCode, codeToString } from "@wildboar/x500";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { sleep } from "../utils/sleep.js";
 import { abortReasonToString, rejectReasonToString, ResultParameters } from "@wildboar/rose-transport";
@@ -96,17 +93,6 @@ import {
 import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import stringifyDN from "../x500/stringifyDN.js";
 import util from "node:util";
-
-// TODO: Use printCode()
-function codeToString (code?: Code): string | undefined {
-    return (code
-        ? ("global" in code)
-            ? code.global.toString()
-            : ("local" in code)
-                ? code.local.toString()
-                : undefined
-        : undefined);
-}
 
 const updateTimingBackoffInSeconds: number[] = [ 2, 4, 8 ];
 
@@ -367,7 +353,7 @@ async function updateSuperiorDSA (
                             security_target: (sp?.target !== undefined)
                                 ? Number(sp.target)
                                 : undefined,
-                            security_operationCode: codeToString(sp?.operationCode),
+                            security_operationCode: sp?.operationCode ? codeToString(sp.operationCode) : undefined,
                             security_errorProtection: (sp?.errorProtection !== undefined)
                                 ? Number(sp.errorProtection)
                                 : undefined,

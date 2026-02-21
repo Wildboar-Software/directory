@@ -170,6 +170,7 @@ import { cacheNamingContexts } from "../../dit/cacheNamingContexts.js";
 import { clearSafeTimeout } from "@wildboar/safe-timers";
 import isAutoApproved from "../isAutoApproved.js";
 import { printCode } from "../../utils/printCode.js";
+import getUniqueOpBindingId from "../../utils/getUniqueOpBindingId.js";
 import util from "node:util";
 
 // This is just for testing purposes and should be deleted.
@@ -706,7 +707,10 @@ async function relayedEstablishOperationalBinding (
                         explicitTermination: null,
                     },
             ),
-            bindingID: undefined,
+            bindingID: new OperationalBindingID(
+                getUniqueOpBindingId(),
+                0,
+            ),
             securityParameters: sp,
             _unrecognizedExtensionsList: [],
         });
@@ -1444,8 +1448,7 @@ async function establishOperationalBinding (
             newBindingIdentifier = Number(data.bindingID.identifier);
         }
     } else if (typeof data.bindingID?.identifier === "undefined") {
-        newBindingIdentifier = randomInt(2147483648);
-        // TODO: Loop until you find an available ID.
+        newBindingIdentifier = getUniqueOpBindingId();
     }
 
     const bindingID = new OperationalBindingID(

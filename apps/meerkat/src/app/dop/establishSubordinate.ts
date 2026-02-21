@@ -6,6 +6,7 @@ import type {
 import { bindForOBM } from "../net/bindToOtherDSA.js";
 import {
     establishOperationalBinding,
+    OperationalBindingID,
 } from "@wildboar/x500/OperationalBindingManagement";
 import {
     SuperiorToSubordinate,
@@ -62,6 +63,7 @@ import getStructuralObjectClass from "../x500/getStructuralObjectClass.js";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding.js";
 import stringifyDN from "../x500/stringifyDN.js";
 import util from "node:util";
+import getUniqueOpBindingId from "../utils/getUniqueOpBindingId.js";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -415,6 +417,10 @@ async function establishSubordinate (
                 true,
                 targetSystem.ae_title.rdnSequence,
                 establishOperationalBinding["&operationCode"],
+            ),
+            bindingID: new OperationalBindingID(
+                getUniqueOpBindingId(),
+                0,
             ),
             cert_path: ctx.config.signing.certPath,
             key: ctx.config.signing.key,

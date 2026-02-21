@@ -244,9 +244,6 @@ async function establishReplicateEverythingAgreement(
             agreement,
             initiator: undefined,
             securityParameters: mySecurityParameters,
-            /* TODO: Elsewhere, do not let the other DSA choose the OB ID.
-            There is no way for the initiator to signal back that the ID is
-            unavailable if it chooses one already taken. */
             bindingID,
             cert_path: ctx.config.signing.certPath,
             key: ctx.config.signing.key,
@@ -490,9 +487,6 @@ async function modifyReplicateEverythingAgreement(
             accessPoint: myAccessPoint,
             initiator: modificationParameter,
             securityParameters: mySecurityParameters,
-            /* TODO: Elsewhere, do not let the other DSA choose the OB ID.
-            There is no way for the initiator to signal back that the ID is
-            unavailable if it chooses one already taken. */
             bindingID,
             cert_path: ctx.config.signing.certPath,
             key: ctx.config.signing.key,
