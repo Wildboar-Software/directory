@@ -361,6 +361,7 @@ function canFail (cb: () => string): string {
     }
 }
 
+// TODO: Why is this unused?
 function errorHandlingMiddleware (req: MeerkatReq, _: Response, next: NextFunction): void {
     try {
         next();

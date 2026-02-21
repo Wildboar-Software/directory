@@ -89,6 +89,7 @@ import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub";
 import { TBSAttributeCertificate, _encode_TBSAttributeCertificate } from "@wildboar/pki-stub";
 import { checkOCSP } from "./verifyCertPath.js";
 import { general_name_matches_cert } from "./general_name_matches_cert.js";
+import util from "node:util";
 
 export const VAC_OK: number = 0;
 export const VAC_NOT_BEFORE: number = -1;
@@ -1140,6 +1141,9 @@ async function verifyAttrCert (
             }
         } catch (e) {
             // TODO: Log
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             return VAC_NOT_GROUP_MEMBER;
         }
     }

@@ -181,13 +181,12 @@ import type {
 import { printInvokeId } from "../utils/printInvokeId.js";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
-import type { DistinguishedValueCreateManyInput } from "../generated/models/DistinguishedValue.js";
-import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs.js";
 import { SubordinateChanges } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh.js";
 import { acdf } from "../authz/acdf.js";
 import { renameEntry } from "../database/renameEntry.js";
+import util from "node:util";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -1293,6 +1292,9 @@ async function modifyDN (
                 timeLimitInMilliseconds: timeRemainingInMilliseconds,
             });
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             throw new errors.UpdateError(
                 ctx.i18n.t("err:superior_dsa_would_not_rename", {
                     e: e?.message,
@@ -1991,6 +1993,9 @@ async function modifyDN (
             try {
                 await removeValues(ctx, target, [valueToDelete], assn.boundNameAndUID?.dn ?? []);
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 ctx.log.warn(ctx.i18n.t("log:failed_to_delete_old_rdn", {
                     oid: oldATAV.type_.toString(),
                     uuid: target.dse.uuid,

@@ -39,6 +39,7 @@ import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.j
 import { id_opcode_search } from "@wildboar/x500/CommonProtocolSpecification";
 import { _decode_SearchResult } from "@wildboar/x500/DirectoryAbstractService";
 import { chainedSearch } from "@wildboar/x500/DistributedOperations";
+import util from "node:util";
 
 /**
  * @summary Search Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -208,6 +209,9 @@ async function scrProcedure (
                     // This preserves the performer.
                     searchState.resultSets.push(searchResult);
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     // TODO: Log e
                     ctx.log.warn(e);
                 }

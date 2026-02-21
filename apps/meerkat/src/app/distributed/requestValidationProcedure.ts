@@ -103,6 +103,7 @@ import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import cloneChainingArgs from "../x500/cloneChainingArguments.js";
 import { isTrustedForIBRA } from "./isTrustedForIBRA.js";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";
+import util from "node:util";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -909,6 +910,9 @@ async function requestValidationProcedure (
             authLevelSigned = true;
         } catch (e) {
             // TODO: Log the error, but don't throw it yet.
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
         }
     }
 

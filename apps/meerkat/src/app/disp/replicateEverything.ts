@@ -204,6 +204,9 @@ async function establishReplicateEverythingAgreement(
             },
         });
     } catch (e) {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
         // If there is an error, just fall back on soft-deletion.
         ctx.log.warn(ctx.i18n.t("log:failed_to_delete_prev_replicate_everything", { e }));
         try {
@@ -216,6 +219,9 @@ async function establishReplicateEverythingAgreement(
                 },
             });
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             ctx.log.warn(ctx.i18n.t("log:failed_to_soft_delete_prev_replicate_everything", { e }));
             return;
         }
@@ -273,6 +279,9 @@ async function establishReplicateEverythingAgreement(
                     undefined,
                 );
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 // If signature is invalid, we terminate the operational binding.
                 const terminateSP = createSecurityParameters(
                     ctx,
@@ -393,6 +402,9 @@ async function establishReplicateEverythingAgreement(
                         undefined,
                     );
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
                 }
             }
@@ -416,6 +428,9 @@ async function establishReplicateEverythingAgreement(
                         undefined,
                     );
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
                 }
             }
@@ -508,6 +523,9 @@ async function modifyReplicateEverythingAgreement(
                     undefined,
                 );
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 /* We intentionally do nothing if we receive an invalid
                 signature. If we refuse to act on receipt, this could
                 result in this DSA spamming the master with one new shadow
@@ -620,6 +638,9 @@ async function modifyReplicateEverythingAgreement(
                         undefined,
                     );
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
                 }
             }
@@ -643,6 +664,9 @@ async function modifyReplicateEverythingAgreement(
                         undefined,
                     );
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
                 }
             }

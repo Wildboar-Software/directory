@@ -51,6 +51,7 @@ import {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/InformationFramework";
 import printInvokeId from "../utils/printInvokeId.js";
+import util from "node:util";
 
 /**
  * @summary Updates a subordinate DSA of changes that may affect a hierarchical operational binding
@@ -310,6 +311,9 @@ async function updateHOBSubordinateDSA (
                         signErrors,
                     );
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     ctx.log.error(ctx.i18n.t("log:invalid_signature", {
                         context: "result",
                         iid: response.result.invoke_id.toString().slice(0, 32),
@@ -370,6 +374,9 @@ async function updateHOBSubordinateDSA (
                         signErrors,
                     );
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     ctx.log.error(ctx.i18n.t("log:invalid_signature", {
                         context: "result",
                         iid: response.error.invoke_id.toString().slice(0, 32),

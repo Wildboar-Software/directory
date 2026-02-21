@@ -68,6 +68,7 @@ import { generateSIGNED } from "../pki/generateSIGNED.js";
 import stringifyDN from "../x500/stringifyDN.js";
 import { TRUE_BIT } from "@wildboar/asn1";
 import { differenceInSeconds } from "date-fns";
+import util from "node:util";
 
 const invalidCredentialsData = new DirectoryBindErrorData(
     versions,
@@ -210,6 +211,9 @@ async function getRemoteSecurityInfo(
         }));
         return [ clearances, unique_id ];
     } catch (e) {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
         ctx.log.debug(ctx.i18n.t("log:failed_to_get_remote_security_info", {
             e,
             dn: stringifyDN(ctx, dn),
@@ -341,6 +345,9 @@ async function remotePasswordCheckingProcedure(
             );
         }
     } catch (e) {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
         ctx.log.info(ctx.i18n.t("log:error_checking_remote_pwd", { source, e }), logInfo);
         matched = false;
         // Intentional fall through to the !matched case.

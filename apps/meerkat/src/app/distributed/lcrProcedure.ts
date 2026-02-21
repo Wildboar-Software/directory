@@ -33,6 +33,7 @@ import {
 import { map } from "@tyler/duckhawk";
 import printCode from "../utils/printCode.js";
 import stringifyDN from "../x500/stringifyDN.js";
+import util from "node:util";
 
 /**
  * @summary List Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -229,6 +230,9 @@ async function lcrProcedure (
                     // This preserves the performer.
                     listState.resultSets.push(listResult);
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     // TODO: Log e
                     ctx.log.warn(e);
                 }

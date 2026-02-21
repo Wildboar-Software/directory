@@ -63,6 +63,7 @@ import { compareAuthenticationLevel } from "@wildboar/x500";
 import { OperationOutcome, RejectReason, AbortReason } from "@wildboar/rose-transport";
 import stringifyDN from "../x500/stringifyDN.js";
 import printCode from "../utils/printCode.js";
+import util from "node:util";
 
 /**
  * These are rejection reasons that may reflect some transient or circumstantial
@@ -342,6 +343,9 @@ async function nrcrProcedure (
                     localScope,
                 );
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 ctx.log.debug(ctx.i18n.t("log:ap_info_procedure_error", { e }));
                 continue;
             }
@@ -359,6 +363,9 @@ async function nrcrProcedure (
                         },
                     };
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     ctx.log.error(e.message, {
                         remoteFamily: assn?.socket.remoteFamily,
                         remoteAddress: assn?.socket.remoteAddress,

@@ -61,6 +61,7 @@ import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass.js";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding.js";
 import stringifyDN from "../x500/stringifyDN.js";
+import util from "node:util";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -448,6 +449,9 @@ async function establishSubordinate (
             response,
         };
     } catch (e) {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
         throw new ServiceError(
             ctx.i18n.t("err:failed_to_establish_hob", {
                 etype: e?.name,

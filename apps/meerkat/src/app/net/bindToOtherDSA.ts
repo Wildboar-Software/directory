@@ -57,6 +57,7 @@ import attemptSPKMAuth from "../authn/attemptSPKMAuth.js";
 import { attemptStrongAuth } from "../authn/attemptStrongAuth.js";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { randomBytes } from "node:crypto";
+import util from "node:util";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
 
@@ -508,6 +509,9 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                         return null;
                     }
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     if ((e instanceof TypeError) || (e instanceof RangeError)) {
                         ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_other_err", {e}), logInfo);
                         rose.write_abort(AbortReason.mistyped_pdu);

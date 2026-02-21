@@ -133,6 +133,7 @@ import {
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh.js";
 import { acdf } from "../authz/acdf.js";
+import util from "node:util";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -524,6 +525,9 @@ async function removeEntry (
                         });
                     });
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
                     obid: bindingID.identifier.toString(),
                     version: bindingID.version.toString(),

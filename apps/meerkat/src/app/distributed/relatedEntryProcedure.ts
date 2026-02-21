@@ -52,6 +52,7 @@ import { randomInt } from "node:crypto";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
+import util from "node:util";
 
 /**
  * @summary The Related Entry Procedure, defined in ITU Recommendation X.518.
@@ -218,6 +219,9 @@ async function relatedEntryProcedure (
                 continue;
             }
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             if (
                 (e instanceof errors.ReferralError)
                 || (

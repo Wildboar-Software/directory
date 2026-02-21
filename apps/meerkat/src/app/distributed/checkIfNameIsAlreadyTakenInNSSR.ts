@@ -45,6 +45,7 @@ import { bindForChaining } from "../net/bindToOtherDSA.js";
 import { stringifyDN } from "../x500/stringifyDN.js";
 import { randomInt } from "node:crypto";
 import { MAX_INVOKE_ID } from "@wildboar/x500-client-ts";
+import util from "node:util";
 
 /**
  * @summary Check if name is already taken among NSSR.
@@ -181,6 +182,9 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     break; // Breaks the innermost for loop.
                 }
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 ctx.log.warn(ctx.i18n.t("log:failed_to_access_master", {
                     dsa: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
                     e: e.message,

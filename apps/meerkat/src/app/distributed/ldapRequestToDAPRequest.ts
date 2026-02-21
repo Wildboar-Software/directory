@@ -178,6 +178,7 @@ import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
 import { getLDAPSyntax } from "../x500/getLDAPSyntax.js";
+import util from "node:util";
 
 const {
     modifyPassword,
@@ -1122,6 +1123,9 @@ function ldapRequestToDAPRequest (
                                 );
                             }
                         } catch (e) {
+                            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                                ctx.log.error(util.inspect(e));
+                            }
                             ctx.log.warn(ctx.i18n.t("log:could_not_decode_ldap_attribute", {
                                 desc,
                                 e: e.message,

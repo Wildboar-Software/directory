@@ -367,6 +367,7 @@ import { isMatchAllFilter } from "../x500/isMatchAllFilter.js";
 import { acdf } from "../authz/acdf.js";
 import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC.js";
 import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn.js";
+import util from "node:util";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -2380,6 +2381,9 @@ async function search_i_ex (
             try {
                 filterResult = evaluateFilter(filter, familyInfos, filterOptions);
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 if (e instanceof CannotPerformExactly) {
                     throw new errors.ServiceError(
                         ctx.i18n.t("err:could_not_match_exactly"),
@@ -2706,6 +2710,9 @@ async function search_i_ex (
             try {
                 filterResult = evaluateFilter(filter, familyInfos, filterOptions);
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 if (e instanceof CannotPerformExactly) {
                     throw new errors.ServiceError(
                         ctx.i18n.t("err:could_not_match_exactly"),

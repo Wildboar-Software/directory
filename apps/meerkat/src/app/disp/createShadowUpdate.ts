@@ -485,6 +485,9 @@ async function _updateShadowConsumer (
         try {
             await disp_client?.unbind({ disconnectSocket: true }); // INTENTIONAL_NO_AWAIT
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             const extraLogData =  (typeof e === "object" && e !== null)
                 ? {
                     problem: e.data?.problem,
@@ -527,6 +530,9 @@ async function updateShadowConsumer (
     try {
         await _updateShadowConsumer(ctx, ob_db_id, forceTotalRefresh);
     } catch (e) {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
         const extraLogData =  (typeof e === "object" && e !== null)
             ? {
                 problem: e.data?.problem,

@@ -48,6 +48,7 @@ import getPartialAttributesFromEntryInformation from "../ldap/getPartialAttribut
 import { decodeLDAPOID } from "@wildboar/ldap";
 import { strict as assert } from "node:assert";
 import LDAPAssociation from "../ldap/LDAPConnection.js";
+import util from "node:util";
 
 const {
     postread: postreadOID,
@@ -94,6 +95,9 @@ function getSearchResultEntries (
                 );
                 onEntry(entry);
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 ctx.log.error(ctx.i18n.t("err:error_converting_entry_to_ldap", { e }));
             }
         }

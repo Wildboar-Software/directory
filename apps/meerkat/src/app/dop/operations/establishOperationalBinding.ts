@@ -170,6 +170,7 @@ import { cacheNamingContexts } from "../../dit/cacheNamingContexts.js";
 import { clearSafeTimeout } from "@wildboar/safe-timers";
 import isAutoApproved from "../isAutoApproved.js";
 import { printCode } from "../../utils/printCode.js";
+import util from "node:util";
 
 // This is just for testing purposes and should be deleted.
 async function modifySOB_delete_me (
@@ -1741,6 +1742,9 @@ async function establishOperationalBinding (
                 structuralObjectClass = soc;
                 governingStructureRule = gsr;
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 ctx.log.warn(ctx.i18n.t("log:hob_invalid_entryInfo", { e }), logInfo);
                 throw new errors.OperationalBindingError(
                     ctx.i18n.t("err:hob_invalid_entryInfo", { e }),

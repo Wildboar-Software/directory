@@ -44,6 +44,7 @@ import {
 } from "@wildboar/x500/OperationalBindingManagement";
 import { _encode_SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import printInvokeId from "../utils/printInvokeId.js";
+import util from "node:util";
 
 /**
  * @summary Updates a subordinate DSA of changes that may affect an NHOB
@@ -297,6 +298,9 @@ async function updateNHOBSubordinateDSA (
                         signErrors,
                     );
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     ctx.log.error(ctx.i18n.t("log:invalid_signature", {
                         context: "result",
                         iid: response.result.invoke_id.toString().slice(0, 32),
@@ -357,6 +361,9 @@ async function updateNHOBSubordinateDSA (
                         signErrors,
                     );
                 } catch (e) {
+                    if (process.env.MEERKAT_LOG_JSON !== "1") {
+                        ctx.log.error(util.inspect(e));
+                    }
                     ctx.log.error(ctx.i18n.t("log:invalid_signature", {
                         context: "result",
                         iid: response.error.invoke_id.toString().slice(0, 32),

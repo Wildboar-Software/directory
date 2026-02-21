@@ -1,6 +1,7 @@
 import { Context } from "../types/index.js";
 import getEntryExistsFilter from "../database/entryExistsFilter.js";
 import getDNFromEntryId from "../database/getDNFromEntryId.js";
+import util from "node:util";
 
 /**
  * @summary Cache the naming contexts in the context object
@@ -29,6 +30,9 @@ async function cacheNamingContexts (ctx: Context): Promise<void> {
         ctx.dsa.namingContexts = await Promise.all(context_prefixes
             .map(async ({ id }) => getDNFromEntryId(ctx, id)));
     } catch (e) {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        }
         // TODO: Log an error.
     }
 }

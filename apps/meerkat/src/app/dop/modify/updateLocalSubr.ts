@@ -47,6 +47,7 @@ import { ASN1Construction } from "@wildboar/asn1";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer.js";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate.js";
+import util from "node:util";
 
 /**
  * @summary Update an update to a local subr DSE given by a subordinate DSA
@@ -145,6 +146,9 @@ async function updateLocalSubr (
                     newDN,
                 );
             } catch (e) {
+                if (process.env.MEERKAT_LOG_JSON !== "1") {
+                    ctx.log.error(util.inspect(e));
+                }
                 throw new OperationalBindingError(
                     ctx.i18n.t("err:entry_already_exists_in_nssr"),
                     new OpBindingErrorParam(

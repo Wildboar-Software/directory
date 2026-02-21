@@ -93,6 +93,7 @@ import deleteEntry from "../database/deleteEntry.js";
 import DAPAssociation from "../dap/DAPConnection.js";
 import isLocalScope from "../x500/isLocalScope.js";
 import printCode from "../utils/printCode.js";
+import util from "node:util";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -432,6 +433,9 @@ async function apinfoProcedure (
                                 "result",
                             );
                         } catch (e) {
+                            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                                ctx.log.error(util.inspect(e));
+                            }
                             dsp_signature_valid = false;
                             ctx.log.warn(ctx.i18n.t("log:dsp_result_invalid_sig", {
                                 ...logInfo,
@@ -629,6 +633,9 @@ async function apinfoProcedure (
                 continue; // Always try another.
             }
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             if (!connected) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
                     ...logInfo,

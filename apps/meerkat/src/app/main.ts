@@ -91,6 +91,7 @@ import * as routes from "./admin/web.js";
 import { fileURLToPath } from "node:url";
 import _ from "lodash";
 import { replicateEverythingFrom } from "./disp/replicateEverything.js";
+import util from "node:util";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -403,6 +404,9 @@ function attachUnboundEventListenersToIDMConnection (
                 },
             });
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             ctx.log.warn(ctx.i18n.t("log:bind_error", {
                 host: originalSocket.remoteAddress,
                 source,
@@ -662,6 +666,9 @@ function handleIDM (
             });
             attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, startTimes);
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
                 host: c.remoteAddress,
@@ -798,6 +805,9 @@ function handleLDAP (
             const conn = new LDAPAssociation(ctx, c);
             ctx.associations.set(c, conn);
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
                 host: c.remoteAddress,
@@ -896,6 +906,9 @@ function attachUnboundEventListenersToITOTConnection (
                 },
             });
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             ctx.log.warn(ctx.i18n.t("log:bind_error", {
                 host: originalSocket.remoteAddress,
                 source,
@@ -1072,6 +1085,9 @@ function attachUnboundEventListenersToITOTConnection (
             );
             attachUnboundEventListenersToITOTConnection(ctx, c, source, itot, startTimes);
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
                 e: e.message,
                 host: c.remoteAddress,

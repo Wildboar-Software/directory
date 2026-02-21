@@ -95,6 +95,7 @@ import {
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import stringifyDN from "../x500/stringifyDN.js";
+import util from "node:util";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -450,6 +451,9 @@ async function updateSuperiorDSA (
                 },
             });
         } catch (e) {
+            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                ctx.log.error(util.inspect(e));
+            }
             ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
                 obid: hob.binding_identifier.toString(),
                 version: hob.binding_version.toString(),
