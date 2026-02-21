@@ -868,6 +868,7 @@ async function applyTotalRefresh (
             signErrors,
             [ ...localName, subordinate.dse.rdn ],
             Math.max(1, Math.round(recursion_fanout / 2)),
+            subordinates_page_size,
         ), {
             concurrency: recursion_fanout,
         });
@@ -1967,7 +1968,7 @@ async function updateShadow (
             signErrors,
             [],
             os.availableParallelism(),
-            100, // TODO: Make configurable.
+            ctx.config.shadowing.totalRefreshDeletionPageSize,
         );
     }
     else if ("incremental" in data.updatedInfo) {

@@ -1060,6 +1060,9 @@ const config: Configuration = {
         secondaryReplicaUpdateConcurrency: process.env.MEERKAT_SHADOW_SECONDARY_REPLICA_UPDATE_CONCURRENCY
             ? Number.parseInt(process.env.MEERKAT_SHADOW_SECONDARY_REPLICA_UPDATE_CONCURRENCY, 10)
             : 2,
+        totalRefreshDeletionPageSize: process.env.MEERKAT_SHADOW_TOTAL_REFRESH_DELETION_PAGE_SIZE
+            ? Number.parseInt(process.env.MEERKAT_SHADOW_TOTAL_REFRESH_DELETION_PAGE_SIZE, 10)
+            : 100,
     },
     sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
     administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,

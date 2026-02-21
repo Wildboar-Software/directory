@@ -2178,6 +2178,14 @@ interface Configuration {
          */
         secondaryReplicaUpdateConcurrency: number;
 
+        /**
+         * The number of entries read in a page from the database when deleting
+         * entries not included in a total refresh from a shadow (replica)
+         * producer. Concurrency multiplies the amount of simultaneous pagination
+         * through the database.
+         */
+        totalRefreshDeletionPageSize: number;
+
     };
 
     /**

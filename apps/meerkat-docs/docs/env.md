@@ -1476,6 +1476,20 @@ update secondary replicas sequentially, which is slower but uses fewer resources
 Setting this to `0` or a negative value is not recommended and may cause
 unexpected behavior.
 
+## MEERKAT_SHADOW_TOTAL_REFRESH_DELETION_PAGE_SIZE
+
+The number of entries read in a page from the database when deleting entries not
+included in a total refresh from a shadow (replica) producer. During a total
+refresh, Meerkat DSA paginates through the database to find shadow entries that
+were not mentioned in the refresh and must be removed. This value controls the
+page size for that pagination.
+
+This defaults to `100`. The value must be a positive integer. Note that
+concurrency multiplies the amount of simultaneous pagination through the
+database: with multiple shadowing agreements or parallel update processing, the
+effective number of concurrent database pages can be this value times the
+concurrency factor.
+
 ## MEERKAT_REQUEST_CROSS_REFERENCES
 
 If set to `1`, Meerkat DSA will request cross references from other DSAs, and,

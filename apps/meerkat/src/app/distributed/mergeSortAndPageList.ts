@@ -501,7 +501,7 @@ async function mergeSortAndPageList(
         } else {
             mergedResult = listState.resultSets.reduce(mergeResultSet, mergedResult);
             mergedResult.subordinates = dedupeSubordinates(ctx, mergedResult.subordinates);
-            if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
+            if (prr.sortKeys?.length) {
                 mergedResult.subordinates.sort((a, b) => compareSubordinates(
                     ctx,
                     a,
@@ -518,7 +518,6 @@ async function mergeSortAndPageList(
                 query_ref: queryReference!,
                 result_index: i,
                 subordinate_info: _encode_ListResultData_listInfo_subordinates_Item(sub, DER).toBytes(),
-                // TODO: Supply entry ID too.
             })),
         });
         paging.totalResults = nonSkippedResults.length;

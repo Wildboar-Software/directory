@@ -552,7 +552,7 @@ async function mergeSortAndPageSearch(
         } else {
             mergedResult = searchState.resultSets.reduce(mergeResultSet, mergedResult);
             mergedResult.entries = dedupeEntries(ctx, mergedResult.entries);
-            if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
+            if (prr.sortKeys?.length) {
                 mergedResult.entries.sort((a, b) => compareEntries(
                     ctx,
                     a,
@@ -571,7 +571,6 @@ async function mergeSortAndPageSearch(
                 query_ref: searchState.paging![0],
                 result_index: i,
                 entry_info: _encode_EntryInformation(entry, DER).toBytes(),
-                // TODO: Supply entry ID too.
             })),
         });
         searchState.paging[1].totalResults = nonSkippedResults.length;
