@@ -21,6 +21,7 @@ import type {
 } from "@wildboar/x500/DirectoryAbstractService";
 import type {
     AccessPoint,
+    CrossReference,
 } from "@wildboar/x500/DistributedOperations";
 import type { LDAPSyntaxDecoder } from "@wildboar/ldap";
 import type { LDAPSyntaxEncoder } from "@wildboar/ldap";
@@ -3342,6 +3343,12 @@ interface Context {
      * `EXTERNAL` that is asserted.
      */
     externalProcedureAuthFunctions: Map<IndexableOID, ExternalAuthFunction>;
+
+    /**
+     * A cache of cross references that were added since this DSA started up.
+     * The cache key is the stringified DN of the context prefix.
+     */
+    recentlyAddedCrossReferences: Map<string, CrossReference>;
 }
 
 /**

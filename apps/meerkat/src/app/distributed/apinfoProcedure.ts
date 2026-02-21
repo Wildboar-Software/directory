@@ -1,4 +1,4 @@
-import type { ClientAssociation, Vertex } from "../types/index.js";
+import type { ClientAssociation, Vertex, Context } from "../types/index.js";
 import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { BOOLEAN } from "@wildboar/asn1";
@@ -24,7 +24,7 @@ import {
     ServiceProblem_loopDetected,
     ServiceProblem_timeLimitExceeded,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { compareCode } from "@wildboar/x500";
+import { compareCode, uriFromNSAP } from "@wildboar/x500";
 import type { ChainedRequest } from "@wildboar/x500";
 import type { Chained } from "@wildboar/x500";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
@@ -94,6 +94,49 @@ import DAPAssociation from "../dap/DAPConnection.js";
 import isLocalScope from "../x500/isLocalScope.js";
 import printCode from "../utils/printCode.js";
 import util from "node:util";
+
+function isAcceptableAccessPoint (ap: AccessPointInformation): boolean {
+    const psel = ap.address.pSelector;
+    const ssel = ap.address.sSelector;
+    const tsel = ap.address.tSelector;
+    const naddrs = ap.address.nAddresses;
+    if (psel && (!ssel || !tsel)) {
+        return false;
+    }
+    if (ssel && !tsel) {
+        return false;
+    }
+    /* We only validate the URL-formatted network addresses. This is meant to
+    be "quick and dirty" validation. */
+    const has_invalid_naddr = naddrs
+        .some((naddr) => (
+            naddr.length < 3
+            || naddr[0] == 0xFF && URL.parse(uriFromNSAP(naddr)[1])
+        ));
+    const has_too_many_naddrs = naddrs.length > 10;
+    const has_empty_dn = ap.ae_title.rdnSequence.length === 0;
+    const has_empty_rdn = ap.ae_title.rdnSequence.some((rdn) => rdn.length === 0);
+    return (
+        !has_invalid_naddr
+        && !has_empty_dn
+        && !has_empty_rdn
+        && !has_too_many_naddrs
+        && naddrs.length > 0
+    );
+}
+
+function isAcceptableCrossReference (
+    ctx: Context,
+    cref: ContinuationReference,
+    xr: CrossReference,
+): boolean {
+    return (
+        isPrefix(ctx, xr.contextPrefix, cref.targetObject.rdnSequence)
+        && !ctx.dsa.namingContexts
+            .some((nc) => (nc.length > 0) && isPrefix(ctx, xr.contextPrefix, nc))
+        && isAcceptableAccessPoint(xr.accessPoint)
+    );
+}
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -444,7 +487,6 @@ async function apinfoProcedure (
                         }
                     }
                     const returned_cross_refs = resultData.chainedResult.crossReferences ?? [];
-                    // TODO: Validate access points, but this is much lower priority.
                     /* We filter out any cross references that do not lie on the
                     target object's path. This is for security purposes: we do
                     not want other DSAs to be able to construct an entirely
@@ -457,11 +499,7 @@ async function apinfoProcedure (
                     if alias dereferencing results in a downstream DSA returning
                     cross references from a totally different targetObject. */
                     acceptableCrossReferences = dsp_signature_valid
-                        ? returned_cross_refs.filter((xr) => (
-                                isPrefix(ctx, xr.contextPrefix, cref.targetObject.rdnSequence)
-                                && !ctx.dsa.namingContexts
-                                    .some((nc) => (nc.length > 0) && isPrefix(ctx, xr.contextPrefix, nc))
-                            ))
+                        ? returned_cross_refs.filter((xr) => isAcceptableCrossReference(ctx, cref, xr))
                         : [];
 
                     if (returned_cross_refs.length !== acceptableCrossReferences.length) {
@@ -480,7 +518,6 @@ async function apinfoProcedure (
                             || ("signed" in decoded)
                         )
                     ) {
-                        // TODO: Index recently added cross references so we're not doing this for every result.
                         map(
                             acceptableCrossReferences,
                             (xr) => upsertCrossReferences(ctx, xr),

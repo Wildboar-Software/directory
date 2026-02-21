@@ -6,6 +6,7 @@ import {
 import { createDse } from "../database/createEntry.js";
 import saveAccessPoint from "../database/saveAccessPoint.js";
 import { Knowledge } from "../generated/client.js";
+import stringifyDN from "../x500/stringifyDN.js";
 
 /**
  * @summary Upsert cross references into the local DSAIT
@@ -27,6 +28,24 @@ async function upsertCrossReferences (
     ctx: Context,
     xr: CrossReference,
 ): Promise<void> {
+    /* We use caching to avoid creating all the glue DSEs and the xr DSE if we
+    just did that from a previous request. This involves a lot of database
+    queries to do. */
+    const xr_cache_key = stringifyDN(ctx, xr.contextPrefix).trim().toUpperCase();
+    const existing_xr = ctx.recentlyAddedCrossReferences.get(xr_cache_key);
+    if (
+        existing_xr
+        // We attempt an update to the cross references only if there are more
+        // network addresses, otherwise we assume it hasn't changed.
+        && (
+            existing_xr.accessPoint.address.nAddresses.length
+            <= xr.accessPoint.address.nAddresses.length
+        )
+    ) {
+        return;
+    }
+    ctx.recentlyAddedCrossReferences.set(xr_cache_key, xr);
+
     let current: Vertex = ctx.dit.root;
     for (const rdn of xr.contextPrefix) {
         const v = await dnToVertex(ctx, current!, [ rdn ]);
