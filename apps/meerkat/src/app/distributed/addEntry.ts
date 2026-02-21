@@ -92,7 +92,7 @@ import establishSubordinate from "../dop/establishSubordinate.js";
 import { addSeconds, differenceInMilliseconds } from "date-fns";
 import { getDateFromTime } from "@wildboar/x500";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
-import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
+import { DER, _encodeBitString, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import { codeToString } from "@wildboar/x500";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments.js";
 import { naddrToURI } from "@wildboar/x500";
@@ -154,6 +154,8 @@ import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs.js";
 import { SubordinateChanges } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh.js";
 import { acdf } from "../authz/acdf.js";
+import readValuesOfType from "../utils/readValuesOfType.js";
+import { strict as assert } from "node:assert";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -169,9 +171,11 @@ function namingViolationErrorData (
 ): UpdateErrorData {
     return new UpdateErrorData(
         UpdateProblem_namingViolation,
-        attributeTypes.map((at) => ({
+        attributeTypes.length > 0
+            ? attributeTypes.map((at) => ({
             attributeType: at,
-        })),
+            }))
+            : undefined,
         [],
         createSecurityParameters(
             ctx,
@@ -529,8 +533,32 @@ async function addEntry (
                 true,
             );
 
-            // TODO: We do not check that the user has permission to the DSEType value!
-            // const superiorDSEType = await readValuesOfType(ctx, immediateSuperior, dseType["&id"])[0];
+            const superiorDSETypeValues = await readValuesOfType(ctx, immediateSuperior, dseType["&id"]);
+            assert(
+                superiorDSETypeValues.length === 1,
+                `Expected 1 DSEType value, got ${superiorDSETypeValues.length}`,
+            );
+            const superiorDSEType = superiorDSETypeValues[0];
+            const authorizedToReadSuperiorDSEValue = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                immediateSuperior,
+                [ PERMISSION_CATEGORY_READ ],
+                relevantTuplesForSuperior,
+                user,
+                {
+                    value: new AttributeTypeAndValue(
+                        dseType["&id"],
+                        superiorDSEType.value,
+                    ),
+                    operational: true,
+                    valuesCount: 1, 
+                },
+                bacSettings,
+                true,
+            );
+
             const authorizedToReadSuperiorObjectClasses = acdf(
                 ctx,
                 accessControlScheme,
@@ -566,12 +594,17 @@ async function addEntry (
                     true,
                 ));
 
+            const authorizedToKnowSuperiorDSEType = (
+                authorizedToReadSuperiorDSEType
+                && authorizedToReadSuperiorDSEValue
+            );
+
             if (
                 (immediateSuperior.dse.alias || immediateSuperior.dse.sa) // superior is some kind of alias, and...
-                // // the user does not have one of the basic permissions that
-                // // could be used to determine that it is an alias.
+                // the user does not have one of the basic permissions that
+                // could be used to determine that it is an alias.
                 && (
-                    !authorizedToReadSuperiorDSEType
+                    !authorizedToKnowSuperiorDSEType
                     && !(
                         authorizedToReadSuperiorObjectClasses
                         && superiorObjectClassesAuthorized.some((oc) => oc.isEqualTo(id_oc_alias))
@@ -602,7 +635,7 @@ async function addEntry (
                 // the user does not have one of the basic permissions that
                 // could be used to determine that it is a subentry.
                 && (
-                    !authorizedToReadSuperiorDSEType
+                    !authorizedToKnowSuperiorDSEType
                     && !(
                         authorizedToReadSuperiorObjectClasses
                         && superiorObjectClassesAuthorized.some((oc) => oc.isEqualTo(id_sc_subentry))
@@ -1115,11 +1148,11 @@ async function addEntry (
                 entry: data.entry,
                 chaining: state.chainingArguments,
             });
-            // TODO: Log
-            // dsp_client.unbind().then().catch();
-            // if (dsp_client.rose.socket?.writable) {
-            //     dsp_client.rose.socket?.end(); // Unbind does not necessarily close the socket.
-            // }
+            ctx.log.debug(ctx.i18n.t("log:checking_for_entry_in_nssr", {
+                dn: stringifyDN(ctx, data.object.rdnSequence),
+                aet: stringifyDN(ctx, targetSystem.ae_title.rdnSequence),
+            }), logInfo);
+            /* Note that, even though we are done with the  */
             if ("result" in outcome) {
                 return {
                     result: outcome.result.parameter,
