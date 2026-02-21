@@ -1462,6 +1462,20 @@ words, the highest up RDNs must appear first.
 
 Example: `MEERKAT_REPLICATE_EVERYTHING_FROM_AE_TITLE=c=US,st=FL,cn=DSA 01`.
 
+## MEERKAT_SHADOW_SECONDARY_REPLICA_UPDATE_CONCURRENCY
+
+The maximum number of secondary shadow updates that can be performed concurrently
+when this DSA receives a shadow update. When a shadow update is received from a
+supplier, this DSA will propagate the update to all of its secondary shadow
+consumers. This value controls how many of those updates can happen in parallel.
+
+This defaults to `2`. Setting this to a higher value will allow more secondary
+replicas to be updated simultaneously, which can speed up propagation but may
+consume more network bandwidth and system resources. Setting this to `1` will
+update secondary replicas sequentially, which is slower but uses fewer resources.
+Setting this to `0` or a negative value is not recommended and may cause
+unexpected behavior.
+
 ## MEERKAT_REQUEST_CROSS_REFERENCES
 
 If set to `1`, Meerkat DSA will request cross references from other DSAs, and,

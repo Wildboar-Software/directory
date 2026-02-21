@@ -134,6 +134,7 @@ export MEERKAT_REQUEST_CROSS_REFERENCES="$(snapctl get request-cross-references)
 export MEERKAT_RETURN_CROSS_REFERENCES="$(snapctl get return-cross-references)"
 export MEERKAT_REVEAL_USER_PWD="$(snapctl get reveal-user-pwd)"
 export MEERKAT_SCR_PARALLELISM="$(snapctl get scr-parallelism)"
+export MEERKAT_SHADOW_SECONDARY_REPLICA_UPDATE_CONCURRENCY="$(snapctl get shadow-secondary-replica-update-concurrency)"
 export MEERKAT_SENTINEL_DOMAIN="$(snapctl get sentinel-domain)"
 export MEERKAT_SIGNING_ACCEPTABLE_CERT_POLICIES="$(snapctl get signing-acceptable-cert-policies)"
 export MEERKAT_SIGNING_BIND_ACCEPTABLE_CERT_POLICIES="$(snapctl get signing-bind-acceptable-cert-policies)"

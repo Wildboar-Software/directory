@@ -2178,7 +2178,7 @@ async function updateShadow (
             obtype: OID_STR_SHADOW_OP_BIND,
         });
     }), {
-        concurrency: 2, // TODO: Make configurable
+        concurrency: ctx.config.shadowing.secondaryReplicaUpdateConcurrency,
     })
         .then()
         .catch((e) => console.error(e));

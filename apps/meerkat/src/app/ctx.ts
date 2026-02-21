@@ -1057,6 +1057,9 @@ const config: Configuration = {
             : undefined,
         replicateEverythingFromAETitle: undefined,
         lastUpdateDisputeThreshold: Number.parseInt(process.env.MEERKAT_LAST_UPDATE_DISPUTE_THRESHOLD ?? "60", 10),
+        secondaryReplicaUpdateConcurrency: process.env.MEERKAT_SHADOW_SECONDARY_REPLICA_UPDATE_CONCURRENCY
+            ? Number.parseInt(process.env.MEERKAT_SHADOW_SECONDARY_REPLICA_UPDATE_CONCURRENCY, 10)
+            : 2,
     },
     sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
     administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,

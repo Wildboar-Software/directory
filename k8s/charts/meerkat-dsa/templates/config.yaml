@@ -138,6 +138,7 @@ data:
   return_cross_references: {{ .Values.return_cross_references | ternary 1 0 | quote }}
   reveal_user_pwd: {{ .Values.reveal_user_pwd | default false | ternary 1 0 | quote }}
   scr_parallelism: {{ .Values.scr_parallelism | default 0 | quote }}
+  shadow_secondary_replica_update_concurrency: {{ .Values.shadow_secondary_replica_update_concurrency | default 2 | quote }}
   {{- if .Values.scvp_attr_cert_checks }}
   # NOTE: The `join` function is not documented currently.
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list

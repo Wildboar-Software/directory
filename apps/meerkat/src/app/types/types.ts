@@ -2169,6 +2169,15 @@ interface Configuration {
          */
         lastUpdateDisputeThreshold: number;
 
+        /**
+         * The maximum number of secondary replica updates that can be performed
+         * concurrently when this DSA receives a shadow update. When a shadow
+         * update is received, this DSA will propagate the update to all of its
+         * secondary shadow consumers. This value controls how many of those
+         * updates can happen in parallel.
+         */
+        secondaryReplicaUpdateConcurrency: number;
+
     };
 
     /**

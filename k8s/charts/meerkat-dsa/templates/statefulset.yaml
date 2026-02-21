@@ -653,6 +653,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: scr_parallelism
                   optional: true
+            - name: MEERKAT_SHADOW_SECONDARY_REPLICA_UPDATE_CONCURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: shadow_secondary_replica_update_concurrency
+                  optional: true
             - name: MEERKAT_SCVP_ATTR_CERT_CHECKS
               valueFrom:
                 configMapKeyRef:
