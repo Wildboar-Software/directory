@@ -204,7 +204,7 @@ model AttributeValue {
 model ContextValue {
   id          Int            @id @default(autoincrement())
   value_id    Int
-  // TODO: Is cascade the right choice for this?
+  // Cascade here means that the `ContextValue` is deleted if the `AttributeValue` is deleted.
   value       AttributeValue @relation(fields: [value_id], references: [id], onDelete: Cascade)
   type        String // OID
   tag_class   Int

@@ -17,8 +17,26 @@ import type {
 import { unpackBits } from "@wildboar/asn1";
 import { randomBytes } from "node:crypto";
 
-// TODO: Document
-// TODO: Convert to native function?
+/**
+ * @summary Create `SecurityParameters`
+ * @description
+ *
+ * Create `SecurityParameters` for a signed argument, error, or result. This
+ * function doesn't really do a lot, but it is a centralized point for this
+ * functionality.
+ *
+ * @param ctx The context object
+ * @param signed {Boolean} Whether the security parameters will be used in signing
+ * @param recipient DN of the recipient of the signed argument, error, or result
+ * @param operationCode The operation code
+ * @param errorCode The error code
+ * @param demandSigning {Boolean} Like `signed`, but more insistent on
+ *  including the certification path and other parameters. Introduced as a
+ *  result of a design mistake in Meerkat DSA.
+ * @returns The security parameters
+ * 
+ * @function
+ */
 export
 function createSecurityParameters (
     ctx: Context,

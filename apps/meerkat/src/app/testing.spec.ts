@@ -13,6 +13,7 @@ import {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
 import {
+    caseIgnoreMatch,
     PresentationAddress,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { EventEmitter } from "node:events";
@@ -223,7 +224,7 @@ function parseAttrCertPath (data: string): AttributeCertificationPath {
     let pkc: Certificate | undefined;
     for (const pem of pems) {
         const el = new BERElement();
-        el.fromBytes(pem.data); // TODO: Check for extra bytes, just to make sure everything is valid.
+        el.fromBytes(pem.data);
         if (pem.label === "ATTRIBUTE CERTIFICATE") {
             const acert = _decode_AttributeCertificate(el);
             path.push(new ACPathData(
@@ -470,11 +471,16 @@ const config: Configuration = {
             undefined,
             undefined,
         ),
+        lastUpdateDisputeThreshold: 0,
+        secondaryReplicaUpdateConcurrency: 0,
+        totalRefreshDeletionPageSize: 0,
+        totalRefreshVertexConcurrency: 0,
     },
     xr: {
         requestCrossReferences: true,
         returnCrossReferences: true,
         signingRequiredToTrust: false,
+        upsertConcurrency: 0,
     },
     vendorName: process.env.MEERKAT_VENDOR_NAME?.length
         ? process.env.MEERKAT_VENDOR_NAME
@@ -494,15 +500,13 @@ const config: Configuration = {
         remotePasswordLocalScopeOnly: false,
     },
     log: {
-        boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
+        boundDN: true,
         options: {
             sinks: {
-                safe: getConsoleSink(),
                 all: getConsoleSink(),
             },
             loggers: [
-                { category: ["logtape", "meta"], lowestLevel: "debug", sinks: ["safe"] },
-                { category: [], lowestLevel: "debug", sinks: ["all"] },
+                { category: [], lowestLevel: null, sinks: ["all"] },
             ]
         },
     },
@@ -919,6 +923,7 @@ await configureLogging({
 });
 
 const ctx: MeerkatContext = {
+    recentlyAddedCrossReferences: new Map(),
     alreadyAssertedAttributeCertificates: new Set(),
     externalProcedureAuthFunctions: new Map(),
     labellingAuthorities: new Map(),
@@ -981,7 +986,9 @@ const ctx: MeerkatContext = {
     substringsMatchingRules: new Map(),
     approxMatchingRules: new Map(),
     contextTypes: new Map(),
-    matchingRulesSuitableForNaming: new Set(),
+    matchingRulesSuitableForNaming: new Set([
+        caseIgnoreMatch["&id"].toString(),
+    ]),
     ldapSyntaxes: new Map(),
     ldapSyntaxToASN1Syntax: new Map(),
     operationalBindingControlEvents: new EventEmitter(),
@@ -996,6 +1003,9 @@ const ctx: MeerkatContext = {
 let cached_ctx: Context | undefined;
 
 export function getMockCtx (): Context {
+    if (cached_ctx) {
+        return cached_ctx;
+    }
     loadMatchingRules(ctx);
     Object.entries(x500at)
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
@@ -1038,6 +1048,7 @@ export function getMockCtx (): Context {
         adapter,
     });
     newCtx.db = db;
+    cached_ctx = newCtx;
     return newCtx;
 }
 

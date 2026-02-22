@@ -48,9 +48,8 @@ function subtreeIntersection (
         // If neither base is a prefix of each other, there is no overlap.
         return null;
     }
-    const prefix_dn = a_is_prefix ? a_base_dn : b_base_dn;
-    const inner_dn  = a_is_prefix ? b_base_dn : a_base_dn;
-    const root_dn   = a_is_prefix ? b_root    : a_root;
+    const prefix_fqdn = a_is_prefix ? a_base_dn : b_base_dn;
+    const inner_fqdn  = a_is_prefix ? b_base_dn : a_base_dn;
 
     const prefix_subtree = a_is_prefix ? a : b;
     const inner_subtree  = a_is_prefix ? b : a;
@@ -61,11 +60,15 @@ function subtreeIntersection (
     const a_max = a_base_dn.length + Number(a.maximum ?? Number.MAX_SAFE_INTEGER);
     const b_max = b_base_dn.length + Number(b.maximum ?? Number.MAX_SAFE_INTEGER);
 
-    // Theoretically, this shouldn't go negative, but we Math.max(..., 0) just to be sure.
-    const minimum = Math.max(Math.max(a_min, b_min) - inner_dn.length, 0);
-    const maximum = Math.min(a_max, b_max);
+    // Get the globally strictest (largest) minimum.
+    // then subtract the inner FQDN length to get the relative minimum.
+    const minimum = Math.max(a_min, b_min) - inner_fqdn.length;
+    const maximum = Math.min(a_max, b_max) - inner_fqdn.length;
 
-    // TODO: Should this be >=?
+    /* This should be >, not >=. Think about it: a minimum of 1 means the
+    entries immediately below the base are included. A maximum of 1 means
+    that the one RDN below the base is accepted (an inclusive bound). That
+    means that there is overlap until minimum becomes 2 or more. */
     if (minimum > maximum) {
         // If minimum is greater than maximum, it means there is no "vertical"
         // overlap between the subtrees.
@@ -77,40 +80,36 @@ function subtreeIntersection (
     const prefix_specific_exclusions: SubtreeSpecification["specificExclusions"] = [];
     for (const spex of prefix_subtree.specificExclusions ?? []) {
         if ("chopBefore" in spex) {
-            const chop = [ ...prefix_dn, ...spex.chopBefore ];
-            if (isPrefix(ctx, chop, inner_dn)) {
+            const chop_fqdn = [ ...prefix_fqdn, ...spex.chopBefore ];
+            if (isPrefix(ctx, chop_fqdn, inner_fqdn)) {
+                // If the chop excludes the whole intersection, return null.
                 return null;
             }
-            if (isPrefix(ctx, inner_dn, chop)) {
-                const adjusted_chop = chop.slice(inner_dn.length);
-                prefix_specific_exclusions.push({
-                    chopBefore: adjusted_chop,
-                });
+            // We have to make sure the chop actually appears in the intersection still.
+            if (isPrefix(ctx, inner_fqdn, chop_fqdn)) {
+                const adjusted_chop = chop_fqdn.slice(inner_fqdn.length);
+                if (adjusted_chop.length === 0) {
+                    return null; // The whole intersection is excluded by a chop.
+                }
+                prefix_specific_exclusions.push({ chopBefore: adjusted_chop });
             }
         }
         else if ("chopAfter" in spex) {
-            const chop = [ ...prefix_dn, ...spex.chopAfter ];
-            const parent_dn = inner_dn.slice(0, -1);
-            if ((parent_dn.length > 0) && isPrefix(ctx, chop, parent_dn)) {
+            const chop_fqdn = [ ...prefix_fqdn, ...spex.chopAfter ];
+            if (isPrefix(ctx, chop_fqdn, inner_fqdn.slice(0, -1))) {
+                // If the chop excludes the whole intersection, return null.
                 return null;
             }
-            if (isPrefix(ctx, inner_dn, chop)) {
-                const adjusted_chop = chop.slice(inner_dn.length);
-                prefix_specific_exclusions.push({
-                    chopBefore: adjusted_chop,
-                });
+            // We have to make sure the chop actually appears in the intersection still.
+            if (isPrefix(ctx, inner_fqdn, chop_fqdn)) {
+                const adjusted_chop = chop_fqdn.slice(inner_fqdn.length);
+                prefix_specific_exclusions.push({ chopAfter: adjusted_chop });
             }
         }
         else {
             prefix_specific_exclusions.push(spex);
         }
     }
-
-
-    // TODO: If the object class selection is innately incompatbile, return null.
-    // This isn't totally necessary. You could just produce a subtree that yields no results.
-    // if (a.specificationFilter && b.specificationFilter) {
-    // }
 
     const refinement: Refinement | undefined = a.specificationFilter && b.specificationFilter
         ? {
@@ -121,20 +120,21 @@ function subtreeIntersection (
         }
         : a.specificationFilter ?? b.specificationFilter;
     const adjusted_specific_exclusions = [
-        ...inner_subtree.specificExclusions ?? [], // The inner subtree SEs can remain.
         ...prefix_specific_exclusions, // The prefix subtree SEs can only be included after having been "re-based."
+        ...inner_subtree.specificExclusions ?? [], // The inner subtree SEs can remain.
     ];
+    
     return [
         new SubtreeSpecification(
-            inner_dn.slice(root_dn.length),
+            undefined,
             adjusted_specific_exclusions.length > 0
                 ? adjusted_specific_exclusions
                 : undefined,
-            minimum,
-            maximum,
+            minimum === 0 ? undefined : minimum,
+            maximum === Number.MAX_SAFE_INTEGER ? undefined : maximum,
             refinement,
         ),
-        root_dn,
+        inner_fqdn,
     ];
 }
 

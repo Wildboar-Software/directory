@@ -1748,7 +1748,7 @@ class OperationDispatcher {
         ctx: MeerkatContext,
         argument: ReadArgument,
     ): ReturnType<typeof doRead> {
-        const invokeId: InvokeId = { // TODO: Refactor.
+        const invokeId: InvokeId = {
             present: randomInt(1, 10_000_000),
         };
         // Request validation not needed.
@@ -1881,7 +1881,7 @@ class OperationDispatcher {
         ctx: MeerkatContext,
         argument: CompareArgument,
     ): ReturnType<typeof doCompare> {
-        const invokeId: InvokeId = { // TODO: Refactor.
+        const invokeId: InvokeId = {
             present: randomInt(1, 10_000_000),
         };
         // Request validation not needed.

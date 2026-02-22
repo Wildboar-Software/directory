@@ -273,7 +273,10 @@ function parseAttrCertPath (data: string): AttributeCertificationPath {
     let pkc: Certificate | undefined;
     for (const pem of pems) {
         const el = new BERElement();
-        el.fromBytes(pem.data); // TODO: Check for extra bytes, just to make sure everything is valid.
+        const bytes_read = el.fromBytes(pem.data);
+        if (bytes_read !== pem.data.length) {
+            throw new Error("Malformed attribute certificate DER: trailing data.");
+        }
         if (pem.label === "ATTRIBUTE CERTIFICATE") {
             const acert = _decode_AttributeCertificate(el);
             path.push(new ACPathData(
@@ -424,7 +427,10 @@ if (trustAnchorList.length === 0) {
             const pem = pems[0];
             assert(pem);
             const el = new BERElement();
-            el.fromBytes(pem.data);
+            const bytes_read = el.fromBytes(pem.data);
+            if (bytes_read !== pem.data.length) {
+                throw new Error("Malformed certificate DER: trailing data.");
+            }
             const certificate = _decode_Certificate(el);
             return { certificate };
         }));
