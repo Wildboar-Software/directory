@@ -78,13 +78,13 @@ async function lcrProcedure (
         || !("basicLevels" in assn.authLevel)
     );
     const logInfo = {
-        remoteFamily: assn.socket.remoteFamily,
-        remoteAddress: assn.socket.remoteAddress,
-        remotePort: assn.socket.remotePort,
+        clientFamily: assn.socket.remoteFamily,
+        clientAddress: assn.socket.remoteAddress,
+        clientPort: assn.socket.remotePort,
         association_id: assn.id,
-        invokeId: ("present" in state.invokeId) ? Number(state.invokeId.present) : undefined,
+        iid: ("present" in state.invokeId) ? Number(state.invokeId.present) : undefined,
         opCode: printCode(state.operationCode),
-        operationIdentifier: state.chainingArguments.operationIdentifier
+        opid: state.chainingArguments.operationIdentifier
             ? Number(state.chainingArguments.operationIdentifier)
             : undefined,
     };
@@ -106,6 +106,10 @@ async function lcrProcedure (
     // Part of Step #3
     const processContinuationReference = async (cr: ContinuationReference): Promise<void> => {
         let crLeftUnexplored: boolean = false;
+        /* Though it is left up to the implementation, I consider it
+        the better choice to return a continuation reference to the
+        requester, because otherwise, they will have no knowledge that
+        a subrequest failed at all. */
         const unexplore = () => {
             if (crLeftUnexplored) {
                 return; // We already added this CR back to unexplored.
@@ -127,7 +131,7 @@ async function lcrProcedure (
                     );
                 }
             } else {
-                listState.poq = listState.poq = new PartialOutcomeQualifier(
+                listState.poq = new PartialOutcomeQualifier(
                     undefined,
                     [ cr ],
                 );
@@ -184,7 +188,7 @@ async function lcrProcedure (
             );
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:lcr_null_response", logMsgInfo), logInfo);
-                unexplore(); // TODO: Copy this over to SCR as well
+                unexplore();
                 continue;
             }
             if ("error" in response) {
@@ -193,7 +197,7 @@ async function lcrProcedure (
                     errcode: response.error.code
                         ? printCode(response.error.code)
                         : undefined,
-                    errbytes: Buffer.from(response.error.parameter.toBytes().slice(0, 16)).toString("hex"),
+                    errbytes: Buffer.from(response.error.parameter.toBytes().subarray(0, 16)).toString("hex"),
                 }), logInfo);
                 unexplore();
                 continue;
@@ -233,10 +237,14 @@ async function lcrProcedure (
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }
-                    // TODO: Log e
-                    ctx.log.warn(e);
+                    ctx.log.warn(ctx.i18n.t("log:subrequest_result_malformed", {
+                        ...logMsgInfo,
+                        e,
+                    }), logMsgInfo);
                 }
-            } else {
+            } else { // A reject, abort, timeout, etc.
+                // TODO: A lot more logging and outcome handling here.
+                unexplore();
                 // TODO: Log
                 continue;
             }

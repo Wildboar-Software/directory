@@ -4,7 +4,7 @@ import type { ClientAssociation, IndexableDN } from "../types/index.js";
 import {
     ContinuationReference, ReferenceType_ditBridge,
 } from "@wildboar/x500/DistributedOperations";
-import { SearchArgument, _encode_SearchArgument } from "@wildboar/x500/DirectoryAbstractService";
+import { PartialOutcomeQualifier, SearchArgument, _encode_SearchArgument } from "@wildboar/x500/DirectoryAbstractService";
 import { SearchState } from "./search_i.js";
 import { OperationDispatcherState } from "./OperationDispatcher.js";
 import { TRUE, TRUE_BIT } from "@wildboar/asn1";
@@ -92,13 +92,13 @@ async function scrProcedure (
         || !("basicLevels" in assn.authLevel)
     );
     const logInfo = {
-        remoteFamily: assn.socket.remoteFamily,
-        remoteAddress: assn.socket.remoteAddress,
-        remotePort: assn.socket.remotePort,
+        clientFamily: assn.socket.remoteFamily,
+        clientAddress: assn.socket.remoteAddress,
+        clientPort: assn.socket.remotePort,
         association_id: assn.id,
-        invokeId: ("present" in state.invokeId) ? Number(state.invokeId.present) : undefined,
+        iid: ("present" in state.invokeId) ? Number(state.invokeId.present) : undefined,
         opCode: printCode(state.operationCode),
-        operationIdentifier: state.chainingArguments.operationIdentifier
+        opid: state.chainingArguments.operationIdentifier
             ? Number(state.chainingArguments.operationIdentifier)
             : undefined,
     };
@@ -118,6 +118,38 @@ async function scrProcedure (
     const highPriority = (data.serviceControls?.priority === ServiceControls_priority_high);
 
     const processContinuationReference = async (cr: ContinuationReference): Promise<void> => {
+        let crLeftUnexplored: boolean = false;
+        /* Though it is left up to the implementation, I consider it
+        the better choice to return a continuation reference to the
+        requester, because otherwise, they will have no knowledge that
+        a subrequest failed at all. */
+        const unexplore = () => {
+            if (crLeftUnexplored) {
+                return; // We already added this CR back to unexplored.
+            }
+            crLeftUnexplored = true;
+            if (searchState.poq) {
+                if (searchState.poq.unexplored) {
+                    searchState.poq.unexplored.push(cr);
+                } else {
+                    searchState.poq = new PartialOutcomeQualifier(
+                        searchState.poq.limitProblem,
+                        [ cr ],
+                        searchState.poq.unavailableCriticalExtensions,
+                        searchState.poq.unknownErrors,
+                        searchState.poq.queryReference,
+                        searchState.poq.overspecFilter,
+                        searchState.poq.notification,
+                        searchState.poq.entryCount,
+                    );
+                }
+            } else {
+                searchState.poq = new PartialOutcomeQualifier(
+                    undefined,
+                    [ cr ],
+                );
+            }
+        };
         if (cr.accessPoints.length === 0) {
             ctx.log.warn(ctx.i18n.t("log:zero_access_points_in_cr", {
                 dn: stringifyDN(ctx, cr.targetObject.rdnSequence).slice(0, 256),
@@ -169,7 +201,7 @@ async function scrProcedure (
             );
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:scr_null_response", logMsgInfo), logInfo);
-                // TODO: Add continuation reference to POQ
+                unexplore();
                 continue;
             }
             if ("error" in response) {
@@ -180,23 +212,28 @@ async function scrProcedure (
                         : undefined,
                     errbytes: Buffer.from(response.error.parameter.toBytes().slice(0, 16)).toString("hex"),
                 }), logInfo);
+                unexplore();
                 continue;
             } else if ("result" in response) {
                 if (!response.result) {
                     ctx.log.warn(ctx.i18n.t("log:scr_undefined_result", logMsgInfo), logInfo);
+                    unexplore();
                     continue;
                 }
                 // TODO: Shouldn't things like this be checked in apinfoProcedure?
                 if (!("present" in response.result.invoke_id)) {
                     ctx.log.warn(ctx.i18n.t("log:scr_invalid_invoke_id_response", logMsgInfo), logInfo);
+                    unexplore();
                     continue;
                 }
                 if (!response.result.code) {
                     ctx.log.warn(ctx.i18n.t("log:scr_missing_opcode", logMsgInfo), logInfo);
+                    unexplore();
                     continue;
                 }
                 if (!compareCode(response.result.code, id_opcode_search)) {
                     ctx.log.warn(ctx.i18n.t("log:scr_mismatch_opcode", logMsgInfo), logInfo);
+                    unexplore();
                     continue;
                 }
                 try {
@@ -212,10 +249,13 @@ async function scrProcedure (
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }
-                    // TODO: Log e
-                    ctx.log.warn(e);
+                    ctx.log.warn(ctx.i18n.t("log:subrequest_result_malformed", {
+                        ...logMsgInfo,
+                        e,
+                    }), logMsgInfo);
                 }
-            } else {
+            } else { // A reject, abort, timeout, etc.
+                unexplore();
                 // TODO: Log
                 continue;
             }
