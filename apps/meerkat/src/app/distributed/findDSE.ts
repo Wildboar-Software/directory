@@ -145,6 +145,7 @@ import { acdf } from "../authz/acdf.js";
 import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC.js";
 import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn.js";
 import printCode from "../utils/printCode.js";
+import { isMasterDSE } from "../x500/isMasterDSE.js";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -1451,7 +1452,7 @@ export
         if ( // Step 6
             (i === nextRDNToBeResolved)
             && state.chainingArguments.nameResolveOnMaster
-            && dse_i.dse.shadow // TODO: Is checking for shadow enough to determine if !master?
+            && isMasterDSE(dse_i)
         ) {
             throw new errors.ServiceError(
                 ctx.i18n.t("err:could_not_resolve_name_on_master"),
@@ -1560,7 +1561,7 @@ export
         }
         if (
             dse_i.dse.subr
-            || dse_i.dse.xr // TODO: && useCrossReference (So they can get periodically corrected.)
+            || dse_i.dse.xr
             || dse_i.dse.immSupr
             || dse_i.dse.ditBridge
         ) {
@@ -1837,7 +1838,6 @@ export
                     ...dse_i.dse.alias.aliasedEntryName,
                     ...needleDN.slice(i), // RDNs N(i + 1) to N(m)
                 ];
-                // TODO: I don't think these chaining arguments are correct.
                 const newChaining: ChainingArguments = new ChainingArguments(
                     requestor,
                     newN,

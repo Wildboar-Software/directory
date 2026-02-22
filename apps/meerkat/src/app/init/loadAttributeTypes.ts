@@ -11,9 +11,6 @@ import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/InformationFramework";
 import { ObjectIdentifier } from "@wildboar/asn1";
-// TODO: Apparently, I forgot to add these to `x500at`... whoops.
-import { uid } from "@wildboar/x500/SelectedAttributeTypes";
-import { dc } from "@wildboar/x500/SelectedAttributeTypes";
 
 // Drivers
 import accessControlSubentryListDriver from "../database/drivers/accessControlSubentryList.js";
@@ -3742,9 +3739,6 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
             uniqueIdentifier: undefined,
             x500UniqueIdentifier: x500at.uniqueIdentifier,
         },
-
-        uid,
-        dc,
 
         userPwdHistory,
         userPwdRecentlyExpired,

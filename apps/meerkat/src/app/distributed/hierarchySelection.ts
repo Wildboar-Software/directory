@@ -214,7 +214,6 @@ async function hierarchySelectionProcedure (
     deadline: Date | undefined,
     separateFamilyMembers: boolean,
 ): Promise<void> {
-    // TODO: This used to be an assert(). If it failed, NodeJS would hang indefinitely. Investigate.
     if (!selfVertex.dse.hierarchy) {
         return;
     }

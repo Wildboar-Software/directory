@@ -22,18 +22,21 @@ import type { UUID } from "../types/index.js";
  */
 export
 function bytesToUUID (bytes: Uint8Array): UUID {
-    const buf = Buffer.from(bytes);
+    const buf = Buffer.from(
+        bytes.buffer,
+        bytes.byteOffset,
+        bytes.byteLength,
+    );
     return (
-        // TODO: Do not use deprecated method .slice()
-        buf.slice(0, 4).toString("hex") +
+        buf.subarray(0, 4).toString("hex") +
         "-" +
-        buf.slice(4, 6).toString("hex") +
+        buf.subarray(4, 6).toString("hex") +
         "-" +
-        buf.slice(6, 8).toString("hex") +
+        buf.subarray(6, 8).toString("hex") +
         "-" +
-        buf.slice(8, 10).toString("hex") +
+        buf.subarray(8, 10).toString("hex") +
         "-" +
-        buf.slice(10, 16).toString("hex")
+        buf.subarray(10, 16).toString("hex")
     );
 }
 

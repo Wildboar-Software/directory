@@ -188,7 +188,7 @@ function curlLDAP (
                 }
                 const receivedMessage: LDAPMessage = _decode_LDAPMessage(el);
                 onMessage(receivedMessage);
-                receivedData = receivedData.slice(bytesRead);
+                receivedData = receivedData.subarray(bytesRead);
                 bytesRead = 0;
             }
         });

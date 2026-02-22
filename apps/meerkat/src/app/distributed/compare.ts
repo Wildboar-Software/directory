@@ -574,59 +574,54 @@ async function compare (
                     signErrors,
                 );
             }
-            try {
-                if (comparingPassword) {
-                    const asserted_pwd: SimpleCredentials_password = data.purported.type_.isEqualTo(userPwd["&id"])
-                        ? {
-                            userPwd: userPwd.decoderFor["&Type"]!(data.purported.assertion),
-                        }
-                        : {
-                            unprotected: userPassword.decoderFor["&Type"]!(data.purported.assertion),
-                        };
-                    const pwd_result = await attemptPassword(ctx, target, new SimpleCredentials(
-                        targetDN,
-                        undefined,
-                        asserted_pwd,
-                    ));
-                    if (pwd_result.unbind) {
-                        throw new errors.SecurityError(
+
+            if (comparingPassword) {
+                const asserted_pwd: SimpleCredentials_password = data.purported.type_.isEqualTo(userPwd["&id"])
+                    ? {
+                        userPwd: userPwd.decoderFor["&Type"]!(data.purported.assertion),
+                    }
+                    : {
+                        unprotected: userPassword.decoderFor["&Type"]!(data.purported.assertion),
+                    };
+                const pwd_result = await attemptPassword(ctx, target, new SimpleCredentials(
+                    targetDN,
+                    undefined,
+                    asserted_pwd,
+                ));
+                if (pwd_result.unbind) {
+                    throw new errors.SecurityError(
+                        (pwd_result.pwdResponse?.error === PwdResponseValue_error_passwordExpired)
+                            ? ctx.i18n.t("err:pwd_end")
+                            : ctx.i18n.t("err:old_password_incorrect"),
+                        new SecurityErrorData(
                             (pwd_result.pwdResponse?.error === PwdResponseValue_error_passwordExpired)
-                                ? ctx.i18n.t("err:pwd_end")
-                                : ctx.i18n.t("err:old_password_incorrect"),
-                            new SecurityErrorData(
-                                (pwd_result.pwdResponse?.error === PwdResponseValue_error_passwordExpired)
-                                    ? SecurityProblem_passwordExpired
-                                    : SecurityProblem_invalidCredentials,
+                                ? SecurityProblem_passwordExpired
+                                : SecurityProblem_invalidCredentials,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn?.boundNameAndUID?.dn,
                                 undefined,
-                                undefined,
-                                [],
-                                createSecurityParameters(
-                                    ctx,
-                                    signErrors,
-                                    assn?.boundNameAndUID?.dn,
-                                    undefined,
-                                    securityError["&errorCode"],
-                                ),
-                                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                state.chainingArguments.aliasDereferenced,
-                                undefined,
+                                securityError["&errorCode"],
                             ),
-                            signErrors,
-                            pwd_result.unbind,
-                        );
-                    }
-                    if (!pwd_result.authorized) {
-                        continue;
-                    }
-                    if (pwd_result.pwdResponse) {
-                        pwdResponse = pwd_result.pwdResponse;
-                    }
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            state.chainingArguments.aliasDereferenced,
+                            undefined,
+                        ),
+                        signErrors,
+                        pwd_result.unbind,
+                    );
                 }
-                else if (!matcher(data.purported.assertion, value.value)) {
+                if (!pwd_result.authorized) {
                     continue;
                 }
-            } catch {
-                // TODO: Log error.
+                if (pwd_result.pwdResponse) {
+                    pwdResponse = pwd_result.pwdResponse;
+                }
+            } else if (!matcher(data.purported.assertion, value.value)) {
                 continue;
             }
 

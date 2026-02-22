@@ -123,7 +123,7 @@ async function changePassword (
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
-    const signErrors: boolean = false; // TODO: Make this configurable.
+    const signErrors: boolean = false; // TODO: Make this configurable. (UPDATE: Added CommonArguments to apw and cpw in @wildboar/x500; just have to publish)
     const passwordIsPermittedOnThisEntry: boolean = Array.from(target.dse.objectClass.values())
         .some((oid) => {
             const spec = ctx.objectClasses.get(oid);
