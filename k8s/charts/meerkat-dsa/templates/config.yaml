@@ -317,6 +317,7 @@ data:
   {{- end }}
   web_admin_use_tls: {{ .Values.web_admin_use_tls | default true | ternary 1 0 | quote }}
   web_admin_port: {{ .Values.web_admin_port | default "18080" | quote }}
+  xr_upsert_concurrency: {{ .Values.xr_upsert_concurrency | default 5 | quote }}
 
   {{- if .Values.init }}
   init: |-

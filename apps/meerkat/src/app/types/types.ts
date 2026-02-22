@@ -1475,6 +1475,12 @@ interface CrossReferencesOptions {
      */
     returnCrossReferences: boolean;
 
+    /**
+     * The maximum number of cross references that may be upserted concurrently
+     * when applying received cross references to the local DSAIT.
+     */
+    upsertConcurrency: number;
+
 }
 
 /**

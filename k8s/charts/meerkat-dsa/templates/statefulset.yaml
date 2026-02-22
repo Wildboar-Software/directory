@@ -1264,6 +1264,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: web_admin_use_tls
                   optional: true
+            - name: MEERKAT_XR_UPSERT_CONCURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: xr_upsert_concurrency
+                  optional: true
           ports:
             - name: idm
               containerPort: 4632

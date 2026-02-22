@@ -2893,6 +2893,18 @@ proxy that provides TLS.
 
 :::
 
+## MEERKAT_XR_UPSERT_CONCURRENCY
+
+The maximum number of cross references that may be upserted into the local
+DSAIT concurrently when applying received cross references during distributed
+operations. This limits parallelism when multiple cross references are received
+in a single response.
+
+This must be a positive integer. If unset or invalid (e.g., zero, negative, or
+non-numeric), it defaults to 5. Higher values may speed up processing when many
+cross references are received at once, but increase database load and memory
+usage.
+
 ## NODE_ENV
 
 This is a standard NodeJS-related environment variable. This should be set to

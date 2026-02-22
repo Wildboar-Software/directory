@@ -321,3 +321,4 @@ use_database_when_there_are_x_subordinates: 1000
 # web_admin_auth_realm: "Bigboi's Playhouse"
 web_admin_use_tls: true
 web_admin_port: 18080
+xr_upsert_concurrency: 5

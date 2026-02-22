@@ -521,7 +521,7 @@ async function apinfoProcedure (
                         map(
                             acceptableCrossReferences,
                             (xr) => upsertCrossReferences(ctx, xr),
-                            { concurrency: 5 }, // TODO: Make configurable
+                            { concurrency: ctx.config.xr.upsertConcurrency },
                         ) // INTENTIONAL_NO_AWAIT
                         .catch((e) => {
                             ctx.log.warn(ctx.i18n.t("log:failed_to_apply_xr", {

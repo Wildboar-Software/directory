@@ -570,6 +570,13 @@ const config: Configuration = {
         requestCrossReferences: (process.env.MEERKAT_REQUEST_CROSS_REFERENCES === "1"),
         returnCrossReferences: (process.env.MEERKAT_RETURN_CROSS_REFERENCES === "1"),
         signingRequiredToTrust: (process.env.MEERKAT_SIGNING_REQUIRED_TO_TRUST_XR !== "0"),
+        upsertConcurrency: (() => {
+            const val = Number.parseInt(
+                process.env.MEERKAT_XR_UPSERT_CONCURRENCY ?? "5",
+                10,
+            );
+            return (Number.isNaN(val) || val < 1) ? 5 : val;
+        })(),
     },
     principledServiceAdministration: (process.env.MEERKAT_PRINCIPLED_SERVICE_ADMIN === "1"),
     revealUserPwdEncryptedValues: (process.env.MEERKAT_REVEAL_USER_PWD === "1"),
