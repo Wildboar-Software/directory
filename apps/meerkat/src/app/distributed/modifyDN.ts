@@ -987,8 +987,33 @@ async function modifyDN (
                 bacSettings,
                 true,
             );
-            // TODO: We do not check that the user has permission to the DSEType value!
-            // const superiorDSEType = await readValuesOfType(ctx, immediateSuperior, dseType["&id"])[0];
+
+            const superiorDSETypeValues = await readValuesOfType(ctx, superior, dseType["&id"]);
+            assert(
+                superiorDSETypeValues.length === 1,
+                `Expected 1 DSEType value, got ${superiorDSETypeValues.length}`,
+            );
+            const superiorDSEType = superiorDSETypeValues[0];
+            const authorizedToReadSuperiorDSEValue = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                superior,
+                [ PERMISSION_CATEGORY_READ ],
+                relevantTuplesForSuperior,
+                user,
+                {
+                    value: new AttributeTypeAndValue(
+                        dseType["&id"],
+                        superiorDSEType.value,
+                    ),
+                    operational: true,
+                    valuesCount: 1, 
+                },
+                bacSettings,
+                true,
+            );
+
             const authorizedToReadSuperiorObjectClasses = acdf(
                 ctx,
                 accessControlScheme,
@@ -1024,12 +1049,17 @@ async function modifyDN (
                     true,
                 ));
 
+            const authorizedToKnowSuperiorDSEType = (
+                authorizedToReadSuperiorDSEType
+                && authorizedToReadSuperiorDSEValue
+            );
+
             if (
                 (superior.dse.alias || superior.dse.sa) // superior is some kind of alias, and...
                 // // the user does not have one of the basic permissions that
                 // // could be used to determine that it is an alias.
                 && (
-                    !authorizedToReadSuperiorDSEType
+                    !authorizedToKnowSuperiorDSEType
                     && !(
                         authorizedToReadSuperiorObjectClasses
                         && superiorObjectClassesAuthorized.some((oc) => oc.isEqualTo(id_oc_alias))
@@ -1060,7 +1090,7 @@ async function modifyDN (
                 // the user does not have one of the basic permissions that
                 // could be used to determine that it is a subentry.
                 && (
-                    !authorizedToReadSuperiorDSEType
+                    !authorizedToKnowSuperiorDSEType
                     && !(
                         authorizedToReadSuperiorObjectClasses
                         && superiorObjectClassesAuthorized.some((oc) => oc.isEqualTo(id_sc_subentry))
