@@ -541,11 +541,12 @@ async function checkSuitabilityProcedure (
             return true;
         }
         if (typesOnly) {
-            /* In theory, the information could be incomplete with respect to
-            the query, but there does not seem to be any way to determine
-            whether all attribute types for an sDSE have been replicated. */
-            // TODO: Does this even make sense? Shouldn't this be _not suitable_?
-            return true;
+            /* There appears to be no way to tell whether all attribute _types_
+            for an sDSE have been replicated, or even which have been
+            replicated (unless you locate the shadowing agreement that put this
+            SDSE here) so if the attribute completeness flag isn't set, we have
+            to assume that we don't have what the user needs. */
+            return false;
         }
         if (
             (vertex.dse.shadow.attributeValuesIncomplete.size > 0)
