@@ -160,7 +160,11 @@ function getDITStructureRulesDecoder (
     ctx: Context,
 ): LDAPSyntaxDecoder {
     return function (value: Uint8Array): ASN1Element {
-        const str = Buffer.from(value).toString("utf-8");
+        const str = Buffer.from(
+            value.buffer,
+            value.byteOffset,
+            value.byteLength,
+        ).toString("utf-8");
         const tokens = Array.from(lex(str)).slice(1, -1);
         const identifier: number = Number.parseInt(tokens[0]);
         const name: string[] = [];
@@ -254,7 +258,11 @@ function getNameFormsDecoder (
     ctx: Context,
 ): LDAPSyntaxDecoder {
     return function (value: Uint8Array): ASN1Element {
-        const str = Buffer.from(value).toString("utf-8");
+        const str = Buffer.from(
+            value.buffer,
+            value.byteOffset,
+            value.byteLength,
+        ).toString("utf-8");
         const tokens = Array.from(lex(str)).slice(1, -1);
         const identifier: OBJECT_IDENTIFIER = ObjectIdentifier.fromString(tokens[0]);
         const name: string[] = [];
@@ -393,7 +401,11 @@ function getDITContentRulesDecoder (
     ctx: Context,
 ): LDAPSyntaxDecoder {
     return function (value: Uint8Array): ASN1Element {
-        const str = Buffer.from(value).toString("utf-8");
+        const str = Buffer.from(
+            value.buffer,
+            value.byteOffset,
+            value.byteLength,
+        ).toString("utf-8");
         const tokens = Array.from(lex(str)).slice(1, -1);
         const structuralObjectClass: OBJECT_IDENTIFIER = ObjectIdentifier.fromString(tokens[0]);
         const name: string[] = [];
@@ -596,7 +608,11 @@ function getObjectClassesDecoder (
     ctx: Context,
 ): LDAPSyntaxDecoder {
     return function (value: Uint8Array): ASN1Element {
-        const str = Buffer.from(value).toString("utf-8");
+        const str = Buffer.from(
+            value.buffer,
+            value.byteOffset,
+            value.byteLength,
+        ).toString("utf-8");
         const tokens = Array.from(lex(str)).slice(1, -1);
         const identifier: OBJECT_IDENTIFIER = ObjectIdentifier.fromString(tokens[0]);
         const name: string[] = [];
@@ -777,7 +793,11 @@ function getAttributeTypesDecoder (
     ctx: Context,
 ): LDAPSyntaxDecoder {
     return function (value: Uint8Array): ASN1Element {
-        const str = Buffer.from(value).toString("utf-8");
+        const str = Buffer.from(
+            value.buffer,
+            value.byteOffset,
+            value.byteLength,
+        ).toString("utf-8");
         const tokens = Array.from(lex(str)).slice(1, -1);
         const identifier: OBJECT_IDENTIFIER = ObjectIdentifier.fromString(tokens[0]);
         const name: string[] = [];
@@ -948,7 +968,11 @@ function getMatchingRulesDecoder (
     ctx: Context,
 ): LDAPSyntaxDecoder {
     return function (value: Uint8Array): ASN1Element {
-        const str = Buffer.from(value).toString("utf-8");
+        const str = Buffer.from(
+            value.buffer,
+            value.byteOffset,
+            value.byteLength,
+        ).toString("utf-8");
         const tokens = Array.from(lex(str)).slice(1, -1);
         const identifier: OBJECT_IDENTIFIER = ObjectIdentifier.fromString(tokens[0]);
         const name: string[] = [];
@@ -1021,7 +1045,11 @@ function getMatchingRuleUseDecoder (
     ctx: Context,
 ): LDAPSyntaxDecoder {
     return function (value: Uint8Array): ASN1Element {
-        const str = Buffer.from(value).toString("utf-8");
+        const str = Buffer.from(
+            value.buffer,
+            value.byteOffset,
+            value.byteLength,
+        ).toString("utf-8");
         const tokens = Array.from(lex(str)).slice(1, -1);
         const identifier: OBJECT_IDENTIFIER = ObjectIdentifier.fromString(tokens[0]);
         const name: string[] = [];
@@ -1108,7 +1136,11 @@ function getMatchingRuleUseDecoder (
 
 export
 function ldapSyntaxes (value: Uint8Array): ASN1Element {
-    const str = Buffer.from(value).toString("utf-8");
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    ).toString("utf-8");
     const tokens = Array.from(lex(str)).slice(1, -1);
     const identifier: OBJECT_IDENTIFIER = ObjectIdentifier.fromString(tokens[0]);
     let description: string | undefined;
@@ -1148,7 +1180,11 @@ function getSubtreeSpecificationDecoder (
 
 export
 const telephoneNumber: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
-    const str = Buffer.from(value).toString("utf-8");
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    ).toString("utf-8");
     const phoneResult = phone(str, {
         validateMobilePrefix: false,
     });
@@ -1171,7 +1207,11 @@ const telephoneNumber: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
 
 export
 const bootParameterSyntax: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
-    const str = Buffer.from(value).toString("utf-8");
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    ).toString("utf-8");
     const indexOfNextEq = str.indexOf("=");
     if (indexOfNextEq < 0) {
         throw new Error("2aaf79ea-5509-4380-bca1-822821123046");
@@ -1189,7 +1229,11 @@ const bootParameterSyntax: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element 
 
 export
 const nisNetgroupTripleSyntax: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
-    const str = Buffer.from(value).toString("latin1");
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    ).toString("latin1");
     const [ hostname, username, domainname ] = str.slice(1, -1).split(",");
     const nts = new NISNetgroupTripleSyntax(
         (hostname?.length && (hostname !== "-")) ? hostname : undefined,
@@ -1424,7 +1468,11 @@ function decodeUiiFilter (
 export
 function getUIIFormDecoder (ctx: Context): LDAPSyntaxDecoder {
     return (value: Uint8Array): ASN1Element => {
-        const str = Buffer.from(value)
+        const str = Buffer.from(
+            value.buffer,
+            value.byteOffset,
+            value.byteLength,
+        )
             .toString("latin1")
             .slice(1, -1)
             .trim();
@@ -1550,7 +1598,11 @@ function getUIIFormDecoder (ctx: Context): LDAPSyntaxDecoder {
 //     urnPrefix       UTF8String                     OPTIONAL }
 export
 const epcForm: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
-    const str = Buffer.from(value)
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    )
         .toString("utf-8")
         .slice(1, -1)
         .trim();
@@ -1667,7 +1719,11 @@ const epcForm: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
 
 export
 const countryString3c: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
-    const str = Buffer.from(value).toString("latin1");
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    ).toString("latin1");
     if (str.length > 3 || !/[A-Z]/.test(str)) {
         throw new Error();
     }
@@ -1676,7 +1732,11 @@ const countryString3c: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
 
 export
 const countryString3n: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
-    const str = Buffer.from(value).toString("latin1");
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    ).toString("latin1");
     if (str.length > 3 || !/\d+/.test(str)) {
         throw new Error();
     }
@@ -1685,13 +1745,21 @@ const countryString3n: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
 
 export
 const dnsString: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
-    const str = Buffer.from(value).toString("utf-8");
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    ).toString("utf-8");
     return _encodeUTF8String(str, BER);
 };
 
 export
 const intEmailString: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
-    const str = Buffer.from(value).toString("utf-8");
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    ).toString("utf-8");
     const parsed = parseOneAddress({
         input: str,
         rfc6532: true, // Unicode
@@ -1704,7 +1772,11 @@ const intEmailString: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
 
 export
 const jidString: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
-    const str = Buffer.from(value).toString("utf-8");
+    const str = Buffer.from(
+        value.buffer,
+        value.byteOffset,
+        value.byteLength,
+    ).toString("utf-8");
     const parsed = parseOneAddress({
         input: str,
         rfc6532: true, // Unicode
