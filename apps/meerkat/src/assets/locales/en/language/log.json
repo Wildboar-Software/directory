@@ -503,5 +503,6 @@
     "sec_label_no_key": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) referred to a public key that could not be located. Fallback behavior will apply.",
     "sec_label_invalid_sig": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) had an invalid signature. Fallback behavior will apply.",
     "unrecognized_class_attrs_shadowing": "Unrecognized alternative in ClassAttributes in shadowing agreement.",
-    "checking_for_entry_in_nssr": "Checking if entry {{dn}} is already taken in non-specific subordinate DSA {{aet}}."
+    "checking_for_entry_in_nssr": "Checking if entry {{dn}} is already taken in non-specific subordinate DSA {{aet}}.",
+    "subrequest_result_malformed": "Subrequest result for operation {{opid}} was malformed. {{e}}"
 }

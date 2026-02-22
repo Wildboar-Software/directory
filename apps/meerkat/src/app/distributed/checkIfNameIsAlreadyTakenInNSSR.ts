@@ -6,6 +6,7 @@ import type {
 import { BOOLEAN, INTEGER, FALSE } from "@wildboar/asn1";
 import * as errors from "../types/index.js";
 import {
+    ReadResult,
     UpdateErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
@@ -46,6 +47,7 @@ import { stringifyDN } from "../x500/stringifyDN.js";
 import { randomInt } from "node:crypto";
 import { MAX_INVOKE_ID } from "@wildboar/x500-client-ts";
 import util from "node:util";
+import { type OperationOutcome } from "@wildboar/rose-transport";
 
 /**
  * @summary Check if name is already taken among NSSR.
@@ -53,7 +55,7 @@ import util from "node:util";
  *
  * The distributed procedure to check if a name is already taken among a
  * non-specific subordinate reference (NSSR), per ITU Recommendation X.518
- * (2016), Section 19.1.5.
+ * (2019), Section 19.1.5.
  *
  * @param ctx The context object
  * @param assn The client association
@@ -62,6 +64,7 @@ import util from "node:util";
  * @param nonSpecificKnowledges The DSAs that participate in the NSSR, whose access points are to be interrogated
  * @param destinationDN The distinguished name whose existence is being determined
  * @param timeLimitInMilliseconds The remaining time for the operation to complete in milliseconds
+ * @param signErrors Whether to sign errors
  *
  * @function
  * @async
@@ -80,23 +83,35 @@ async function checkIfNameIsAlreadyTakenInNSSR (
     const op = ("present" in invokeId)
         ? assn.invocations.get(Number(invokeId.present))
         : undefined;
+    const logInfo = {
+        clientFamily: assn.socket.remoteFamily,
+        clientAddress: assn.socket.remoteAddress,
+        clientPort: assn.socket.remotePort,
+        association_id: assn.id,
+        iid: printInvokeId(invokeId),
+        destination_dn: stringifyDN(ctx, destinationDN),
+        time_limit_ms: timeLimitInMilliseconds,
+        signErrors,
+        aliasDereferenced,
+        nonSpecificKnowledgesCount: nonSpecificKnowledges.length,
+    };
     for (const nsk of nonSpecificKnowledges) {
+        // "The DSA shall only use the master DSA from each MasterAndShadowAccessPoints
+        // due to transient inconsistency caused by shadowing." -- ITU-T Rec. X.518.
         const [ masters ] = splitIntoMastersAndShadows(nsk);
         for (const accessPoint of masters) {
+            let read_outcome: OperationOutcome<typeof chainedRead["&ResultType"]> | undefined;
+            const operationIdentifier: INTEGER = randomInt(MAX_INVOKE_ID);
             try {
                 const client = await bindForChaining(ctx, assn, op, accessPoint, FALSE, signErrors);
                 if (!client) {
                     continue;
                 }
-                const operationIdentifier: INTEGER = randomInt(MAX_INVOKE_ID);
                 ctx.log.debug(ctx.i18n.t("log:checking_if_name_taken_in_nssr", {
                     opid: operationIdentifier,
                 }), {
-                    remoteFamily: assn.socket.remoteFamily,
-                    remoteAddress: assn.socket.remoteAddress,
-                    remotePort: assn.socket.remotePort,
-                    association_id: assn.id,
-                    invokeID: printInvokeId(invokeId),
+                    ...logInfo,
+                    outgoing_opid: operationIdentifier,
                 });
                 const chaining = new ChainingArguments(
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -132,11 +147,11 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     undefined,
                     operationIdentifier,
                 );
-                const read_response = await client.read({
+                read_outcome = await client.read({
                     object: destinationDN,
                     selection: {
                         attributes: {
-                            select: [ objectClass["&id"] ],
+                            select: [ objectClass["&id"] ], // This is demanded by the spec.
                         },
                     },
                     dontDereferenceAliases: true,
@@ -156,31 +171,6 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         ? ctx.config.signing.key
                         : undefined,
                 });
-
-                // TODO: Check signature on responses?
-                if ("result" in read_response) {
-                    throw new errors.UpdateError(
-                        ctx.i18n.t("err:entry_already_exists_in_nssr"),
-                        new UpdateErrorData(
-                            UpdateProblem_entryAlreadyExists,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                signErrors,
-                                accessPoint.ae_title.rdnSequence,
-                                undefined,
-                                updateError["&errorCode"],
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
-                        ),
-                        signErrors,
-                    );
-                } else {
-                    break; // Breaks the innermost for loop.
-                }
             } catch (e) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
                     ctx.log.error(util.inspect(e));
@@ -189,13 +179,42 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     dsa: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
                     e: e.message,
                 }), {
-                    remoteFamily: assn.socket.remoteFamily,
-                    remoteAddress: assn.socket.remoteAddress,
-                    remotePort: assn.socket.remotePort,
-                    association_id: assn.id,
-                    invokeID: printInvokeId(invokeId),
+                    ...logInfo,
+                    outgoing_opid: operationIdentifier,
                 });
                 continue;
+            }
+            // TODO: Report this.
+            // There's no point in checking the signature on the response,
+            // because a malicious DSA that participates in an NSSR could just
+            // not respond, not sign the result or error. There seems to be no
+            // defense against this. The specifications do not mandate signing
+            // for these results, nor do they define what to do if a DSA does
+            // not respond.
+            if ("result" in read_outcome) {
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:entry_already_exists_in_nssr"),
+                    new UpdateErrorData(
+                        UpdateProblem_entryAlreadyExists,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        aliasDereferenced,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            } else {
+                // Breaks the innermost for loop, which iterates over access
+                // points for one knowledge reference.
+                break;
             }
         }
     }
