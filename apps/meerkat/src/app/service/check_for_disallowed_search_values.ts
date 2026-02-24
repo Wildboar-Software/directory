@@ -1,7 +1,7 @@
-import { IndexableOID } from "../types/index.js";
-import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import { Filter } from "@wildboar/x500/DirectoryAbstractService";
-import { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
+import type { IndexableOID } from "../types/index.js";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary Check a filter for filter items that assert values when prohibited

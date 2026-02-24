@@ -6,6 +6,8 @@ import {
     id_oc_child,
 } from "@wildboar/x500/InformationFramework";
 
+// TODO: This is unused
+
 /**
  * @summary Determine whether an entry is compound
  * @description

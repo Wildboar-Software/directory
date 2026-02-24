@@ -26,7 +26,7 @@ export
         ret: Set<IndexableOID>
     ): void {
     if ("attribute" in combo) {
-        ret.add(combo.attribute.toString());
+        non_negated && ret.add(combo.attribute.toString());
     } else if ("and" in combo) {
         // Required attributes are any required by any subfilter.
         for (const sub of combo.and) {
