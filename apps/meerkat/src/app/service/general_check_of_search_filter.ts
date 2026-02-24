@@ -115,15 +115,16 @@ export function general_check_of_search_filter(
     for (const attr of rule.inputAttributeTypes) {
         permitted_attrs.set(attr.attributeType.toString(), attr);
     }
-    const non_negated: Map<IndexableOID, boolean> = new Map();
-    getAttributeTypeNegationFromFilter(filter ?? { and: [] }, true, non_negated);
+    const negation_by_attr_type: Map<IndexableOID, [boolean, boolean]> = new Map();
+    getAttributeTypeNegationFromFilter(filter ?? { and: [] }, true, negation_by_attr_type);
 
     const required_attrs: Set<IndexableOID> = new Set();
     if (rule.attributeCombination) {
         getRequiredAttributesFromAttributeCombination(rule.attributeCombination, true, required_attrs);
     }
 
-    for (const [attr, is_non_neg] of non_negated.entries()) {
+    // Steps 1 and 2
+    for (const [attr, [was_non_negated, was_negated]] of negation_by_attr_type.entries()) {
         const oid = ObjectIdentifier.fromString(attr);
         let is_permitted: boolean = false;
         for (const attr_type of getAttributeParentTypes(ctx, oid)) {
@@ -133,16 +134,7 @@ export function general_check_of_search_filter(
                 const is_subtype: boolean = (key !== attr);
                 if (!is_subtype || profile.includeSubtypes) {
                     is_permitted = true;
-                } else {
-                    break;
                 }
-            } else {
-                continue;
-            }
-            /* WARNING: The specification is not clear as to whether this is true
-            for all attributes at all, or just those present in the input attrs. */
-            if (!is_non_neg) {
-                state.attributeNegationViolations.push(oid);
                 break;
             }
         }
@@ -150,16 +142,25 @@ export function general_check_of_search_filter(
             state.searchAttributeViolations.push(oid);
             continue;
         }
-        required_attrs.delete(attr);
+        // TODO: Document this.
+        /* WARNING: The specification is not clear as to whether this is true
+        for all attributes at all, or just those present in the input attrs. */
+        const was_only_negated = was_negated && !was_non_negated;
+        if (was_only_negated) {
+            state.attributeNegationViolations.push(oid);
+            break;
+        }
+        was_non_negated && required_attrs.delete(attr);
     }
 
+    // Step 3
     // If attribute combo is defined AND it is not the default value.
     if (rule.attributeCombination && !(
         ("and" in rule.attributeCombination)
         && (rule.attributeCombination.and.length === 0)
     )) {
         state.missingSearchAttributes.push(...Array
-            .from(required_attrs.values())
+            .from(required_attrs.values()) // Some of these were deleted above.
             .map((s) => ObjectIdentifier.fromString(s)));
 
         if (filter) {
@@ -172,6 +173,9 @@ export function general_check_of_search_filter(
         }
     }
 
+    // Step 4
+    // This step, and in fact this whole procedure, does NOT check for
+    // selected values. That is done in another procedure.
     const zero_select_values_attrs: Map<IndexableOID, boolean> = new Map();
     for (const attr of rule.inputAttributeTypes ?? []) {
         if (attr.selectedValues && (attr.selectedValues.length === 0)) {
@@ -193,6 +197,9 @@ export function general_check_of_search_filter(
         }
     }
 
+    // TODO: Validate that there are not duplicate attribute types in search rules in general.
+
+    // Step 5
     if (filter && attrs_with_contexts.size > 0) {
         check_for_disallowed_contexts(ctx, filter, attrs_with_contexts, state.searchContextViolations);
     }
@@ -207,7 +214,7 @@ export function general_check_of_search_filter(
         return [3, state]; // id-pr-missingSearchAttribute & serviceType & attributeTypeList
     }
     if (state.searchAttributeCombinationViolations.length > 0) {
-        return [4, state]; // id-pr-searchAttributeCombinationViolation & serviceType & attributeCombinations
+        return [3, state]; // id-pr-searchAttributeCombinationViolation & serviceType & attributeCombinations
     }
     if (state.searchValuesDisallowed.length > 0) {
         return [4, state]; // id-pr-searchValueNotAllowed & serviceType & filterItem

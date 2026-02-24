@@ -1,7 +1,7 @@
-import { IndexableOID } from "../types/index.js";
-import { Filter } from "@wildboar/x500/DirectoryAbstractService";
-import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
+import type { IndexableOID } from "../types/index.js";
+import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
 
 /**
  * @summary Extract the attribute type from a filter and whether it was present in a non-negated filter item.
@@ -32,7 +32,7 @@ export
     function getAttributeTypeNegationFromFilterItem(
         item: FilterItem,
         non_negated: boolean,
-        ret: Map<IndexableOID, boolean>
+        ret: Map<IndexableOID, [boolean, boolean]>
     ): void {
     let type_oid: OBJECT_IDENTIFIER | undefined;
     if ("equality" in item) {
@@ -63,17 +63,19 @@ export
         return;
     }
     const key = type_oid.toString();
-    const current_non_negated = ret.get(key);
+    const record = ret.get(key);
     // These next two lines can only upgrade from undefined -> true or
     // false -> true for a given type.
-    if (current_non_negated === undefined) {
-        ret.set(key, non_negated);
+    if (!record) {
+        ret.set(key, [non_negated, !non_negated]);
+        return;
     }
-    else if (current_non_negated === false) {
-        ret.set(key, non_negated);
-    }
+    const [current_non_negated, current_negated] = record;
+    ret.set(key, [
+        non_negated || current_non_negated,
+        !non_negated || current_negated,
+    ]);
 }
-
 
 /**
  * @summary Gets each attribute type from a filter and whether it was only negated
@@ -87,7 +89,8 @@ export
  * @param filter The filter to analyze
  * @param non_negated Whether the current filter is non-negated
  * @param ret A mapping of string-form attribute type object identifiers to
- *  booleans indicating whether the type was present in any non-negated filter item.
+ *  two booleans indicating whether the type was present in any non-negated
+ *  filter item and whether the type was present in any negated filter item.
  * @returns Nothing. This function modifies `ret` by reference.
  *
  * @function
@@ -97,7 +100,7 @@ export
     function getAttributeTypeNegationFromFilter(
         filter: Filter,
         non_negated: boolean,
-        ret: Map<IndexableOID, boolean>
+        ret: Map<IndexableOID, [boolean, boolean]>
     ): void {
     if ("item" in filter) {
         getAttributeTypeNegationFromFilterItem(filter.item, non_negated, ret);
