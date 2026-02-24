@@ -258,6 +258,16 @@ export function check_of_request_attribute_profile_in_filter(
                 }
             }
             // Step 5
+            /* Note that there are three nested for loops below. Not only is this
+            ugly, but it is also a potential denial-of-service attack, because the
+            code below executes with O(n^2) time complexity (one of the for loops
+            doesn't count towards the exponent). As a safeguard against this, we
+            return an error if the number of asserted contexts is greater than 100;
+            chances are that, with that many, one will violate the rules anyway.
+            
+            This is my fault. The directory needs too much many-to-many comparison:
+            my rewrite of Meerkat DSA is going (soft) require hash implementations
+            for all equality matching rules and context types. */
             const context_map: Map<IndexableOID, ContextProfile> = new Map();
             for (const context of profile.contexts) {
                 context_map.set(context.contextType.toString(), context);
@@ -269,6 +279,15 @@ export function check_of_request_attribute_profile_in_filter(
                     state.searchContextViolationsAttr = type_oid;
                     state.searchContextViolations.push(asserted_context.contextType);
                 } else if (profile.contextValue) {
+                    // Denial-of-service attack mitigation.
+                    if (
+                        asserted_context.contextValues
+                        && (asserted_context.contextValues.length > 100)
+                    ) {
+                        state.searchContextViolationsAttr = type_oid;
+                        state.searchContextViolations.push(asserted_context.contextType);
+                        return;
+                    }
                     // Step 6
                     const matcher = ctx.contextTypes.get(key)?.matcher ?? compareElements;
                     const non_matching_assertions: ASN1Element[] = [];
