@@ -78,6 +78,27 @@ Separately from this, I think there is a place for having an audit log, which
 would store the entire requests from users, along with IP addresses, invoke IDs,
 etc. But this sounds like a hell of a lot of logging.
 
+## Value Matching
+
+It seems like there are a lot of scenarios in the X.500 directory where you
+have to do a many-to-many comparison of either attribute values or context
+values. This is a trap that leads to O(n^2) time complexity comparisons, and
+therefore denial-of-service attacks.
+
+I think it should be a (soft) requirement to implement some sort of hashing
+for each equality matching rule and context type. There has to be some way
+to efficiently compare many values to many others.
+
+## Service Administration
+
+I think the procedures for evaluating search rules described in ITU-T
+Recommendation X.511 (2019) are overly complicated and inefficient. My code
+feels really sloppy and weird because I tried to follow the specification.
+
+One of the things following the specification exactly causes is traversing
+the search filter over and over again. I think the whole search rule could be
+evaluated in a single pass over the filter. It would be faster and cleaner.
+
 ## Database
 
 I should have used a key-value store instead.
