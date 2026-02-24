@@ -1203,6 +1203,7 @@ const ctx: MeerkatContext = {
     rbacPolicies: new Map([ [id_simpleSecurityPolicy.toString(), simple_rbac_acdf] ]),
     alreadyAssertedAttributeCertificates: new Set(),
     externalProcedureAuthFunctions: new Map([ [id_tls_client_auth.toString(), tls_client_auth] ]),
+    recentlyAddedCrossReferences: new Map(),
 };
 
 for (const la of labellingAuthorities) {
