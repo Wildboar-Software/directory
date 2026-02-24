@@ -1,6 +1,62 @@
-import { AttributeCombination } from "@wildboar/x500/ServiceAdministration";
-import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import type { AttributeCombination } from "@wildboar/x500/ServiceAdministration";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import type { AttributeType } from "@wildboar/x500/InformationFramework";
+
+// TODO: Limit recursion depth.
+function checkRequiredAttributeInFilter(
+    filter: Filter,
+    non_negated: boolean,
+    attribute: AttributeType,
+): boolean {
+    if ("item" in filter) {
+        const item = filter.item;
+        let type_oid: OBJECT_IDENTIFIER | undefined;
+        if ("equality" in item) {
+            type_oid = item.equality.type_;
+        }
+        else if ("substrings" in item) {
+            type_oid = item.substrings.type_;
+        }
+        else if ("greaterOrEqual" in item) {
+            type_oid = item.greaterOrEqual.type_;
+        }
+        else if ("lessOrEqual" in item) {
+            type_oid = item.lessOrEqual.type_;
+        }
+        else if ("present" in item) {
+            type_oid = item.present;
+        }
+        else if ("approximateMatch" in item) {
+            type_oid = item.approximateMatch.type_;
+        }
+        else if ("extensibleMatch" in item) {
+            type_oid = item.extensibleMatch.type_;
+        }
+        else if ("contextPresent" in item) {
+            type_oid = item.contextPresent.type_;
+        }
+        return non_negated === !!(type_oid && type_oid.isEqualTo(attribute));
+    } else if ("and" in filter) {
+        // Match if any subfilter requires the attribute.
+        return filter.and.some((subfilter) => checkRequiredAttributeInFilter(subfilter, non_negated, attribute));
+    } else if ("or" in filter) {
+        // Match if all subfilters require the attribute.
+        return filter.or.every((subfilter) => checkRequiredAttributeInFilter(subfilter, non_negated, attribute));
+    } else if ("not" in filter) {
+        // TODO: Document this.
+        /* I'm not sure how to interpret this case: does a not in the combination
+        mean that we have to proactively ensure that any negated attributes do
+        NOT appear, or do we merely check that the subcombination is not met?
+        
+        These are two slightly different interpretations. In the latter case, I
+        think, there is no way to exclude an attribute from matching; as such,
+        I went with the former case. */
+        return checkRequiredAttributeInFilter(filter.not, !non_negated, attribute);
+    }
+    return true;
+}
+
 
 /**
  * @summary Check attribute combinations in a search filter
@@ -29,91 +85,41 @@ export
         non_negated: boolean,
         violations: AttributeCombination[]
     ): void {
-    if (("item" in filter) && ("attribute" in combo)) {
-        const item = filter.item;
-        let type_oid: OBJECT_IDENTIFIER | undefined;
-        if ("equality" in item) {
-            type_oid = item.equality.type_;
-        }
-        else if ("substrings" in item) {
-            type_oid = item.substrings.type_;
-        }
-        else if ("greaterOrEqual" in item) {
-            type_oid = item.greaterOrEqual.type_;
-        }
-        else if ("lessOrEqual" in item) {
-            type_oid = item.lessOrEqual.type_;
-        }
-        else if ("present" in item) {
-            type_oid = item.present;
-        }
-        else if ("approximateMatch" in item) {
-            type_oid = item.approximateMatch.type_;
-        }
-        else if ("extensibleMatch" in item) {
-            type_oid = item.extensibleMatch.type_;
-        }
-        else if ("contextPresent" in item) {
-            type_oid = item.contextPresent.type_;
-        }
-        if (!type_oid || !type_oid.isEqualTo(combo.attribute)) {
+    if ("attribute" in combo) {
+        if (!checkRequiredAttributeInFilter(filter, non_negated, combo.attribute)) {
             violations.push(combo);
             return;
         }
-    } else if (("and" in filter) && ("and" in combo)) {
-        if (filter.and.length !== combo.and.length) {
-            violations.push(combo);
-            return;
-        }
-        /* TODO:
-            Yes this is an O^2 comparison, but its max size is constrained
-            by the search filter, which the administrators control. In the long
-            run, maybe you can create an algorithm to pre-sort filters and
-            combinations, which should solve this.
-        */
+    } else if ("and" in combo) {
+        let matched: boolean = true;
         for (const subcombo of combo.and) {
-            let matched: boolean = false;
-            for (const subfilter of filter.and) {
-                const subviolations: AttributeCombination[] = [];
-                checkAttributeCombination(subfilter, subcombo, non_negated, subviolations);
-                if (subviolations.length === 0) {
-                    matched = true;
-                    break;
-                }
-            }
-            if (!matched) {
-                violations.push(combo);
-                return;
+            const subviolations: AttributeCombination[] = [];
+            checkAttributeCombination(filter, subcombo, non_negated, subviolations);
+            if (subviolations.length > 0) {
+                matched = false;
+                break;
             }
         }
-    } else if (("or" in filter) && ("or" in combo)) {
-        if (filter.or.length !== combo.or.length) {
+        if (!matched) {
             violations.push(combo);
             return;
         }
-        /* TODO:
-            Yes this is an O^2 comparison, but its max size is constrained
-            by the search filter, which the administrators control. In the long
-            run, maybe you can create an algorithm to pre-sort filters and
-            combinations, which should solve this.
-        */
+    } else if ("or" in combo) {
+        let matched: boolean = false;
         for (const subcombo of combo.or) {
-            let matched: boolean = false;
-            for (const subfilter of filter.or) {
-                const subviolations: AttributeCombination[] = [];
-                checkAttributeCombination(subfilter, subcombo, non_negated, subviolations);
-                if (subviolations.length === 0) {
-                    matched = true;
-                    break;
-                }
-            }
-            if (!matched) {
-                violations.push(combo);
-                return;
+            const subviolations: AttributeCombination[] = [];
+            checkAttributeCombination(filter, subcombo, non_negated, subviolations);
+            if (subviolations.length === 0) {
+                matched = true;
+                break;
             }
         }
-    } else if (("not" in filter) && ("not" in combo)) {
-        checkAttributeCombination(filter.not, combo.not, !non_negated, violations);
+        if (!matched) {
+            violations.push(combo);
+            return;
+        }
+    } else if ("not" in combo) {
+        checkAttributeCombination(filter, combo.not, !non_negated, violations);
     } else {
         violations.push(combo);
     }
