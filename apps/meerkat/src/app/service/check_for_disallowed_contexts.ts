@@ -93,23 +93,7 @@ export function check_for_disallowed_contexts(
                 violating_context_types.add(context_type);
                 continue;
             }
-            if (profile.contextValue) {
-                const ct = ctx.contextTypes.get(context_type);
-                const matcher = ct?.assertionMatcher ?? ct?.matcher ?? compareElements;
-                for (const asserted_value of asserted.contextValues) {
-                    let matched: boolean = false;
-                    for (const allowed_value of profile.contextValue) {
-                        if (matcher(asserted_value, allowed_value)) {
-                            matched = true;
-                            break;
-                        }
-                    }
-                    if (!matched) {
-                        violating_context_types.add(context_type);
-                        return;
-                    }
-                }
-            }
+            // We don't check context values here. That is done in another procedure.
         }
     }
     else if ("and" in filter) {
