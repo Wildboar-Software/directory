@@ -25,13 +25,19 @@ export
         ret: Set<IndexableOID>
     ): void {
     if ("context" in combo) {
-        ret.add(combo.context.toString());
+        non_negated && ret.add(combo.context.toString());
     } else if ("and" in combo) {
         // Required attributes are any required by any subfilter.
         for (const sub of combo.and) {
             getRequiredContextsFromContextCombination(sub, non_negated, ret);
         }
     } else if ("or" in combo) {
+        if (combo.or.length > 100) {
+            // This is a heuristic to prevent denial-of-service, because the
+            // algorithm below has bad time complexity, and it sounds like
+            // there is no efficient way to do this.
+            return;
+        }
         // Required attributes are those that are required by all subfilters.
         const subrets: Set<IndexableOID>[] = [];
         for (const sub of combo.or) {
@@ -42,18 +48,17 @@ export
         if (subrets.length === 0) {
             return;
         }
-        const first = subrets[0];
-        for (const attr of first.values()) {
-            for (const subret of subrets.slice(1)) {
-                if (!subret.has(attr)) {
-                    first.delete(attr);
-                    break;
+        subrets.sort((a, b) => a.size - b.size);
+        const [smallest, ...rest] = subrets;
+
+        outer:
+        for (const value of smallest.values()) {
+            for (const set of rest) {
+                if (!set.has(value)) {
+                    continue outer;
                 }
             }
-        }
-        // These are the attributes that were required by every subfilter.
-        for (const attr of first.values()) {
-            ret.add(attr);
+            ret.add(value);
         }
     } else if ("not" in combo) {
         getRequiredContextsFromContextCombination(combo.not, !non_negated, ret);

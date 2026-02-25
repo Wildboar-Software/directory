@@ -2,14 +2,7 @@ import { SearchRule } from "@wildboar/x500/ServiceAdministration";
 import { SearchArgumentData, ServiceControls } from "@wildboar/x500/DirectoryAbstractService";
 import { TRUE_BIT, BIT_STRING, ObjectIdentifier, FALSE_BIT } from "@wildboar/asn1";
 import {
-    HierarchySelections_all,
     HierarchySelections_children,
-    HierarchySelections_hierarchy,
-    HierarchySelections_parent,
-    HierarchySelections_siblingChildren,
-    HierarchySelections_siblingSubtree,
-    HierarchySelections_siblings,
-    HierarchySelections_subtree,
     HierarchySelections_top,
     SearchControlOptions_checkOverspecified, // 2
     SearchControlOptions_dnAttribute, // 6
@@ -17,11 +10,6 @@ import {
     ServiceControlOptions_manageDSAIT, // 8
 } from "@wildboar/x500/DirectoryAbstractService";
 import { ControlOptions } from "@wildboar/x500/ServiceAdministration";
-import type {
-    HierarchySelections,
-    SearchControlOptions,
-    ServiceControlOptions,
-} from "@wildboar/x500/DirectoryAbstractService";
 import { check_of_controls_and_hierarchy_selections } from "./check_of_controls_and_hierarchy_selections.js";
 
 const rule_oid = ObjectIdentifier.fromString("1.2.3.4");

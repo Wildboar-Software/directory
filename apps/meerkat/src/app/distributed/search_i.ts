@@ -1266,7 +1266,6 @@ function update_operation_dispatcher_state_with_search_rule (
         data.hierarchySelections,
         data.searchControlOptions,
         data.serviceControls?.options,
-        false,
     );
     state.effectiveServiceControls = effective_service_opts;
     if (governing_search_rule.familyReturn !== undefined) {
@@ -1321,7 +1320,6 @@ function update_search_state_with_search_rule (
         data.hierarchySelections,
         data.searchControlOptions,
         data.serviceControls?.options,
-        true,
     );
     searchState.effectiveHierarchySelections = effective_hs;
     searchState.effectiveSearchControls = effective_search_opts;

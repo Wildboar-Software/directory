@@ -242,6 +242,7 @@ export function check_of_controls_and_hierarchy_selections(
             serviceControlOptionsList: int_to_bits(c_service_controls),
         };
     }
+    // This code was copied to getEffectiveControlsFromSearchRule.ts.
     const s_hierarchy_selections = bits_to_int(rule.searchRuleControls.hierarchyOptions
         ?? DEFAULT_HS);
     const s_search_opts = bits_to_int(rule.searchRuleControls.searchOptions

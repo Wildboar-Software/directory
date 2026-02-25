@@ -804,7 +804,6 @@ async function searchRuleCheckProcedure_i (
             }));
         }
         return GoodPermittedSR[0];
-
     }
 
     // Step 7
