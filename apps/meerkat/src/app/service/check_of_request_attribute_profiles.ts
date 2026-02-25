@@ -337,7 +337,8 @@ export function check_of_request_attribute_profile_in_filter(
  * @param ctx The context object
  * @param search The unsigned search argument data
  * @param rule The governing search rule
- * @returns The step on which validation failed and the internal function state
+ * @returns A tuple containing the step on which validation failed (or 0 if
+ *  none) and the internal function state, in that order.
  *
  * @function
  * @see {@link CheckRequestAttributeState}

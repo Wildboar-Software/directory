@@ -1,5 +1,5 @@
-import { IndexableOID } from "../types/index.js";
-import { ContextCombination } from "@wildboar/x500/ServiceAdministration";
+import type { IndexableOID } from "../types/index.js";
+import type { ContextCombination } from "@wildboar/x500/ServiceAdministration";
 
 /**
  * @summary Extract the required context types from a context combination

@@ -1,25 +1,16 @@
 import type { Buffer } from "node:buffer";
-import { Context, ClientAssociation, Vertex, ServiceError } from "../types/index.js";
+import type { Context, ClientAssociation, Vertex } from "../types/index.js";
+import { ServiceError } from "../types/index.js";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import {
-    SearchArgumentData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     administrativeRole,
-} from "@wildboar/x500/InformationFramework";
-import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/InformationFramework";
-import {
     id_ar_serviceSpecificArea,
 } from "@wildboar/x500/InformationFramework";
 import {
+    SearchArgumentData,
     ServiceErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ServiceProblem_unwillingToPerform,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import createSecurityParameters from "../x500/createSecurityParameters.js";
@@ -57,7 +48,7 @@ async function searchRuleCheckProcedure_ii (
     assn: ClientAssociation,
     state: OperationDispatcherState,
     target: Vertex,
-    searchArg: SearchArgumentData,
+    searchArg: SearchArgumentData, // TODO: Remove unused parameter
     signErrors: boolean,
 ): Promise<void> {
     const searchRuleId = state.chainingArguments.searchRuleId;

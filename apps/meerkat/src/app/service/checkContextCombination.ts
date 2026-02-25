@@ -1,6 +1,6 @@
-import { IndexableOID } from "../types/index.js";
-import { ContextAssertion } from "@wildboar/x500/InformationFramework";
-import { ContextCombination } from "@wildboar/x500/ServiceAdministration";
+import type { IndexableOID } from "../types/index.js";
+import type { ContextAssertion } from "@wildboar/x500/InformationFramework";
+import type { ContextCombination } from "@wildboar/x500/ServiceAdministration";
 
 /**
  * @summary Validate context combinations

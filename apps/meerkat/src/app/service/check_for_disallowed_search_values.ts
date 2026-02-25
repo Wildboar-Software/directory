@@ -28,7 +28,7 @@ import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
  */
 export function check_for_disallowed_search_values(
     filter: Filter,
-    disallowed: Map<IndexableOID, boolean>,
+    disallowed: Map<IndexableOID, boolean>, // TODO: Change this variable name
     violations: FilterItem[]): void {
     if ("item" in filter) {
         const item = filter.item;
@@ -65,9 +65,11 @@ export function check_for_disallowed_search_values(
             // If no contexts, we can use whatever filter item we want.
             return;
         }
-        if (contexts && !("contextPresent" in item)) {
-            violations.push(item);
-        } else if (!contexts && !("present" in item)) {
+        const is_compliant: boolean = (
+            (("present" in item) && !contexts)
+            || ("contextPresent" in item) && contexts
+        );
+        if (!is_compliant) {
             violations.push(item);
         }
     }

@@ -297,7 +297,6 @@ describe("general_check_of_search_filter", () => {
             ],
             undefined,
             undefined,
-
         );
         // This rule forbids any contexts at all.
         const [failed_step1] = general_check_of_search_filter(ctx, search, rule1);

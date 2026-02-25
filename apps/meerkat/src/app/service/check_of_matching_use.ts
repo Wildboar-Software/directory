@@ -1,5 +1,5 @@
-import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import { AttributeType } from "@wildboar/x500/InformationFramework";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import type { AttributeType } from "@wildboar/x500/InformationFramework";
 
 export interface CheckMatchingUseReturn {
     problem?: OBJECT_IDENTIFIER,

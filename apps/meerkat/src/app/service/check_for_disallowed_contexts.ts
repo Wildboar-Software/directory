@@ -1,9 +1,8 @@
 import type { Context, IndexableOID } from "../types/index.js";
-import { compareElements } from "@wildboar/x500";
-import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import { Filter } from "@wildboar/x500/DirectoryAbstractService";
-import { ContextProfile } from "@wildboar/x500/ServiceAdministration";
-import { ContextAssertion } from "@wildboar/x500/InformationFramework";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
+import type { ContextProfile } from "@wildboar/x500/ServiceAdministration";
+import type { ContextAssertion } from "@wildboar/x500/InformationFramework";
 
 /**
  * @summary Identify any disallowed context types in a search filter

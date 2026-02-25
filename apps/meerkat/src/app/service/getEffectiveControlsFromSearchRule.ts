@@ -1,14 +1,10 @@
-import { BIT_STRING, FALSE_BIT, TRUE_BIT } from "@wildboar/asn1";
+import { type BIT_STRING, FALSE_BIT, TRUE_BIT } from "@wildboar/asn1";
 import type {
     SearchRule,
 } from "@wildboar/x500/ServiceAdministration";
 import {
     HierarchySelections,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     SearchControlOptions,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ServiceControlOptions,
 } from "@wildboar/x500/DirectoryAbstractService";
 
