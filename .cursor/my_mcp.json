@@ -1,0 +1,9 @@
+{
+    "note": "Copied here so Cursor doesn't automatically pick this up. This is what I use.",
+    "mcpServers": {
+      "pdf-reader": {
+        "command": "npx",
+        "args": ["@sylphx/pdf-reader-mcp"]
+      }
+    }
+}

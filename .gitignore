@@ -11,6 +11,8 @@
 *.snap
 
 demo/
+specs/*
+!specs/.gitkeep
 
 *.snap
 k8s/charts/meerkat-dsa/*.tgz
