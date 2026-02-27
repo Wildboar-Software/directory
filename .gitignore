@@ -6,6 +6,9 @@
 *.gz
 *.apk
 *.zst
+*.log
+*.tgz
+*.snap
 
 demo/
 
@@ -26,7 +29,7 @@ debian/meerkat-dsa.substvars
 /out-tsc
 
 # dependencies
-/node_modules
+**/node_modules
 
 # IDEs and editors
 /.idea
@@ -45,14 +48,7 @@ debian/meerkat-dsa.substvars
 !.vscode/extensions.json
 
 # misc
-/.sass-cache
-/connect.lock
 /coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
 
 # System Files
 .DS_Store
