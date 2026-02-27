@@ -311,8 +311,7 @@ async function read (
         && !state.chainingArguments.authenticationLevel.basicLevels.signed
     ) {
         const remoteHostIdentifier = assn
-            ? `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`
-            : "INTERNAL://127.0.0.1/1"; // TODO: Make this a constant.
+            && `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
         const logInfo = {
             context: "arg",
             host: remoteHostIdentifier,

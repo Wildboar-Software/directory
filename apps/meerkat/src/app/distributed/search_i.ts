@@ -1466,15 +1466,6 @@ async function search_i_ex (
         ?? data.requestor
         ?? assn.boundNameAndUID?.dn;
 
-    if (requestor && (searchState.depth === 0)) {
-        ctx.log.debug(ctx.i18n.t("log:requester", {
-            aid: assn.id,
-            iid: printInvokeId(state.invokeId),
-            r: stringifyDN(ctx, requestor).slice(0, 256),
-            context: "search_i",
-        }));
-    }
-
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
@@ -2025,7 +2016,6 @@ async function search_i_ex (
 
     const readFamilyMemberInfo = async (vertex: Vertex): Promise<EntryInformation> => {
         const infoItems: EntryInformation_information_Item[] = [];
-        const vertexDN = getDistinguishedName(vertex);
         const {
             userAttributes,
             operationalAttributes,
@@ -2052,7 +2042,7 @@ async function search_i_ex (
          */
         return new EntryInformation(
             {
-                rdnSequence: vertexDN,
+                rdnSequence: getDistinguishedName(vertex),
             },
             undefined,
             infoItems,
@@ -2314,6 +2304,17 @@ async function search_i_ex (
     })();
     const familyReturn: FamilyReturn = searchState.effectiveFamilyReturn
         ?? EntryInformationSelection._default_value_for_familyReturn;
+
+    const readEntryInfoOptions = {
+        selection: data.selection,
+        relevantSubentries,
+        operationContexts: data.operationContexts,
+        attributeSizeLimit,
+        noSubtypeSelection,
+        dontSelectFriends,
+        outputAttributeTypes: searchState.outputAttributeTypes,
+    } as const;
+
     if ((subset === SearchArgumentData_subset_oneLevel) && !entryOnly) { // Step 3
         // Nothing needs to be done here. Proceed to step 6.
         // This no-op section is basically so that a one-level search does not
@@ -2467,15 +2468,7 @@ async function search_i_ex (
                                 user,
                                 relevantTuples,
                                 accessControlScheme,
-                                {
-                                    selection: data.selection, // TODO: Future improvement: filter out non-permitted types.
-                                    relevantSubentries,
-                                    operationContexts: data.operationContexts,
-                                    attributeSizeLimit,
-                                    noSubtypeSelection,
-                                    dontSelectFriends,
-                                    outputAttributeTypes: searchState.outputAttributeTypes,
-                                },
+                                readEntryInfoOptions,
                             );
                             return [
                                 member.dse.id,
@@ -2796,14 +2789,7 @@ async function search_i_ex (
                                 user,
                                 relevantTuples,
                                 accessControlScheme,
-                                {
-                                    selection: data.selection, // TODO: Future improvement: filter out non-permitted types.
-                                    relevantSubentries,
-                                    operationContexts: data.operationContexts,
-                                    attributeSizeLimit,
-                                    noSubtypeSelection,
-                                    dontSelectFriends,
-                                },
+                                readEntryInfoOptions,
                             );
                             return [
                                 member.dse.id,

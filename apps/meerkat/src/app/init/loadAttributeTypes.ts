@@ -1858,9 +1858,6 @@ import {
 // import {
 //     emailAddress,
 // } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/emailAddress.oa.js";
-// import { // TODO: Eventually support this, when you track the change number.
-//     etag,
-// } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/etag.oa.js";
 import {
     fullVendorVersion,
 } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa.js";

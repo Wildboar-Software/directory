@@ -41,11 +41,11 @@ const mTSIdentifierMatch: EqualityMatcher = (
     // Country Comparison
     // TODO: Support translation between ISO-3166 CC and X.121 DCC Code
     const aCountry = ("x121_dcc_code" in aglob.country_name)
-        ? aglob.country_name.x121_dcc_code.trim().replace(/\s+/g, "")
-        : aglob.country_name.iso_3166_alpha2_code.slice(0, 2); // TODO: Slice(0,2) all usage of ISO-3166 codes.
+        ? aglob.country_name.x121_dcc_code
+        : aglob.country_name.iso_3166_alpha2_code;
     const vCountry = ("x121_dcc_code" in vglob.country_name)
-        ? vglob.country_name.x121_dcc_code.trim().replace(/\s+/g, "")
-        : vglob.country_name.iso_3166_alpha2_code.slice(0, 2); // TODO: Slice(0,2) all usage of ISO-3166 codes.
+        ? vglob.country_name.x121_dcc_code
+        : vglob.country_name.iso_3166_alpha2_code;
     if (aCountry !== vCountry) {
         return false;
     }

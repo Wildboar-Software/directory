@@ -104,6 +104,9 @@ import cloneChainingArgs from "../x500/cloneChainingArguments.js";
 import { isTrustedForIBRA } from "./isTrustedForIBRA.js";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";
 import util from "node:util";
+import { stringifyDN } from "../x500/stringifyDN.js";
+import { printCode } from "../utils/printCode.js";
+import printBitString from "../utils/printBitString.js";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -726,10 +729,9 @@ async function requestValidationProcedure (
     const unsigned = getOptionallyProtectedValue(hydratedArgument);
     const {
         chainedArgument,
-        argument, // TODO: rename "dapArgument"
+        argument: dapArgument,
     } = unsigned;
-
-    const commonArgs = getCommonArguments(req.opCode, argument);
+    const commonArgs = getCommonArguments(req.opCode, dapArgument);
     if ((commonArgs?.aliasedRDNs ?? 0) < 0) {
         throw new MistypedArgumentError(ctx.i18n.t("err:aliased_rdns_lt0"));
     }
@@ -738,6 +740,113 @@ async function requestValidationProcedure (
         assn.authorizedForSignedErrors
         && (securityParams?.errorProtection === ErrorProtectionRequest_signed)
     );
+    /* We log a lot of information because this is a bottleneck code path
+    that all DAP and DSP operations go through. */
+    const logInfo = ctx.config.bulkInsertMode
+        ? {}
+        : {
+            clientFamily: assn.socket.remoteFamily,
+            clientAddress: assn.socket.remoteAddress,
+            clientPort: assn.socket.remotePort,
+            association_id: assn.id,
+            iid: printInvokeId(req.invokeId),
+            requestor: commonArgs?.requestor
+                ? stringifyDN(ctx, commonArgs.requestor)
+                : undefined,
+            opcode: printCode(req.opCode),
+            opid: chainedArgument.operationIdentifier
+                ? Number(chainedArgument.operationIdentifier)
+                : undefined,
+            common_aliased_rdns: commonArgs?.aliasedRDNs,
+            entryOnly: commonArgs?.entryOnly,
+            common_reference_type: commonArgs?.referenceType,
+            familyGrouping: commonArgs?.familyGrouping,
+            common_name_resolve_on_master: commonArgs?.nameResolveOnMaster,
+            exclusions_length: commonArgs?.exclusions?.length ?? 0,
+            attributeSizeLimit: commonArgs?.serviceControls?.attributeSizeLimit ?? 0,
+            priority: commonArgs?.serviceControls?.priority,
+            common_time_limit: commonArgs?.serviceControls?.timeLimit,
+            sizeLimit: commonArgs?.serviceControls?.sizeLimit,
+            scopeOfReferral: commonArgs?.serviceControls?.scopeOfReferral,
+            serviceType: commonArgs?.serviceControls?.serviceType?.toString(),
+            userClass: commonArgs?.serviceControls?.userClass,
+            common_op_progress_phase: commonArgs?.operationProgress?.nameResolutionPhase,
+            common_op_progress_next_rdn: commonArgs?.operationProgress?.nextRDNToBeResolved,
+            sp_error_code: commonArgs?.securityParameters?.errorCode
+                ? printCode(commonArgs.securityParameters.errorCode)
+                : undefined,
+            sp_operation_code: commonArgs?.securityParameters?.operationCode
+                ? printCode(commonArgs.securityParameters.operationCode)
+                : undefined,
+            sp_error_protection: commonArgs?.securityParameters?.errorProtection,
+            sp_time: commonArgs?.securityParameters?.time
+                ? getDateFromTime(commonArgs.securityParameters.time).toISOString()
+                : undefined,
+            sp_target: commonArgs?.securityParameters?.target,
+            sp_name: commonArgs?.securityParameters?.name
+                ? stringifyDN(ctx, commonArgs.securityParameters.name)
+                : undefined,
+            aliasDereferenced: chainedArgument.aliasDereferenced,
+            chained_aliased_rdns: chainedArgument.aliasedRDNs,
+            ...(chainedArgument.authenticationLevel && ("basicLevels" in chainedArgument.authenticationLevel))
+                ? {
+                    chained_auth_level_basic_level: chainedArgument.authenticationLevel.basicLevels.level,
+                    chained_auth_level_basic_local_qualifier: chainedArgument.authenticationLevel.basicLevels.localQualifier,
+                    chained_auth_level_basic_signed: chainedArgument.authenticationLevel.basicLevels.signed,
+                }
+                : {},
+            ...(chainedArgument.authenticationLevel && ("other" in chainedArgument.authenticationLevel))
+                ? {
+                    chained_auth_level_other_dir_ref: chainedArgument.authenticationLevel.other.directReference?.toString(),
+                    chained_auth_level_other_indir_ref: chainedArgument.authenticationLevel.other.indirectReference?.toString(),
+                }
+                : {},
+            chained_relaxation_mappings: chainedArgument.chainedRelaxation?.mapping?.length ?? 0,
+            chained_relaxation_substitutions: chainedArgument.chainedRelaxation?.substitution?.length ?? 0,
+            dspPaging: chainedArgument.dspPaging,
+            excludeWriteableCopies: chainedArgument.excludeWriteableCopies,
+            relatedEntry: chainedArgument.relatedEntry,
+            chained_search_rule_id: chainedArgument.searchRuleId?.id.toString(),
+            chained_search_rule_dmd_id: chainedArgument.searchRuleId?.dmdId.toString(),
+            operationIdentifier: chainedArgument.operationIdentifier,
+            // operationProgress: chainedArgument.operationProgress?.nameResolutionPhase,
+            chained_op_progress_phase: chainedArgument?.operationProgress?.nameResolutionPhase,
+            chained_op_progress_next_rdn: chainedArgument?.operationProgress?.nextRDNToBeResolved,
+            targetObject: chainedArgument.targetObject
+                ? stringifyDN(ctx, chainedArgument.targetObject)
+                : undefined,
+            originator: chainedArgument.originator
+                ? stringifyDN(ctx, chainedArgument.originator)
+                : undefined,
+            excludeShadows: chainedArgument.excludeShadows,
+            chained_exclusions_length: chainedArgument.exclusions?.length ?? 0,
+            chained_info_field_length: chainedArgument.info?.length ?? 0,
+            chained_time_limit: chainedArgument.timeLimit
+                ? getDateFromTime(chainedArgument.timeLimit).toISOString()
+                : undefined,
+            chained_name_resolve_on_master: chainedArgument.nameResolveOnMaster,
+            chained_reference_type: chainedArgument.referenceType,
+            returnCrossRefs: chainedArgument.returnCrossRefs,
+            chained_trace_info_length: chainedArgument.traceInformation.length,
+            chained_unique_identifier: chainedArgument.uniqueIdentifier
+                ? printBitString(chainedArgument.uniqueIdentifier)
+                : undefined,
+            chained_sp_error_code: chainedArgument.securityParameters?.errorCode
+                ? printCode(chainedArgument.securityParameters.errorCode)
+                : undefined,
+            chained_sp_operation_code: chainedArgument.securityParameters?.operationCode
+                ? printCode(chainedArgument.securityParameters.operationCode)
+                : undefined,
+            chained_sp_error_protection: chainedArgument.securityParameters?.errorProtection,
+            chained_sp_time: chainedArgument.securityParameters?.time
+                ? getDateFromTime(chainedArgument.securityParameters.time).toISOString()
+                : undefined,
+            chained_sp_target: chainedArgument.securityParameters?.target,
+            chained_sp_name: chainedArgument.securityParameters?.name
+                ? stringifyDN(ctx, chainedArgument.securityParameters.name)
+                : undefined,
+            signErrors,
+        };
     const namingMatcher = getNamingMatcherGetter(ctx);
     /**
      * If the requestor does not match the bound DN, throw an error, per ITU
@@ -874,8 +983,8 @@ async function requestValidationProcedure (
         );
     }
     let authLevelSigned: boolean = false;
-    if (isArgumentSigned(req.opCode, argument)) {
-        const signedArgElements = argument.sequence;
+    if (isArgumentSigned(req.opCode, dapArgument)) {
+        const signedArgElements = dapArgument.sequence;
         const tbsElement = signedArgElements[0];
         const sigAlgElement = signedArgElements[1];
         const sigValueElement = signedArgElements[2];
@@ -909,10 +1018,18 @@ async function requestValidationProcedure (
             );
             authLevelSigned = true;
         } catch (e) {
-            // TODO: Log the error, but don't throw it yet.
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
+            const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+                
+            ctx.log.warn(ctx.i18n.t("log:invalid_signature", {
+                aid: assn.id,
+                iid: printInvokeId(req.invokeId),
+                context: "reqval",
+                host: remoteHostIdentifier,
+                e,
+            }), logInfo);
         }
     }
 
@@ -1014,7 +1131,7 @@ async function requestValidationProcedure (
                                 ),
                             },
                         }),
-                        argument,
+                        dapArgument,
                     ),
                 },
                 commonArgs,
@@ -1045,7 +1162,7 @@ async function requestValidationProcedure (
         return [ {
             unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 effectiveChainingArguments,
-                argument,
+                dapArgument,
             ),
         }, commonArgs ];
     }
@@ -1092,23 +1209,15 @@ async function requestValidationProcedure (
     });
 
     ctx.log.debug(ctx.i18n.t("log:accepted_operation", {
-        iid: ("present" in req.invokeId)
-            ? req.invokeId.present.toString()
-            : "?",
+        iid: printInvokeId(req.invokeId),
         opid: effectiveChainingArguments.operationIdentifier ?? "?"
-    }), {
-        remoteFamily: assn.socket.remoteFamily,
-        remoteAddress: assn.socket.remoteAddress,
-        remotePort: assn.socket.remotePort,
-        association_id: assn.id,
-        invokeID: printInvokeId(req.invokeId),
-    });
+    }), logInfo);
 
     return [
         {
             unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 effectiveChainingArguments,
-                argument,
+                dapArgument,
             ),
         },
         commonArgs,

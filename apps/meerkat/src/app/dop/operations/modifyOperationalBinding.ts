@@ -161,7 +161,6 @@ function getInitiatorParam (init: Initiator): ASN1Element {
         return init.roleB_initiates;
     }
 }
-// TODO: Use printCode()
 
 /**
  * @summary Modifies an operational binding, as described in ITU Recommendation X.501.

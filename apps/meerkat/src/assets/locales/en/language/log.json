@@ -163,6 +163,7 @@
     "cert_path_invalid@result": "Invalid certification path in result of invocation {{iid}} from access point {{ap}}.",
     "invalid_signature@arg": "COULD_BAN={{host}}; Invalid signature for invocation {{iid}} from association {{aid}}.",
     "invalid_signature@result": "Invalid signature on result for invocation {{iid}} from access point {{ap}}.",
+    "invalid_signature@reqval": "COULD_BAN={{host}}; Invalid signature for invocation {{iid}} from association {{aid}} discovered during request validation. If the target DSE resides here, the operation will fail. Error: {{e}}",
     "cert_path_required_signed@arg": "COULD_BAN={{host}}; Certification-path parameter is required when providing a signed argument, but was missing from invocation {{iid}} from association {{aid}}.",
     "cert_path_required_signed@result": "Certification-path parameter is required when providing a signed result, but was missing from the result of invocation {{iid}} from access point {{ap}}.",
     "cert_path_issuedToThisCA@arg": "COULD_BAN={{host}}; Certification-path CA certifications must use the issuedToThisCA field for CA certs--a constraint violated in invocation {{iid}} from association {{aid}}.",
@@ -276,9 +277,6 @@
     "lcr_abstained": "List continuation not performed. PROHIBITED_BY_USER={{prohibited}}; UNAUTHORIZED={{unauthorized}}.",
     "failed_to_normalize_dn": "Failed to normalize DN: {{dn}}",
     "zero_access_points_in_cr": "Zero access points found in continuation reference for target object '{{dn}}'",
-    "requester": "Requester for association {{aid}}, invocation {{iid}} is '{{r}}'.",
-    "requester@search_i": "Requester for association {{aid}}, Search (I) invocation {{iid}} is '{{r}}'.",
-    "requester@search_ii": "Requester for association {{aid}}, Search (II) invocation {{iid}} is '{{r}}'.",
     "search_complete": "Search complete for invocation {{iid}} by association {{aid}}.",
     "search_complete@limit": "Search limit reached for invocation {{iid}} by association {{aid}}: {{limit}}",
     "multiple_search_rules_of_same_user_class": "Detected multiple permitted and applicable search rules having user class {{user_class}}. It may be desirable to re-work the search rule definitions.",
@@ -504,5 +502,7 @@
     "sec_label_invalid_sig": "Security label used in a value of type {{type}} in DSE {{dn}} (dse UUID {{uuid}}) had an invalid signature. Fallback behavior will apply.",
     "unrecognized_class_attrs_shadowing": "Unrecognized alternative in ClassAttributes in shadowing agreement.",
     "checking_for_entry_in_nssr": "Checking if entry {{dn}} is already taken in non-specific subordinate DSA {{aet}}.",
-    "subrequest_result_malformed": "Subrequest result for operation {{opid}} was malformed. {{e}}"
+    "subrequest_result_malformed": "Subrequest result for operation {{opid}} was malformed. {{e}}",
+    "local_read_request": "Dispatching local read request with invocation ID {{iid}} for {{dn}}.",
+    "local_compare_request": "Dispatching local compare request with invocation ID {{iid}} asserting attribute type {{attr}} against {{dn}}."
 }

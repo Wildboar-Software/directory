@@ -150,6 +150,7 @@ import searchRuleCheckProcedure_ii from "./searchRuleCheckProcedure_ii.js";
 import { SearchArgumentData_subset_baseObject } from "@wildboar/x500/DirectoryAbstractService";
 import { ResultAttribute, SearchRule } from "@wildboar/x500/ServiceAdministration";
 import { AbortReason } from "@wildboar/rose-transport";
+import { printInvokeId } from "../utils/printInvokeId.js";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -823,7 +824,7 @@ class OperationDispatcher {
 
             const use_search_rule_check_ii: boolean = (nameResolutionPhase === completed);
             if (use_search_rule_check_ii) {
-                await searchRuleCheckProcedure_ii(ctx, assn, state, state.foundDSE, data, signErrors);
+                await searchRuleCheckProcedure_ii(ctx, assn, state, state.foundDSE, signErrors);
             } else {
                 const search_rule = await searchRuleCheckProcedure_i(
                     ctx,
@@ -1759,7 +1760,13 @@ class OperationDispatcher {
         const timeLimitDate = addSeconds(new Date(), data.serviceControls?.timeLimit
             ? Number(data.serviceControls.timeLimit)
             : 5000);
-        // TODO: Log iid, target, timeLimit
+        const logInfo = {
+            iid: printInvokeId(invokeId),
+            dn: stringifyDN(ctx, targetObject),
+            timeLimit: timeLimitDate.toISOString(),
+            signErrors,
+        };
+        ctx.log.debug(ctx.i18n.t("log:local_read_request", logInfo), logInfo);
         const chainingResults = new ChainingResults(
             undefined,
             undefined,
@@ -1892,7 +1899,14 @@ class OperationDispatcher {
         const timeLimitDate = addSeconds(new Date(), data.serviceControls?.timeLimit
             ? Number(data.serviceControls.timeLimit)
             : 5000);
-        // TODO: Log iid, target, timeLimit
+        const logInfo = {
+            iid: printInvokeId(invokeId),
+            dn: stringifyDN(ctx, targetObject),
+            attr: data.purported.type_.toString(),
+            timeLimit: timeLimitDate.toISOString(),
+            signErrors,
+        };
+        ctx.log.debug(ctx.i18n.t("log:local_compare_request", logInfo), logInfo);
         const chainingResults = new ChainingResults(
             undefined,
             undefined,

@@ -102,7 +102,6 @@ interface UpdateSuperiorOptions {
     endTime?: Date;
 }
 
-// TODO: This whole function can go in a separate thread in some cases.
 /**
  * @summary Update a superior DSA of changes made to the context prefix or its subentries, if present.
  * @description

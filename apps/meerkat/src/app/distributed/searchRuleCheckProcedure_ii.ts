@@ -31,7 +31,6 @@ const ID_SERVICE = id_ar_serviceSpecificArea.toBytes() as Buffer<ArrayBuffer>;
  * @param assn The client association
  * @param state The operation dispatcher state
  * @param target The target DSE
- * @param searchArg The unsigned search argument data
  * @param signErrors Whether to digitally sign errors
  * @returns Nothing. This function only checks if any subordinate is a
  *  continuation of the preceeding search's service administrative area and
@@ -48,7 +47,6 @@ async function searchRuleCheckProcedure_ii (
     assn: ClientAssociation,
     state: OperationDispatcherState,
     target: Vertex,
-    searchArg: SearchArgumentData, // TODO: Remove unused parameter
     signErrors: boolean,
 ): Promise<void> {
     const searchRuleId = state.chainingArguments.searchRuleId;

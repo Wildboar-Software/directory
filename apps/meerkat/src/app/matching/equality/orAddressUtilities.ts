@@ -397,8 +397,8 @@ function process_pds_name_ext (info: ORAddressInfo, value: ASN1Element): ORAddre
 function process_physical_delivery_country_name_ext (info: ORAddressInfo, value: ASN1Element): ORAddressInfo | null {
     const pdcn = _decode_PhysicalDeliveryCountryName(value);
     const newValue = ("x121_dcc_code" in pdcn)
-        ? pdcn.x121_dcc_code.trim().replace(/\s+/g, "")
-        : pdcn.iso_3166_alpha2_code.slice(0, 2); // TODO: Slice(0,2) all usage of ISO-3166 codes.
+        ? pdcn.x121_dcc_code
+        : pdcn.iso_3166_alpha2_code;
     if (info.physicalDeliveryCountryName && (info.physicalDeliveryCountryName !== newValue)) {
         return null;
     }
@@ -987,14 +987,14 @@ function compareBuiltInStandardAttributes (
             }
             // Technically, these codes should be comparable to their
             // equivalent ISO-3166 codes, but this will not be supported for now.
-            const acc = a.country_name.x121_dcc_code.trim().replace(/\s+/g, "");
-            const bcc = b.country_name.x121_dcc_code.trim().replace(/\s+/g, "");
+            const acc = a.country_name.x121_dcc_code;
+            const bcc = b.country_name.x121_dcc_code;
             if (acc !== bcc) {
                 return false;
             }
         } else if ("iso_3166_alpha2_code" in b.country_name) {
-            const acc = a.country_name.iso_3166_alpha2_code.toUpperCase();
-            const bcc = a.country_name.iso_3166_alpha2_code.toUpperCase();
+            const acc = a.country_name.iso_3166_alpha2_code;
+            const bcc = a.country_name.iso_3166_alpha2_code;
             if (acc !== bcc) {
                 return false;
             }
@@ -1122,9 +1122,9 @@ function orAddressToInfo (addr: ORAddress): ORAddressInfo | null {
     const bisa = addr.built_in_standard_attributes;
     if (bisa.country_name) {
         if ("x121_dcc_code" in bisa.country_name) {
-            ret.countryName = bisa.country_name.x121_dcc_code.trim().replace(/\s+/g, "");
+            ret.countryName = bisa.country_name.x121_dcc_code;
         } else {
-            ret.countryName = bisa.country_name.iso_3166_alpha2_code.toUpperCase();
+            ret.countryName = bisa.country_name.iso_3166_alpha2_code;
         }
     }
     if (bisa.administration_domain_name) {

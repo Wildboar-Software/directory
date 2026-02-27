@@ -211,7 +211,6 @@ async function establishSubordinate (
 ): Promise<EstablishSubordinateReturn> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
-    // TODO: Why is this unused?
     const timeoutTime: Date | undefined = connectionTimeout
         ? addMilliseconds(startTime, connectionTimeout)
         : undefined;
