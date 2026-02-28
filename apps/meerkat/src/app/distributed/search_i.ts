@@ -1430,7 +1430,6 @@ async function search_i(
         }
     }
 
-    // TODO: Put all depth == 0 code here.
     return search_i_ex(
         ctx,
         assn,

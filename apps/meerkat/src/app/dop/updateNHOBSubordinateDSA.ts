@@ -296,6 +296,9 @@ async function updateNHOBSubordinateDSA (
                         param.signed,
                         _encode_ModifyOperationalBindingResultData,
                         signErrors,
+                        "result",
+                        assn.peer_ae_title?.rdnSequence
+                            ?? targetSystem.ae_title.rdnSequence,
                     );
                 } catch (e) {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
@@ -306,7 +309,7 @@ async function updateNHOBSubordinateDSA (
                         iid: response.result.invoke_id.toString().slice(0, 32),
                         ap: stringifyDN(ctx, targetSystem.ae_title.rdnSequence),
                     }), logInfo);
-                    return;
+                    return; // The above must be awaited for this return.
                 }
             }
             newBindingID = resultData.newBindingID;
@@ -347,20 +350,22 @@ async function updateNHOBSubordinateDSA (
             }), logInfo);
             const sp = data.securityParameters;
             if ("signed" in param) {
-                try {
-                    await verifySIGNED(
-                        ctx,
-                        undefined,
-                        sp?.certification_path,
-                        {
-                            absent: null,
-                        },
-                        false,
-                        param.signed,
-                        _encode_SecurityErrorData,
-                        signErrors,
-                    );
-                } catch (e) {
+                // We do not await, because we only log this failure, unbind, and return.
+                verifySIGNED(
+                    ctx,
+                    undefined,
+                    sp?.certification_path,
+                    {
+                        absent: null,
+                    },
+                    false,
+                    param.signed,
+                    _encode_SecurityErrorData,
+                    signErrors,
+                    "error",
+                    assn.peer_ae_title?.rdnSequence
+                        ?? targetSystem.ae_title.rdnSequence,
+                ).catch((e) => {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }
@@ -369,7 +374,7 @@ async function updateNHOBSubordinateDSA (
                         iid: response.error.invoke_id.toString().slice(0, 32),
                         ap: stringifyDN(ctx, targetSystem.ae_title.rdnSequence),
                     }));
-                }
+                });
             }
         }
         else if (compareCode(response.error.code, operationalBindingError["&errorCode"]!)) {

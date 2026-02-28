@@ -272,8 +272,8 @@ async function establishReplicateEverythingAgreement(
                     result.parameter.signed,
                     DER,
                     true,
-                    "result",
-                    undefined,
+                    "error",
+                    yourAccessPoint.ae_title.rdnSequence,
                 );
             } catch (e) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
@@ -385,25 +385,24 @@ async function establishReplicateEverythingAgreement(
         if (compareCode(error.code, operationalBindingError["&errorCode"]!)) {
             const param = operationalBindingError.decoderFor["&ParameterType"]!(error.parameter);
             if ("signed" in param) {
-                try {
-                    await verifySIGNED(
-                        ctx,
-                        undefined,
-                        param.signed.toBeSigned.securityParameters?.certification_path,
-                        error.invoke_id,
-                        false,
-                        param.signed,
-                        DER,
-                        true,
-                        "result",
-                        undefined,
-                    );
-                } catch (e) {
+                verifySIGNED(
+                    ctx,
+                    undefined,
+                    param.signed.toBeSigned.securityParameters?.certification_path,
+                    error.invoke_id,
+                    false,
+                    param.signed,
+                    DER,
+                    true,
+                    "error",
+                    assn.peer_ae_title?.rdnSequence
+                        ?? yourAccessPoint.ae_title.rdnSequence,
+                ).catch((e) => {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }
                     ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
-                }
+                });
             }
             const data = getOptionallyProtectedValue(param);
             const logInfo = _.pick(data, ["problem", "bindingType", "retryAt"]);
@@ -411,25 +410,24 @@ async function establishReplicateEverythingAgreement(
         } else if (compareCode(error.code, securityError["&errorCode"]!)) {
             const param = securityError.decoderFor["&ParameterType"]!(error.parameter);
             if ("signed" in param) {
-                try {
-                    await verifySIGNED(
-                        ctx,
-                        undefined,
-                        param.signed.toBeSigned.securityParameters?.certification_path,
-                        error.invoke_id,
-                        false,
-                        param.signed,
-                        DER,
-                        true,
-                        "result",
-                        undefined,
-                    );
-                } catch (e) {
+                verifySIGNED(
+                    ctx,
+                    undefined,
+                    param.signed.toBeSigned.securityParameters?.certification_path,
+                    error.invoke_id,
+                    false,
+                    param.signed,
+                    DER,
+                    true,
+                    "error",
+                    assn.peer_ae_title?.rdnSequence
+                        ?? yourAccessPoint.ae_title.rdnSequence,
+                ).catch((e) => {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }
                     ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
-                }
+                });
             }
             const data = getOptionallyProtectedValue(param);
             const logInfo = _.pick(data, ["problem"]);
@@ -514,7 +512,8 @@ async function modifyReplicateEverythingAgreement(
                     DER,
                     true,
                     "result",
-                    undefined,
+                    assn.peer_ae_title?.rdnSequence
+                        ?? yourAccessPoint.ae_title.rdnSequence,
                 );
             } catch (e) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
@@ -618,25 +617,24 @@ async function modifyReplicateEverythingAgreement(
         if (compareCode(error.code, operationalBindingError["&errorCode"]!)) {
             const param = operationalBindingError.decoderFor["&ParameterType"]!(error.parameter);
             if ("signed" in param) {
-                try {
-                    await verifySIGNED(
-                        ctx,
-                        undefined,
-                        param.signed.toBeSigned.securityParameters?.certification_path,
-                        error.invoke_id,
-                        false,
-                        param.signed,
-                        DER,
-                        true,
-                        "result",
-                        undefined,
-                    );
-                } catch (e) {
+                verifySIGNED(
+                    ctx,
+                    undefined,
+                    param.signed.toBeSigned.securityParameters?.certification_path,
+                    error.invoke_id,
+                    false,
+                    param.signed,
+                    DER,
+                    true,
+                    "error",
+                    assn.peer_ae_title?.rdnSequence
+                        ?? yourAccessPoint.ae_title.rdnSequence,
+                ).catch((e) => {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }
                     ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
-                }
+                });
             }
             const data = getOptionallyProtectedValue(param);
             const logInfo = _.pick(data, ["problem", "bindingType", "retryAt"]);
@@ -644,25 +642,24 @@ async function modifyReplicateEverythingAgreement(
         } else if (compareCode(error.code, securityError["&errorCode"]!)) {
             const param = securityError.decoderFor["&ParameterType"]!(error.parameter);
             if ("signed" in param) {
-                try {
-                    await verifySIGNED(
-                        ctx,
-                        undefined,
-                        param.signed.toBeSigned.securityParameters?.certification_path,
-                        error.invoke_id,
-                        false,
-                        param.signed,
-                        DER,
-                        true,
-                        "result",
-                        undefined,
-                    );
-                } catch (e) {
+                verifySIGNED(
+                    ctx,
+                    undefined,
+                    param.signed.toBeSigned.securityParameters?.certification_path,
+                    error.invoke_id,
+                    false,
+                    param.signed,
+                    DER,
+                    true,
+                    "error",
+                    assn.peer_ae_title?.rdnSequence
+                        ?? yourAccessPoint.ae_title.rdnSequence,
+                ).catch((e) => {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }
                     ctx.log.warn(ctx.i18n.t("log:invalid_signed_error", { e }), { e });
-                }
+                });
             }
             const data = getOptionallyProtectedValue(param);
             const logInfo = _.pick(data, ["problem"]);

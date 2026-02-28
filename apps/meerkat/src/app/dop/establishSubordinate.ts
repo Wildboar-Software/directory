@@ -2,11 +2,15 @@ import { Vertex, ServiceError } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import type {
     AccessPoint,
+    MasterAndShadowAccessPoints,
 } from "@wildboar/x500/DistributedOperations";
 import { bindForOBM } from "../net/bindToOtherDSA.js";
 import {
     establishOperationalBinding,
     OperationalBindingID,
+    Validity,
+    _encode_EstablishOperationalBindingResultData,
+    EstablishOperationalBindingResult,
 } from "@wildboar/x500/OperationalBindingManagement";
 import {
     SuperiorToSubordinate,
@@ -15,15 +19,9 @@ import {
     SubentryInfo,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
-    Validity,
-} from "@wildboar/x500/OperationalBindingManagement";
-import {
     RelativeDistinguishedName,
     Attribute,
 } from "@wildboar/pki-stub";
-import {
-    MasterAndShadowAccessPoints,
-} from "@wildboar/x500/DistributedOperations";
 import getDistinguishedName from "../x500/getDistinguishedName.js";
 import readSubordinates from "../dit/readSubordinates.js";
 import admPointEIS from "./admPointEIS.js";
@@ -33,21 +31,11 @@ import { addMilliseconds } from "date-fns";
 import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     ServiceErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ServiceProblem_unavailable,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { checkNameForm, getOptionallyProtectedValue } from "@wildboar/x500";
 import { verifySIGNED } from "../pki/verifySIGNED.js";
-import {
-    _encode_EstablishOperationalBindingResultData,
-} from "@wildboar/x500/OperationalBindingManagement";
-import {
-    EstablishOperationalBindingResult,
-} from "@wildboar/x500/OperationalBindingManagement";
 import { OperationOutcome } from "@wildboar/rose-transport";
 import { CommonEstablishOptions } from "@wildboar/x500-client-ts";
 import { dSAProblem } from "@wildboar/x500/SelectedAttributeTypes";
@@ -446,6 +434,8 @@ async function establishSubordinate (
                     _encode_EstablishOperationalBindingResultData,
                     signErrors,
                     "result",
+                    assn.peer_ae_title?.rdnSequence
+                        ?? targetSystem.ae_title.rdnSequence,
                 );
             }
         }
