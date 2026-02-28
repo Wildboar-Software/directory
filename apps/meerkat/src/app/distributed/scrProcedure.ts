@@ -203,7 +203,7 @@ async function scrProcedure (
                 deadline,
                 localScope,
                 partialNameResolution,
-                2,
+                ctx.config.chaining.followReferralTTL,
             );
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:scr_null_response", logMsgInfo), logInfo);

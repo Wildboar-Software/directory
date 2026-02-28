@@ -442,6 +442,21 @@ There is little reason to do this except for performance concerns (since this
 can slow down log-ins that use passwords in another DSA) or network congestion
 concerns.
 
+## MEERKAT_FOLLOW_REFERRAL_TTL
+
+When this DSA chains requests to other DSAs, an upstream DSA may return a
+referral (e.g. to another DSA that holds the requested data). This option
+controls how many times this DSA will follow such referrals before returning
+the referral to the client instead.
+
+The value is a non-negative integer. A value of `0` (the default) means the DSA
+will not follow referrals: any referral from an upstream DSA is returned to the
+client as-is. A value of `1` means the DSA will follow one level of referrals
+(if the next DSA also returns a referral, that referral is returned to the
+client). Higher values allow longer chains of referral-following.
+
+Invalid or negative values are treated as `0`. If not set, the default is `0`.
+
 ## MEERKAT_FORBID_ANONYMOUS_BIND
 
 If set to `1`, anonymous binds are declined entirely.

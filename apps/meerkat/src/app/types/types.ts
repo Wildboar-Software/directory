@@ -2073,6 +2073,14 @@ interface Configuration {
          */
         onlyFollowSignedReferrals: boolean;
 
+        /**
+         * The number of times this DSA will follow referrals presented by upstream
+         * DSAs when chaining requests. Zero disables following referrals. Used
+         * as the initial TTL wherever nrcrProcedure is invoked; apinfoProcedure
+         * decrements it when recursively calling nrcrProcedure.
+         */
+        followReferralTTL: number;
+
     };
 
     /**

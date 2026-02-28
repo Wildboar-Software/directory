@@ -182,7 +182,7 @@ async function apinfoProcedure (
     deadline: Date,
     localScope: boolean,
     partialNameResolution: boolean,
-    followReferralTTL: number, // TODO: Make this configurable.
+    followReferralTTL: number,
 ): Promise<OperationOutcome | null> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))

@@ -190,7 +190,7 @@ async function lcrProcedure (
                 deadline,
                 localScope,
                 partialNameResolution,
-                2,
+                ctx.config.chaining.followReferralTTL,
             );
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:lcr_null_response", logMsgInfo), logInfo);

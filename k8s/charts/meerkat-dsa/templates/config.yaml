@@ -33,6 +33,7 @@ data:
   enable_dap: {{ .Values.enable_dap | ternary 1 0 | quote }}
   entries_per_subordinates_page: {{ .Values.entries_per_subordinates_page | default 100 | quote }}
   fetch_remote_authz_attrs: {{ .Values.fetch_remote_authz_attrs | ternary 1 0 | quote }}
+  follow_referral_ttl: {{ .Values.follow_referral_ttl | default 0 | quote }}
   forbid_anonymous_bind: {{ .Values.forbid_anonymous_bind | ternary 1 0 | quote }}
   get_clearances_from_attr_certs: {{ .Values.get_clearances_from_attr_certs | default true | ternary 1 0 | quote }}
   get_clearances_from_dsait: {{ .Values.get_clearances_from_dsait | default true | ternary 1 0 | quote }}

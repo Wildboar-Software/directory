@@ -1051,6 +1051,12 @@ const config: Configuration = {
         strongCredentialsTimeToLiveInSeconds: process.env.MEERKAT_CHAINING_STRONG_CREDS_TTL
             ? Number.parseInt(process.env.MEERKAT_CHAINING_STRONG_CREDS_TTL, 10)
             : 60,
+        followReferralTTL: (() => {
+            const raw = process.env.MEERKAT_FOLLOW_REFERRAL_TTL;
+            if (raw === undefined) return 0;
+            const n = Number.parseInt(raw, 10);
+            return Number.isNaN(n) ? 0 : Math.max(0, n);
+        })(),
     },
     ob: {
         minAuthRequired: parseAuthLevel(

@@ -1293,7 +1293,7 @@ class OperationDispatcher {
                 signErrors,
                 localScope,
                 false,
-                2,
+                ctx.config.chaining.followReferralTTL,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1687,7 +1687,7 @@ class OperationDispatcher {
                 signErrors,
                 localScope,
                 false,
-                2,
+                ctx.config.chaining.followReferralTTL,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1841,7 +1841,7 @@ class OperationDispatcher {
                 signErrors,
                 localScope,
                 false,
-                2,
+                ctx.config.chaining.followReferralTTL,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1983,7 +1983,7 @@ class OperationDispatcher {
                 signErrors,
                 localScope,
                 false,
-                2,
+                ctx.config.chaining.followReferralTTL,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(

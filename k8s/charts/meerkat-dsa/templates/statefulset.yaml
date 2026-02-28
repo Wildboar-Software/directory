@@ -268,6 +268,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: fetch_remote_authz_attrs
                   optional: true
+            - name: MEERKAT_FOLLOW_REFERRAL_TTL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: follow_referral_ttl
+                  optional: true
             - name: MEERKAT_FORBID_ANONYMOUS_BIND
               valueFrom:
                 configMapKeyRef:
