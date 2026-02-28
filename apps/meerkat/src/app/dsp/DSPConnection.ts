@@ -14,9 +14,10 @@ import { DER } from "@wildboar/asn1/functional";
 import versions from "../versions.js";
 import {
     DSABindArgument,
+    DsaReferralData,
     _decode_DSABindArgument,
-} from "@wildboar/x500/DistributedOperations";
-import {
+    _encode_DsaReferralData,
+    dsaReferral,
     _encode_DSABindResult,
 } from "@wildboar/x500/DistributedOperations";
 import OperationDispatcher from "../distributed/OperationDispatcher.js";
@@ -34,9 +35,6 @@ import { _encode_SecurityErrorData } from "@wildboar/x500/DirectoryAbstractServi
 import { ServiceErrorData, ServiceProblem_unavailable, _encode_ServiceErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { _encode_UpdateErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { bind as doBind } from "../authn/dsaBind.js";
-import {
-    directoryBindError,
-} from "@wildboar/x500/DirectoryAbstractService";
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
@@ -59,34 +57,20 @@ import {
 } from "../telemetry/getStatisticsFromSecurityParameters.js";
 import { signDirectoryError } from "../pki/signDirectoryError.js";
 import {
+    directoryBindError,
     abandoned,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     abandonFailed,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     attributeError,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     nameError,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    referral,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     securityError,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     serviceError,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     updateError,
-} from "@wildboar/x500/DirectoryAbstractService";
-import { compareAuthenticationLevel } from "@wildboar/x500";
-import {
+    administerPassword,
+    changePassword,
     Versions_v2,
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/DirectoryAbstractService";
+import { compareAuthenticationLevel } from "@wildboar/x500";
 import { stringifyDN } from "../x500/stringifyDN.js";
 import printCode from "../utils/printCode.js";
 import {
@@ -96,14 +80,9 @@ import {
     RequestParameters,
 } from "@wildboar/rose-transport";
 import { compareCode } from "@wildboar/x500";
-import {
-    administerPassword,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    changePassword,
-} from "@wildboar/x500/DirectoryAbstractService";
 import _ from "lodash";
 import * as util from "node:util";
+import { createSecurityParameters } from "../x500/createSecurityParameters.js";
 
 /**
  * @summary The handles a request, but not errors
@@ -402,14 +381,30 @@ async function handleRequestAndErrors (
                 dn: stringifyDN(ctx, e.data.matched.rdnSequence),
             }));
         } else if (e instanceof errors.ReferralError) {
-            const code = _encode_Code(errors.ReferralError.errcode, BER);
+            const code = _encode_Code(dsaReferral["&errorCode"]!, BER);
             const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
-            const param: typeof referral["&ParameterType"] = signError
-                ? signDirectoryError(ctx, e.data, _encode_ReferralData)
+            const newSecParams = createSecurityParameters(
+                ctx,
+                signError,
+                assn.boundNameAndUID?.dn,
+                undefined,
+                dsaReferral["&errorCode"]!,
+            );
+            const data = new DsaReferralData(
+                e.data.candidate,
+                undefined, // TODO: I am not sure what goes here.
+                [],
+                newSecParams,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                e.data.aliasDereferenced,
+                e.data.notification,
+            );
+            const param: typeof dsaReferral["&ParameterType"] = signError
+                ? signDirectoryError(ctx, data, _encode_DsaReferralData)
                 : {
-                    unsigned: e.data,
+                    unsigned: data,
                 };
-            const payload = referral.encoderFor["&ParameterType"]!(param, DER);
+            const payload = dsaReferral.encoderFor["&ParameterType"]!(param, DER);
             assn.rose.write_error({
                 invoke_id: request.invoke_id,
                 code,
