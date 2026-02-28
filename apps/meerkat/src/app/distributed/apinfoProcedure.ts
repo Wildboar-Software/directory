@@ -739,7 +739,7 @@ async function apinfoProcedure (
                         );
                     }
                     state.referralRequests = tenativeTrace;
-                    const onlyFollowSignedReferrals: boolean = true; // TODO: Make this configurable.
+                    const onlyFollowSignedReferrals: boolean = ctx.config.chaining.onlyFollowSignedReferrals;
                     if ("signed" in referralParam) {
                         try {
                             const sigVerifyResult = await verifySIGNED(

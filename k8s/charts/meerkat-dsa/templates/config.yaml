@@ -126,6 +126,7 @@ data:
   {{- else }}
   ob_auto_accept: {{ .Values.ob_auto_accept | quote }}
   {{- end }}
+  only_follow_signed_referrals: {{ .Values.only_follow_signed_referrals | default true | ternary 1 0 | quote }}
   open_top_level: {{ .Values.open_top_level | ternary 1 0 | quote }}
   principled_service_admin: {{ .Values.principled_service_admin | ternary 1 0 | quote }}
   {{- if .Values.private_key_engine }}

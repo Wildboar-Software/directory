@@ -1029,6 +1029,7 @@ const config: Configuration = {
             : 0,
     },
     chaining: {
+        onlyFollowSignedReferrals: (process.env.MEERKAT_ONLY_FOLLOW_SIGNED_REFERRALS !== "0"),
         minAuthRequired: parseAuthLevel(
             process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING ?? "1",
             process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING,

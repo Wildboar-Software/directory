@@ -1285,6 +1285,25 @@ automatically agree to:
 
 :::
 
+## MEERKAT_ONLY_FOLLOW_SIGNED_REFERRALS
+
+When set to `1` (the default), during chaining Meerkat DSA only follows
+referrals that are signed and whose signature verifies successfully. Unsigned
+referrals and referrals with an invalid or unverifiable signature are skipped;
+the DSA continues with other referrals or returns a result to the client.
+
+When set to `0`, the DSA also follows unsigned referrals. Use this if you need
+to chain through DSAs that do not sign their referrals, at the cost of reduced
+assurance that referral targets are authoritative.
+
+:::info
+
+This option does not affect whether the DSA signs its own referrals or
+chained requests; it only controls which incoming referrals are followed when
+the DSA is performing chaining.
+
+:::
+
 ## MEERKAT_OPEN_TOP_LEVEL
 
 If set to `1`, Meerkat DSA will not apply any access controls to adding new

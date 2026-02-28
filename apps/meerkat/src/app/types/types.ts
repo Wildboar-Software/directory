@@ -2065,6 +2065,14 @@ interface Configuration {
          */
         strongCredentialsTimeToLiveInSeconds: number;
 
+        /**
+         * When true, during chaining the DSA only follows referrals that are
+         * signed (OPTIONALLY_PROTECTED with a valid signature). Unsigned referrals
+         * and referrals whose signature verification fails are skipped. When
+         * false, unsigned referrals are followed as well.
+         */
+        onlyFollowSignedReferrals: boolean;
+
     };
 
     /**

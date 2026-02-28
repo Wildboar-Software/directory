@@ -180,6 +180,7 @@ no_color: false
 no_console: false
 no_timestamp: false
 # ob_auto_accept: "none"
+only_follow_signed_referrals: true
 open_top_level: false
 principled_service_admin: false
 # private_key_engine: pkcs11

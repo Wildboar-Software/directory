@@ -582,6 +582,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: ob_auto_accept
                   optional: true
+            - name: MEERKAT_ONLY_FOLLOW_SIGNED_REFERRALS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: only_follow_signed_referrals
+                  optional: true
             - name: MEERKAT_OPEN_TOP_LEVEL
               valueFrom:
                 configMapKeyRef:

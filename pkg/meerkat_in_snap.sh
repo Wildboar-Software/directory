@@ -124,6 +124,7 @@ export MEERKAT_MIN_TRANSFER_SPEED_BYTES_PER_MINUTE="$(snapctl get min-transfer-s
 export MEERKAT_MRU_VERTEX_TTL="$(snapctl get mru-vertex-ttl)"
 export MEERKAT_MUTUAL_AUTH_OPTIONAL="$(snapctl get mutual-auth-optional)"
 export MEERKAT_OB_AUTO_ACCEPT="$(snapctl get ob-auto-accept)"
+export MEERKAT_ONLY_FOLLOW_SIGNED_REFERRALS="$(snapctl get only-follow-signed-referrals)"
 export MEERKAT_OPEN_TOP_LEVEL="$(snapctl get open-top-level)"
 export MEERKAT_PRINCIPLED_SERVICE_ADMIN="$(snapctl get principled-service-admin)"
 export MEERKAT_PRIVATE_KEY_ENGINE="$(snapctl get private-key-engine)"
