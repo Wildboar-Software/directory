@@ -18,6 +18,7 @@ import * as errors from "../types/index.js";
 import versions from "../versions.js";
 import {
     DirectoryBindResult,
+    ReferralData,
     _encode_DirectoryBindResult,
     list,
     modifyEntry,
@@ -114,6 +115,7 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import _ from "lodash";
 import * as util from "node:util";
+import { dsaReferral } from "@wildboar/x500/DistributedOperations";
 
 /**
  * @summary The handles a request, but not errors
@@ -354,6 +356,50 @@ async function handleRequestAndErrors (
                 });
             } else {
                 stats.outcome.error.code = codeToString(e.errcode);
+                // If this is a dsaReferral, convert it to a referral.
+                if (compareCode(e.errcode, dsaReferral["&errorCode"]!)) {
+                    try {
+                        const referralParam = dsaReferral.decoderFor["&ParameterType"]!(e.error!);
+                        const referralData = getOptionallyProtectedValue(referralParam);
+                        const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
+                        let referralErrorParam: typeof referral["&ParameterType"] = {
+                            unsigned: new ReferralData(
+                                referralData.reference,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    signError,
+                                    assn.boundNameAndUID?.dn,
+                                    undefined,
+                                    referral["&errorCode"]!,
+                                ),
+                                undefined,
+                                undefined,
+                                undefined,
+                            ),
+                        };
+                        if (signError) {
+                            referralErrorParam = signDirectoryError(ctx, referralErrorParam.unsigned, _encode_ReferralData);
+                        }
+                        // Write as a referral error instead of a DSA referral error
+                        assn.rose.write_error({
+                            invoke_id: request.invoke_id,
+                            code: _encode_Code(referral["&errorCode"]!, BER),
+                            parameter: referral.encoderFor["&ParameterType"]!(referralErrorParam, DER),
+                        });
+                        return;
+                    } catch (err) {
+                        ctx.log.error(ctx.i18n.t("log:convert_dsa_referral_fail", {
+                            iid: printInvokeId(request.invoke_id),
+                            aid: assn.id,
+                            e: err,
+                        }));
+                        assn.rose.write_reject({
+                            invoke_id: request.invoke_id,
+                            problem: RejectReason.unknown_error,
+                        });
+                    }
+                }
                 assn.rose.write_error({
                     invoke_id: request.invoke_id,
                     code: _encode_Code(e.errcode, BER),
