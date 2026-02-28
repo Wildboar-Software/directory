@@ -1292,6 +1292,8 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
                 localScope,
+                false,
+                2,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1684,6 +1686,8 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
                 localScope,
+                false,
+                2,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1836,6 +1840,8 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
                 localScope,
+                false,
+                2,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
@@ -1976,6 +1982,8 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
                 localScope,
+                false,
+                2,
             );
             if ("error" in nrcrResult) {
                 throw new errors.ChainedError(

@@ -32,6 +32,7 @@ import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { map } from "@tyler/duckhawk";
 import {
     ServiceControls_priority_high,
+    ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
 } from "@wildboar/x500/DirectoryAbstractService";
 import printCode from "../utils/printCode.js";
 import stringifyDN from "../x500/stringifyDN.js";
@@ -40,6 +41,7 @@ import { id_opcode_search } from "@wildboar/x500/CommonProtocolSpecification";
 import { _decode_SearchResult } from "@wildboar/x500/DirectoryAbstractService";
 import { chainedSearch } from "@wildboar/x500/DistributedOperations";
 import util from "node:util";
+import { addMinutes } from "date-fns";
 
 /**
  * @summary Search Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -184,9 +186,11 @@ async function scrProcedure (
                 opCode: id_opcode_search,
                 argument: _encode_SearchArgument(arg, DER),
             };
+            const sco = state.effectiveServiceControls ?? data.serviceControls?.options;
+            const partialNameResolution = (sco?.[partialNameResolutionBit] === TRUE_BIT);
             const deadline = state.chainingArguments.timeLimit
                 ? getDateFromTime(state.chainingArguments.timeLimit)
-                : undefined;
+                : addMinutes(new Date(), 1);
             const response = await apinfoProcedure(
                 ctx,
                 api,
@@ -198,6 +202,8 @@ async function scrProcedure (
                 cr,
                 deadline,
                 localScope,
+                partialNameResolution,
+                2,
             );
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:scr_null_response", logMsgInfo), logInfo);

@@ -2,76 +2,63 @@ import type { ClientAssociation, Vertex, Context } from "../types/index.js";
 import * as errors from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
 import { BOOLEAN } from "@wildboar/asn1";
-import { AccessPointInformation } from "@wildboar/x500/DistributedOperations";
-import { ChainingArguments } from "@wildboar/x500/DistributedOperations";
 import type {
     Code,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import {
-    chainedAbandon,
-} from "@wildboar/x500/DistributedOperations";
-import {
-    referral,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     serviceError,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ServiceProblem_busy,
     ServiceProblem_unavailable,
     ServiceProblem_unwillingToPerform,
     ServiceProblem_invalidReference,
     ServiceProblem_loopDetected,
     ServiceProblem_timeLimitExceeded,
+    ServiceErrorData,
+    AbandonedData,
+    abandoned,
+    list,
+    search,
+    _encode_ReferralData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { compareCode, uriFromNSAP } from "@wildboar/x500";
-import type { ChainedRequest } from "@wildboar/x500";
-import type { Chained } from "@wildboar/x500";
-import { getOptionallyProtectedValue } from "@wildboar/x500";
+import {
+    isModificationOperation,
+    compareCode,
+    uriFromNSAP,
+    getOptionallyProtectedValue,
+    type ChainedRequest,
+    type Chained,
+} from "@wildboar/x500";
+import { DER } from "@wildboar/asn1/functional";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/DistributedOperations";
-import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
     ChainingResults,
     _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
-} from "@wildboar/x500/DistributedOperations";
-import { chainedRead } from "@wildboar/x500/DistributedOperations";
-import { DER } from "@wildboar/asn1/functional";
-import {
+    chainedAbandon,
+    chainedRead,
     MasterOrShadowAccessPoint,
-} from "@wildboar/x500/DistributedOperations";
-import {
     MasterOrShadowAccessPoint_category_shadow,
-} from "@wildboar/x500/DistributedOperations";
-import { isModificationOperation } from "@wildboar/x500";
-import {
     OperationProgress_nameResolutionPhase_proceeding as proceeding,
-} from "@wildboar/x500/DistributedOperations";
-import {
+    OperationProgress_nameResolutionPhase_completed as completed,
     ReferenceType_cross,
     ReferenceType_immediateSuperior,
     ReferenceType_nonSpecificSubordinate,
     ReferenceType_subordinate,
     ReferenceType_superior,
     ReferenceType_nonSpecificSubordinate as nssr,
+    TraceItem,
+    CrossReference,
+    type ContinuationReference,
+    AccessPointInformation,
+    ChainingArguments,
+    dsaReferral,
+    DsaReferralData,
+    _encode_DsaReferralData,
 } from "@wildboar/x500/DistributedOperations";
 import cloneChainingArguments from "../x500/cloneChainingArguments.js";
-import {
-    TraceItem,
-} from "@wildboar/x500/DistributedOperations";
-import {
-    ServiceErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
 import { loopDetected } from "@wildboar/x500";
 import createSecurityParameters from "../x500/createSecurityParameters.js";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
-import {
-    AbandonedData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    abandoned,
-} from "@wildboar/x500/DirectoryAbstractService";
 import { printInvokeId } from "../utils/printInvokeId.js";
 import { signChainedArgument } from "../pki/signChainedArgument.js";
 import { strict as assert } from "node:assert";
@@ -80,20 +67,38 @@ import stringifyDN from "../x500/stringifyDN.js";
 import { bindForChaining } from "../net/bindToOtherDSA.js";
 import { OperationOutcome } from "@wildboar/rose-transport";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";
-import { ContinuationReference } from "@wildboar/x500/DistributedOperations";
-import { addMilliseconds, differenceInMilliseconds, differenceInSeconds } from "date-fns";
+import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import { upsertCrossReferences } from "../dit/upsertCrossReferences.js";
 import { map } from "@tyler/duckhawk";
 import isPrefix from "../x500/isPrefix.js";
 import { compareDistinguishedName, getDateFromTime } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
-import { CrossReference } from "@wildboar/x500/DistributedOperations";
 import { signChainedResult } from "../pki/signChainedResult.js";
 import deleteEntry from "../database/deleteEntry.js";
 import DAPAssociation from "../dap/DAPConnection.js";
 import isLocalScope from "../x500/isLocalScope.js";
 import printCode from "../utils/printCode.js";
 import util from "node:util";
+import nrcrProcedure from "./nrcrProcedure.js";
+import { OPTIONALLY_PROTECTED } from "@wildboar/x500/EnhancedSecurity";
+import {
+    VCP_RETURN_CRL_UNREACHABLE,
+    VCP_RETURN_OCSP_OTHER,
+    VCP_RETURN_PROHIBITED_SIG_ALG,
+    VCP_RETURN_UNTRUSTED_ANCHOR,
+    type VCPReturnCode,
+} from "../pki/verifyCertPath.js";
+
+/* These are all the cert path validation error types where they could be
+invalid on this DSA, but not to the client verifying the cert path.
+In these cases, we are going to return the referral to the DUA, because its
+signature might be valid to it. */
+const HOST_DEPENDENT_CERT_PATH_ERRORS: VCPReturnCode[] = [
+    VCP_RETURN_UNTRUSTED_ANCHOR,
+    VCP_RETURN_PROHIBITED_SIG_ALG,
+    VCP_RETURN_OCSP_OTHER,
+    VCP_RETURN_CRL_UNREACHABLE,
+];
 
 function isAcceptableAccessPoint (ap: AccessPointInformation): boolean {
     const psel = ap.address.pSelector;
@@ -155,6 +160,10 @@ function isAcceptableCrossReference (
  * @param cref The continuation reference
  * @param deadline The deadline for the APInfo procedure to return
  * @param localScope Whether to restrict chaining to a local scope
+ * @param partialNameResolution Whether to use partial name resolution
+ * @param followReferralTTL The number of times this procedure may recurse
+ *  as a result of following a referral. Needed because this calls NRCR
+ *  procedure, which can call this again.
  * @returns An operation outcome, or null if chaining is prohibited.
  *
  * @function
@@ -170,8 +179,10 @@ async function apinfoProcedure (
     signErrors: boolean,
     chainingProhibited: boolean,
     cref: ContinuationReference,
-    deadline?: Date,
-    localScope?: boolean,
+    deadline: Date,
+    localScope: boolean,
+    partialNameResolution: boolean,
+    followReferralTTL: number, // TODO: Make this configurable.
 ): Promise<OperationOutcome | null> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
@@ -238,6 +249,11 @@ async function apinfoProcedure (
         ),
         ...api.additionalPoints ?? [],
     ];
+    const isSearchOrList: boolean = (
+        compareCode(req.opCode, list["&operationCode"]!)
+        || compareCode(req.opCode, search["&operationCode"]!)
+    );
+    const isNameResolved: boolean = cref.operationProgress.nameResolutionPhase === completed;
     const startTime = new Date();
     const timeoutTime: Date = deadline ?? addMilliseconds(startTime, 60_000);
     let timeRemaining: number = 0;
@@ -413,6 +429,7 @@ async function apinfoProcedure (
             //     dsp_client.rose.socket?.end(); // Unbind does not necessarily close the socket.
             // }
 
+            // Step 8.a.
             if ("result" in response) {
                 assert(chainedAbandon["&operationCode"]);
                 assert("local" in chainedAbandon["&operationCode"]);
@@ -613,21 +630,166 @@ async function apinfoProcedure (
             }
             else if ("error" in response) {
                 const errcode: Code = response.error.code ?? { local: -1 };
-                if (compareCode(errcode, referral["&errorCode"]!)) {
-                    /**
-                     * Effectively, this means that the local policy is to
-                     * always return the referral. I prefer to take this
-                     * approach, because using the referral means that the
-                     * next step is to empty the NRContinuationList. This is
-                     * problematic, because the NRContinuationList is used
-                     * by the function that calls this APInfo procedure in
-                     * a loop! This sounds like a great way to introduce
-                     * impossible-to-diagnose bugs.
-                     *
-                     * This also means we do not need to pass in the CR, which
-                     * has the returnToDUA setting.
-                     */
-                    return response;
+                // Step 8.c / 8.d
+                if (compareCode(errcode, dsaReferral["&errorCode"]!)) {
+                    /*
+                    A well-functioning DSA is not supposed to return a
+                    referral for a search or list operation if the name
+                    resolution is completed. ITU-T Rec. X.518's description of
+                    the List Continuation Reference Procedure and the Search
+                    Continuation Reference Procedure describe this scenario as
+                    "implausible", saying: "It is not plausible to get a
+                    referral back from APInfo. Any "referral" should come in
+                    the form of "unexplored" in partialOutcomeQualifier." I
+                    would like to clarify that the use of the word
+                    "implausible" is misleading: a DSA could maliciously or
+                    accidentally do this. We do have to handle this scenario.
+
+                    In fact, I don't really think it is valid to get a referral
+                    when name resolution is completed at all.
+                    */
+                    const isInappropriateReferral: boolean = (isSearchOrList || isNameResolved);
+                    if (isInappropriateReferral) {
+                        ctx.log.warn(ctx.i18n.t("log:inappropriate_referral", {
+                            ...logInfo,
+                            opid: req.invokeId,
+                            dn: stringifyDN(ctx, ap.ae_title.rdnSequence),
+                        }));
+                        continue;
+                    }
+                    const followReferrals = followReferralTTL > 0;
+                    if (cref.returnToDUA || !followReferrals) {
+                        /**
+                         * Effectively, this means that the local policy is to
+                         * always return the referral. I prefer to take this
+                         * approach, because using the referral means that the
+                         * next step is to empty the NRContinuationList. This is
+                         * problematic, because the NRContinuationList is used
+                         * by the function that calls this APInfo procedure in
+                         * a loop! This sounds like a great way to introduce
+                         * impossible-to-diagnose bugs.
+                         */
+                        return response;
+                    }
+                    let referralParam: OPTIONALLY_PROTECTED<DsaReferralData>;
+                    try {
+                        referralParam = dsaReferral.decoderFor["&ResultType"]!(response.error.parameter);
+                    } catch (e) {
+                        const aet = stringifyDN(ctx, ap.ae_title.rdnSequence);
+                        ctx.log.warn(ctx.i18n.t("log:referral_parameter_malformed", {
+                            ...logInfo,
+                            aet,
+                            e,
+                        }), {
+                            ...logInfo,
+                            aet,
+                        });
+                        continue;
+                    }
+                    const referralData = getOptionallyProtectedValue(referralParam);
+                    if (referralData.reference.accessPoints.length === 0) {
+                        const aet = stringifyDN(ctx, ap.ae_title.rdnSequence);
+                        ctx.log.warn(ctx.i18n.t("log:referral_no_access_points", {
+                            ...logInfo,
+                            aet,
+                        }), {
+                            ...logInfo,
+                            aet,
+                        });
+                        continue;
+                    }
+                    /* I think referralRequests exists so that you don't make
+                    repeated requests to a DSA that refers you to another DSA
+                    over and over again. */
+                    // referralData.candidate.accessPoints can contain
+                    // multiple access points only if traversing an NSSR.
+                    // And each of those should have a unique AE-title each.
+                    const tenativeTrace: TraceItem[] = [
+                        ...state.referralRequests,
+                        // ...that means that these trace items should not
+                        // produce loops, even if multiple.
+                        ...referralData.reference.accessPoints.map((ap) => new TraceItem(
+                            {
+                                rdnSequence: ap.ae_title.rdnSequence,
+                            },
+                            referralData.reference.targetObject,
+                            referralData.reference.operationProgress,
+                        )),
+                    ];
+                    // TODO: Implement a better loop detection function.
+                    // TODO: Deprecate this loop detection function.
+                    if (loopDetected(tenativeTrace)) {
+                        throw new errors.ServiceError(
+                            ctx.i18n.t("err:loop_detected"),
+                            new ServiceErrorData(
+                                ServiceProblem_loopDetected,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    signErrors,
+                                    undefined,
+                                    undefined,
+                                    serviceError["&errorCode"],
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                req.chaining.aliasDereferenced,
+                                undefined,
+                            ),
+                            signErrors,
+                        );
+                    }
+                    state.referralRequests = tenativeTrace;
+                    const onlyFollowSignedReferrals: boolean = true; // TODO: Make this configurable.
+                    if ("signed" in referralParam) {
+                        try {
+                            const sigVerifyResult = await verifySIGNED(
+                                ctx,
+                                assn,
+                                referralParam.signed.toBeSigned.securityParameters?.certification_path,
+                                state.invokeId,
+                                state.chainingArguments.aliasDereferenced,
+                                referralParam.signed,
+                                _encode_DsaReferralData,
+                                signErrors,
+                                "referral",
+                                dsp_client.peer_ae_title?.rdnSequence
+                                    ?? ap.ae_title.rdnSequence,
+                                HOST_DEPENDENT_CERT_PATH_ERRORS,
+                            );
+                            if (sigVerifyResult) {
+                                assert(HOST_DEPENDENT_CERT_PATH_ERRORS.includes(sigVerifyResult.returnCode));
+                                return response;
+                            }
+                        } catch (e) {
+                            if (process.env.MEERKAT_LOG_JSON !== "1") {
+                                ctx.log.error(util.inspect(e));
+                            }
+                            if (onlyFollowSignedReferrals) {
+                                // Ignore the referral because it has an invalid
+                                // signature or certification path.
+                                continue;
+                            }
+                        }
+                    } else if (onlyFollowSignedReferrals) {
+                        // Ignore the referral because it is not signed when we require that.
+                        continue;
+                    }
+                    return nrcrProcedure(
+                        ctx,
+                        assn,
+                        getOptionallyProtectedValue(argument),
+                        {
+                            ...state,
+                            NRcontinuationList: [referralData.reference],
+                        },
+                        chainingProhibited,
+                        partialNameResolution,
+                        signErrors,
+                        localScope ?? false,
+                        true,
+                        followReferralTTL - 1,
+                    );
+                // Step 8.b
                 } else if (compareCode(errcode, serviceError["&errorCode"]!)) {
                     const param = serviceError.decoderFor["&ParameterType"]!(response.error.parameter);
                     const errorData = getOptionallyProtectedValue(param);
@@ -642,6 +804,7 @@ async function apinfoProcedure (
                         return response;
                     }
                 } else {
+                    // Step 8.e.
                     return response;
                 }
             }

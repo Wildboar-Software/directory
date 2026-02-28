@@ -10,6 +10,7 @@ import {
     _decode_ListResult,
     ServiceControls_priority_high,
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
+    ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
     ServiceControlOptions_localScope as localScopeBit,
     ErrorProtectionRequest_signed,
@@ -34,6 +35,7 @@ import { map } from "@tyler/duckhawk";
 import printCode from "../utils/printCode.js";
 import stringifyDN from "../x500/stringifyDN.js";
 import util from "node:util";
+import { addMinutes } from "date-fns";
 
 /**
  * @summary List Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -173,7 +175,9 @@ async function lcrProcedure (
             };
             const deadline = state.chainingArguments.timeLimit
                 ? getDateFromTime(state.chainingArguments.timeLimit)
-                : undefined;
+                : addMinutes(new Date(), 1);
+            const sco = state.effectiveServiceControls ?? data.serviceControls?.options;
+            const partialNameResolution = (sco?.[partialNameResolutionBit] === TRUE_BIT);
             const response = await apinfoProcedure(
                 ctx,
                 api,
@@ -185,6 +189,8 @@ async function lcrProcedure (
                 cr,
                 deadline,
                 localScope,
+                partialNameResolution,
+                2,
             );
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:lcr_null_response", logMsgInfo), logInfo);

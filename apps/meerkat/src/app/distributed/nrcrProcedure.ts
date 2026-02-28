@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 import type { ClientAssociation, OPCR } from "../types/index.js";
 import type { MeerkatContext } from "../ctx.js";
-import { BOOLEAN, TRUE } from "@wildboar/asn1";
+import { ASN1Element, BOOLEAN, TRUE } from "@wildboar/asn1";
 import * as errors from "../types/index.js";
 import {
     OperationProgress,
@@ -64,6 +64,8 @@ import { OperationOutcome, RejectReason, AbortReason } from "@wildboar/rose-tran
 import stringifyDN from "../x500/stringifyDN.js";
 import printCode from "../utils/printCode.js";
 import util from "node:util";
+import { addMinutes } from "date-fns";
+import { BER } from "@wildboar/asn1/functional";
 
 /**
  * These are rejection reasons that may reflect some transient or circumstantial
@@ -93,6 +95,34 @@ const RECOVERABLE_ABORT_REASONS: AbortReason[] = [
     AbortReason.invalid_protocol,
 ];
 
+export
+async function nrcrProcedure(
+    ctx: MeerkatContext,
+    assn: ClientAssociation | undefined,
+    reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+    state: OperationDispatcherState,
+    chainingProhibited: BOOLEAN,
+    partialNameResolution: BOOLEAN,
+    signErrors: boolean,
+    localScope: boolean,
+    doNotDecode: true,
+    recursionTTL: number,
+): Promise<OperationOutcome<ASN1Element>>;
+
+export
+async function nrcrProcedure(
+    ctx: MeerkatContext,
+    assn: ClientAssociation | undefined,
+    reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+    state: OperationDispatcherState,
+    chainingProhibited: BOOLEAN,
+    partialNameResolution: BOOLEAN,
+    signErrors: boolean,
+    localScope: boolean,
+    doNotDecode: false,
+    recursionTTL: number,
+): Promise<OperationOutcome<OPCR>>;
+
 /**
  * @summary The Name Resolution Continuation Reference Procedure, defined in ITU Recommendation X.518.
  * @description
@@ -107,13 +137,18 @@ const RECOVERABLE_ABORT_REASONS: AbortReason[] = [
  * @param chainingProhibited Whether chaining was prohibited
  * @param partialNameResolution Whether partial name resolution is permitted
  * @param signErrors Whether to cryptographically sign errors
+ * @param localScope Whether to restrict chaining to a local scope
+ * @param doNotDecode Whether to not decode the result
+ * @param followReferralTTL The number of times this procedure may recurse.
+ *  Needed because this calls APInfo procedure, which, when following referrals,
+ *  can call this again.
  * @returns An optionally-protected chained result or an error
  *
  * @function
  * @async
  */
 export
-async function nrcrProcedure (
+async function nrcrProcedure(
     ctx: MeerkatContext,
     assn: ClientAssociation | undefined,
     reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
@@ -121,14 +156,16 @@ async function nrcrProcedure (
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
     signErrors: boolean,
-    localScope: boolean = false,
-): Promise<OperationOutcome<OPCR>> {
+    localScope: boolean,
+    doNotDecode: boolean,
+    followReferralTTL: number,
+): Promise<OperationOutcome<OPCR | ASN1Element>> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
-        : undefined;
+        : addMinutes(new Date(), 1);
     const checkTimeLimit = () => {
         if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
             throw new errors.ServiceError(
@@ -254,6 +291,9 @@ async function nrcrProcedure (
                 chainingProhibited,
                 cref,
                 timeLimitEndTime,
+                localScope,
+                partialNameResolution,
+                followReferralTTL,
             );
             if (!outcome) {
                 // This can happen if chaining is prohibited or if all access points fail.
@@ -266,7 +306,9 @@ async function nrcrProcedure (
                 return {
                     result: {
                         ...outcome.result,
-                        parameter: chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter),
+                        parameter: doNotDecode
+                            ? outcome.result.parameter
+                            : chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter),
                     },
                 };
             }
@@ -341,6 +383,8 @@ async function nrcrProcedure (
                     cref,
                     timeLimitEndTime,
                     localScope,
+                    partialNameResolution,
+                    followReferralTTL,
                 );
             } catch (e) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
@@ -359,7 +403,9 @@ async function nrcrProcedure (
                     return {
                         result: {
                             ...outcome.result,
-                            parameter: chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter),
+                            parameter: doNotDecode
+                                ? outcome.result.parameter
+                                : chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter),
                         },
                     };
                 } catch (e) {
@@ -496,7 +542,9 @@ async function nrcrProcedure (
                     result: {
                         code: req.opCode,
                         invoke_id: req.invokeId,
-                        parameter: localResult.result,
+                        parameter: doNotDecode
+                            ? chainedRead.encoderFor["&ResultType"]!(localResult.result, BER)
+                            : localResult.result,
                     },
                 };
             } else {

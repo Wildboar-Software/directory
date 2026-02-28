@@ -68,6 +68,7 @@ async function resultsMergingProcedureForList (
         }
     }
     if (state.SRcontinuationList.length) {
+        // TODO: review this. I'm not sure this is right. In search too.
         // Deviation: this is not specified, but I think we need to do it.
         if (res.poq?.unexplored) {
             // We will re-introduce CRs as we fail to access the

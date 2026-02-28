@@ -24,7 +24,7 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import { printInvokeId } from "../utils/printInvokeId.js";
 import { verifyAnyCertPath } from "./verifyAnyCertPath.js";
-import { verifySignature, VCP_RETURN_OK } from "./verifyCertPath.js";
+import { verifySignature, VCP_RETURN_OK, type VerifyCertPathResult, VCPReturnCode } from "./verifyCertPath.js";
 import type {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
@@ -75,9 +75,10 @@ async function verifySIGNED <T> (
     param: SIGNED<T>,
     paramDataEncoder: ASN1Encoder<T>,
     signErrors: boolean,
-    argOrResult: "arg" | "result" = "arg",
+    argOrResult: "arg" | "result" | "error" | "referral" = "arg",
     ae_title_rdnSequence?: RDNSequence,
-): Promise<void> {
+    returnCertPathResult?: VCPReturnCode[],
+): Promise<VerifyCertPathResult | undefined> {
     // I don't think ignoring this when in bulk-insert mode should be a problem,
     // because verifyToken() is a separate function used for strong auth.
     if (ctx.config.signing.disableAllSignatureVerification || ctx.config.bulkInsertMode) {
@@ -119,6 +120,11 @@ async function verifySIGNED <T> (
         ctx.config.signing,
     );
     if (vacpResult.returnCode !== VCP_RETURN_OK) {
+        /* This is a hack so that we can obtain what went wrong, since we want
+        to handle some errors differently. */
+        if (returnCertPathResult?.includes(vacpResult.returnCode)) {
+            return vacpResult;
+        }
         ctx.log.warn(ctx.i18n.t("log:cert_path_invalid", {
             ...logInfo,
             rc: vacpResult.returnCode,
