@@ -1134,16 +1134,16 @@ async function verifyAttrCert (
             eeCert.toBeSigned.subjectUniqueIdentifier,
         );
         try {
-
             const in_group: boolean | undefined = await isGroupMember(groupName, memberName);
             if (!in_group) {
                 return VAC_NOT_GROUP_MEMBER;
             }
         } catch (e) {
-            // TODO: Log
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
+            const group = stringifyDN(ctx, groupName.dn);
+            ctx.log.error(ctx.i18n.t("log:failed_group_member_check", { group, e }), { group });
             return VAC_NOT_GROUP_MEMBER;
         }
     }
