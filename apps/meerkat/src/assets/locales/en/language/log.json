@@ -510,5 +510,6 @@
     "referral_parameter_malformed": "Referral parameter for operation {{opid}} from DSA {{aet}} was malformed. {{e}}",
     "referral_no_access_points": "Referral parameter for operation {{opid}} from DSA {{aet}} had no access points. Ignoring this referral.",
     "convert_dsa_referral_fail": "Failed to convert DSA referral to referral error for invocation {{iid}} for association {{aid}}: {{e}}",
-    "failed_group_member_check": "Failed to check group membership for group {{group}}: {{e}}"
+    "failed_group_member_check": "Failed to check group membership for group {{group}}: {{e}}",
+    "cache_naming_contexts_error": "Failed to cache naming contexts: {{e}}"
 }

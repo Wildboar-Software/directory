@@ -2239,6 +2239,7 @@ async function executeEntryModification (
     contextRuleIndex: ContextRulesIndex,
     isSubentry: boolean,
     manageDSAIT: boolean,
+    index: number,
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
 ): Promise<Prisma.PrismaPromise<any>[]> {
@@ -2491,8 +2492,31 @@ async function executeEntryModification (
         return executeReplaceValues(target, attrWithDefaultContexts, ...commonArguments);
     }
     else {
-        // TODO: Log not-understood alternative.
-        return []; // Any other alternative not understood.
+        throw new errors.AttributeError(
+            ctx.i18n.t("err:entry_mod_unrecognized", {
+                iid: printInvokeId(state.invokeId),
+                aid: assn.id,
+                index,
+            }),
+            new AttributeErrorData(
+                {
+                    rdnSequence: targetDN,
+                },
+                [],
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    attributeError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
     }
 }
 
@@ -2751,7 +2775,7 @@ async function modifyEntry (
         removedValues: new Map(),
         removedAttributes: new Set(),
     };
-    for (const mod of data.changes) {
+    for (const [index, mod] of data.changes.entries()) {
         if (op?.abandonTime) {
             op.events.emit("abandon");
             throw new errors.AbandonError(
@@ -2791,6 +2815,7 @@ async function modifyEntry (
                 contextRulesIndex,
                 isSubentry,
                 manageDSAIT,
+                index,
                 state.chainingArguments.aliasDereferenced,
                 signErrors,
             )),

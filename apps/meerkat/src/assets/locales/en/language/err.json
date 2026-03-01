@@ -278,5 +278,6 @@
     "superior_knowledge_empty": "Superior knowledge attribute was empty. Cannot route this request.",
     "ob_missing_initiator": "Missing initiator parameters.",
     "bad_algorithm_parameters": "Malformed or unacceptable parameters for algorithm with object identifier {{oid}}.",
-    "missing_cp_shadowing": "Failed to find context prefix used in shadowing."
+    "missing_cp_shadowing": "Failed to find context prefix used in shadowing.",
+    "entry_mod_unrecognized": "Entry modification at index {{index}} not understood for invocation {{iid}} for association {{aid}}."
 }

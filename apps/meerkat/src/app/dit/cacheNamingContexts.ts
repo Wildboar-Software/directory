@@ -33,6 +33,6 @@ async function cacheNamingContexts (ctx: Context): Promise<void> {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         }
-        // TODO: Log an error.
+        ctx.log.error(ctx.i18n.t("log:cache_naming_contexts_error", { e }));
     }
 }
