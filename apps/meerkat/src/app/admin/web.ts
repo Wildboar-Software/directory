@@ -274,6 +274,7 @@ import { AttributeCertificate } from "@wildboar/pki-stub";
 import * as os from "node:os";
 import { fileURLToPath } from "node:url";
 import { timingSafeEqual, randomInt } from "node:crypto";
+import util from "node:util";
 
 async function unauthorized (
     ctx: Context,
@@ -361,12 +362,18 @@ function canFail (cb: () => string): string {
     }
 }
 
-// TODO: Why is this unused?
-function errorHandlingMiddleware (req: MeerkatReq, _: Response, next: NextFunction): void {
+function errorHandlingMiddleware (req: MeerkatReq, res: Response, next: NextFunction): void {
     try {
         next();
     } catch (e) {
-        req.ctx.log.error(`${e}`);
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.error(util.inspect(e));
+        } else {
+            req.ctx.log.error(`${e}`);
+        }
+        if (!res.headersSent) {
+            res.status(500).send(e.message);
+        }
     }
 }
 
@@ -2990,4 +2997,5 @@ export {
     getHibernate,
     startHibernate,
     endHibernate,
+    errorHandlingMiddleware,
 };
