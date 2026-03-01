@@ -872,6 +872,17 @@ cost of more memory and a short delay before log lines are flushed to disk.
 
 This has no effect if the `MEERKAT_LOG_FILE` environment variable is not set.
 
+## MEERKAT_LOG_FILE_FLUSH_INTERVAL_MS
+
+The maximum number of milliseconds between flushes of the log file buffer to
+disk. Must be a positive integer. The default is 5000 (5 seconds). Values less
+than 1 or non-numeric values are treated as invalid and the default is used.
+Shorter intervals make log output appear on disk sooner but may increase I/O;
+longer intervals reduce I/O at the cost of possibly losing recent log lines if
+the process exits before the next flush.
+
+This has no effect if the `MEERKAT_LOG_FILE` environment variable is not set.
+
 ## MEERKAT_LOG_JSON
 
 Setting this to `1` will cause log messages to be logged in JSON format instead

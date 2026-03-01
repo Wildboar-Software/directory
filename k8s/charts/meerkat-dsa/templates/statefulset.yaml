@@ -450,6 +450,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: log_file_buffer_size
                   optional: true
+            - name: MEERKAT_LOG_FILE_FLUSH_INTERVAL_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_file_flush_interval_ms
+                  optional: true
             - name: MEERKAT_LOG_JSON
               valueFrom:
                 configMapKeyRef:

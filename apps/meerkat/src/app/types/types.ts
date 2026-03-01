@@ -1654,6 +1654,11 @@ interface Configuration {
          * delay before flush.
          */
         fileBufferSize: number;
+        /**
+         * Maximum interval in milliseconds between flushes to the log file.
+         * Must be a positive integer. Used when MEERKAT_LOG_FILE is set.
+         */
+        fileFlushIntervalMs: number;
         options: Config<"meerkat" | string, "all" | string>;
         // level: LogLevel;
         // color: boolean;

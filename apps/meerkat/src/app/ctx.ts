@@ -546,6 +546,14 @@ const logFileBufferSize: number = (() => {
     return (Number.isNaN(n) || n < 1) ? DEFAULT_LOG_FILE_BUFFER_SIZE : n;
 })();
 
+const DEFAULT_LOG_FILE_FLUSH_INTERVAL_MS = 5000;
+const logFileFlushIntervalMs: number = (() => {
+    const raw = process.env.MEERKAT_LOG_FILE_FLUSH_INTERVAL_MS;
+    if (raw === undefined || raw === "") return DEFAULT_LOG_FILE_FLUSH_INTERVAL_MS;
+    const n = Number.parseInt(raw, 10);
+    return (Number.isNaN(n) || n < 1) ? DEFAULT_LOG_FILE_FLUSH_INTERVAL_MS : n;
+})();
+
 const syslogLevels = new Map([
     ["T", "<7>"],
     ["D", "<7>"],
@@ -620,6 +628,7 @@ const config: Configuration = {
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
         fileBufferSize: logFileBufferSize,
+        fileFlushIntervalMs: logFileFlushIntervalMs,
         options: {
             sinks: {
                 ...(process.env.MEERKAT_NO_CONSOLE === "1")
@@ -655,7 +664,7 @@ const config: Configuration = {
                             // Intentionally always JSON
                             formatter: jsonLinesFormatter,
                             bufferSize: logFileBufferSize,
-                            flushInterval: 5000, // TODO: Make this configurable
+                            flushInterval: logFileFlushIntervalMs,
                         })
                     }
                     : {},

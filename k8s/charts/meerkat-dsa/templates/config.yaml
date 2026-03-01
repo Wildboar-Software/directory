@@ -78,6 +78,7 @@ data:
   {{- if .Values.log_file }}
   log_file: {{ .Values.log_file | quote }}
   log_file_buffer_size: {{ .Values.log_file_buffer_size | default 8192 | quote }}
+  log_file_flush_interval_ms: {{ .Values.log_file_flush_interval_ms | default 5000 | quote }}
   log_file_max_size: {{ .Values.log_file_max_size | default 1000000 | quote }}
   log_file_max_files: {{ .Values.log_file_max_files | default 100 | quote }}
   log_tailable: {{ .Values.log_tailable | ternary 1 0 | quote }}

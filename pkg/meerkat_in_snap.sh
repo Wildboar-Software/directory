@@ -106,6 +106,7 @@ export MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2="$(snapctl get local-qua
 export MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3="$(snapctl get local-qualifier-points-for-using-tls-1-3)"
 export MEERKAT_LOG_BOUND_DN="$(snapctl get log-bound-dn)"
 export MEERKAT_LOG_FILE_BUFFER_SIZE="$(snapctl get log-file-buffer-size)"
+export MEERKAT_LOG_FILE_FLUSH_INTERVAL_MS="$(snapctl get log-file-flush-interval-ms)"
 export MEERKAT_LOG_LEVEL="$(snapctl get log-level)"
 export MEERKAT_LOG_TLS_SECRETS="$(snapctl get log-tls-secrets)"
 export MEERKAT_LOOKUP_UNCERT_STRONG_AUTH="$(snapctl get lookup-uncert-strong-auth)"
