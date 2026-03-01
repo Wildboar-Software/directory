@@ -221,19 +221,8 @@ async function scrProcedure (
                 unexplore();
                 continue;
             } else if ("result" in response) {
-                if (!response.result) {
-                    ctx.log.warn(ctx.i18n.t("log:scr_undefined_result", logMsgInfo), logInfo);
-                    unexplore();
-                    continue;
-                }
-                // TODO: Shouldn't things like this be checked in apinfoProcedure?
                 if (!("present" in response.result.invoke_id)) {
                     ctx.log.warn(ctx.i18n.t("log:scr_invalid_invoke_id_response", logMsgInfo), logInfo);
-                    unexplore();
-                    continue;
-                }
-                if (!response.result.code) {
-                    ctx.log.warn(ctx.i18n.t("log:scr_missing_opcode", logMsgInfo), logInfo);
                     unexplore();
                     continue;
                 }
