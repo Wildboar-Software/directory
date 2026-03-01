@@ -17,8 +17,7 @@ import {
     specificKnowledge,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import saveAccessPoint from "../saveAccessPoint.js";
-import { compareRDNSequence } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import { distinguishedNameMatchTyped as dnNormalizer } from "../../matching/normalizers.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -179,14 +178,17 @@ const hasValue: SpecialAttributeValueDetector = async (
     if (aps.length !== decoded.length) {
         return false;
     }
-    // REVIEW: This runs in O(n^2) time.
-    return aps
-        .every((a) => decoded
-            .some((b) => compareRDNSequence(
-                a.ae_title.rdnSequence,
-                b.ae_title.rdnSequence,
-                getNamingMatcherGetter(ctx),
-            )));
+    const existingValues = aps.map((a) => dnNormalizer(ctx, a.ae_title.rdnSequence));
+    const assertedValues = decoded.map((d) => dnNormalizer(ctx, d.ae_title.rdnSequence));
+    const assertedValuesSet = new Set(assertedValues);
+    for (const ev of existingValues) {
+        // As we find matches we remove asserted values.
+        if (!assertedValuesSet.delete(ev)) {
+            return false;
+        }
+    }
+    // If there were any asserted values that did not match, we return false.
+    return (assertedValuesSet.size === 0);
 };
 
 export
