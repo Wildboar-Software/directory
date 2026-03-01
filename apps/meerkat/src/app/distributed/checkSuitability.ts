@@ -221,8 +221,6 @@ async function is_selection_satisfied (
     if (!vertex.dse.shadow || vertex.dse.shadow.attributeCompleteness) {
         return true;
     }
-    // TODO: Document that it is unclear whether the subordinates-incompleteness
-    // flag applies to child entries.
     const infoTypes = selection.infoTypes
         ?? EntryInformationSelection._default_value_for_infoTypes;
     const tav = (Number(infoTypes) === typesAndValues);

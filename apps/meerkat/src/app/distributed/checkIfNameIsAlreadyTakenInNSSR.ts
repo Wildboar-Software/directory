@@ -184,7 +184,6 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 });
                 continue;
             }
-            // TODO: Report this.
             // There's no point in checking the signature on the response,
             // because a malicious DSA that participates in an NSSR could just
             // not respond, not sign the result or error. There seems to be no

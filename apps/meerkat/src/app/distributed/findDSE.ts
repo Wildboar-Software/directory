@@ -302,7 +302,7 @@ export
             );
         }
     };
-    /** // TODO: Does this need to be reported?
+    /**
      * This procedural deviation is needed. Without it, the subordinates of the
      * root DSE will be searched for an entry with a zero-length RDN!
      */

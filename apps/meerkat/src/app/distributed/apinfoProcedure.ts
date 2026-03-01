@@ -164,7 +164,8 @@ function isAcceptableCrossReference (
  * @param followReferralTTL The number of times this procedure may recurse
  *  as a result of following a referral. Needed because this calls NRCR
  *  procedure, which can call this again.
- * @returns An operation outcome, or null if chaining is prohibited.
+ * @returns An operation outcome, or null if chaining is prohibited or if
+ *  all access points fail.
  *
  * @function
  * @async

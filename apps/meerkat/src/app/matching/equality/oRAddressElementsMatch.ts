@@ -6,8 +6,9 @@ import {
     _decode_ORAddress,
 } from "@wildboar/x400/MTSAbstractService";
 import { ORAddressInfo, orAddressToInfo, recursivelyNormalize } from "./orAddressUtilities.js";
-import { PresentationAddress } from "@wildboar/x500/SelectedAttributeTypes";
+import { _encode_PresentationAddress, PresentationAddress } from "@wildboar/x500/SelectedAttributeTypes";
 import _ from "lodash";
+import { presentationAddressMatch } from "@wildboar/x500/matching/equality";
 
 export
 function orAddressIsSubset (asserted: ORAddress, value: ORAddress): boolean {
@@ -47,7 +48,9 @@ function orAddressIsSubset (asserted: ORAddress, value: ORAddress): boolean {
             }
             const presa = aInfo.extendedNetworkAddress;
             const presb = bInfo.extendedNetworkAddress;
-            // TODO: Compare presentation addresses. Depends on implementation in X.500 Library.
+            const presaEncoded = _encode_PresentationAddress(presa);
+            const presbEncoded = _encode_PresentationAddress(presb);
+            return presentationAddressMatch(presaEncoded, presbEncoded);
         } else {
             return false;
         }

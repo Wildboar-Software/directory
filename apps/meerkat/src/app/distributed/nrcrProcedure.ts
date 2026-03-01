@@ -188,7 +188,6 @@ async function nrcrProcedure(
             );
         }
     };
-    // TODO: Can you assert that every CR has OP not set to completed?
     assert(state.chainingArguments.operationProgress?.nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed, "7d3c9dbc-41e1-4cde-a634-ff6d2d82e8f0");
     assert(state.NRcontinuationList.length, "b5df97a7-f855-4ce5-b40b-38bb78fa8247"); // This procedure should not be called if there are no refs.
     /**
@@ -251,6 +250,21 @@ async function nrcrProcedure(
     // We sort by rdnsResolved to get the "deepest" reference.
     // This means that, if you have a chain of two cross reference DSEs, the deepest one will be used.
     state.NRcontinuationList.sort((a, b) => Number(b.rdnsResolved ?? 0) - Number(a.rdnsResolved ?? 0));
+
+    const logInfo = {
+        aid: assn?.id,
+        iid: printInvokeId(state.invokeId),
+        opCode: printCode(state.operationCode),
+        opid: state.chainingArguments.operationIdentifier
+            ? Number(state.chainingArguments.operationIdentifier)
+            : undefined,
+        signErrors,
+        chainingProhibited,
+        localScope,
+        doNotDecode,
+        followReferralTTL,
+        timeLimitEndTime: timeLimitEndTime.toISOString(),
+    };
     for (const cref of state.NRcontinuationList) {
         if (op?.abandonTime) {
             op.events.emit("abandon");
@@ -275,12 +289,23 @@ async function nrcrProcedure(
         }
         assert(cref.accessPoints[0]);
         checkTimeLimit();
+        const crefLogInfo = {
+            ...logInfo,
+            ref_type: cref.referenceType,
+            aliasedRDNs: cref.aliasedRDNs,
+            entryOnly: cref.entryOnly,
+            exclusionsCount: cref.exclusions?.length,
+            returnToDUA: cref.returnToDUA,
+            nameResolveOnMaster: cref.nameResolveOnMaster,
+            nameResolutionPhase: cref.operationProgress.nameResolutionPhase,
+            nextRDNToBeResolved: cref.operationProgress.nextRDNToBeResolved,
+        }
         const isNSSR = (cref.referenceType === ReferenceType_nonSpecificSubordinate);
         if (!isNSSR) {
             ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
                 opid: req.chaining.operationIdentifier ?? "ABSENT",
                 dn: stringifyDN(ctx, cref.targetObject.rdnSequence),
-            }));
+            }), crefLogInfo);
             const outcome = await apinfoProcedure(
                 ctx,
                 cref.accessPoints[0],
@@ -302,7 +327,7 @@ async function nrcrProcedure(
             else if ("result" in outcome) {
                 ctx.log.debug(ctx.i18n.t("log:nrcr_result", {
                     opid: req.chaining.operationIdentifier ?? "ABSENT",
-                }));
+                }), crefLogInfo);
                 return {
                     result: {
                         ...outcome.result,
@@ -317,27 +342,27 @@ async function nrcrProcedure(
                     opid: req.chaining.operationIdentifier ?? "ABSENT",
                     code: printCode(outcome.error.code),
                     bytes: Buffer.from(outcome.error.parameter.toBytes()).subarray(0, 16).toString("hex"),
-                }));
+                }), crefLogInfo);
                 return outcome;
             }
             else if ("reject" in outcome) {
                 ctx.log.debug(ctx.i18n.t("log:nrcr_reject", {
                     opid: req.chaining.operationIdentifier ?? "ABSENT",
                     reason: outcome.reject.problem,
-                }));
+                }), crefLogInfo);
                 return outcome;
             }
             else if ("abort" in outcome) {
                 ctx.log.debug(ctx.i18n.t("log:nrcr_abort", {
                     opid: req.chaining.operationIdentifier ?? "ABSENT",
                     reason: outcome.abort,
-                }));
+                }), crefLogInfo);
                 return outcome;
             }
             else if ("timeout" in outcome) {
                 ctx.log.debug(ctx.i18n.t("log:nrcr_timeout", {
                     opid: req.chaining.operationIdentifier ?? "ABSENT",
-                }));
+                }), crefLogInfo);
                 return outcome;
             }
         }
@@ -346,7 +371,7 @@ async function nrcrProcedure(
             opid: req.chaining.operationIdentifier ?? "ABSENT",
             dn: stringifyDN(ctx, cref.targetObject.rdnSequence),
             i: cref.operationProgress?.nextRDNToBeResolved?.toString(),
-        }));
+        }), crefLogInfo);
         let allUnableToProceed: boolean = true;
         for (const ap of cref.accessPoints) {
             if (op?.abandonTime) {
@@ -390,11 +415,15 @@ async function nrcrProcedure(
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
                     ctx.log.error(util.inspect(e));
                 }
-                ctx.log.debug(ctx.i18n.t("log:ap_info_procedure_error", { e }));
+                ctx.log.debug(ctx.i18n.t("log:ap_info_procedure_error", { e }), crefLogInfo);
                 continue;
             }
             if (!outcome) {
-                // TODO: Log this? I don't think you have to do anything beyond this.
+                ctx.log.trace(ctx.i18n.t("log:name_resolution_failed", {
+                    ...logInfo,
+                    aet: stringifyDN(ctx, ap.ae_title.rdnSequence),
+                    target: stringifyDN(ctx, cref.targetObject.rdnSequence),
+                }), crefLogInfo);
                 continue;
             }
             if ("result" in outcome) {
@@ -412,13 +441,7 @@ async function nrcrProcedure(
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }
-                    ctx.log.error(e.message, {
-                        remoteFamily: assn?.socket.remoteFamily,
-                        remoteAddress: assn?.socket.remoteAddress,
-                        remotePort: assn?.socket.remotePort,
-                        association_id: assn?.id,
-                        invokeID: printInvokeId(req.invokeId),
-                    });
+                    ctx.log.error(e.message);
                     continue;
                 }
             }
@@ -427,7 +450,7 @@ async function nrcrProcedure(
                     opid: req.chaining.operationIdentifier ?? "ABSENT",
                     code: printCode(outcome.error.code),
                     bytes: Buffer.from(outcome.error.parameter.toBytes()).subarray(0, 16).toString("hex"),
-                }));
+                }), crefLogInfo);
                 if (compareCode(outcome.error.code, serviceError["&errorCode"]!)) {
                     let errorParam: OPTIONALLY_PROTECTED<ServiceErrorData> | null = null;
                     try {
@@ -486,7 +509,7 @@ async function nrcrProcedure(
                 ctx.log.debug(ctx.i18n.t("log:nrcr_reject", {
                     opid: req.chaining.operationIdentifier ?? "ABSENT",
                     reason: outcome.reject.problem,
-                }));
+                }), crefLogInfo);
                 allUnableToProceed = false;
                 /* What to do here is unspecified, but for some reject outcomes,
                 we can just carry on. */
@@ -499,7 +522,7 @@ async function nrcrProcedure(
                 ctx.log.debug(ctx.i18n.t("log:nrcr_abort", {
                     opid: req.chaining.operationIdentifier ?? "ABSENT",
                     reason: outcome.abort,
-                }));
+                }), crefLogInfo);
                 allUnableToProceed = false;
                 /* What to do here is unspecified, but for some abort outcomes,
                 we can just carry on. */
@@ -511,7 +534,7 @@ async function nrcrProcedure(
             else if ("timeout" in outcome) {
                 ctx.log.debug(ctx.i18n.t("log:nrcr_timeout", {
                     opid: req.chaining.operationIdentifier ?? "ABSENT",
-                }));
+                }), crefLogInfo);
                 allUnableToProceed = false;
                 continue;
             }

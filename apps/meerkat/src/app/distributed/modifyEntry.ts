@@ -2115,7 +2115,7 @@ function handleContextRule (
             attribute.values,
             []
         );
-    for (const ct of permittedContexts) { // TODO: This is O(n^2).
+    for (const ct of permittedContexts) {
         const spec = ctx.contextTypes.get(ct.toString());
         if (!spec) {
             continue; // This is intentional. This is not supposed to throw.

@@ -8,6 +8,8 @@ import {
 } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     _decode_AttributeTypeAndValue,
+    type DistinguishedName,
+    type RelativeDistinguishedName,
 } from "@wildboar/pki-stub";
 import {
     _decode_PresentationAddress,
@@ -229,6 +231,41 @@ export const distinguishedNameMatch: ValueNormalizer = (
     const rdns: string[] = [];
     for (const rdn of dn) {
         const normalized_rdn = rdnMatch(ctx, rdn);
+        if (!normalized_rdn) {
+            return undefined;
+        }
+        rdns.push(normalized_rdn);
+    }
+    return rdns.join(",");
+};
+
+export const rdnMatchTyped = (
+    ctx: Context,
+    value: RelativeDistinguishedName,
+): string | undefined => {
+    const atav_els = value;
+    const atav_strs: string[] = [];
+    for (const atav of atav_els) {
+        const normalized_value: string | undefined = getEqualityNormalizer(ctx)(atav.type_)?.(ctx, atav.value);
+        if (!normalized_value) {
+            return undefined;
+        }
+        const value_str = normalized_value
+            .replace(/\+/g, "\\+")
+            .replace(/,/g, "\\,");
+        atav_strs.push(`${atav.type_.toString()}=${value_str}`);
+    }
+    return atav_strs.sort().join("+");
+};
+
+export const distinguishedNameMatchTyped = (
+    ctx: Context,
+    value: DistinguishedName,
+): string | undefined => {
+    const dn = value;
+    const rdns: string[] = [];
+    for (const rdn of dn) {
+        const normalized_rdn = rdnMatchTyped(ctx, rdn);
         if (!normalized_rdn) {
             return undefined;
         }
