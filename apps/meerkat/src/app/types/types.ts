@@ -1340,19 +1340,6 @@ interface DSAInfo {
     accessPoint: AccessPoint;
 
     /**
-     * The time at which hibernation began. If this is `undefined`, this DSA is
-     * not hibernating; if this is set, this DSA is hibernating.
-     */
-    hibernatingSince?: Date;
-
-    /**
-     * The time at which the sentinel-based killswitch initiated hibernation.
-     * If this is `undefined`, this DSA is not hibernating; if this is set, this
-     * DSA is hibernating.
-     */
-    sentinelTriggeredHibernation?: Date;
-
-    /**
      * The context prefixes administered by this DSA.
      *
      * This is cached here because cross references need to be validated. In
@@ -2102,17 +2089,6 @@ interface Configuration {
         followReferralTTL: number;
 
     };
-
-    /**
-     * This is a fully-qualified DNS name. If it contains a TXT record whose text is
-     * `meerkat:kill`, Meerkat DSA will exit as soon as it detects this. If this
-     * record's text is `meerkat:hibernate`, Meerkat DSA will enter hibernation as
-     * soon as it detects this.
-     *
-     * This exists so that Meerkat DSA may be remotely shut down in the event that
-     * a severe security vulnerability is discovered. It is a "remote killswitch."
-     */
-    sentinelDomain?: string;
 
     /**
      * If `true`, the `administratorEmail` will be exposed as an attribute value

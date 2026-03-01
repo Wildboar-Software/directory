@@ -1111,7 +1111,6 @@ const config: Configuration = {
             ? Number.parseInt(process.env.MEERKAT_SHADOW_TOTAL_REFRESH_VERTEX_CONCURRENCY, 10)
             : 4,
     },
-    sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
     administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
     administratorEmailPublic: (process.env.MEERKAT_ADMINISTRATOR_EMAIL_PUBLIC === "1"),
     bulkInsertMode,
@@ -1184,7 +1183,6 @@ const ctx: MeerkatContext = {
             ),
             undefined,
         ),
-        hibernatingSince: undefined,
         namingContexts: [],
     },
     otherDSAs: {

@@ -16,8 +16,6 @@
     "socket_closed": "{{source}} socket closed.",
     "server_error": "{{protocol}} server error: {{e}}",
     "listening": "{{protocol}} server listening on port {{port}}.",
-    "killed_by_sentinel": "Killed by sentinel. This likely means that there was a security vulnerability discovered in Meerkat DSA. Please check the Meerkat DSA website for information. To disable this killswitch (and start up Meerkat despite there possibly being a severe security vulnerability), please restart Meerkat DSA with the MEERKAT_SENTINEL_DOMAIN environment variable set to an empty string.",
-    "hibernated_by_sentinel": "Hibernation triggered by sentinel. This likely means that there was a security vulnerability discovered in Meerkat DSA. Please check the Meerkat DSA website for information. To disable this killswitch (and start up Meerkat despite there possibly being a severe security vulnerability), please restart Meerkat DSA with the MEERKAT_SENTINEL_DOMAIN environment variable set to an empty string or open the Meerkat DSA administrative console in your web browser and un-hibernate this DSA.",
     "major_version_insecure": "Your version of Meerkat DSA is insecure. Please update to the next major version.",
     "major_version_deprecated": "Your version of Meerkat DSA is no longer supported. Please consider updating to the next major version.",
     "security_update_available": "Your version of Meerkat DSA is insecure. Please update to version {{version}} or later.",

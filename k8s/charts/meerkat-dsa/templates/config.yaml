@@ -191,7 +191,6 @@ data:
   {{- if .Values.scvp_validation_policy_ref_id }}
   scvp_validation_policy_ref_id: {{ .Values.scvp_validation_policy_ref_id | quote }}
   {{- end }}
-  sentinel_domain: sentinel.meerkat.wildboar.software
   {{- if .Values.signing_acceptable_cert_policies }}
   # NOTE: The `join` function is not documented currently.
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list

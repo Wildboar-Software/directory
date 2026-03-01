@@ -675,19 +675,6 @@ async function requestValidationProcedure (
     if (!req.argument) {
         throw new MistypedPDUError();
     }
-    if (ctx.dsa.hibernatingSince || ctx.dsa.sentinelTriggeredHibernation) {
-        throw new errors.ServiceError(
-            ctx.i18n.t("err:hibernating"),
-            new ServiceErrorData(
-                ServiceProblem_busy,
-                [],
-                undefined, // Intentionally not including more information.
-                undefined,
-                undefined,
-                undefined,
-            ),
-        );
-    }
     if (!isModificationOperation(req.opCode) && ctx.config.bulkInsertMode) {
         ctx.log.error(ctx.i18n.t("err:bulk_insert_mode_no_read"));
         throw new errors.ServiceError(

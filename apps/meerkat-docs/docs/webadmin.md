@@ -7,10 +7,9 @@ of Javascript means that you can access your Meerkat DSA web admin console over
 [TOR](https://www.torproject.org/).
 
 The web admin console is only necessary for accepting or rejecting requested
-operational bindings and triggering
-[hibernation](./administration.md#hibernation); everything else can be done
-using the X.500 protocols. In the future, we will find a way to make even this
-possible without the web console.
+operational bindings; everything else can be done using the X.500 protocols.
+In the future, we will find a way to make even this possible without the web
+console.
 
 :::warning
 
@@ -101,6 +100,3 @@ functionality. **DO NOT** automate tasks using this API. There are **NO**
 guarantees of stability. These APIs may be changed in any release, without
 warning, without changelog entries, and without prior deprecation. These APIs
 are for use by the web admin console's user interface only.
-
-If you want to automate things like accepting operational bindings or
-hibernation, contact Wildboar Software.

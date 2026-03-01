@@ -2901,47 +2901,6 @@ function getAbout(req: MeerkatReq, res: Response): void {
     });
 }
 
-function getHibernate(req: MeerkatReq, res: Response): void {
-    res.render("hibernate", {
-        hibernatingSince: req.ctx.dsa.hibernatingSince
-            ? req.ctx.dsa.hibernatingSince.toISOString()
-            : undefined,
-    });
-}
-
-function startHibernate(req: MeerkatReq, res: Response): void {
-    const startDate = new Date();
-    req.ctx.telemetry.trackEvent({
-        name: "Hibernation",
-        properties: {
-            ...flatten<any, object>({
-                server: getServerStatistics(req.ctx),
-            }),
-            since: startDate,
-            started: true,
-            administratorEmail: req.ctx.config.administratorEmail,
-        },
-    });
-    req.ctx.dsa.hibernatingSince = startDate;
-    res.redirect("/hibernate");
-}
-
-function endHibernate(req: MeerkatReq, res: Response): void {
-    req.ctx.telemetry.trackEvent({
-        name: "Hibernation",
-        properties: {
-            ...flatten<any, object>({
-                server: getServerStatistics(req.ctx),
-            }),
-            since: req.ctx.dsa.hibernatingSince,
-            started: false,
-            administratorEmail: req.ctx.config.administratorEmail,
-        },
-    });
-    req.ctx.dsa.hibernatingSince = undefined;
-    res.redirect("/hibernate");
-}
-
 // Why the hell did I put this much effort into a web admin console?
 export {
     setMeerkatContext,
@@ -2994,8 +2953,5 @@ export {
     getUpdates,
     getHelp,
     getAbout,
-    getHibernate,
-    startHibernate,
-    endHibernate,
     errorHandlingMiddleware,
 };

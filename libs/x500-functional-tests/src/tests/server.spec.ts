@@ -450,7 +450,6 @@ async function createTestRootNode(
 describe.skip("Meerkat DSA", () => {
 
     it.todo("Memory leaks do not occur");
-    it.todo("Requests are rejected when the DSA is hibernating");
 
     it("An idle TCP socket is eventually closed", () => new Promise<void>((done) => {
         // This test is pretty flaky, so we just don't run it in the pipeline.

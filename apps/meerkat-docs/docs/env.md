@@ -1780,16 +1780,6 @@ will have no effect. This is merely reserved for later use.
 is not currently supported in Meerkat DSA, so setting this environment variable
 will have no effect. This is merely reserved for later use.
 
-## MEERKAT_SENTINEL_DOMAIN
-
-This is a fully-qualified DNS name. If it contains a TXT record whose text is
-`meerkat:kill`, Meerkat DSA will exit as soon as it detects this. If this
-record's text is `meerkat:hibernate`, Meerkat DSA will enter hibernation as
-soon as it detects this.
-
-This exists so that Meerkat DSA may be remotely shut down in the event that
-a severe security vulnerability is discovered. It is a "remote killswitch."
-
 ## MEERKAT_SIGNING_ACCEPTABLE_CERT_POLICIES
 
 A list of object identifiers of certificate policies that are acceptable for a

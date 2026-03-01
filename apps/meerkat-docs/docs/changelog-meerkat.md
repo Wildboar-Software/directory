@@ -147,6 +147,7 @@ details of this algorith are documented [here](./distributed.md#local-scope).
   infinite loops formed from chained operations.
 - Meerkat now can follow referrals when chaining
   - How many times it will do this is configurable.
+- Remove the stupid hibernation feature
 - TODO: What is `7af8973bcaa39a78b27ef07328206a962ce571d5`?
 
 ### Other Projects

@@ -809,12 +809,6 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: sslkeylog_file
                   optional: true
-            - name: MEERKAT_SENTINEL_DOMAIN
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: sentinel_domain
-                  optional: true
             - name: MEERKAT_SIGNING_ACCEPTABLE_CERT_POLICIES
               valueFrom:
                 configMapKeyRef:

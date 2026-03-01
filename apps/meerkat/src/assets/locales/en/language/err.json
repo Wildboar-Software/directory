@@ -81,7 +81,6 @@
     "chained_error": "Chained error.",
     "not_authz_read": "Not authorized to read target entry.",
     "not_authz_remove_entry": "Not authorized to remove target entry.",
-    "hibernating": "Hibernating.",
     "invalid_nextrdntoberesolved": "Invalid nextRDNToBeResolved {{next}}.",
     "joins_unsupported": "Joins are entirely unsupported by this server.",
     "not_authz_search_base_object": "Not authorized to search the base object entry.",

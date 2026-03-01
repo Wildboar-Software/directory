@@ -1413,9 +1413,6 @@ async function main (): Promise<void> {
         app.get("/updates", routes.getUpdates);
         app.get("/help", routes.getHelp);
         app.get("/about", routes.getAbout);
-        app.get("/hibernate", routes.getHibernate);
-        app.post("/hibernate/start", routes.startHibernate);
-        app.post("/hibernate/end", routes.endHibernate);
 
         app.listen(ctx.config.webAdmin.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
@@ -1423,31 +1420,6 @@ async function main (): Promise<void> {
                 port: ctx.config.webAdmin.port,
             }));
         });
-    }
-
-    if (ctx.config.sentinelDomain) {
-        setInterval(async () => {
-            const records = await dns.resolveTxt(ctx.config.sentinelDomain!)
-                .catch(() => []);
-            for (const record of records) {
-                const fullRecord: string = record.join(" ").trim().toLowerCase();
-                switch (fullRecord) {
-                case ("meerkat:kill"): {
-                    ctx.log.error(ctx.i18n.t("log:killed_by_sentinel"));
-                    process.exit(503);
-                    break;
-                }
-                case ("meerkat:hibernate"): {
-                    ctx.log.error(ctx.i18n.t("log:hibernated_by_sentinel"));
-                    ctx.dsa.sentinelTriggeredHibernation = new Date();
-                    break;
-                }
-                default: {
-                    continue;
-                }
-                }
-            }
-        }, 300000);
     }
 
     ctx.log.info(ctx.i18n.t("log:docs"));

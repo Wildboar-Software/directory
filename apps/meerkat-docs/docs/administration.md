@@ -1,10 +1,5 @@
 # Administration
 
-## Hibernation
-
-All requests, both DAP, DSP, and LDAP, return a `serviceError` with problem
-`busy`.
-
 ## Handling Memory Pressure
 
 What research I have done into this has shown me:
