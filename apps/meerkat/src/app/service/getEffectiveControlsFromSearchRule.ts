@@ -56,8 +56,22 @@ function int_to_bits(int: number): BIT_STRING {
     return ret;
 }
 
-// TODO: Document
 // This code was copied from check_of_controls_and_hierarchy_selections.ts.
+/**
+ * @summary Get the effective controls from a search rule
+ * @description
+ *
+ * This function determines the effective controls based on the user-supplied
+ * controls and an applicable search rule.
+ *
+ * @param rule The search rule to get the effective controls from
+ * @param user_hs The user's hierarchy selections
+ * @param user_search_opts The user's search options
+ * @param user_service_opts The user's service options
+ * @returns The effective controls
+ * 
+ * @function
+ */
 export
 function getEffectiveControlsFromSearchRule (
     rule: SearchRule,

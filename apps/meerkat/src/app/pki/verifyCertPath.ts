@@ -247,6 +247,11 @@ export const VCP_RETURN_PROHIBITED_SIG_ALG: VCPReturnCode = -21;
 export const VCP_RETURN_POLICY_NOT_ACCEPTABLE: VCPReturnCode = -22;
 export const VCP_RETURN_NO_AUTHORIZED_POLICIES: VCPReturnCode = -23;
 export const VCP_RETURN_NO_BASIC_CONSTRAINTS_CA: VCPReturnCode = -24;
+export const VCP_RETURN_UNRECOGNIZED_SUBJECT_ALT_NAME: VCPReturnCode = -25;
+export const VCP_RETURN_UNRECOGNIZED_ISSUER_ALT_NAME: VCPReturnCode = -26;
+export const VCP_RETURN_UNRECOGNIZED_SUBJECT_DIR_ATTRS: VCPReturnCode = -27;
+export const VCP_RETURN_UNRECOGNIZED_ASSOC_INFO_ATTRS: VCPReturnCode = -28;
+
 
 // The -100s are shared between verifyCertPath and verifyAttrCert.
 export const VCP_RETURN_OCSP_REVOKED: VCPReturnCode = -102;
@@ -262,16 +267,16 @@ export const VCP_RETURN_CRL_UNREACHABLE: VCPReturnCode = -105;
  */
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
-    subjectDirectoryAttributes["&id"]!.toString(), // TODO: If critical, at least one attr must be understood.
+    subjectDirectoryAttributes["&id"]!.toString(), // If critical, at least one attr must be understood.
     subjectKeyIdentifier["&id"]!.toString(), // Always non-critical.
     keyUsage["&id"]!.toString(), // If NOT critical, don't set this on the state, because it is not enforced.
     privateKeyUsagePeriod["&id"]!.toString(), // Always non-critical.
-    subjectAltName["&id"]!.toString(), // TODO: If critical, one of the name forms must be recognized.
-    issuerAltName["&id"]!.toString(), // TODO: If critical, one of the name forms must be recognized.
+    subjectAltName["&id"]!.toString(), // If critical, one of the name forms must be recognized.
+    issuerAltName["&id"]!.toString(), // If critical, one of the name forms must be recognized.
     basicConstraints["&id"]!.toString(), // Always critical in a CA.
     nameConstraints["&id"]!.toString(), // Not checked if not critical.
     cRLDistributionPoints["&id"]!.toString(), // MUST be checked if critical.
-    certificatePolicies["&id"]!.toString(), // TODO: If not critical, cert policy constraints can be "disobeyed".
+    certificatePolicies["&id"]!.toString(), // If not critical, cert policy constraints can be "disobeyed".
     policyMappings["&id"]!.toString(), // No meaning imputed to critical/non-critical.
     authorityKeyIdentifier["&id"]!.toString(), // Always non-critical.
     policyConstraints["&id"]!.toString(), // No meaning imputed to critical/non-critical.
@@ -280,7 +285,7 @@ const supportedExtensions: Set<IndexableOID> = new Set([
     subjectAltPublicKeyInfo["&id"]!.toString(), // No meaning imputed to critical/non-critical.
     altSignatureAlgorithm["&id"]!.toString(), // No meaning imputed to critical/non-critical.
     altSignatureValue["&id"]!.toString(), // No meaning imputed to critical/non-critical.
-    associatedInformation["&id"]!.toString(), // TODO: If critical, at least one attr must be understood.
+    associatedInformation["&id"]!.toString(), // If critical, at least one attr must be understood.
     authorizationValidation["&id"]!.toString(), // Always critical
     authorityInfoAccess["&id"]!.toString(), // Always non-critical
     subjectInfoAccess["&id"]!.toString(), // Always non-critical
@@ -1244,6 +1249,28 @@ function isRevokedFromConfiguredCRLs (
         ));
 }
 
+function isRecognizedOtherName (an: OBJECT_IDENTIFIER): boolean {
+    const s = an.toString();
+    return s.startsWith("1.3.6.1.5.5.7.8.") || s.startsWith("1.3.6.1.4.1.311.20.2.");
+}
+
+function isRecognizedAltName (an: GeneralName): boolean {
+    if (an instanceof ASN1Element) {
+        return false;
+    }
+    if ("otherName" in an) {
+        const othername = an.otherName;
+        const hasUnrecognizedOtherName = (
+            !othername.directReference
+            || !isRecognizedOtherName(othername.directReference)
+        );
+        if (hasUnrecognizedOtherName) {
+            return false;
+        }
+    }
+    return true;
+}
+
 /**
  * @summary Verify a public key certificate per ITU-T Rec. X.509, Section 12.5.1
  * @description
@@ -1314,6 +1341,8 @@ async function verifyBasicPublicKeyCertificateChecks (
         = extsGroupedByOID[certificatePolicies["&id"]!.toString()]?.[0];
     const subjectAltNamesExt: Extension | undefined
         = extsGroupedByOID[subjectAltName["&id"]!.toString()]?.[0];
+    const issuerAltNamesExt: Extension | undefined
+        = extsGroupedByOID[issuerAltName["&id"]!.toString()]?.[0];
     const authorityKeyIdentifierExt: Extension | undefined
         = extsGroupedByOID[authorityKeyIdentifier["&id"]!.toString()]?.[0];
     const keyUsageExt: Extension | undefined
@@ -1322,6 +1351,10 @@ async function verifyBasicPublicKeyCertificateChecks (
         = extsGroupedByOID[extKeyUsage["&id"]!.toString()]?.[0];
     const privateKeyUsagePeriodExt: Extension | undefined
         = extsGroupedByOID[privateKeyUsagePeriod["&id"]!.toString()]?.[0];
+    const associatedInformationExt: Extension | undefined
+        = extsGroupedByOID[associatedInformation["&id"]!.toString()]?.[0];
+    const subjectDirectoryAttributesExt: Extension | undefined
+        = extsGroupedByOID[subjectDirectoryAttributes["&id"]!.toString()]?.[0];
 
     const authoritySKIExt = issuerCert.toBeSigned.extensions
         ?.find((ext) => ext.extnId.isEqualTo(subjectKeyIdentifier["&id"]!));
@@ -1644,12 +1677,51 @@ async function verifyBasicPublicKeyCertificateChecks (
         }
     }
 
+    const subjectAltNames = subjectAltNamesExt
+        ? subjectAltName.decoderFor["&ExtnType"]!(subjectAltNamesExt.valueElement())
+        : [];
+
+    // This is required by the specification
+    if (subjectAltNamesExt?.critical) {
+        const recognizedSome = subjectAltNames.some(isRecognizedAltName);
+        if (!recognizedSome) {
+            return VCP_RETURN_UNRECOGNIZED_SUBJECT_ALT_NAME;
+        }
+    }
+
+    const issuerAltNames = issuerAltNamesExt
+        ? issuerAltName.decoderFor["&ExtnType"]!(issuerAltNamesExt.valueElement())
+        : [];
+
+    // This is required by the specification.
+    if (issuerAltNamesExt?.critical) {
+        const recognizedSome = issuerAltNames.some(isRecognizedAltName);
+        if (!recognizedSome) {
+            return VCP_RETURN_UNRECOGNIZED_ISSUER_ALT_NAME;
+        }
+    }
+
+    // This is required by the specification.
+    if (subjectDirectoryAttributesExt?.critical) {
+        const attrs = subjectDirectoryAttributes.decoderFor["&ExtnType"]!(subjectDirectoryAttributesExt.valueElement());
+        const recognizedSome = attrs.some((attr) => ctx.attributeTypes.has(attr.type_.toString()));
+        if (!recognizedSome) {
+            return VCP_RETURN_UNRECOGNIZED_SUBJECT_DIR_ATTRS;
+        }
+    }
+
+    // This is required by the specification.
+    if (associatedInformationExt?.critical) {
+        const attrs = associatedInformation.decoderFor["&ExtnType"]!(associatedInformationExt.valueElement());
+        const recognizedSome = attrs.some((attr) => ctx.attributeTypes.has(attr.type_.toString()));
+        if (!recognizedSome) {
+            return VCP_RETURN_UNRECOGNIZED_ASSOC_INFO_ATTRS;
+        }
+    }
+
     // Step 12.5.1.g
     if (!selfIssuedIntermediate) {
         // Step 12.5.1.g
-        const subjectAltNames = subjectAltNamesExt
-            ? subjectAltName.decoderFor["&ExtnType"]!(subjectAltNamesExt.valueElement())
-            : [];
         const namesToValidate: GeneralName[] = [
             {
                 directoryName: subjectCert.toBeSigned.subject,
