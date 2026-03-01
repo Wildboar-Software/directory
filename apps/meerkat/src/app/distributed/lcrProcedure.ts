@@ -239,7 +239,6 @@ async function lcrProcedure (
             } else { // A reject, abort, timeout, etc.
                 // TODO: A lot more logging and outcome handling here.
                 unexplore();
-                // TODO: Log
                 continue;
             }
         }

@@ -660,7 +660,6 @@ async function read (
         assn
         && data.modifyRightsRequest
         // We only return these rights to the user if they are authenticated.
-        // TODO: Make this behavior configurable.
         && (("basicLevels" in assn.authLevel) && (assn.authLevel.basicLevels.level > 0))
         && accessControlScheme
     ) {
@@ -680,7 +679,8 @@ async function read (
             ]),
         ));
         // Return permissions for the selected attribute types, since they seem to be of interest.
-        for (const attr of selectedAttributes) {
+        // We stop at only ten attributes to avoid denial-of-service attacks.
+        for (const attr of selectedAttributes.slice(0, 10)) {
             const permittedToDoXToAttributeType = getPermittedToDoXToY({
                 attributeType: attr,
             });

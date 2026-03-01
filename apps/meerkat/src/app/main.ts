@@ -1356,6 +1356,7 @@ async function main (): Promise<void> {
         app.set("views", path.join(__dirname, "assets", "views"));
 
         // Middleware: the ordering of these is important!
+        app.use(routes.errorHandlingMiddleware);
         app.use(routes.setMeerkatContext);
         app.use(routes.loggingMiddleware);
         app.use(routes.securityMiddleware);
