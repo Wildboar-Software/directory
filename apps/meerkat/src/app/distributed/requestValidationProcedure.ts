@@ -46,7 +46,7 @@ import { read } from "@wildboar/x500/DirectoryAbstractService";
 import { removeEntry } from "@wildboar/x500/DirectoryAbstractService";
 import { search } from "@wildboar/x500/DirectoryAbstractService";
 import { chainedRead } from "@wildboar/x500/DistributedOperations";
-import { loopDetected } from "@wildboar/x500";
+import { isLoopDetected } from "./isLoopDetected.js";
 import {
     AuthenticationLevel,
 } from "@wildboar/x500/BasicAccessControl";
@@ -1093,7 +1093,7 @@ async function requestValidationProcedure (
             chainedArgument.operationProgress ?? ChainingArguments._default_value_for_operationProgress,
         ));
     }
-    if (loopDetected(chainedArgument.traceInformation)) {
+    if (isLoopDetected(ctx, chainedArgument.traceInformation)) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:loop_detected"),
             new ServiceErrorData(

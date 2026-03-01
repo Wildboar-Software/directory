@@ -143,6 +143,8 @@ details of this algorith are documented [here](./distributed.md#local-scope).
 - Use `fetch` instead of NodeJS's `http` and `https` modules.
 - More efficient alias creation, reading, etc.
 - Much faster bulk entry creation
+- Better loop detection: Meerkat DSA now does a better job of identifying
+  infinite loops formed from chained operations.
 - Meerkat now can follow referrals when chaining
   - How many times it will do this is configurable.
 - TODO: What is `7af8973bcaa39a78b27ef07328206a962ce571d5`?

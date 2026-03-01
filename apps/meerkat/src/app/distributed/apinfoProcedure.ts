@@ -56,7 +56,6 @@ import {
     _encode_DsaReferralData,
 } from "@wildboar/x500/DistributedOperations";
 import cloneChainingArguments from "../x500/cloneChainingArguments.js";
-import { loopDetected } from "@wildboar/x500";
 import createSecurityParameters from "../x500/createSecurityParameters.js";
 import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { printInvokeId } from "../utils/printInvokeId.js";
@@ -88,6 +87,7 @@ import {
     VCP_RETURN_UNTRUSTED_ANCHOR,
     type VCPReturnCode,
 } from "../pki/verifyCertPath.js";
+import { isLoopDetected } from "./isLoopDetected.js";
 
 /* These are all the cert path validation error types where they could be
 invalid on this DSA, but not to the client verifying the cert path.
@@ -330,7 +330,7 @@ async function apinfoProcedure (
             namingMatcher,
         );
         const ignoreLoopCheck: boolean = (isInStatefulSet && nextHopIsMe);
-        if (!ignoreLoopCheck && loopDetected(tenativeTrace)) {
+        if (!ignoreLoopCheck && isLoopDetected(ctx, tenativeTrace)) {
             throw new errors.ServiceError(
                 ctx.i18n.t("err:loop_detected"),
                 new ServiceErrorData(
@@ -716,9 +716,8 @@ async function apinfoProcedure (
                             referralData.reference.operationProgress,
                         )),
                     ];
-                    // TODO: Implement a better loop detection function.
                     // TODO: Deprecate this loop detection function.
-                    if (loopDetected(tenativeTrace)) {
+                    if (isLoopDetected(ctx, tenativeTrace)) {
                         throw new errors.ServiceError(
                             ctx.i18n.t("err:loop_detected"),
                             new ServiceErrorData(
