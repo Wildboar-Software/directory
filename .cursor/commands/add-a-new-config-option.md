@@ -65,3 +65,6 @@ Add a new configuration option to Meerkat DSA for end users.
    options from the config map as is done with the other options, unless it
    is a file in a separate configmap or secret: in this case, just mount
    these things and ensure the file is mounted at the correct location.
+9. Add the default value of this configuration setting to the test context
+   created in `apps/meerkat/src/app/testing.spec.ts`, unless you think a
+   different value would be better in a test environment.
