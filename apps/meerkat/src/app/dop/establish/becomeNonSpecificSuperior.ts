@@ -242,7 +242,15 @@ async function becomeNonSpecificSuperior (
             agreement_ber: true,
         },
     });
-    // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
+
+    /* I wish I could make this cascade the incremental updates to secondary
+    shadows instead of performing a total refresh, but that would require
+    an absurdly complicated comparison of the supplier and consumer
+    agreements. We would have to assess what incremental steps from the
+    supplier apply to the consumer, and modify those steps to contain only
+    the consumer's choice of replicated information. All of this assumes
+    that the have the same exact update frequency and last update times. */
+
     // A total refresh is the only mechanism that updates extended knowledge, currently!
     await Promise.all(possibly_related_sobs.map((sob) => updateShadowConsumer(ctx, sob.id, true)));
     const immediateSuperiorInfo: Attribute[] = await getEntryAttributesToShareInOpBinding(ctx, superior);
