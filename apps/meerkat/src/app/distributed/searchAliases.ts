@@ -51,6 +51,8 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
+import { getServiceAdminPoint } from "../dit/getServiceAdminPoint.js";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 
 /**
  * @summary The Search Aliases Procedure, as defined in ITU Recommendation X.518.
@@ -110,7 +112,18 @@ async function searchAliases (
         ?? data.requestor
         ?? assn.boundNameAndUID?.dn;
 
-    // TODO: Step 4; pending service-specific administrative area implementation.
+    // Step 4.
+    const isInServiceSpecAdministration = !!ret.governingSearchRule;
+    if (isInServiceSpecAdministration) {
+        const serviceSpecAdminPoint = getServiceAdminPoint(target);
+        if (serviceSpecAdminPoint) {
+            const ssapDN = getDistinguishedName(serviceSpecAdminPoint);
+            if (!isPrefix(ctx, ssapDN, aen)) {
+                return;
+            }
+        }
+    }
+
     const invokeId: InvokeId = {
         present: 0, // REVIEW: Will this be a problem?
     };
