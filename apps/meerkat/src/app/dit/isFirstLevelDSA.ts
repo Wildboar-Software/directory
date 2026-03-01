@@ -1,6 +1,5 @@
 import type { Context } from "../types/index.js";
 
-// TODO: Make sure this query is completely indexed.
 /**
  * @summary Indicates whether this DSA is a first-level DSA
  * @description

@@ -322,7 +322,7 @@ async function readValues (
     const attValIncomplete: Set<IndexableOID> = new Set();
     const outputTypes = options?.outputAttributeTypes;
     const cads: TypeAndContextAssertion[] = options?.relevantSubentries
-        ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
+        ? await getContextAssertionDefaults(ctx, options.relevantSubentries)
         : [];
 
     const returnContexts: boolean = options?.selection?.returnContexts

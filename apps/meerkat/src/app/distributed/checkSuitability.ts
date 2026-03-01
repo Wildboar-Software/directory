@@ -576,7 +576,7 @@ async function checkSuitabilityProcedure (
                 },
             })),
         )).flat();
-        const cads: TypeAndContextAssertion[] = await getContextAssertionDefaults(ctx, vertex, relevantSubentries);
+        const cads: TypeAndContextAssertion[] = await getContextAssertionDefaults(ctx, relevantSubentries);
         /**
          * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
          * Per ITU X.501 (2016), Section 8.9.2.2.
@@ -818,7 +818,7 @@ async function checkSuitabilityProcedure (
                     },
                 })),
             )).flat();
-            const cads: TypeAndContextAssertion[] = await getContextAssertionDefaults(ctx, vertex, relevantSubentries);
+            const cads: TypeAndContextAssertion[] = await getContextAssertionDefaults(ctx, relevantSubentries);
 
             /**
              * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.

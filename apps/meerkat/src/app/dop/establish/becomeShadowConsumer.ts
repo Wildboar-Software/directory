@@ -166,7 +166,7 @@ async function becomeShadowConsumer (
     scheduleShadowUpdates(ctx, agreement, ob_db_id, Number(obid.identifier), ob_time, false);
     // Already saved before this is function is called.
     // if (agreement.master) {
-    //     await saveAccessPoint(ctx, agreement.master, Knowledge.OB_SHADOW_MASTER, currentRoot.dse.id); // TODO: What type should this be?
+    //     await saveAccessPoint(ctx, agreement.master, Knowledge.OB_SHADOW_MASTER, currentRoot.dse.id);
     // }
     return currentRoot;
 }

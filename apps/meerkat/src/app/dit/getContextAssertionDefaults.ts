@@ -20,7 +20,6 @@ const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
  * This function retrieves the context assertion defaults for an entry.
  *
  * @param ctx The context object
- * @param entry The entry whose context assertion defaults are to be determined
  * @param relevantSubentries The subentries whose subtree specification selected
  *  the entry given by the `entry` parameter, in order of descending
  *  administrative point
@@ -32,7 +31,6 @@ const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 export
 async function getContextAssertionDefaults (
     ctx: Context,
-    entry: Vertex, // TODO: Remove unused parameter
     relevantSubentries: Vertex[],
 ): Promise<TypeAndContextAssertion[]> {
     const cadSubentries = relevantSubentries
