@@ -1,138 +1,78 @@
 import type { Context, ClientAssociation, Vertex, IndexableOID, Value } from "../types/index.js";
 import type { BOOLEAN, INTEGER } from "@wildboar/asn1";
-import {
-    Attribute,
-} from "@wildboar/x500/InformationFramework";
 import * as errors from "../types/index.js";
 import {
     id_at_objectClass,
-} from "@wildboar/x500/InformationFramework";
-import {
     id_sc_subentry,
-} from "@wildboar/x500/InformationFramework";
-import {
     id_oc_alias,
-} from "@wildboar/x500/InformationFramework";
-import {
     id_oc_parent,
-} from "@wildboar/x500/InformationFramework";
-import {
     id_oc_child,
-} from "@wildboar/x500/InformationFramework";
-import type {
-    AttributeType,
+    type AttributeType,
+    subentryNameForm,
+    type RelativeDistinguishedName,
+    AttributeUsage_userApplications,
+    ObjectClassKind_auxiliary,
+    id_oa_allAttributeTypes,
+    id_oa_collectiveExclusions,
+    administrativeRole,
+    hierarchyParent,
+    Context as X500Context,
+    subtreeSpecification,
+    _decode_SubtreeSpecification,
+    type OBJECT_CLASS,
+    type DistinguishedName,
+    id_ar_autonomousArea,
+    Attribute,
 } from "@wildboar/x500/InformationFramework";
 import {
     UpdateErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     UpdateProblem_objectClassViolation,
     UpdateProblem_namingViolation,
     UpdateProblem_familyRuleViolation,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     AttributeProblem_contextViolation,
     AttributeProblem_undefinedAttributeType,
     AttributeProblem_constraintViolation,
     AttributeProblem_invalidAttributeSyntax,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    AttributeUsage_userApplications,
-} from "@wildboar/x500/InformationFramework";
-import {
     AttributeErrorData_problems_Item,
-} from "@wildboar/x500/DirectoryAbstractService";
-import { ObjectIdentifier, OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import { AttributeErrorData } from "@wildboar/x500/DirectoryAbstractService";
-import {
     SecurityErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "./createSecurityParameters.js";
-import {
     updateError,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     securityError,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     attributeError,
+    NameErrorData,
+    NameProblem_invalidAttributeSyntax,
+    nameError,
+    AttributeErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
+import { ObjectIdentifier, type OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import createSecurityParameters from "./createSecurityParameters.js";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import validateObjectClasses from "./validateObjectClasses.js";
 import valuesFromAttribute from "./valuesFromAttribute.js";
 import getNamingMatcherGetter from "./getNamingMatcherGetter.js";
 import {
     subschema,
+    DITContextUseDescription,
+    governingStructureRule as gsrAttrType,
 } from "@wildboar/x500/SchemaAdministration";
 import getStructuralObjectClass from "./getStructuralObjectClass.js";
 import { checkNameForm } from "@wildboar/x500";
-import {
-    ObjectClassKind_auxiliary,
-} from "@wildboar/x500/InformationFramework";
-import {
-    DITContextUseDescription,
-} from "@wildboar/x500/SchemaAdministration";
-import {
-    id_oa_allAttributeTypes,
-} from "@wildboar/x500/InformationFramework";
 import getSubschemaSubentry from "../dit/getSubschemaSubentry.js";
-import {
-    administrativeRole,
-} from "@wildboar/x500/InformationFramework";
 import extensibleObject from "../ldap/extensibleObject.js";
 import attributeTypesPermittedForEveryEntry from "./attributeTypesPermittedForEveryEntry.js";
-import {
-    id_oa_collectiveExclusions,
-} from "@wildboar/x500/InformationFramework";
-import { id_aca_subentryACI } from "@wildboar/x500/BasicAccessControl";
-import { id_aca_prescriptiveACI } from "@wildboar/x500/BasicAccessControl";
-import {
-    hierarchyParent,
-} from "@wildboar/x500/InformationFramework";
-import {
-    NameErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    NameProblem_invalidAttributeSyntax,
-} from "@wildboar/x500/DirectoryAbstractService";
-import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
-import { id_ar_autonomousArea } from "@wildboar/x500/InformationFramework";
 import mayAddTopLeveDSE from "../authz/mayAddTopLevelDSE.js";
 import {
     id_aca_accessControlScheme,
+    id_aca_subentryACI,
+    id_aca_prescriptiveACI,
 } from "@wildboar/x500/BasicAccessControl";
-import {
-    Context as X500Context,
-} from "@wildboar/x500/InformationFramework";
-import { nameError } from "@wildboar/x500/DirectoryAbstractService";
-import {
-    subtreeSpecification,
-} from "@wildboar/x500/InformationFramework";
-import {
-    _decode_SubtreeSpecification,
-} from "@wildboar/x500/InformationFramework";
 import { strict as assert } from "node:assert";
-import {
-    subentryNameForm,
-} from "@wildboar/x500/InformationFramework";
 import { printInvokeId } from "../utils/printInvokeId.js";
-import type {
-    RelativeDistinguishedName,
-} from "@wildboar/x500/InformationFramework";
-import type {
-    InvokeId,
-} from "@wildboar/x500/CommonProtocolSpecification";
-import type {
-    OBJECT_CLASS,
-} from "@wildboar/x500/InformationFramework";
+import type { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
 import stringifyDN from "./stringifyDN.js";
 import groupByOID from "../utils/groupByOID.js";
 import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 import DOPAssociation from "../dop/DOPConnection.js";
-import { governingStructureRule as gsrAttrType } from "@wildboar/x500/SchemaAdministration";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
