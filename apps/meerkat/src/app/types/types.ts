@@ -1647,6 +1647,13 @@ interface Configuration {
          * implications.
          */
         boundDN: boolean;
+        /**
+         * Buffer size in bytes for the file log sink. Must be at least 1.
+         * Used when MEERKAT_LOG_FILE is set. Larger values can reduce
+         * write syscalls at the cost of more memory and potential log
+         * delay before flush.
+         */
+        fileBufferSize: number;
         options: Config<"meerkat" | string, "all" | string>;
         // level: LogLevel;
         // color: boolean;

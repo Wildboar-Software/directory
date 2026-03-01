@@ -862,6 +862,16 @@ log file.
 
 This has no effect if the `MEERKAT_LOG_FILE` environment variable is not set.
 
+## MEERKAT_LOG_FILE_BUFFER_SIZE
+
+The size in bytes of the in-memory buffer used when writing to the log file.
+Must be an integer greater than or equal to 1. Values less than 1 are treated
+as invalid and the default is used. The default is 8192. A larger buffer can
+reduce write syscalls and may improve throughput when logging heavily, at the
+cost of more memory and a short delay before log lines are flushed to disk.
+
+This has no effect if the `MEERKAT_LOG_FILE` environment variable is not set.
+
 ## MEERKAT_LOG_JSON
 
 Setting this to `1` will cause log messages to be logged in JSON format instead

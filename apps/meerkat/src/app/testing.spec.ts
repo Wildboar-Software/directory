@@ -501,6 +501,7 @@ const config: Configuration = {
     },
     log: {
         boundDN: true,
+        fileBufferSize: 8192,
         options: {
             sinks: {
                 all: getConsoleSink(),

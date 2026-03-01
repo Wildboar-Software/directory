@@ -538,6 +538,14 @@ const logTimestamp: boolean = isSystemdService
     ? (process.env.MEERKAT_LOG_TIMESTAMP === "1")
     : (process.env.MEERKAT_LOG_TIMESTAMP !== "0");
 
+const DEFAULT_LOG_FILE_BUFFER_SIZE = 8192;
+const logFileBufferSize: number = (() => {
+    const raw = process.env.MEERKAT_LOG_FILE_BUFFER_SIZE;
+    if (raw === undefined || raw === "") return DEFAULT_LOG_FILE_BUFFER_SIZE;
+    const n = Number.parseInt(raw, 10);
+    return (Number.isNaN(n) || n < 1) ? DEFAULT_LOG_FILE_BUFFER_SIZE : n;
+})();
+
 const syslogLevels = new Map([
     ["T", "<7>"],
     ["D", "<7>"],
@@ -611,6 +619,7 @@ const config: Configuration = {
     },
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
+        fileBufferSize: logFileBufferSize,
         options: {
             sinks: {
                 ...(process.env.MEERKAT_NO_CONSOLE === "1")
@@ -645,7 +654,7 @@ const config: Configuration = {
                             maxSize: Number.parseInt(process.env.MEERKAT_LOG_FILE_MAX_SIZE ?? "1000000", 10),
                             // Intentionally always JSON
                             formatter: jsonLinesFormatter,
-                            bufferSize: 8192, // TODO: Make this configurable
+                            bufferSize: logFileBufferSize,
                             flushInterval: 5000, // TODO: Make this configurable
                         })
                     }
