@@ -1080,6 +1080,14 @@ want to make this much larger than three, otherwise nefarious users could use
 malicious search requests with a huge number of relaxations or tightenings to
 overwhelm your DSA with bogus search re-evaluations.
 
+## MEERKAT_MAX_USED_INVOKE_IDS
+
+The maximum number of recently used invoke IDs to keep in memory before the set
+is cleared. Meerkat DSA tracks invoke IDs used for outbound operations to avoid
+reusing them; when the count exceeds this value, the set is cleared to prevent
+unbounded memory use. Must be a non-negative integer. Defaults to 10000 if
+unset. Invalid or negative values are treated as 10000.
+
 ## MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING
 
 The integer representation of the minimum authentication level required for

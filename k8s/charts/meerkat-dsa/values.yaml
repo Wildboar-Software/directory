@@ -167,6 +167,7 @@ max_idm_pdu_size: "1000000"
 max_idm_segments: 10
 max_pre_bind_requests: 0
 max_relaxations: 3
+max_used_invoke_ids: 10000
 min_auth_level_for_chaining: 1
 min_auth_level_for_ob: 1
 min_auth_level_for_disp: 1

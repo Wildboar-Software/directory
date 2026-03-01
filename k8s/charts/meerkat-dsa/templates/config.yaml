@@ -93,6 +93,7 @@ data:
   max_idm_segments: {{ .Values.max_idm_segments | default 10 | quote }}
   max_pre_bind_requests: {{ .Values.max_pre_bind_requests | quote }}
   max_relaxations: {{ .Values.max_relaxations | default 3 | quote }}
+  max_used_invoke_ids: {{ .Values.max_used_invoke_ids | default 10000 | quote }}
   min_auth_level_for_chaining: {{ .Values.min_auth_level_for_chaining | quote }}
   min_auth_level_for_disp: {{ .Values.min_auth_level_for_disp | quote }}
   min_auth_level_for_ob: {{ .Values.min_auth_level_for_ob | quote }}

@@ -26,7 +26,7 @@ function generateUnusedInvokeID (ctx: Context): number {
     while (ctx.usedInvokeIDs?.has(invokeID)) {
         invokeID = crypto.randomInt(MAX_INVOKE_ID);
     }
-    if (ctx.usedInvokeIDs.size > 10000) { // TODO: Make this customizable.
+    if (ctx.usedInvokeIDs.size > ctx.config.maxUsedInvokeIDs) {
         ctx.usedInvokeIDs.clear();
     }
     ctx.usedInvokeIDs.add(invokeID);

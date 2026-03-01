@@ -702,6 +702,12 @@ const config: Configuration = {
     maxConcurrentOperationsPerConnection: process.env.MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION
         ? Number.parseInt(process.env.MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION)
         : Infinity,
+    maxUsedInvokeIDs: (() => {
+        const raw = process.env.MEERKAT_MAX_USED_INVOKE_IDS;
+        if (raw === undefined || raw === "") return 10000;
+        const n = Number.parseInt(raw, 10);
+        return Number.isNaN(n) || n < 0 ? 10000 : n;
+    })(),
     mostRecentVertexTTL: process.env.MEERKAT_MRU_VERTEX_TTL
         ? Number.parseInt(process.env.MEERKAT_MRU_VERTEX_TTL, 10)
         : 300,

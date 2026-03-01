@@ -1688,6 +1688,14 @@ interface Configuration {
     maxConcurrentOperationsPerConnection: number;
 
     /**
+     * The maximum number of recently used invoke IDs to retain in memory before
+     * clearing the set. When the set of used invoke IDs (for outbound
+     * operations) exceeds this value, it is cleared to avoid unbounded memory
+     * growth. Must be non-negative. See generateUnusedInvokeID.
+     */
+    maxUsedInvokeIDs: number;
+
+    /**
      * DSA configuration pertaining to digital signing of requests, responses,
      * and errors.
      *

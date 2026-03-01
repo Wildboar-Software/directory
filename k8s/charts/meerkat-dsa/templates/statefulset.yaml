@@ -510,6 +510,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: max_relaxations
                   optional: true
+            - name: MEERKAT_MAX_USED_INVOKE_IDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: max_used_invoke_ids
+                  optional: true
             - name: MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING
               valueFrom:
                 configMapKeyRef:
