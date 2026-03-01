@@ -179,7 +179,7 @@ interface OperationDispatcherState {
     NRcontinuationList: ContinuationReference[];
     SRcontinuationList: ContinuationReference[];
     admPoints: Vertex[];
-    referralRequests: TraceItem[]; // TODO: This doesn't seem to be used anywhere.
+    referralRequests: TraceItem[];
     emptyHierarchySelect: boolean;
 
     // Procedures need to modify these by reference:

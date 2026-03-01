@@ -71,6 +71,7 @@ import {
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics.js";
 import { stringifyDN } from "../x500/stringifyDN.js";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.js";
+import mergePOQ from "../x500/mergePOQ.js";
 
 export
 interface MergeListResultsReturn {
@@ -104,51 +105,6 @@ function getEntryCount (lr: ListResult): number {
     } else {
         return 0;
     }
-}
-
-// TODO: Dedupe
-/**
- * @summary Merge two partial outcome qualifiers
- * @description
- *
- * Joins two partial outcome qualifiers to create one `PartialOutcomeQualifier`.
- *
- * NOTE: This differs from the `mergePOQ()` defined in
- * `mergeSortAndPageSearch.ts`.
- *
- * @param a One `PartialOutcomeQualifier`
- * @param b The other `PartialOutcomeQualifier`
- * @returns A new, merged `PartialOutcomeQualifier`
- *
- * @function
- */
-function mergePOQ (a: PartialOutcomeQualifier, b: PartialOutcomeQualifier): PartialOutcomeQualifier {
-    return new PartialOutcomeQualifier(
-        a.limitProblem ?? b.limitProblem,
-        (a.unexplored?.length || b.unexplored?.length)
-            ? [
-                ...(a.unexplored ?? []),
-                ...(b.unexplored ?? []),
-            ]
-            : undefined,
-        (a.unavailableCriticalExtensions || b.unavailableCriticalExtensions),
-        (a.unknownErrors?.length || b.unknownErrors?.length)
-            ? [
-                ...(a.unknownErrors ?? []),
-                ...(b.unknownErrors ?? []),
-            ]
-            : undefined,
-        a.queryReference ?? b.queryReference,
-        a.overspecFilter ?? b.overspecFilter,
-        (a.notification?.length || b.notification?.length)
-            ? [
-                ...(a.notification ?? []),
-                ...(b.notification ?? []),
-            ]
-            : undefined,
-        // NOTE: entryCount is only for `search` operations.
-        undefined,
-    );
 }
 
 /**
