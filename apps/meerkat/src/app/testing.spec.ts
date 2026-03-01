@@ -862,6 +862,8 @@ const config: Configuration = {
         checkSignaturesOnResponses: (process.env.MEERKAT_CHAINING_CHECK_SIG !== "0"),
         itot: (process.env.MEERKAT_ITOT_CHAINING !== "0"),
         strongCredentialsTimeToLiveInSeconds: 60,
+        followReferralTTL: 0,
+        onlyFollowSignedReferrals: false,
     },
     ob: {
         minAuthRequired: parseAuthLevel(
@@ -1027,19 +1029,8 @@ export function getMockCtx (): Context {
     const newCtx: Context = {
         ...ctx,
     };
-    const dbfile = path.join(
-        fs.mkdtempSync(path.join(os.tmpdir(), 'meerkat-test-')),
-        "meerkat.db",
-    );
-    const dburl = `file:${dbfile}`;
-    execSync("npx prisma migrate deploy --schema apps/meerkat/src/prisma/schema.prisma", {
-        env: {
-            DATABASE_URL: dburl,
-            PATH: process.env.PATH,
-        },
-    });
     const adapter = new PrismaLibSql({
-        url: dburl,
+        url: process.env.VITE_DATABASE_URL!,
     }, {
         // Recommended choice here: https://www.prisma.io/docs/orm/overview/databases/sqlite#3-configure-timestamp-format-for-backward-compatibility
         timestampFormat: 'iso8601',

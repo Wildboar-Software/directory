@@ -24,5 +24,6 @@ export default defineConfig(() => ({
             reportsDirectory: '../../coverage/apps/meerkat',
             provider: 'v8' as const,
         },
+        globalSetup: './test/setup.ts',
     },
 }));
