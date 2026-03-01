@@ -1,7 +1,7 @@
 import type { Context } from "../../types/index.js";
 import { ASN1Element, BERElement } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
-import { getORNameElementsMatcher } from "./oRNameElementsMatch.js";
+import { orNameElementsMatcher } from "./oRNameElementsMatch.js";
 
 // DLExpansionHistory ::= SEQUENCE SIZE (1..ub-dl-expansions) OF DLExpansion
 
@@ -24,24 +24,21 @@ import { getORNameElementsMatcher } from "./oRNameElementsMatch.js";
 
 // TODO: This could be made more efficient by not decoding the assertion every time.
 export
-function getRedirectionOrDLExpansionElementsMatch (ctx: Context): EqualityMatcher {
-    const orNameMatcher = getORNameElementsMatcher(ctx);
-    return(
-        assertion: ASN1Element,
-        value: ASN1Element,
-    ): boolean => {
-        const values = value.sequenceOf.map((el) => {
-            const firstComponent = new BERElement();
-            firstComponent.fromBytes(el.value);
-            return firstComponent;
-        });
-        for (const v of values) {
-            if (orNameMatcher(assertion, v)) {
-                return true;
-            }
+function redirectionOrDLExpansionElementsMatcher(
+    assertion: ASN1Element,
+    value: ASN1Element,
+): boolean {
+    const values = value.sequenceOf.map((el) => {
+        const firstComponent = new BERElement();
+        firstComponent.fromBytes(el.value);
+        return firstComponent;
+    });
+    for (const v of values) {
+        if (orNameElementsMatcher(assertion, v)) {
+            return true;
         }
-        return false;
-    };
-}
+    }
+    return false;
+};
 
-export default getRedirectionOrDLExpansionElementsMatch;
+export default redirectionOrDLExpansionElementsMatcher;

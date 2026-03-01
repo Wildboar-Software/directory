@@ -272,7 +272,7 @@ import {
     circulationMemberCheckmarkMatch as circulationMemberCheckmarkMatchMatcher,
 } from "../matching/equality/circulationMemberCheckmarkMatch.js";
 import {
-    getCirculationMemberElementsMatcher,
+    circulationMemberElementsMatcher,
 } from "../matching/equality/circulationMemberElementsMatch.js";
 import {
     getCirculationMemberMatcher,
@@ -333,7 +333,7 @@ import {
     oRAddressSubstringElementsMatch as oRAddressSubstringElementsMatchMatcher,
 } from "../matching/equality/oRAddressSubstringElementsMatch.js";
 import {
-    getORDescriptorElementsMatcher,
+    orDescriptorElementsMatcher,
 } from "../matching/equality/oRDescriptorElementsMatch.js";
 import {
     getORDescriptorMatcher,
@@ -345,7 +345,7 @@ import {
     getORDescriptorSubstringElementsMatcher,
 } from "../matching/equality/oRDescriptorSubstringElementsMatch.js";
 import {
-    getORNameElementsMatcher,
+    orNameElementsMatcher,
 } from "../matching/equality/oRNameElementsMatch.js";
 import {
     getORNameExactMatcher,
@@ -360,7 +360,7 @@ import {
     getORNameSubstringElementsMatcher,
 } from "../matching/equality/oRNameSubstringElementsMatch.js";
 import {
-    getRecipientSpecifierElementsMatcher,
+    recipientSpecifierElementsMatcher,
 } from "../matching/equality/recipientSpecifierElementsMatch.js";
 import {
     getRecipientSpecifierMatcher,
@@ -372,7 +372,7 @@ import {
     getRecipientSpecifierSubstringElementsMatcher,
 } from "../matching/equality/recipientSpecifierSubstringElementsMatch.js";
 import {
-    getRedirectionOrDLExpansionElementsMatch
+    redirectionOrDLExpansionElementsMatcher
 } from "../matching/equality/redirectionOrDLExpansionElementsMatch.js";
 import {
     getRedirectionOrDLExpansionMatch,
@@ -601,11 +601,11 @@ function loadMatchingRules (ctx: Context): void {
         [ oRAddressElementsMatch, oRAddressElementsMatchMatcher ],
         [ oRAddressSubstringElementsMatch, oRAddressSubstringElementsMatchMatcher ],
         [ oRNameMatch, getORNameMatcher(ctx) ],
-        [ oRNameElementsMatch, getORNameElementsMatcher(ctx) ],
+        [ oRNameElementsMatch, orNameElementsMatcher ],
         [ oRNameSubstringElementsMatch, getORNameSubstringElementsMatcher(ctx) ],
         [ oRNameSingleElementMatch, oRNameSingleElementMatchMatcher ],
         [ redirectionOrDLExpansionMatch, getRedirectionOrDLExpansionMatch(ctx) ],
-        [ redirectionOrDLExpansionElementsMatch, getRedirectionOrDLExpansionElementsMatch(ctx) ],
+        [ redirectionOrDLExpansionElementsMatch, redirectionOrDLExpansionElementsMatcher ],
         [ redirectionOrDLExpansionSingleElementMatch, redirectionOrDLExpansionSingleElementMatchMatcher ],
         [ redirectionOrDLExpansionSubstringElementsMatch, getRedirectionOrDLExpansionSubstringElementsMatch(ctx) ],
         [ redirectionReasonMatch, redirectionReasonMatchMatcher ],
@@ -615,15 +615,15 @@ function loadMatchingRules (ctx: Context): void {
         [ iPMIdentifierMatch, getIPMIdentifierMatcher(ctx) ],
         [ iPMLocationMatch, iPMLocationMatchMatcher ],
         [ oRDescriptorMatch, getORDescriptorMatcher(ctx) ],
-        [ oRDescriptorElementsMatch, getORDescriptorElementsMatcher(ctx) ],
+        [ oRDescriptorElementsMatch, orDescriptorElementsMatcher ],
         [ oRDescriptorSubstringElementsMatch, getORDescriptorSubstringElementsMatcher(ctx) ],
         [ oRDescriptorSingleElementMatch, oRDescriptorSingleElementMatchMatcher ],
         [ recipientSpecifierMatch, getRecipientSpecifierMatcher(ctx) ],
-        [ recipientSpecifierElementsMatch, getRecipientSpecifierElementsMatcher(ctx) ],
+        [ recipientSpecifierElementsMatch, recipientSpecifierElementsMatcher ],
         [ recipientSpecifierSubstringElementsMatch, getRecipientSpecifierSubstringElementsMatcher(ctx) ],
         [ recipientSpecifierSingleElementMatch, recipientSpecifierSingleElementMatchMatcher ],
         [ circulationMemberMatch, getCirculationMemberMatcher(ctx) ],
-        [ circulationMemberElementsMatch, getCirculationMemberElementsMatcher(ctx) ],
+        [ circulationMemberElementsMatch, circulationMemberElementsMatcher ],
         [ circulationMemberSubstringElementsMatch, getCirculationMemberSubstringElementsMatcher(ctx) ],
         [ circulationMemberSingleElementMatch, circulationMemberSingleElementMatchMatcher ],
         [ circulationMemberCheckmarkMatch, circulationMemberCheckmarkMatchMatcher ],

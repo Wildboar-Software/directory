@@ -1,7 +1,5 @@
 import { ASN1Element, ASN1TagClass } from "@wildboar/asn1";
-import type { EqualityMatcher } from "@wildboar/x500";
-import { Context } from "../../types/index.js";
-import { getORDescriptorElementsMatcher } from "./oRDescriptorElementsMatch.js";
+import { orDescriptorElementsMatcher } from "./oRDescriptorElementsMatch.js";
 
 // RecipientSpecifier ::= SET {
 //     recipient              [0]  ORDescriptor,
@@ -21,25 +19,22 @@ import { getORDescriptorElementsMatcher } from "./oRDescriptorElementsMatch.js";
 // TelephoneNumber ::= PrintableString(SIZE (0..ub-telephone-number))
 
 export
-function getRecipientSpecifierElementsMatcher (ctx: Context): EqualityMatcher {
-    const orDescriptorMatcher = getORDescriptorElementsMatcher(ctx);
-    return (
-        assertion: ASN1Element,
-        value: ASN1Element,
-    ): boolean => {
-        const assertionRecipientElement = assertion.set.find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 0)
-        ));
-        const valueRecipientElement = value.set.find((el) => (
-            (el.tagClass === ASN1TagClass.context)
-            && (el.tagNumber === 0)
-        ));
-        if (!valueRecipientElement || !assertionRecipientElement) { // This should not happen, because it is a required field.
-            return false;
-        }
-        return orDescriptorMatcher(assertionRecipientElement, valueRecipientElement);
-    };
-}
+function recipientSpecifierElementsMatcher(
+    assertion: ASN1Element,
+    value: ASN1Element,
+): boolean {
+    const assertionRecipientElement = assertion.set.find((el) => (
+        (el.tagClass === ASN1TagClass.context)
+        && (el.tagNumber === 0)
+    ));
+    const valueRecipientElement = value.set.find((el) => (
+        (el.tagClass === ASN1TagClass.context)
+        && (el.tagNumber === 0)
+    ));
+    if (!valueRecipientElement || !assertionRecipientElement) { // This should not happen, because it is a required field.
+        return false;
+    }
+    return orDescriptorElementsMatcher(assertionRecipientElement, valueRecipientElement);
+};
 
-export default getRecipientSpecifierElementsMatcher;
+export default recipientSpecifierElementsMatcher;
