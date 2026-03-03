@@ -22,7 +22,7 @@ import type {
 } from "@wildboar/x500/InformationFramework";
 import { compareDistinguishedName } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
-import { addMilliseconds, differenceInMilliseconds } from "date-fns";
+import { addMilliseconds, addMinutes, differenceInMilliseconds } from "date-fns";
 import {
     modifyOperationalBinding,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -32,8 +32,6 @@ import {
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     MasterOrShadowAccessPoint,
-} from "@wildboar/x500/DistributedOperations";
-import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/DistributedOperations";
 import {
@@ -50,26 +48,14 @@ import {
 import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     UpdateErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     UpdateProblem_affectsMultipleDSAs,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     updateError,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ServiceErrorData,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     ServiceProblem_unavailable,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     operationalBindingError,
-} from "@wildboar/x500/OperationalBindingManagement";
-import {
     OpBindingErrorParam_problem_invalidNewID,
 } from "@wildboar/x500/OperationalBindingManagement";
 import { OperationalBindingInitiator } from "../generated/client.js";
@@ -78,19 +64,14 @@ import {
 } from "@wildboar/x500/AuthenticationFramework";
 import { getDateFromTime } from "@wildboar/x500";
 import { rdnToJson } from "../x500/rdnToJson.js";
-import { compareCode, codeToString } from "@wildboar/x500";
-import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { compareCode, codeToString, getOptionallyProtectedValue } from "@wildboar/x500";
 import { sleep } from "../utils/sleep.js";
-import { abortReasonToString, rejectReasonToString, ResultParameters } from "@wildboar/rose-transport";
-import {
-    ModifyOperationalBindingResult,
-} from "@wildboar/x500/OperationalBindingManagement";
+import { abortReasonToString, rejectReasonToString } from "@wildboar/rose-transport";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding.js";
 import { dSAProblem } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_targetDsaUnavailable,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import stringifyDN from "../x500/stringifyDN.js";
 import util from "node:util";
 
@@ -128,21 +109,17 @@ async function updateSuperiorDSA (
     aliasDereferenced: boolean,
     options?: UpdateSuperiorOptions,
     signErrors: boolean = false,
-): Promise<ResultParameters<ModifyOperationalBindingResult>> {
+): Promise<void> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
     const timeoutTime: Date | undefined = connectionTimeout
         ? addMilliseconds(startTime, connectionTimeout)
-        : undefined;
+        : addMinutes(startTime, 1);
     let noHOBS: boolean = true;
-    const activeHOBs = await getRelevantOperationalBindings(ctx, false);
-    // TODO: Make these all update in parallel.
-    for (const hob of activeHOBs) {
+    const activeHOBs = await getRelevantOperationalBindings(ctx, false, true);
+    await Promise.all(activeHOBs.map(async (hob) => {
         if (!hob.access_point) {
-            continue;
-        }
-        if (hob.binding_type === id_op_binding_non_specific_hierarchical.toString()) {
-            continue;
+            return;
         }
         const argreementElement = new BERElement();
         argreementElement.fromBytes(hob.agreement_ber);
@@ -152,7 +129,7 @@ async function updateSuperiorDSA (
             agreement.rdn,
         ];
         if (!compareDistinguishedName(agreementDN, affectedDN, getNamingMatcherGetter(ctx))) {
-            continue;
+            return;
         }
         // Beyond this point, this operational binding is definitely relevant
         // to the `affectedDN`.
@@ -164,7 +141,7 @@ async function updateSuperiorDSA (
         );
 
         const accessPointElement = new BERElement();
-        accessPointElement.fromBytes(hob.access_point.ber);
+        accessPointElement.fromBytes(hob.access_point!.ber);
         const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
 
         const logInfo = {
@@ -182,7 +159,7 @@ async function updateSuperiorDSA (
                     obid: hob.binding_identifier.toString(),
                     version: hob.binding_version.toString(),
                 }));
-                continue;
+                return;
             }
             assert(subr.immediateSuperior);
             // const assn: Connection | null = await connect(ctx, accessPoint, dop_ip["&id"]!, {
@@ -190,7 +167,15 @@ async function updateSuperiorDSA (
             //     tlsOptional: ctx.config.chaining.tlsOptional,
             //     signErrors,
             // });
-            const assn = await bindForOBM(ctx, undefined, undefined, accessPoint, aliasDereferenced, signErrors);
+            const assn = await bindForOBM(
+                ctx,
+                undefined,
+                undefined,
+                accessPoint,
+                aliasDereferenced,
+                signErrors,
+                differenceInMilliseconds(timeoutTime, new Date()),
+            );
             if (!assn) {
                 throw new ServiceError(
                     ctx.i18n.t("err:could_not_connect"),
@@ -216,10 +201,7 @@ async function updateSuperiorDSA (
                     signErrors,
                 );
             }
-            // TODO: Use this.
-            const timeRemainingForOperation: number | undefined = timeoutTime
-                ? differenceInMilliseconds(timeoutTime, new Date())
-                : undefined;
+            let timeRemainingForOperation: number = differenceInMilliseconds(timeoutTime, new Date());
             const cpInfo: Attribute[] = [];
             const subentryInfos: SubentryInfo[] = [];
 
@@ -292,7 +274,29 @@ async function updateSuperiorDSA (
             });
             // A binary exponential backoff loop for retrying failed updates.
             let bindingVersion = hob.binding_version;
+
             for (const backoff of updateTimingBackoffInSeconds) {
+                if (timeRemainingForOperation <= 1) {
+                    throw new UpdateError(
+                        ctx.i18n.t("err:failed_to_update_superior_dsa", { context: "failed" }),
+                        new UpdateErrorData(
+                            UpdateProblem_affectsMultipleDSAs, // NotIdealProblemCode
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                undefined,
+                                undefined,
+                                updateError["&errorCode"],
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            aliasDereferenced,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
                 const sp = createSecurityParameters(
                     ctx,
                     true,
@@ -311,7 +315,9 @@ async function updateSuperiorDSA (
                     securityParameters: sp,
                     cert_path: ctx.config.signing.certPath,
                     key: ctx.config.signing.key,
+                    timeout: timeRemainingForOperation,
                 });
+                timeRemainingForOperation = differenceInMilliseconds(timeoutTime, new Date());
                 // const response = await assn.writeOperation({
                 //     opCode: modifyOperationalBinding["&operationCode"]!,
                 //     argument: _encode_ModifyOperationalBindingArgument(arg, DER),
@@ -359,7 +365,7 @@ async function updateSuperiorDSA (
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
                     });
-                    return response.result;
+                    break;
                 } else if ("error" in response) {
                     if (compareCode(response.error.code, operationalBindingError["&errorCode"]!)) {
                         const obError = operationalBindingError.decoderFor["&ParameterType"]!(response.error.parameter);
@@ -445,32 +451,31 @@ async function updateSuperiorDSA (
                 e: e.message,
             }));
         }
-    }
-    throw new UpdateError(
-        noHOBS
-            ? ctx.i18n.t("err:failed_to_update_superior_dsa", {
-                context: "no_hob",
-            })
-            : ctx.i18n.t("err:failed_to_update_superior_dsa", {
-                context: "failed",
-            }),
-        new UpdateErrorData(
-            UpdateProblem_affectsMultipleDSAs,
-            undefined,
-            [],
-            createSecurityParameters(
-                ctx,
-                signErrors,
+    }));
+    /* If there were no HOBs associated with this DSE, how did we even get here?
+    All code paths check that the affected DSE is a cp or subentry of a cp. */
+    if (noHOBS) {
+        throw new UpdateError(
+            ctx.i18n.t("err:failed_to_update_superior_dsa", { context: "no_hob" }),
+            new UpdateErrorData(
+                UpdateProblem_affectsMultipleDSAs, // NotIdealProblemCode
                 undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    undefined,
+                    undefined,
+                    updateError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                aliasDereferenced,
                 undefined,
-                updateError["&errorCode"],
             ),
-            ctx.dsa.accessPoint.ae_title.rdnSequence,
-            aliasDereferenced,
-            undefined,
-        ),
-        signErrors,
-    );
+            signErrors,
+        );
+    }
+
 }
 
 export default updateSuperiorDSA;

@@ -5,6 +5,24 @@
 Note that for all changes you make to `meerkat-docs`, there may be equivalent
 documentation in `docs`.
 
+## Use of Problem Codes
+
+It seems like X.500 directories can have a lot of error conditions that do not
+fit neatly into the existing problem codes used in errors. Whenever you feel
+forced to pick a bad choice of problem code for something, add the comment
+`NotIdealProblemCode` after it. I plan to collect all of these scenarios
+later and document them as a deficiency of the X.500 specifications.
+
+## Logging
+
+The logging, in each locale, is split into `log` and `err` namespaces. The
+`err` namespace is for error messages that will be returned to the DUA. As
+such, these error messages are supposed to be as non-technical as possible,
+and not disclose any DSA internals or sensitive information, such as the IDs
+of entries in the underlying database. The `log` namespace is for the eyes of
+administrators, so it can contain sensitive or internal data; often times, it
+_should_ include this data.
+
 ## Adding a New Configuration Option / Environment Variable
 
 In no particular order:

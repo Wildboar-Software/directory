@@ -19,7 +19,7 @@ import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/Director
  * @function
  */
 export
-function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boolean = true) {
+function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boolean = true, onlySpecific: boolean = false) {
     const now = new Date();
     return ctx.db.operationalBinding.findMany({
         where: {
@@ -30,16 +30,21 @@ function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boole
             next_version: {
                 none: {},
             },
-            binding_type: {
-                in: [
-                    id_op_binding_hierarchical.toString(),
-                    id_op_binding_non_specific_hierarchical.toString(),
-                ],
-            },
+            binding_type: onlySpecific
+                ? id_op_binding_hierarchical.toString()
+                : {
+                    in: [
+                        id_op_binding_hierarchical.toString(),
+                        id_op_binding_non_specific_hierarchical.toString(),
+                    ],
+                },
             accepted: true,
             terminated_time: null,
             validity_start: {
                 lte: now,
+            },
+            access_point: {
+                isNot: null,
             },
             AND: [
                 {

@@ -111,3 +111,10 @@ I should have used a key-value store instead.
 - I wish I had just used the `Attribute` construct instead, or something like
   it, since directories do seem to operate on whole attributes at a time.
 - Password policy applies _per password attribute_.
+- Operational binding updates when context prefixes should be batched. I was
+  having problems with race conditions because multiple simultaneous updates
+  under a cp or subentry would cause the `version` of the operational binding
+  to be incremented by one out-of-sync with each other. These updates really
+  have to be batched with a large gap between them so that this doesn't
+  happen. X.518 specifically allows these OB updates to be non-immediate.
+  
