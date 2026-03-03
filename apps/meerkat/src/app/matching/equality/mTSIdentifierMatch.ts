@@ -3,6 +3,7 @@ import type { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_MTSIdentifier,
 } from "@wildboar/x400/MTSAbstractService";
+import { x121dcc2iso2c } from "../../utils/x121dcc2iso.js";
 
 // MTSIdentifier ::= [APPLICATION 4]  SEQUENCE {
 //     global-domain-identifier  GlobalDomainIdentifier,
@@ -39,14 +40,15 @@ const mTSIdentifierMatch: EqualityMatcher = (
     const vglob = v.global_domain_identifier;
 
     // Country Comparison
-    // TODO: Support translation between ISO-3166 CC and X.121 DCC Code
     const aCountry = ("x121_dcc_code" in aglob.country_name)
         ? aglob.country_name.x121_dcc_code
         : aglob.country_name.iso_3166_alpha2_code;
     const vCountry = ("x121_dcc_code" in vglob.country_name)
         ? vglob.country_name.x121_dcc_code
         : vglob.country_name.iso_3166_alpha2_code;
-    if (aCountry !== vCountry) {
+    const aCountryISO = x121dcc2iso2c.get(aCountry) ?? aCountry;
+    const vCountryISO = x121dcc2iso2c.get(vCountry) ?? vCountry;
+    if (aCountryISO !== vCountryISO) {
         return false;
     }
 

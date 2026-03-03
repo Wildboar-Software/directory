@@ -183,6 +183,7 @@ import {
     terminal_type,
 } from "@wildboar/x400/MTSAbstractService";
 import _ from "lodash";
+import { x121dcc2iso2c } from "../../utils/x121dcc2iso.js";
 
 function bothUndefinedOrSame (a: Uint8Array | undefined, b: Uint8Array | undefined): boolean {
     return (
@@ -1111,50 +1112,18 @@ function compareBuiltInStandardAttributes (
     return true;
 }
 
-// export
-// function oRAddressesMatch (a: ORAddress, b: ORAddress): boolean {
-//     if (a.extension_attributes?.length !== b.extension_attributes?.length) {
-//         return false;
-//     }
-//     if (a.built_in_domain_defined_attributes?.length !== b.built_in_domain_defined_attributes?.length) {
-//         return false;
-//     }
-//     if (!compareBuiltInStandardAttributes(a.built_in_standard_attributes, b.built_in_standard_attributes)) {
-//         return false;
-//     }
-//     if (a.built_in_domain_defined_attributes) {
-//         const abiddaIndex: Map<string, string> = new Map();
-//         for (const bidda of a.built_in_domain_defined_attributes) {
-//             // I can't find much information on how these are even used at all.
-//             const key = bidda.type_.trim().toUpperCase();
-//             if (abiddaIndex.has(key)) {
-//                 return false; // Duplicate values.
-//             } else {
-//                 abiddaIndex.set(key, bidda.value);
-//             }
-//         }
-//         for (const bbidda of b.built_in_domain_defined_attributes ?? []) {
-//             const key = bbidda.type_.trim().toUpperCase();
-//             const avalue = abiddaIndex.get(key);
-//             if (avalue !== bbidda.value) {
-//                 return false;
-//             }
-//         }
-//     }
-
-
-//     return true;
-// }
-
 export
 function orAddressToInfo (addr: ORAddress): ORAddressInfo | null {
     let ret: ORAddressInfo = {};
     const bisa = addr.built_in_standard_attributes;
     if (bisa.country_name) {
         if ("x121_dcc_code" in bisa.country_name) {
-            ret.countryName = bisa.country_name.x121_dcc_code;
-        } else {
+            ret.countryName = x121dcc2iso2c.get(bisa.country_name.x121_dcc_code)
+                ?? bisa.country_name.x121_dcc_code;
+        } else if ("iso_3166_alpha2_code" in bisa.country_name) {
             ret.countryName = bisa.country_name.iso_3166_alpha2_code;
+        } else {
+            return null;
         }
     }
     if (bisa.administration_domain_name) {
