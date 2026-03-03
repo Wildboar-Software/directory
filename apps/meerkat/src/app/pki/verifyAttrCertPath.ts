@@ -962,7 +962,6 @@ async function verifyAttrCertPath (
         // Then check if the SOA cert is present at the end.
         // If there is no SOA cert, just start i off at 0.
 
-
         // let issuer_cert: Certificate = soa_cert;
         // for (let i = 1; i < pmi_path.length; i++) {
         //     const arc = await hydrate_attr_cert_path_arc(pmi_path[i]);
@@ -970,7 +969,6 @@ async function verifyAttrCertPath (
         //     const attr_cert = arc.attributeCertificate;
         //     // TODO: Check that attr_cert is issued by issuer_cert
         //     // TODO: Check that attr_cert has indirectIssuer extension
-        //     // TODO:
         // }
 
         // for (const arc of pmi_path.slice(1)) { // slice(1) because the last arc is the SOA. It is infallible.

@@ -110,3 +110,4 @@ I should have used a key-value store instead.
     and it has been such a nightmare maintaining all these classes.
 - I wish I had just used the `Attribute` construct instead, or something like
   it, since directories do seem to operate on whole attributes at a time.
+- Password policy applies _per password attribute_.

@@ -955,6 +955,7 @@ async function modifyOperationalBinding (
                     );
                 }
             }
+            await updateLocalSubr(ctx, assn, invokeId, oldAgreement, newAgreement, init, signErrors);
             // We auto-accept changes to the subordinate entry by the subordinate DSA.
             await ctx.db.operationalBinding.update({
                 where: {
@@ -977,7 +978,6 @@ async function modifyOperationalBinding (
                     },
                 },
             });
-            await updateLocalSubr(ctx, assn, invokeId, oldAgreement, newAgreement, init, signErrors);
             ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
                 context: "succeeded",
                 type: data.bindingType.toString(),

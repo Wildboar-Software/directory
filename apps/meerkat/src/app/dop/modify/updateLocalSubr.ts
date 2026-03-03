@@ -34,6 +34,7 @@ import {
 } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     OpBindingErrorParam_problem_invalidAgreement,
+    OpBindingErrorParam_problem_currentlyNotDecidable,
 } from "@wildboar/x500/OperationalBindingManagement";
 import {
     id_err_operationalBindingError,
@@ -130,7 +131,30 @@ async function updateLocalSubr (
     const oldSubordinate = await dnToVertex(ctx, superior, [ oldAgreement.rdn ]);
     if (!oldSubordinate) {
         // The old subordinate should not have disappeared.
-        throw new Error("63c307c5-35b4-41b8-94e6-f95b1828c951"); // TODO: Different error.
+        throw new OperationalBindingError(
+            ctx.i18n.t("err:old_subr_dse_not_found"),
+            new OpBindingErrorParam(
+                /* There is no great error code choice here. I picked this one
+                because a corruption of the local DSAIT seems like a
+                "try again later when its fixed" kind of error. */
+                OpBindingErrorParam_problem_currentlyNotDecidable,
+                id_op_binding_non_specific_hierarchical,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                false,
+                undefined,
+            ),
+            signErrors,
+        );
     }
     if (!compareRDN(oldAgreement.rdn, newAgreement.rdn, getNamingMatcherGetter(ctx))) {
         // If newAgreement.rdn is different, change the RDN of the existing entry.

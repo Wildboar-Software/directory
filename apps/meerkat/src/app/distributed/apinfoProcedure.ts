@@ -717,7 +717,6 @@ async function apinfoProcedure (
                             referralData.reference.operationProgress,
                         )),
                     ];
-                    // TODO: Deprecate this loop detection function.
                     if (isLoopDetected(ctx, tenativeTrace)) {
                         throw new errors.ServiceError(
                             ctx.i18n.t("err:loop_detected"),

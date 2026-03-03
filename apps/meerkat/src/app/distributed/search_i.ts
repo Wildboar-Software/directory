@@ -369,7 +369,7 @@ import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUs
 import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn.js";
 import util from "node:util";
 
-// NOTE: This will require serious changes when service specific areas are implemented.
+// TODO: This will require serious changes when service specific areas are implemented.
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = id_oc_parent.toString();
@@ -2013,7 +2013,12 @@ async function search_i_ex (
         )
         : undefined;
 
+    const attributesByFamilyMember: Map<number, EntryInformation> = new Map();
+
     const readFamilyMemberInfo = async (vertex: Vertex): Promise<EntryInformation> => {
+        if (attributesByFamilyMember.has(vertex.dse.id)) {
+            return attributesByFamilyMember.get(vertex.dse.id)!;
+        }
         const infoItems: EntryInformation_information_Item[] = [];
         const {
             userAttributes,
@@ -2039,13 +2044,15 @@ async function search_i_ex (
          * This is the entry information that is used for filtering, not necessarily
          * what is returned by the search (via `selection`).
          */
-        return new EntryInformation(
+        const ret = new EntryInformation(
             {
                 rdnSequence: getDistinguishedName(vertex),
             },
             undefined,
             infoItems,
         );
+        attributesByFamilyMember.set(vertex.dse.id, ret);
+        return ret;
     };
     const subschemaSubentry = relevantSubentries
         .filter((sub) => sub.dse.objectClass.has(id_soc_subschema.toString()))
@@ -2372,7 +2379,6 @@ async function search_i_ex (
                 });
                 continue; // This should never happen, but just handling it in case it does.
             }
-            // TODO: Cache attributes from previous reads.
             const familyInfos = await Promise.all(
                 familySubset.map((member) => readFamilyMemberInfo(member)),
             );
