@@ -4,7 +4,7 @@ import { EqualityMatcher, teletexToString } from "@wildboar/x500";
 import { _encode_ORName } from "@wildboar/x400/MTSAbstractService";
 import { _decode_ORDescriptor } from "@wildboar/x400/IPMSInformationObjects";
 import { Context } from "../../types/index.js";
-import getORNameMatcher from "./oRNameMatch.js";
+import { getORNameMatcherTyped } from "./oRNameMatch.js";
 
 // ORDescriptor ::= SET {
 //     formal-name       ORName OPTIONAL,
@@ -18,7 +18,7 @@ import getORNameMatcher from "./oRNameMatch.js";
 
 export
 function getORDescriptorMatcher (ctx: Context): EqualityMatcher {
-    const orNameMatcher = getORNameMatcher(ctx);
+    const orNameMatcher = getORNameMatcherTyped(ctx);
     return (
         assertion: ASN1Element,
         value: ASN1Element,
@@ -26,9 +26,7 @@ function getORDescriptorMatcher (ctx: Context): EqualityMatcher {
         const a = _decode_ORDescriptor(assertion);
         const v = _decode_ORDescriptor(value);
         if (!!a.formal_name && !!v.formal_name) {
-            const aname = _encode_ORName(a.formal_name, DER);
-            const vname = _encode_ORName(v.formal_name, DER);
-            return orNameMatcher(aname, vname);
+            return orNameMatcher(a.formal_name, v.formal_name);
         }
         if (!!a.free_form_name && !!v.free_form_name) {
             const aname = teletexToString(a.free_form_name).trim().replace(/\s+/g, " ").toUpperCase();

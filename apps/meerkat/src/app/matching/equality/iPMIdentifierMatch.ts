@@ -1,5 +1,4 @@
 import type { ASN1Element } from "@wildboar/asn1";
-import { DER } from "@wildboar/asn1/functional";
 import type { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_IPMIdentifier,
@@ -7,7 +6,7 @@ import {
 import { _encode_ORName } from "@wildboar/x400/MTSAbstractService";
 import { strict as assert } from "node:assert";
 import { Context } from "../../types/index.js";
-import getORNameMatcher from "./oRNameMatch.js";
+import { getORNameMatcherTyped } from "./oRNameMatch.js";
 
 // IPMIdentifier ::= [APPLICATION 11]  SET {
 //     user                      ORName OPTIONAL,
@@ -18,7 +17,7 @@ import getORNameMatcher from "./oRNameMatch.js";
 
 export
 function getIPMIdentifierMatcher (ctx: Context): EqualityMatcher {
-    const orNameMatcher = getORNameMatcher(ctx);
+    const orNameMatcher = getORNameMatcherTyped(ctx);
     return (
         assertion: ASN1Element,
         value: ASN1Element,
@@ -35,10 +34,7 @@ function getIPMIdentifierMatcher (ctx: Context): EqualityMatcher {
         }
         if (a.user) {
             assert(v.user);
-            // TODO: Re-encoding this is not the most efficient way to do this...
-            const aname = _encode_ORName(a.user, DER);
-            const vname = _encode_ORName(v.user, DER);
-            return orNameMatcher(aname, vname);
+            return orNameMatcher(a.user, v.user);
         }
         return true;
     };

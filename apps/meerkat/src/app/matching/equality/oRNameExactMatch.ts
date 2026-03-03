@@ -69,14 +69,10 @@ function getORNameExactMatcher (ctx: Context): EqualityMatcher {
             if (!namesMatch) {
                 return false;
             }
-            const a2 = _decode_ORAddress(assertion);
-            const v2 = _decode_ORAddress(value); // TODO: Make ORName a subclass of ORAddress.
-            return orAddressesMatch(a2, v2);
+            return orAddressesMatch(a, v);
         }
         if (orAddressAsserted) {
-            const a2 = _decode_ORAddress(assertion);
-            const v2 = _decode_ORAddress(value); // TODO: Make ORName a subclass of ORAddress.
-            return orAddressesMatch(a2, v2);
+            return orAddressesMatch(a, v);
         }
         return true;
     };

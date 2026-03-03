@@ -6,7 +6,7 @@ const matcher: EqualityMatcher = (
     assertion: ASN1Element,
     value: ASN1Element,
 ): boolean => {
-    return false; // Not implemented.
+    return false; // FIXME: Not implemented.
 };
 
 export default matcher;

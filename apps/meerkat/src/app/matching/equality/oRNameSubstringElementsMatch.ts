@@ -16,8 +16,8 @@ function getORNameSubstringElementsMatcher (ctx: Context): EqualityMatcher {
         value: ASN1Element,
     ): boolean => {
         const a = _decode_ORName(assertion);
+        const v = _decode_ORName(value);
         if (a.directory_name) {
-            const v = _decode_ORName(value);
             if (v.directory_name) {
                 // TODO: Match upon RDN presence substrings. (This could be an approximate matching rule implementation.)
                 const namesMatch = compareDistinguishedName(
@@ -28,14 +28,10 @@ function getORNameSubstringElementsMatcher (ctx: Context): EqualityMatcher {
                 if (namesMatch) {
                     return true; // Either the DN or ORAddress must match.
                 }
-                const a2 = _decode_ORAddress(assertion);
-                const v2 = _decode_ORAddress(value); // TODO: Make ORName a subclass of ORAddress.
-                return orAddressIsSubstringSubset(a2, v2);
+                return orAddressIsSubstringSubset(a, v);
             }
         }
-        const a2 = _decode_ORAddress(assertion);
-        const v2 = _decode_ORAddress(value); // TODO: Make ORName a subclass of ORAddress.
-        return orAddressIsSubstringSubset(a2, v2);
+        return orAddressIsSubstringSubset(a, v);
     };
 }
 

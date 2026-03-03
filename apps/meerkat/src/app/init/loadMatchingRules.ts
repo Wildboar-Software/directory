@@ -375,10 +375,10 @@ import {
     redirectionOrDLExpansionElementsMatcher
 } from "../matching/equality/redirectionOrDLExpansionElementsMatch.js";
 import {
-    getRedirectionOrDLExpansionMatch,
+    redirectionOrDLExpansionMatcher,
 } from "../matching/equality/redirectionOrDLExpansionMatch.js";
 import {
-    redirectionOrDLExpansionSingleElementMatch as redirectionOrDLExpansionSingleElementMatchMatcher,
+    redirectionOrDLExpansionSingleElementMatcher,
 } from "../matching/equality/redirectionOrDLExpansionSingleElementMatch.js";
 import {
     getRedirectionOrDLExpansionSubstringElementsMatch,
@@ -604,9 +604,9 @@ function loadMatchingRules (ctx: Context): void {
         [ oRNameElementsMatch, orNameElementsMatcher ],
         [ oRNameSubstringElementsMatch, getORNameSubstringElementsMatcher(ctx) ],
         [ oRNameSingleElementMatch, oRNameSingleElementMatchMatcher ],
-        [ redirectionOrDLExpansionMatch, getRedirectionOrDLExpansionMatch(ctx) ],
-        [ redirectionOrDLExpansionElementsMatch, redirectionOrDLExpansionElementsMatcher ],
-        [ redirectionOrDLExpansionSingleElementMatch, redirectionOrDLExpansionSingleElementMatchMatcher ],
+        [ redirectionOrDLExpansionMatch, redirectionOrDLExpansionElementsMatcher(ctx) ],
+        [ redirectionOrDLExpansionElementsMatch, redirectionOrDLExpansionMatcher(ctx) ],
+        [ redirectionOrDLExpansionSingleElementMatch, redirectionOrDLExpansionSingleElementMatcher(ctx) ],
         [ redirectionOrDLExpansionSubstringElementsMatch, getRedirectionOrDLExpansionSubstringElementsMatch(ctx) ],
         [ redirectionReasonMatch, redirectionReasonMatchMatcher ],
         [ mTSIdentifierMatch, mTSIdentifierMatchMatcher ],

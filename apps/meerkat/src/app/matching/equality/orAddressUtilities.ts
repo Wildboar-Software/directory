@@ -1,5 +1,5 @@
-import type { ASN1Element, INTEGER } from "@wildboar/asn1";
-import { teletexToString } from "@wildboar/x500";
+import type { ASN1Element, INTEGER, OCTET_STRING } from "@wildboar/asn1";
+import { teletexToString, type EqualityMatcher } from "@wildboar/x500";
 import {
     MSString,
 } from "@wildboar/x400/MSMatchingRules";
@@ -183,6 +183,36 @@ import {
     terminal_type,
 } from "@wildboar/x400/MTSAbstractService";
 import _ from "lodash";
+
+function bothUndefinedOrSame (a: Uint8Array | undefined, b: Uint8Array | undefined): boolean {
+    return (
+        ((a === undefined) && (b === undefined))
+        || (
+            !!(a && b)
+            && !Buffer.compare(a, b)
+        )
+    );
+}
+
+const presentationAddressMatch = (
+    assertion: PresentationAddress,
+    value: PresentationAddress,
+): boolean => {
+    const a = assertion;
+    const v = value;
+    const storedNAddresses: Set<string> = new Set<string>(
+        v.nAddresses.map((naddr: OCTET_STRING): string => naddr.toString())
+    );
+    return (
+        (
+            bothUndefinedOrSame(a.pSelector, v.pSelector)
+            && bothUndefinedOrSame(a.sSelector, v.sSelector)
+            && bothUndefinedOrSame(a.tSelector, v.tSelector)
+            && a.nAddresses.every((naddr: OCTET_STRING) => storedNAddresses.has(naddr.toString()))
+        )
+    );
+}
+
 
 
 function process_common_name_ext (info: ORAddressInfo, value: ASN1Element): ORAddressInfo | null {
@@ -1226,7 +1256,7 @@ function orAddressesMatch (a: ORAddress, b: ORAddress): boolean {
         }
         const presa = aInfo.extendedNetworkAddress;
         const presb = bInfo.extendedNetworkAddress;
-        // TODO: Compare presentation addresses. Depends on implementation in X.500 Library.
+        return presentationAddressMatch(presa, presb);
     }
     return true;
 }

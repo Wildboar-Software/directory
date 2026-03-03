@@ -22,7 +22,21 @@ import { getORNameSubstringElementsMatcher } from "./oRNameSubstringElementsMatc
 //   redirection-time    Time
 // }
 
-// TODO: This could be made more efficient by not decoding the assertion every time.
+// FIXME: This implementation is wrong.
+
+// The Redirection-or-DL-expansion-substring-elements-match rule determines whether a presented value of element
+// substrings is a matching subset of the elements present in the OR-address-and-optional-directory-name component of
+// some value of an attribute of type Redirection-history or DL-expansion-history.
+// redirectionOrDLExpansionSubstringElementsMatch MATCHING-RULE ::= {
+// SYNTAX
+// ORAddressAndOptionalDirectoryName
+// ID
+// id-mr-redirection-or-dl-expansion-substring-elements-match }
+// This rule is identical to the Redirection-or-DL-expansion-elements-match rule except that for those elements which are
+// matched using the MS-string-match rule, the MS-single-substring-match rule is applied
+
+// I think you'd just want to use `ORNameSubstringElementsMatch`
+
 export
 function getRedirectionOrDLExpansionSubstringElementsMatch (ctx: Context): EqualityMatcher {
     const orNameMatcher = getORNameSubstringElementsMatcher(ctx);
@@ -30,17 +44,11 @@ function getRedirectionOrDLExpansionSubstringElementsMatch (ctx: Context): Equal
         assertion: ASN1Element,
         value: ASN1Element,
     ): boolean => {
-        const values = value.sequenceOf.map((el) => {
-            const firstComponent = new BERElement();
-            firstComponent.fromBytes(el.value);
-            return firstComponent;
+        return value.sequenceOf.some((el) => {
+            const v = new BERElement();
+            v.fromBytes(el.value);
+            return orNameMatcher(assertion, v);
         });
-        for (const v of values) {
-            if (orNameMatcher(assertion, v)) {
-                return true;
-            }
-        }
-        return false;
     };
 }
 

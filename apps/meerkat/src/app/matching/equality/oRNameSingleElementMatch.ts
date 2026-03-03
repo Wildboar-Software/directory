@@ -33,7 +33,7 @@ const oRNameSingleElementMatch: EqualityMatcher = (
         .trim()
         .replace(/\s+/g, " ")
         .toUpperCase();
-    const v = _decode_ORAddress(value); // TODO: Make ORName a subclass of ORAddress.
+    const v = _decode_ORName(value);
     const vInfo = orAddressToInfo(v);
     if (!vInfo) {
         return false;
@@ -45,9 +45,8 @@ const oRNameSingleElementMatch: EqualityMatcher = (
             return true;
         }
     }
-    const v2 = _decode_ORName(value);
-    if (v2.directory_name) {
-        for (const rdn of v2.directory_name.rdnSequence) {
+    if (v.directory_name) {
+        for (const rdn of v.directory_name.rdnSequence) {
             for (const atav of rdn) {
                 if (atav.value.toString() === `"${a}"`) {
                     return true;
