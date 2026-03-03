@@ -23,6 +23,7 @@ import getAttributeParentTypes from "../x500/getAttributeParentTypes.js";
 import {
     ZonalResult, ZonalResult_cannot_select_mapping,
 } from "@wildboar/x500/SelectedAttributeTypes";
+import { lookup } from "@wildboar/iso3166";
 
 interface PostalZoneMatchProperties {
     c2c: string;
@@ -59,6 +60,11 @@ async function extract_zone_info (
                 return ZonalResult_cannot_select_mapping;
             }
             postal.c2c = item.equality.assertion.printableString;
+            const isoInfo = lookup(postal.c2c);
+            if (isoInfo) {
+                postal.c3c = isoInfo.c3;
+                postal.c3n = Number.parseInt(isoInfo.n, 10);
+            }
         }
         else if (item.equality.type_.isEqualTo(countryCode3c["&id"])) {
             if (postal.c3c) {
@@ -66,15 +72,24 @@ async function extract_zone_info (
                 return ZonalResult_cannot_select_mapping;
             }
             postal.c3c = item.equality.assertion.printableString;
-            // TODO: Use this to lookup the correct 2-character code
+            const isoInfo = lookup(postal.c3c);
+            if (isoInfo) {
+                postal.c2c = isoInfo.c2;
+                postal.c3n = Number.parseInt(isoInfo.n, 10);
+            }
         }
         else if (item.equality.type_.isEqualTo(countryCode3n["&id"])) {
             if (postal.c3n) {
                 postal.unmappable = true;
                 return ZonalResult_cannot_select_mapping;
             }
-            postal.c3n = Number.parseInt(item.equality.assertion.numericString, 10);
-            // TODO: Use this to lookup the correct 2-character code
+            const ns = item.equality.assertion.numericString;
+            postal.c3n = Number.parseInt(ns, 10);
+            const isoInfo = lookup(ns);
+            if (isoInfo) {
+                postal.c2c = isoInfo.c2;
+                postal.c3c = isoInfo.c3;
+            }
         }
         else if (item.equality.type_.isEqualTo(stateOrProvinceName["&id"])) {
             if (postal.st) {
