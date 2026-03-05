@@ -758,7 +758,6 @@ function process_extended_network_address_ext (info: ORAddressInfo, value: ASN1E
         }
         info.extendedNetworkAddress = [ numberPart, subaddressPart ];
     } else {
-        // TODO: Needs comparePresentationAddress() function in X.500 library.
         info.extendedNetworkAddress = param.psap_address;
     }
     return info;

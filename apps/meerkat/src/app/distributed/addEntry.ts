@@ -1524,8 +1524,6 @@ async function addEntry (
                 clear: Buffer.from(encoded.octetString).toString("utf-8"),
             };
     }
-    // TODO: Password policy applies _per password attribute_. This is something I'll
-    // have to change when I re-write Meerkat DSA entirely.
     const pwdAdminPoint = state.admPoints
         .find((ap) => ap.dse.admPoint?.administrativeRole.has(id_ar_pwdAdminSpecificArea.toString()));
     if (pwdAdminPoint && password) {
