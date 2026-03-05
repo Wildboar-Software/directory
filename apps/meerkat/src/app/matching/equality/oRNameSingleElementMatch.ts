@@ -9,16 +9,18 @@ import {
 } from "@wildboar/x400/MSMatchingRules";
 import { msStringToString, orAddressToInfo } from "./orAddressUtilities.js";
 
-// TODO: Tail recursion.
 export
-function extractStrings (value: unknown): string[] {
+function extractStrings (value: unknown, depth: number = 0): string[] {
+    if (depth > 10) {
+        return [];
+    }
     if (typeof value === "string") {
         return [ value ];
     } else if (typeof value === "object") {
         if (!value) {
             return [];
         }
-        return Object.values(value).flatMap(extractStrings);
+        return Object.values(value).flatMap((v) => extractStrings(v, depth + 1));
     } else {
         return [];
     }
