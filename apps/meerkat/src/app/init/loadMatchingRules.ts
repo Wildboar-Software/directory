@@ -467,6 +467,9 @@ import { getRDNMatcher } from "../matching/equality/rdnMatch.js";
 import {
     getPolicySpecificationMatcher,
 } from "../matching/equality/policySpecificationMatch.js";
+import {
+    matcher as generalWordMatch,
+} from "../matching/equality/generalWordMatch.js";
 import * as norms from "../matching/normalizers.js";
 
 const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
@@ -553,7 +556,7 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.enhancedCertificateMatch, enhancedCertificateMatch ],
         [ x500mr.extensionPresenceMatch, extensionPresenceMatch ],
         [ x500mr.facsimileNumberMatch, facsimileNumberMatch ],
-        // TODO: [ x500mr.generalWordMatch, generalWordMatch ],
+        [ x500mr.generalWordMatch, generalWordMatch ],
         [ x500mr.generalizedTimeMatch, generalizedTimeMatch ],
         [ x500mr.holderIssuerMatch, holderIssuerMatch ],
         // [ x500mr.ignoreIfAbsentMatch, ignoreIfAbsentMatch ], // Not directly usable.

@@ -89,6 +89,99 @@ I think it should be a (soft) requirement to implement some sort of hashing
 for each equality matching rule and context type. There has to be some way
 to efficiently compare many values to many others.
 
+## Matching Rules
+
+I think there should be multiple type signatures to describe matching rules.
+
+Since these type signatures take undecoded ASN.1 values, they are fallible,
+and that means we need to handle the failure cases. Further, an invalid
+assertion needs to be treated differently from an invalid stored value.
+In invalid assertion syntax should result in the entire operation returning
+an error immediately. An invalid stored value means there could be database
+corruption. It should simply return a different kind of error to the caller
+that is treated as a non-match as far as the directory user is concerned,
+but which logs a message for the DSA administrator or takes some corrective
+action.
+
+Libraries should only provide functions for matching that are generally
+context-free or, at most, type-discerning or concerned with all values
+of the attribute at once.
+
+A completely context-free matching: 
+
+```ts
+type ContextFreeMatcher = (a: ASN1Element, b: ASN1Element) => boolean;
+```
+
+Type-discerning matching:
+
+```ts
+type TypeDiscerningMatcher = (
+  attr_type: AttributeType,
+  a: ASN1Element,
+  b: ASN1Element,
+) => boolean;
+```
+
+I honestly can't think of cases where the above would be useful, because you
+generally need to know more about the attribute type than the type OID alone
+tells you.
+
+Whole-attribute matching:
+
+```ts
+type WholeAttributeMatcher = (
+  attr: Attribute,
+  assertion: ASN1Element,
+) => boolean;
+```
+
+The above would allow for a `valuesCountMatch` matching rule.
+
+The type signature actually used by the DSA internally MUST be more
+complex. The matching rules should have a signature that permits a lot of
+information to be brought in. This is one place where I went wrong. The
+matching rules signature should not be externally defined, in part so
+that it can be flexible enough to accommodate DSA-specific data
+structures.
+
+For example, I think the matching rules used by Meerkat DSA should have
+had a signature like:
+
+```ts
+function generalWordMatch(
+  ctx: Context,
+  // Not sure of this one. Why would you want the matching to vary by client?
+  // The only use case I can think of is some "who-am-i" operational attribute.
+  // Are any access control checks going to need to be done in the matching rule?
+  assn: ClientAssociation | undefined,
+  entry: Vertex | undefined,
+  attr_type: AttributeType,
+  stored_values: ASN1Element[],
+  stored_vwcs: ValuesWithContexts_Item[],
+  asserted_value: ASN1Element,
+  stored_normalized: boolean,
+  assertion_normalized: boolean,
+) {
+  return false;
+}
+```
+
+This would allow really complex matching rules, including matching rules whose
+assertion syntaxes themselves incorporate matching assertions in some way.
+
+It even seems like some existing matching rules, like `generalWordMatch` need
+the contexts associated with a value, too.
+
+A matching rule like `ignoreIfAbsentMatch` takes the whole entry and no
+attribute. I think this is such a bizarre edge case that it might need to be
+handled separately.
+
+It would be nice for unit testing purposes if matching rules could return an
+arbitrary integer indicating what code path was taken too. This would help
+make more robust tests that can ensure that a specific codepath is taken and
+make debugging really easy.
+
 ## Service Administration
 
 I think the procedures for evaluating search rules described in ITU-T
@@ -117,4 +210,3 @@ I should have used a key-value store instead.
   to be incremented by one out-of-sync with each other. These updates really
   have to be batched with a large gap between them so that this doesn't
   happen. X.518 specifically allows these OB updates to be non-immediate.
-  

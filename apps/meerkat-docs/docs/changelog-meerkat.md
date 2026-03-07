@@ -148,6 +148,8 @@ details of this algorith are documented [here](./distributed.md#local-scope).
 - Meerkat now can follow referrals when chaining
   - How many times it will do this is configurable.
 - Remove the stupid hibernation feature
+- `generalWordMatch` is now fully supported, including all controls, except for
+  `selectedContexts` (this will never be supported)
 - TODO: What is `7af8973bcaa39a78b27ef07328206a962ce571d5`?
 
 ### Other Projects
