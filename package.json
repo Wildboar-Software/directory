@@ -70,6 +70,7 @@
     "cookie-parser": "1.4.7",
     "date-fns": "4.1.0",
     "dotenv": "^16.6.1",
+    "double-metaphone": "^2.0.1",
     "email-addresses": "5.0.0",
     "express": "5.1.0",
     "express-handlebars": "8.0.4",
