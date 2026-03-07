@@ -150,6 +150,16 @@ details of this algorith are documented [here](./distributed.md#local-scope).
 - Remove the stupid hibernation feature
 - `generalWordMatch` is now fully supported, including all controls, except for
   `selectedContexts` (this will never be supported)
+- Where phonetic comparison is used, such as in `ia5StringApproxMatch`,
+  `directoryStringApproxMatch`, and in `generalWordMatch`, the use of the
+  Metaphone algorithm has been upgraded to Metaphone 2 ("double-metaphone").
+  This gives better matching for non-English speaking languages.
+  - I would have used Metaphone 3, which is supposedly even better, but it is
+    patented (US-20090043584-A1). There are many implementations out there,
+    and it seems like the inventor is not really enforcing this IP, but I do
+    not want Meerkat DSA to incorporate code with questionable legality.
+    - I think this patent expires in 2029, so it might be possible to use
+      Metaphone 3 in a few years.
 - TODO: What is `7af8973bcaa39a78b27ef07328206a962ce571d5`?
 
 ### Other Projects

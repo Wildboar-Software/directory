@@ -23,11 +23,7 @@ import {
     characterMatchTypes,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { type Attribute } from "@wildboar/x500/InformationFramework";
-import { metaphone } from "../metaphone.js";
-
-// TODO: Use Metaphone 2
-// TODO: Document that Metaphone 3 is proprietary, patented (US-20090043584-A1)
-// even though the algorithm is out there and many people have implemented it.
+import { doubleMetaphone } from "double-metaphone";
 
 // sequenceMatchType ATTRIBUTE ::= {
 //     WITH SYNTAX   SequenceMatchType
@@ -113,9 +109,9 @@ function matchWord(
         ? s.toUpperCase().trim()
         : s.trim();
     if (word_match === WordMatchTypes_wordPhonetic) {
-        const ma = metaphone(a);
-        const ms = metaphone(s);
-        return ma === ms;
+        const [ ma1, ma2 ] = doubleMetaphone(a);
+        const [ ms1, ms2 ] = doubleMetaphone(s);
+        return (ma1 === ms1 || ma1 === ms2 || ma2 === ms1 || ma2 === ms2);
     }
     return prepString(s) === prepString(a);
 }
@@ -131,26 +127,19 @@ function matchWordPermutable(
     char_match: CharacterMatchTypes,
 ): boolean {
     let a = (char_match === CharacterMatchTypes_characterMapped)
-        ? stripDiacritics(assertion).toUpperCase()
-        : assertion;
+        ? stripDiacritics(prepString(assertion) ?? assertion).toUpperCase()
+        : (prepString(assertion) ?? assertion);
     a = (char_match === CharacterMatchTypes_characterCaseIgnore)
         ? a.toUpperCase().trim()
         : a.trim();
     if (word_match === WordMatchTypes_wordPhonetic) {
-        a = metaphone(a);
-        return valuePhoneticWords.has(a);
+        const [a1, a2] = doubleMetaphone(a);
+        return valuePhoneticWords.has(a1) || valuePhoneticWords.has(a2);
     }
     return (char_match === CharacterMatchTypes_characterExact)
         ? (valueWords.get(a) ?? false)
         : valueWords.has(a);
 }
-
-// TODO: Document this, including that this does not explode in time complexity
-
-// FIXME: Use stringprep
-
-// This is literally the same as caseExactMatch / caseIgnoreMatch, but it is
-// allowed to use the control attributes. That's it.
 
 // Quote:
 // > control is not used for the caseIgnoreSubstringsMatch , telephoneNumberSubstringsMatch ,
@@ -158,6 +147,50 @@ function matchWordPermutable(
 // > algorithm; if a control element is encountered, it is ignored. The control element is only used for
 // > matching rules that explicitly specify its use in the matching algorithm. Such a matching rule may also
 // > redefine the semantics of the initial , any and final substrings.
+
+
+/**
+ * @summary Matching rule implementation for `generalWordMatch`
+ * @description
+ * 
+ * [ITU-T Recommendation X.520 (2019)](https://www.itu.int/rec/T-REC-X.520-201910-I/en),
+ * Section 8.5.3, describes the `generalWordMatch` as being exactly equal to
+ * either `caseExactSubstringsMatch` or `caseIgnoreSubstringsMatch` when no
+ * control attributes are present, but later text of this section seems to
+ * contradict this. Note that the aforementioned substring matching rules do
+ * not use control attributes: control attributes are explicitly ignored for
+ * these matching rules. `generalWordMatch` takes the four named control
+ * attributes named in the specification, which are:
+ * 
+ * - `sequenceMatchType`
+ * - `wordMatchTypes`
+ * - `characterMatchTypes`
+ * - `selectedContexts`
+ * 
+ * Control attributes other than these are ignored.
+ * 
+ * This implementation was designed to avoid algorithms that use superlinear
+ * time complexity. Miraculously, I think I managed to do it.
+ * 
+ * When matching without permutation, it is not clear from the specification
+ * alone whether the words that match the "initial" assertion are consumed,
+ * or if a subsequent "any" assertion can still match the "initial" words.
+ * I refer to Quipu's implementation of substrings matching for this:
+ * https://github.com/Wildboar-Software/isode/blob/7ff410cc923b5535389a8fee13232688495197f2/quipu/ds_search.c#L1582
+ * 
+ * Side Note:
+ * 
+ * I believe that `sequenceRestrictedDeletion` was invented because, if
+ * deletion is allowed, for every word in the stored value, words could be
+ * deleted from the front until the `initial` assertion matches, which defeats
+ * the point of the `initial` assertion.
+ * 
+ * @param assertion - The encoded assertion of the match.
+ * @param value - The encoded value to match.
+ * @returns {Boolean} Whether the value matches the assertion.
+ * 
+ * @function
+ */
 export
 const matcher: EqualityMatcher = (
     assertion: ASN1Element,
@@ -243,7 +276,9 @@ const matcher: EqualityMatcher = (
                 vmap.set(mappedWord, false);
             }
             if (word_phonetic_used) {
-                phoneticMap.add(metaphone(word));
+                const [word1, word2] = doubleMetaphone(word);
+                phoneticMap.add(word1);
+                phoneticMap.add(word2);
             }
         }
 
@@ -254,26 +289,28 @@ const matcher: EqualityMatcher = (
                     continue;
                 }
                 const ass: string = directoryStringToString(subassertion.any_);
-                // FIXME: Split the assertion into words too.
-                const matched = matchWordPermutable(
-                    vmap,
-                    phoneticMap,
-                    ass,
-                    word_match,
-                    char_match,
-                );
-
-                // If the word matched, add it to a list of matched words (used later)
-                if (matched) {
-                    matchedWords.set(ass, matchedWords.get(ass) ?? true);
-                    if (char_match === CharacterMatchTypes_characterCaseIgnore) {
-                        matchedWords.set(ass.toUpperCase(), false);
-                    } else if (char_match === CharacterMatchTypes_characterMapped) {
-                        matchedWords.set(ass.toUpperCase(), false);
-                        matchedWords.set(stripDiacritics(ass).toUpperCase(), false);
+                const assWords = getWords(ass);
+                for (const assWord of assWords) {
+                    const matched = matchWordPermutable(
+                        vmap,
+                        phoneticMap,
+                        assWord,
+                        word_match,
+                        char_match,
+                    );
+    
+                    // If the word matched, add it to a list of matched words (used later)
+                    if (matched) {
+                        matchedWords.set(assWord, matchedWords.get(assWord) ?? true);
+                        if (char_match === CharacterMatchTypes_characterCaseIgnore) {
+                            matchedWords.set(assWord.toUpperCase(), false);
+                        } else if (char_match === CharacterMatchTypes_characterMapped) {
+                            matchedWords.set(assWord.toUpperCase(), false);
+                            matchedWords.set(stripDiacritics(assWord).toUpperCase(), false);
+                        }
+                    } else {
+                        return false; // ...otherwise, we already know its not a match.
                     }
-                } else {
-                    return false; // ...otherwise, we already know its not a match.
                 }
             } else if ("control" in subassertion) {
                 const control: Attribute = subassertion.control;
@@ -310,9 +347,6 @@ const matcher: EqualityMatcher = (
 
     // TODO: Discard noise words
     for (const [i_str, str] of a.entries()) {
-        // TODO: Note that sequenceDeletion also means we can delete from the front,
-        // meaning that `initial` is no longer meaningful. This is probably why
-        // "restricted deletion" was invented.
         const restricted: boolean = seq_match === SequenceMatchType_sequenceRestrictedDeletion;
         const deletion: boolean = (seq_match === SequenceMatchType_sequenceDeletion) || restricted;
         if ("initial" in str) {
@@ -352,7 +386,6 @@ const matcher: EqualityMatcher = (
             if (assWords[i]) {
                 return false; // There was an unmatched assertion.
             }
-            // TODO: Document that it is not specified whether the initial can be re-matched.
             // Looking at Quipu's implementation of substrings matching, it appears that the
             // `initial` assertion does consume the matching prefix.
             // See: https://github.com/Wildboar-Software/isode/blob/7ff410cc923b5535389a8fee13232688495197f2/quipu/ds_search.c#L1582

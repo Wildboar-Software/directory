@@ -4,8 +4,12 @@ import {
     _decode_UnboundedDirectoryString,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { directoryStringToString } from "@wildboar/x500";
-import { metaphone } from "../metaphone.js";
+import { doubleMetaphone } from "double-metaphone";
 
+/* OpenLDAP uses a flexible choice of phonetic algorithms with
+metaphone (I think version 1) being the default. Since
+double-metaphone's first return value is the same as metaphone 1
+(I think), it should be fine to use double-metaphone here. */
 export
 const matcher: EqualityMatcher = (
     assertion: ASN1Element,
@@ -13,7 +17,9 @@ const matcher: EqualityMatcher = (
 ): boolean => {
     const a = directoryStringToString(_decode_UnboundedDirectoryString(assertion)).trim();
     const v = directoryStringToString(_decode_UnboundedDirectoryString(value)).trim();
-    return (metaphone(a) === metaphone(v));
+    const [ a1, a2 ] = doubleMetaphone(a);
+    const [ v1, v2 ] = doubleMetaphone(v);
+    return (a1 === v1 || a1 === v2 || a2 === v1 || a2 === v2);
 };
 
 export default matcher;
