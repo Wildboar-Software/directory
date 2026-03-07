@@ -178,6 +178,10 @@ function matchWordPermutable(
  * I refer to Quipu's implementation of substrings matching for this:
  * https://github.com/Wildboar-Software/isode/blob/7ff410cc923b5535389a8fee13232688495197f2/quipu/ds_search.c#L1582
  * 
+ * This implementation does not skip "noise words." There are far too many in
+ * just one language, I would never be able to index even a fraction of them
+ * for all languages, and it this would be a subjective matter.
+ * 
  * Side Note:
  * 
  * I believe that `sequenceRestrictedDeletion` was invented because, if
@@ -290,6 +294,9 @@ const matcher: EqualityMatcher = (
                 }
                 const ass: string = directoryStringToString(subassertion.any_);
                 const assWords = getWords(ass);
+                if (assWords.length > vwords.length) {
+                    return false;
+                }
                 for (const assWord of assWords) {
                     const matched = matchWordPermutable(
                         vmap,
@@ -320,7 +327,6 @@ const matcher: EqualityMatcher = (
                     }
                     seq_match = sequenceMatchType.decoderFor["&Type"]!(control.values[0]);
                     if (seq_match === SequenceMatchType_sequencePermutationAndDeletion) {
-                        // TODO: Only set this once its actually been used by a substring.
                         permutedDeletionUsed = true;
                     }
                 } else if (control.type_.isEqualTo(wordMatchTypes["&id"])) {
@@ -345,7 +351,6 @@ const matcher: EqualityMatcher = (
 
     let valueRemaining: string[] = vwords;
 
-    // TODO: Discard noise words
     for (const [i_str, str] of a.entries()) {
         const restricted: boolean = seq_match === SequenceMatchType_sequenceRestrictedDeletion;
         const deletion: boolean = (seq_match === SequenceMatchType_sequenceDeletion) || restricted;
@@ -500,7 +505,6 @@ const matcher: EqualityMatcher = (
             if (matchedWords.get(stripDiacritics(upper)) === false) {
                 continue; // The word matched when uppercased and diacritics-stripped
             }
-            // TODO: Skip noise words here?
             /* The match failed because there was a word in the stored value that
             did not match up to any assertion, and we don't tolerate deletions. */
             return false;
