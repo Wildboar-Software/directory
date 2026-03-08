@@ -141,14 +141,6 @@ function matchWordPermutable(
         : valueWords.has(a);
 }
 
-// Quote:
-// > control is not used for the caseIgnoreSubstringsMatch , telephoneNumberSubstringsMatch ,
-// > or any other form of substring match for which only initial, any, or final elements are used in the matching
-// > algorithm; if a control element is encountered, it is ignored. The control element is only used for
-// > matching rules that explicitly specify its use in the matching algorithm. Such a matching rule may also
-// > redefine the semantics of the initial , any and final substrings.
-
-
 /**
  * @summary Matching rule implementation for `generalWordMatch`
  * @description
@@ -157,10 +149,15 @@ function matchWordPermutable(
  * Section 8.5.3, describes the `generalWordMatch` as being exactly equal to
  * either `caseExactSubstringsMatch` or `caseIgnoreSubstringsMatch` when no
  * control attributes are present, but later text of this section seems to
- * contradict this. Note that the aforementioned substring matching rules do
- * not use control attributes: control attributes are explicitly ignored for
- * these matching rules. `generalWordMatch` takes the four named control
- * attributes named in the specification, which are:
+ * contradict this. In the aforementioned matching rules, the asserted strings
+ * do not have to match every word in the stored string, which they must in
+ * `generalWordMatch` (after transformations are applied, such as deletions,
+ * in accordance with the control attributes used). Note also that the
+ * aforementioned substring matching rules do not use control attributes:
+ * control attributes are explicitly ignored for these matching rules.
+ *
+ * `generalWordMatch` takes the four named control attributes named in the
+ * specification, which are:
  * 
  * - `sequenceMatchType`
  * - `wordMatchTypes`
@@ -181,6 +178,16 @@ function matchWordPermutable(
  * This implementation does not skip "noise words." There are far too many in
  * just one language, I would never be able to index even a fraction of them
  * for all languages, and it this would be a subjective matter.
+ * 
+ * If this implementation encounters an unrecognized value of a control
+ * attribute, it will continue the evaluation of the matching rule.
+ * The handling of an unrecognized control value will be an eternally
+ * unstable implementation detail; there are no guarantees what it will do,
+ * except that the function will return in a reasonable amount of time without
+ * memory leaks or security vulnerabilities.
+ * 
+ * Control attributes with no values are ignored. Values with context are
+ * ignored.
  * 
  * Side Note:
  * 
@@ -525,29 +532,3 @@ const matcher: EqualityMatcher = (
 };
 
 export default matcher;
-
-
-/*
-Scratch pad for my ideas for implementing this:
-
-- Anything that appears inside a sequencePermutation or sequencePermutationAndDeletion
-  section can appear anywhere in the string. I think you could index these assertions
-  and iterate over the words one time to check if all are present. The words that are
-  present can be removed from the array of words altogether. This means that it might
-  be desirable to use a linked list. Better yet, you could just push the indexes to
-  remove from the array of words. Then the array of words can be used subsequently
-  for other matching.
-- Then, you iterate again over the array of stored words in order:
-  - If SequenceMatchType_sequenceExact, the assertion must match each word in order.
-  - If SequenceMatchType_sequenceDeletion, you can skip over words until you find
-    the next assertion word, but if you don't find it, return FALSE.
-  - Same for SequenceMatchType_sequenceRestrictedDeletion, except the first word
-    cannot be deleted.
-  - If sequenceProviderDefined is encountered, return UNDEFINED?
-- If you get to the end of this iteration and there are assertions left unmatched,
-  return FALSE.
-- If you get to the end of this iteration and there are still words remaining,
-  return TRUE if SequenceMatchType_sequenceDeletion or SequenceMatchType_sequenceRestrictedDeletion,
-  and FALSE otherwise.
-  
-*/

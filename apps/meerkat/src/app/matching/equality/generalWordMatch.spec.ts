@@ -418,7 +418,6 @@ describe("generalWordMatch", () => {
         expect(generalWordMatch(encodedAssertion, encodedValue)).toBe(true);
     });
 
-    // TODO: Document this behavior.
     /* Meerkat DSA's seeks to carry on the evaluation of the matching rule
     in the face of an unrecognized control attribute value. The handling of
     an unrecognized control value will be an eternally unstable implementation
@@ -453,7 +452,6 @@ describe("generalWordMatch", () => {
         expect(generalWordMatch(encodedAssertion, encodedValue)).toBeDefined();
     });
 
-    // TODO: Document this behavior. Basically, same policy as above.
     it("handles empty control attributes", () => {
         const assertion: SubstringAssertion = [
             {
