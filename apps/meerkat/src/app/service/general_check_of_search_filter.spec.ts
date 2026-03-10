@@ -206,7 +206,6 @@ describe("general_check_of_search_filter", () => {
     });
 
     // TODO: filter contexts
-    // TODO: allowedSubset
     // TODO: "If an empty set of attribute values is given, this attribute type can only be effectively present in..."
 
     // This is skipped (forever) because this procedure does not check for

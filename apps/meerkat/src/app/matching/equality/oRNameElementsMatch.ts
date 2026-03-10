@@ -14,6 +14,7 @@ function orNameElementsMatcher (
     }
     const a = _decode_ORName(assertion);
     const v = _decode_ORName(value);
+    // TODO: Use the directory name too.
     return orAddressIsSubset(a, v);
 };
 

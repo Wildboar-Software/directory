@@ -3,12 +3,15 @@ import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
 import type { AttributeType } from "@wildboar/x500/InformationFramework";
 
-// TODO: Limit recursion depth.
 function checkRequiredAttributeInFilter(
     filter: Filter,
     non_negated: boolean,
     attribute: AttributeType,
+    recursion_ttl: number,
 ): boolean {
+    if (recursion_ttl <= 0) {
+        return false;
+    }
     if ("item" in filter) {
         const item = filter.item;
         let type_oid: OBJECT_IDENTIFIER | undefined;
@@ -39,12 +42,23 @@ function checkRequiredAttributeInFilter(
         return non_negated === !!(type_oid && type_oid.isEqualTo(attribute));
     } else if ("and" in filter) {
         // Match if any subfilter requires the attribute.
-        return filter.and.some((subfilter) => checkRequiredAttributeInFilter(subfilter, non_negated, attribute));
+        return filter.and
+            .some((subfilter) => checkRequiredAttributeInFilter(
+                subfilter,
+                non_negated,
+                attribute,
+                recursion_ttl - 1,
+            ));
     } else if ("or" in filter) {
         // Match if all subfilters require the attribute.
-        return filter.or.every((subfilter) => checkRequiredAttributeInFilter(subfilter, non_negated, attribute));
+        return filter.or
+            .every((subfilter) => checkRequiredAttributeInFilter(
+                subfilter,
+                non_negated,
+                attribute,
+                recursion_ttl - 1,
+            ));
     } else if ("not" in filter) {
-        // TODO: Document this.
         /* I'm not sure how to interpret this case: does a not in the combination
         mean that we have to proactively ensure that any negated attributes do
         NOT appear, or do we merely check that the subcombination is not met?
@@ -52,7 +66,12 @@ function checkRequiredAttributeInFilter(
         These are two slightly different interpretations. In the latter case, I
         think, there is no way to exclude an attribute from matching; as such,
         I went with the former case. */
-        return checkRequiredAttributeInFilter(filter.not, !non_negated, attribute);
+        return checkRequiredAttributeInFilter(
+            filter.not,
+            !non_negated,
+            attribute,
+            recursion_ttl - 1,
+        );
     }
     return true;
 }
@@ -86,7 +105,7 @@ export
         violations: AttributeCombination[]
     ): void {
     if ("attribute" in combo) {
-        if (!checkRequiredAttributeInFilter(filter, non_negated, combo.attribute)) {
+        if (!checkRequiredAttributeInFilter(filter, non_negated, combo.attribute, 10)) {
             violations.push(combo);
             return;
         }

@@ -96,5 +96,25 @@ describe("checkAttributeCombination", () => {
         expect(violations).not.toHaveLength(0);
     });
 
-    // TODO: Test empty AND and OR cases
+    it("should not find any violations in an empty AND case", () => {
+        const violations: AttributeCombination[] = [];
+        const filter: Filter = {
+            and: [],
+        };
+        const combo: AttributeCombination = {
+            and: [],
+        };
+    });
+
+    it("should not find any violations in an empty OR case", () => {
+        const violations: AttributeCombination[] = [];
+        const filter: Filter = {
+            or: [],
+        };
+        const combo: AttributeCombination = {
+            or: [],
+        };
+        checkAttributeCombination(filter, combo, true, violations);
+        expect(violations).not.toHaveLength(0);
+    });
 });

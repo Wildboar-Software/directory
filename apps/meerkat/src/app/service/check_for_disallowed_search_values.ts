@@ -2,6 +2,7 @@ import type { IndexableOID } from "../types/index.js";
 import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
 import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
+import { id_pr_administratorImposedLimit } from "@wildboar/x500/SelectedAttributeTypes";
 
 /**
  * @summary Check a filter for filter items that assert values when prohibited
@@ -28,8 +29,16 @@ import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
  */
 export function check_for_disallowed_search_values(
     filter: Filter,
-    disallowed: Map<IndexableOID, boolean>, // TODO: Change this variable name
-    violations: FilterItem[]): void {
+    context_use_by_attr_type: Map<IndexableOID, boolean>,
+    violations: FilterItem[],
+    recursion_ttl: number = 10,
+): void {
+    if (recursion_ttl <= 0) {
+        violations.push({
+            present: id_pr_administratorImposedLimit,
+        });
+        return;
+    }
     if ("item" in filter) {
         const item = filter.item;
         let type_oid: OBJECT_IDENTIFIER | undefined;
@@ -60,7 +69,7 @@ export function check_for_disallowed_search_values(
         if (!type_oid) {
             return;
         }
-        const contexts: boolean | undefined = disallowed.get(type_oid.toString());
+        const contexts: boolean | undefined = context_use_by_attr_type.get(type_oid.toString());
         if (contexts === undefined) {
             // If no contexts, we can use whatever filter item we want.
             return;
@@ -75,15 +84,15 @@ export function check_for_disallowed_search_values(
     }
     else if ("and" in filter) {
         for (const sub of filter.and) {
-            check_for_disallowed_search_values(sub, disallowed, violations);
+            check_for_disallowed_search_values(sub, context_use_by_attr_type, violations, recursion_ttl - 1);
         }
     }
     else if ("or" in filter) {
         for (const sub of filter.or) {
-            check_for_disallowed_search_values(sub, disallowed, violations);
+            check_for_disallowed_search_values(sub, context_use_by_attr_type, violations, recursion_ttl - 1);
         }
     }
     else if ("not" in filter) {
-        check_for_disallowed_search_values(filter.not, disallowed, violations);
+        check_for_disallowed_search_values(filter.not, context_use_by_attr_type, violations, recursion_ttl - 1);
     }
 }
