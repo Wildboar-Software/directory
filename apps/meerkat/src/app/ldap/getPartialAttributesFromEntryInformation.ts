@@ -23,6 +23,7 @@ import {
     _encode_TimeAssertion,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { evaluateTemporalContext } from "@wildboar/x500/matching/context";
+import getLDAPEncoder from "./getLDAPEncoder.js";
 
 const now: TimeAssertion = {
     now: null,
@@ -74,18 +75,18 @@ function getPartialAttributesFromEntryInformation (
                 // ctx.log.warn(`No LDAP syntax defined for attribute ${attrType.toString()}.`);
                 return undefined;
             }
-            const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
-            if (!ldapSyntax?.encoder) {
+            const ldapEncoder = getLDAPEncoder(ctx, attrSpec.id);
+            if (!ldapEncoder) {
                 // ctx.log.warn(`LDAP Syntax ${attrSpec.ldapSyntax} not understood or had no encoder.`);
                 return undefined;
             }
 
             // Wrap the encoder in error handling so we can ignore attributes that don't encode successfully.
             const encoder = (
-                ...args: Parameters<typeof ldapSyntax.encoder>
-            ): ReturnType<typeof ldapSyntax.encoder> | null => {
+                ...args: Parameters<typeof ldapEncoder>
+            ): ReturnType<typeof ldapEncoder> | null => {
                 try {
-                    return ldapSyntax.encoder!(...args);
+                    return ldapEncoder!(...args);
                 } catch {
                     return null;
                 }
