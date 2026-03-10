@@ -14,6 +14,7 @@ import {
 } from "@wildboar/x500/DistributedOperations";
 import {
     caseIgnoreMatch,
+    commonName,
     PresentationAddress,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { EventEmitter } from "node:events";
@@ -88,8 +89,9 @@ import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
 import { decodePkiPathFromPEM } from "./utils/decodePkiPathFromPEM.js";
-import type {
-    PkiPath,
+import {
+    AttributeTypeAndValue,
+    type PkiPath,
 } from "@wildboar/pki-stub";
 import { rootCertificates } from "node:tls";
 import { strict as assert } from "node:assert";
@@ -98,6 +100,7 @@ import { attributeFromInformationObject } from "./init/attributeFromInformationO
 import { loadMatchingRules } from "./init/loadMatchingRules.js";
 import { PrismaClient } from "./generated/client.js";
 import { PrismaLibSql } from '@prisma/adapter-libsql';
+import { person } from "@wildboar/x500/SelectedObjectClasses";
 
 export
 interface MeerkatTelemetryClient {
@@ -1007,9 +1010,9 @@ const ctx: MeerkatContext = {
     jobQueue: [],
 };
 
-let cached_ctx: Context | undefined;
+let cached_ctx: MeerkatContext | undefined;
 
-export function getMockCtx (): Context {
+export function getMockCtx (): MeerkatContext {
     if (cached_ctx) {
         return cached_ctx;
     }
@@ -1031,7 +1034,7 @@ export function getMockCtx (): Context {
                 ctx.ldapSyntaxes.set(ldapName, oidSyntax);
             });
         });
-    const newCtx: Context = {
+    const newCtx: MeerkatContext = {
         ...ctx,
     };
     const adapter = new PrismaLibSql({
@@ -1046,6 +1049,105 @@ export function getMockCtx (): Context {
     newCtx.db = db;
     cached_ctx = newCtx;
     return newCtx;
+}
+
+export async function createPersonEntry(
+    ctx: Context,
+    immediateSuperior: Vertex | undefined,
+    cn: string,
+    surname: string,
+): Promise<Vertex> {
+    const now = new Date();
+    const entry = await ctx.db.entry.create({
+        data: {
+            immediate_superior_id: immediateSuperior?.dse.id,
+            materialized_path: "this doesnt matter",
+            entryUUID: crypto.randomUUID(),
+            creatorsName: [],
+            modifiersName: [],
+            createTimestamp: now,
+            modifyTimestamp: now,
+            glue: false,
+            cp: false,
+            entry: true,
+            subr: false,
+            nssr: false,
+            xr: false,
+            subentry: false,
+            shadow: false,
+            immSupr: false,
+            rhob: false,
+            sa: false,
+            admPoint: false,
+            dsSubentry: false,
+            alias: false,
+            subordinate_completeness: true,
+            attribute_completeness: true,
+            RDN: {
+                create: {
+                    type_oid: ObjectIdentifier.fromString("2.5.4.3").toBytes(),
+                    constructed: false,
+                    order_index: 0,
+                    content_octets: Buffer.from(cn, "utf-8"),
+                    tag_class: 0,
+                    tag_number: 12,
+                    normalized_str: cn.toUpperCase(),
+                },
+            },
+            EntryObjectClass: {
+                createMany: {
+                    data: [
+                        {
+                            object_class: person["&id"].toString(),
+                        },
+                    ],
+                },
+            },
+            AttributeValue: {
+                createMany: {
+                    data: [
+                        {
+                            type_oid: ObjectIdentifier.fromString("2.5.4.3").toBytes(),
+                            tag_class: 0,
+                            constructed: false,
+                            tag_number: 12,
+                            content_octets: Buffer.from(cn, "utf-8"),
+                            operational: false,
+                        },
+                        {
+                            type_oid: ObjectIdentifier.fromString("2.5.4.4").toBytes(),
+                            tag_class: 0,
+                            constructed: false,
+                            tag_number: 12,
+                            content_octets: Buffer.from(surname, "utf-8"),
+                            operational: false,
+                        },
+                    ],
+                },
+            },
+        },
+        select: {
+            id: true,
+        },
+    });
+    return {
+        subordinates: null,
+        immediateSuperior: immediateSuperior,
+        dse: {
+            id: entry.id,
+            materializedPath: "this doesnt matter",
+            uuid: crypto.randomUUID(),
+            objectClass: new Set([person["&id"].toString()]),
+            rdn: [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    commonName.encoderFor["&Type"]!({
+                        uTF8String: cn,
+                    }, DER),
+                ),
+            ],
+        },
+    };
 }
 
 // This is just put here to prevent `Your test suite must contain at least one test.`

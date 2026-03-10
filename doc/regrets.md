@@ -210,3 +210,6 @@ I should have used a key-value store instead.
   to be incremented by one out-of-sync with each other. These updates really
   have to be batched with a large gap between them so that this doesn't
   happen. X.518 specifically allows these OB updates to be non-immediate.
+- I did not realize at the outset that the DSA would have to invoke its own
+  services. In the re-write of Meerkat DSA, every function will be able to
+  be invoked without a network connection.
