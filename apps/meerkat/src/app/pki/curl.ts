@@ -23,15 +23,6 @@ import * as os from "node:os";
 
 const { success } = resultCodes;
 
-// Yes, I realize I could have done this with .reduce(), but for loops are more performant.
-function getReceivedDataSize (chunks: Buffer[]) {
-    let sum: number = 0;
-    for (const chunk in chunks) {
-        sum += chunk.length;
-    }
-    return sum;
-}
-
 /**
  * @summary Fetch a blob using LDAP
  * @description
@@ -55,7 +46,7 @@ function curlLDAP (
     tlsOptions?: TlsOptions,
     timeoutInMilliseconds: number = 5000,
     sizeLimit: number = 1_000_000,
-): Promise<Buffer[] | null> {
+): Promise<Buffer<ArrayBuffer>[] | null> {
     const firstMessageId: number = randomInt(1, 100_000_000);
     let messageId: number = firstMessageId;
     const bind: LDAPMessage = new LDAPMessage(
@@ -222,7 +213,7 @@ async function curlFTP (
     timeoutInMilliseconds: number = 5000,
     sizeLimit: number = 1_000_000,
     debugLog?: (message: string) => void,
-): Promise<Buffer | null> {
+): Promise<Buffer<ArrayBuffer> | null> {
     const client = new ftp.Client(timeoutInMilliseconds);
     const tempDir = await mkdtemp(path.join(os.tmpdir(), "ftp_dl_"));
     const randomBaseName: string = randomUUID();

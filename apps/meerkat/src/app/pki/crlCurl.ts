@@ -57,6 +57,7 @@ import {
     ServiceControls,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { getAttributeSize } from "@wildboar/x500";
+import limitBytes from "../utils/limitBytes.js";
 
 const CRL_CACHE_TTL_SECONDS: number = 3600;
 const CACHE_SIZE_LIMIT: number = 1000;
@@ -74,32 +75,6 @@ const CACHE_SIZE_LIMIT: number = 1000;
  */
 export
 const crlCache: Map<string, [ Date, CertificateList[] ]> = new Map();
-
-/**
- * @summary A function that limits the size of a response
- * @description
- *
- * This function returns a transform stream that limits the size of a response
- * to the maximum number of bytes specified.
- *
- * @param maxBytes The maximum number of bytes to allow in the response
- * @returns A transform stream that limits the response to the maximum number of bytes
- *
- * @function
- */
-function limitBytes(maxBytes: number) {
-    let total = 0;
-    return new TransformStream({
-        transform(chunk, controller) {
-            total += chunk.byteLength;
-            if (total > maxBytes) {
-                controller.error(new Error("Response too large"));
-                return;
-            }
-            controller.enqueue(chunk);
-        }
-    });
-}
 
 /**
  * @summary A function that will perform a local `read` operation.
@@ -289,9 +264,12 @@ async function crlCurl (
                         const res = await fetch(url.toString(), {
                             method: "GET",
                             headers: {
-                                "Accept": "application/pkix-crl",
+                                "Accept": "application/pkix-crl"
+                                    + ", application/x-pkcs7-crl"
+                                    + ", application/octet-stream",
                             },
                             signal: AbortSignal.timeout(options.remoteCRLTimeout * 1000),
+                            // TODO: Use TLS configuration
                         });
                         if (!res.ok || !res.body) {
                             return null;

@@ -63,11 +63,13 @@ IsdnAddress{SCF-SSF-BOUNDS:b2} ::= Digits{b2}`;
  * Initialize Meerkat DSA's internal index of known context types.
  *
  * @param ctx The context object
+ * @param useDB Whether to load context types from the database.
+ *  If false, only the in-memory context types will be used.
  *
  * @function
  */
 export
-async function loadContextTypes (ctx: Context): Promise<void> {
+async function loadContextTypes (ctx: Context, useDB: boolean = true): Promise<void> {
     const contextTypes: [ CONTEXT, ContextMatcher, string, string?, EqualityMatcher? ][] = [
         [ x500c.languageContext, evaluateLanguageContext, "LanguageContextSyntax" ],
         [ x500c.ldapAttributeOptionContext, evaluateLDAPAttributeOptionContext, "AttributeOptionList" ],
@@ -97,6 +99,10 @@ async function loadContextTypes (ctx: Context): Promise<void> {
                 ),
             );
         });
+
+    if (!useDB) {
+        return;
+    }
 
     const cts = await ctx.db.contextDescription.findMany({
         where: {

@@ -1,5 +1,4 @@
-import { lookupPkiPathViaX500 } from "./lookupPkiPath.js";
-import { _decode_Certificate, Validity, SubjectPublicKeyInfo } from "@wildboar/x500/AuthenticationFramework";
+import { _decode_Certificate } from "@wildboar/x500/AuthenticationFramework";
 import {
     _decode_ReadResult,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -12,20 +11,31 @@ import {
     type CertificateSerialNumber,
     SIGNED,
     _get_encoder_for_SIGNED,
-    TBSCertificate,
-    _encode_TBSCertificate,
-    _encode_Certificate,
     AlgorithmIdentifier,
 } from "@wildboar/x500/AuthenticationFramework";
 import { DERElement, ObjectIdentifier } from "@wildboar/asn1";
 import { createPersonEntry, getMockCtx } from "../testing.spec.js";
-import { commonName, temporalContext, TimeSpecification, TimeSpecification_time_absolute } from "@wildboar/x500/SelectedAttributeTypes";
+import {
+    commonName,
+    temporalContext,
+    TimeSpecification,
+    TimeSpecification_time_absolute,
+} from "@wildboar/x500/SelectedAttributeTypes";
 import { DER } from "@wildboar/asn1/functional";
 import { rsaEncryption } from "@wildboar/x500/AlgorithmObjectIdentifiers";
+import {
+    _encode_AttributeCertificate,
+    AttCertIssuer,
+    AttCertValidityPeriod,
+    AttCertVersion_v2,
+    Holder,
+    TBSAttributeCertificate,
+} from "@wildboar/pki-stub";
+import lookupAttrCertViaX500 from "./lookupAttrCertViaX500.js";
 import { addDays, subDays, subMinutes } from "date-fns";
 
-describe("lookupPkiPathViaX500()", () => {
-    it("can return a PKI path", async () => {
+describe("lookupAttrCertViaX500()", () => {
+    it("can return an attribute certificate for a delegation path", async () => {
         const ctx = getMockCtx();
         const subjectName: Name = {
             rdnSequence: [
@@ -58,20 +68,30 @@ describe("lookupPkiPathViaX500()", () => {
             undefined,
         );
 
-        const tbs = new TBSCertificate(
-            2,
-            serialNumber,
+        const tbs = new TBSAttributeCertificate(
+            AttCertVersion_v2,
+            new Holder(
+                undefined,
+                [
+                    {
+                        directoryName: subjectName,
+                    },
+                ],
+            ),
+            new AttCertIssuer(
+                [
+                    {
+                        directoryName: issuerName,
+                    },
+                ],
+            ),
             algId,
-            issuerName,
-            new Validity(
-                { generalizedTime: new Date() },
-                { generalizedTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365) },
+            serialNumber,
+            new AttCertValidityPeriod(
+                new Date(),
+                new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
             ),
-            subjectName,
-            new SubjectPublicKeyInfo(
-                algId,
-                new Uint8ClampedArray(32),
-            ),
+            [],
         );
         const cert = new SIGNED(
             tbs,
@@ -80,40 +100,36 @@ describe("lookupPkiPathViaX500()", () => {
             undefined,
             undefined,
         );
-        const certEl =_encode_Certificate(cert, DER);
+        const certEl = _encode_AttributeCertificate(cert, DER);
 
         const person = await createPersonEntry(ctx, ctx.dit.root, "subject", "mcgubject");
 
         // This doesn't really have to make sense.
-        const storedPkiPath = [ certEl, certEl ];
+        const storedDelegationPath = [ certEl, certEl ];
 
         await ctx.db.attributeValue.create({
             data: {
                 entry_id: person.dse.id,
-                type_oid: ObjectIdentifier.fromString("2.5.4.70").toBytes(), // pkiPath
+                type_oid: ObjectIdentifier.fromString("2.5.4.73").toBytes(), // delegationPath
                 tag_class: 0,
                 constructed: true,
                 tag_number: 16,
-                content_octets: DERElement.fromSequence(storedPkiPath).value,
+                content_octets: DERElement.fromSequence(storedDelegationPath).value,
                 operational: false,
             },
             select: {
                 id: true,
             },
         });
-
-        const pkiPathReturned = await lookupPkiPathViaX500(
+        const attrCertReturned = await lookupAttrCertViaX500(
             ctx,
             subjectName,
             false,
-            [ { directoryName: issuerName } ],
-            serialNumber,
         );
-        expect(Array.isArray(pkiPathReturned)).toBe(true);
-        expect(pkiPathReturned).toHaveLength(2);
+        expect(attrCertReturned).toBeTruthy();
     });
 
-    it("can return a single certificate", async () => {
+    it("can still return a single attribute certificate as long as delegationPath and attributeCertificateAttribute have the same attribute certificate", async () => {
         const ctx = getMockCtx();
         const subjectName: Name = {
             rdnSequence: [
@@ -146,20 +162,30 @@ describe("lookupPkiPathViaX500()", () => {
             undefined,
         );
 
-        const tbs = new TBSCertificate(
-            2,
-            serialNumber,
+        const tbs = new TBSAttributeCertificate(
+            AttCertVersion_v2,
+            new Holder(
+                undefined,
+                [
+                    {
+                        directoryName: subjectName,
+                    },
+                ],
+            ),
+            new AttCertIssuer(
+                [
+                    {
+                        directoryName: issuerName,
+                    },
+                ],
+            ),
             algId,
-            issuerName,
-            new Validity(
-                { generalizedTime: new Date() },
-                { generalizedTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365) },
+            serialNumber,
+            new AttCertValidityPeriod(
+                new Date(),
+                new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
             ),
-            subjectName,
-            new SubjectPublicKeyInfo(
-                algId,
-                new Uint8ClampedArray(32),
-            ),
+            [],
         );
         const cert = new SIGNED(
             tbs,
@@ -168,14 +194,14 @@ describe("lookupPkiPathViaX500()", () => {
             undefined,
             undefined,
         );
-        const certEl =_encode_Certificate(cert, DER);
+        const certEl = _encode_AttributeCertificate(cert, DER);
 
         const person = await createPersonEntry(ctx, ctx.dit.root, "subject", "mcgubject");
 
         await ctx.db.attributeValue.create({
             data: {
                 entry_id: person.dse.id,
-                type_oid: ObjectIdentifier.fromString("2.5.4.36").toBytes(), // userCertificate
+                type_oid: ObjectIdentifier.fromString("2.5.4.58").toBytes(), // attributeCertificateAttribute
                 tag_class: 0,
                 constructed: true,
                 tag_number: 16,
@@ -187,18 +213,32 @@ describe("lookupPkiPathViaX500()", () => {
             },
         });
 
-        const pkiPathReturned = await lookupPkiPathViaX500(
+        // This doesn't really have to make sense.
+        const storedDelegationPath = [ certEl, certEl ];
+
+        await ctx.db.attributeValue.create({
+            data: {
+                entry_id: person.dse.id,
+                type_oid: ObjectIdentifier.fromString("2.5.4.73").toBytes(), // delegationPath
+                tag_class: 0,
+                constructed: true,
+                tag_number: 16,
+                content_octets: DERElement.fromSequence(storedDelegationPath).value,
+                operational: false,
+            },
+            select: {
+                id: true,
+            },
+        });
+        const attrCertReturned = await lookupAttrCertViaX500(
             ctx,
             subjectName,
-            true, // Must be true to return userCertificate values.
-            [ { directoryName: issuerName } ],
-            serialNumber,
+            false,
         );
-        expect(Array.isArray(pkiPathReturned)).toBe(false);
-        expect(pkiPathReturned).toBeTruthy();
+        expect(attrCertReturned).toBeTruthy();
     });
 
-    it.only("only returns certificates that are applicable to the given time", async () => {
+    it.only("does not return attribute certificates that are not applicable to the given time", async () => {
         const ctx = getMockCtx();
         const subjectName: Name = {
             rdnSequence: [
@@ -231,36 +271,56 @@ describe("lookupPkiPathViaX500()", () => {
             undefined,
         );
 
-        const tbs1 = new TBSCertificate(
-            2,
-            serialNumber,
+        const tbs1 = new TBSAttributeCertificate(
+            AttCertVersion_v2,
+            new Holder(
+                undefined,
+                [
+                    {
+                        directoryName: subjectName,
+                    },
+                ],
+            ),
+            new AttCertIssuer(
+                [
+                    {
+                        directoryName: issuerName,
+                    },
+                ],
+            ),
             algId,
-            issuerName,
-            new Validity(
-                { generalizedTime: new Date() },
-                { generalizedTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365) },
+            serialNumber,
+            new AttCertValidityPeriod(
+                new Date(),
+                new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
             ),
-            subjectName,
-            new SubjectPublicKeyInfo(
-                algId,
-                new Uint8ClampedArray(32),
-            ),
+            [],
         );
         serialNumber[0]++;
-        const tbs2 = new TBSCertificate(
-            2,
-            serialNumber,
+        const tbs2 = new TBSAttributeCertificate(
+            AttCertVersion_v2,
+            new Holder(
+                undefined,
+                [
+                    {
+                        directoryName: subjectName,
+                    },
+                ],
+            ),
+            new AttCertIssuer(
+                [
+                    {
+                        directoryName: issuerName,
+                    },
+                ],
+            ),
             algId,
-            issuerName,
-            new Validity(
-                { generalizedTime: new Date() },
-                { generalizedTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365) },
+            serialNumber,
+            new AttCertValidityPeriod(
+                new Date(),
+                new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
             ),
-            subjectName,
-            new SubjectPublicKeyInfo(
-                algId,
-                new Uint8ClampedArray(32),
-            ),
+            [],
         );
         const cert1 = new SIGNED(
             tbs1,
@@ -276,8 +336,10 @@ describe("lookupPkiPathViaX500()", () => {
             undefined,
             undefined,
         );
-        const certEl1 =_encode_Certificate(cert1, DER);
-        const certEl2 =_encode_Certificate(cert2, DER);
+
+        // These certs differ by a serial number.
+        const certEl1 = _encode_AttributeCertificate(cert1, DER);
+        const certEl2 = _encode_AttributeCertificate(cert2, DER);
 
         const person = await createPersonEntry(ctx, ctx.dit.root, "subject", "mcgubject");
 
@@ -285,7 +347,7 @@ describe("lookupPkiPathViaX500()", () => {
         await ctx.db.attributeValue.create({
             data: {
                 entry_id: person.dse.id,
-                type_oid: ObjectIdentifier.fromString("2.5.4.36").toBytes(), // userCertificate
+                type_oid: ObjectIdentifier.fromString("2.5.4.58").toBytes(), // attributeCertificateAttribute
                 tag_class: 0,
                 constructed: true,
                 tag_number: 16,
@@ -321,7 +383,7 @@ describe("lookupPkiPathViaX500()", () => {
         await ctx.db.attributeValue.create({
             data: {
                 entry_id: person.dse.id,
-                type_oid: ObjectIdentifier.fromString("2.5.4.36").toBytes(), // userCertificate
+                type_oid: ObjectIdentifier.fromString("2.5.4.58").toBytes(), // attributeCertificateAttribute
                 tag_class: 0,
                 constructed: true,
                 tag_number: 16,
@@ -353,40 +415,29 @@ describe("lookupPkiPathViaX500()", () => {
             },
         });
 
-        const attrCertReturned1 = await lookupPkiPathViaX500(
+        const attrCertReturned1 = await lookupAttrCertViaX500(
             ctx,
             subjectName,
-            true, // Must be true to return userCertificate values.
-            undefined,
-            undefined,
-            undefined,
+            true, // Must be true to return attributeCertificateAttribute values.
             undefined, // No asserted time (meaning now)
         );
-        expect(Array.isArray(attrCertReturned1)).toBe(false);
         expect(attrCertReturned1).toBeTruthy();
 
-        const attrCertReturned2 = await lookupPkiPathViaX500(
+        const attrCertReturned2 = await lookupAttrCertViaX500(
             ctx,
             subjectName,
-            true, // Must be true to return userCertificate values.
-            undefined,
-            undefined,
-            undefined,
+            true, // Must be true to return attributeCertificateAttribute values.
             subMinutes(new Date(), 10),
         );
-        expect(Array.isArray(attrCertReturned2)).toBe(false);
         expect(attrCertReturned2).toBeTruthy();
 
-        const attrCertReturned3 = await lookupPkiPathViaX500(
+        const attrCertReturned3 = await lookupAttrCertViaX500(
             ctx,
             subjectName,
-            true, // Must be true to return userCertificate values.
-            undefined,
-            undefined,
-            undefined,
+            true, // Must be true to return attributeCertificateAttribute values.
             subDays(new Date(), 10),
         );
-        expect(Array.isArray(attrCertReturned3)).toBe(false);
         expect(attrCertReturned3).toBeFalsy();
     });
 });
+

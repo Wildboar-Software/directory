@@ -53,7 +53,7 @@ import {
 import { GeneralName } from "@wildboar/pki-stub";
 import { IssuerSerial } from "@wildboar/pki-stub";
 import { ObjectDigestInfo } from "@wildboar/pki-stub";
-import { MeerkatContext } from "../ctx.js";
+import type { MeerkatContext } from "../ctx.js";
 import { NameAndOptionalUID } from "@wildboar/x500/SelectedAttributeTypes";
 import getIsGroupMember from "../authz/getIsGroupMember.js";
 import { checkRemoteCRLs } from "./verifyCertPath.js";
@@ -367,18 +367,10 @@ function isRevokedFromConfiguredCRLs (
         ));
 }
 
-async function hydrate_attr_cert_path_arc (arc: ACPathData): Promise<ACPathData> {
-    // TODO: ~~If no certificate, fetch the certificate from the~~
-    // Actually, nevermind. There is no efficient way to find the cert if not specified.
-    // TODO: If no attribute certificate, fetch the attribute certificate from the subject DN.
-    return arc;
-}
-
 // Holder ::= SEQUENCE {
 //     baseCertificateID  [0]  IssuerSerial OPTIONAL,
 //     entityName         [1]  GeneralNames OPTIONAL,
 //     objectDigestInfo   [2]  ObjectDigestInfo OPTIONAL }
-// TODO: Actually, the path should just be an index of DNs
 async function hydrate_attr_cert_path (
     ctx: Context,
     path: AttributeCertificationPath,
@@ -403,7 +395,6 @@ async function hydrate_attr_cert_path (
         }
     }
 
-
     // const new_path: ACPathData[] = [];
     // const first = path.acPath?.find((arc) => arc.)
     // stringifyGN(ctx, )
@@ -425,6 +416,7 @@ async function hydrate_attr_cert_path (
  * @param issuerCert The issuer certificate of the end-entity
  * @returns A return code
  */
+export
 function is_cert_holder (
     ctx: Context,
     eeCert: Certificate,
@@ -776,6 +768,33 @@ function isAttrCertIssuerTrusted (
 //     ... }
 // TODO: Report defect: `ACPathData.attributeCertificate` should support multiple ACs, since an entity may obtain priviledge from multiple ACs.
 // TODO: Report defect: there should be a constraint to mandate one or the other.
+// TODO: Report defect: it is not clear if the ordering of elements in the ACPath is important.
+
+/*
+It seems like, for each AC path datum, you have to look up the full PKI path,
+even if the certificate is provided. I think this could be cost prohibitive.
+For each one of these, you could:
+- Use any `authorityInfoAccess` of type `id-ad-caIssuers` to find the CA certificates
+- Search the DIT:
+  - Select `pkiPath`, `userCertificate`, `cACertificate` from the entry corresponding to the issuer DN
+  - Recurse up the certification chain
+  - Chaining, localScope should be configurable.
+
+I increasingly think Meerkat DSA simply should not support this.
+DoS-limiting ideas:
+
+- `MEERKAT_AC_PATH_LIMIT`
+- `MEERKAT_AC_PATH_AIA_LOOKUP_TIME_LIMIT` (0 is off)
+- `MEERKAT_AC_PATH_AIA_LOOKUP_URL_WHITELIST`
+- `MEERKAT_AC_PATH_X500_LOOKUP_CHAINING`
+- `MEERKAT_AC_PATH_X500_LOOKUP_LOCAL_SCOPE`
+- `MEERKAT_AC_PATH_X500_LOOKUP_COPY_SHALL_DO`
+- `MEERKAT_AC_PATH_X500_LOOKUP_DONT_USE_COPY`
+- `MEERKAT_AC_PATH_X500_LOOKUP_DEREF_ALIASES`
+- `MEERKAT_AC_PATH_X500_LOOKUP_TIME_LIMIT` (0 is off)
+
+Country blacklists / whitelists?
+*/
 
 //   - [ ] Verify that, for each certificate, if issuedOnBehalfOf is present, it points to the next AC
 //   - [ ] If the issuedOnBehalfOf extension is present, wat do?
@@ -806,6 +825,7 @@ async function verifyAttrCertPath (
     acPath: AttributeCertificationPath,
     userPkiPath: PkiPath,
     soas: TrustAnchorList,
+    // TODO: timeOfCheck
 ): Promise<number> {
 
     // #region validity
@@ -813,10 +833,11 @@ async function verifyAttrCertPath (
     // computationally expensive step, and it is the most likely step to fail.
     // So it's an excellent candidate for "short-circuiting" a lot more work.
     const now = new Date();
-    if (now < acPath.attributeCertificate.toBeSigned.attrCertValidityPeriod.notBeforeTime) {
+    const actbs = acPath.attributeCertificate.toBeSigned;
+    if (now < actbs.attrCertValidityPeriod.notBeforeTime) {
         return VAC_NOT_BEFORE;
     }
-    if (now > acPath.attributeCertificate.toBeSigned.attrCertValidityPeriod.notAfterTime) {
+    if (now > actbs.attrCertValidityPeriod.notAfterTime) {
         return VAC_NOT_AFTER;
     }
     for (const pair of acPath.acPath ?? []) {
@@ -1016,10 +1037,13 @@ async function verifyAttrCertPath (
  * This function verifies a single attribute certificate. It does not support
  * indirect issuance: it does not check the delegation path where an SOA issues
  * an AA beneath it to serve as an indirect issuer.
+ * 
+ * **WARNING**: This function does not verify the user PKI path.
  *
  * @param ctx The context object
  * @param acert The attribute certificate being verified
- * @param userPkiPath The user PKI path
+ * @param userPkiPath The user PKI path, which MUST be verified prior to
+ *  calling this function
  * @param soas The trust anchors that can serve as SOAs
  * @returns A promise resolving to a return code
  *
@@ -1033,6 +1057,9 @@ async function verifyAttrCert (
     userPkiPath: PkiPath,
     soas: TrustAnchorList,
 ): Promise<number> {
+    if (userPkiPath.length === 0) {
+        return VAC_MISSING_BASE_CERT; // TODO: Is this the right error?
+    }
 
     const now = new Date();
     if (now < acert.toBeSigned.attrCertValidityPeriod.notBeforeTime) {
@@ -1105,10 +1132,9 @@ async function verifyAttrCert (
                 return VAC_INVALID_TIME_SPEC;
             }
         }
-        return VAC_NO_ASSERTION;
     }
 
-    if (isRevokedFromConfiguredCRLs(ctx, acert, now, ctx.config.signing)) {
+    if (!no_rev_avail && isRevokedFromConfiguredCRLs(ctx, acert, now, ctx.config.signing)) {
         return VAC_CRL_REVOKED;
     }
 
@@ -1145,7 +1171,7 @@ async function verifyAttrCert (
             return VAC_NOT_GROUP_MEMBER;
         }
     }
-    else {
+    else { // End-entity AC
         const holder = acert.toBeSigned.holder;
         const issuerCert: Certificate | undefined = userPkiPath[userPkiPath.length - 2];
         const holder_result = is_cert_holder(ctx, eeCert, holder, issuerCert);

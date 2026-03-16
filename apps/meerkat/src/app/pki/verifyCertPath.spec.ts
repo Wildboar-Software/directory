@@ -1,17 +1,16 @@
 import type { MeerkatContext } from "../ctx.js";
-import { verifyCertPath, VerifyCertPathArgs } from "./verifyCertPath.js";
+import {
+    verifyCertPath,
+    VerifyCertPathArgs,
+} from "./verifyCertPath.js";
 import {
     Certificate,
     _decode_Certificate,
 } from "@wildboar/x500/AuthenticationFramework";
 import { PEMObject } from "@wildboar/pem";
 import { DERElement, ObjectIdentifier } from "@wildboar/asn1";
-import type {
-    TrustAnchorList,
-} from "@wildboar/tal";
-import {
-    caseIgnoreMatch,
-} from "@wildboar/x500/SelectedAttributeTypes";
+import type { TrustAnchorList } from "@wildboar/tal";
+import { caseIgnoreMatch } from "@wildboar/x500/SelectedAttributeTypes";
 
 const ctx: MeerkatContext = {
     attributeTypes: {

@@ -101,6 +101,7 @@ import { loadMatchingRules } from "./init/loadMatchingRules.js";
 import { PrismaClient } from "./generated/client.js";
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import { person } from "@wildboar/x500/SelectedObjectClasses";
+import { loadContextTypes } from "./init/loadContextTypes.js";
 
 export
 interface MeerkatTelemetryClient {
@@ -1017,6 +1018,7 @@ export function getMockCtx (): MeerkatContext {
         return cached_ctx;
     }
     loadMatchingRules(ctx);
+    loadContextTypes(ctx, false);
     Object.entries(x500at)
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {
@@ -1047,6 +1049,7 @@ export function getMockCtx (): MeerkatContext {
         adapter,
     });
     newCtx.db = db;
+    newCtx["__testing"] = true;
     cached_ctx = newCtx;
     return newCtx;
 }

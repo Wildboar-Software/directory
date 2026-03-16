@@ -3551,20 +3551,6 @@ abstract class ClientAssociation implements WithIntegerProtocolVersion, WithSube
      * `queryReference`.
      */
     public readonly pagedResultsRequests: Map<string, PagedResultsRequestState> = new Map();
-    /**
-     * TODO: Eventually change this to a proper FIFO queue so that enqueuing
-     * runs in O(1) time. This is not really a huge problem right now, because
-     * the size of the queue will be capped at a pretty low number.
-     *
-     * I tried [this queue library](https://www.npmjs.com/package/yocto-queue)
-     * but I got the loathesome `ERR_REQUIRE_ESM` error, because that package
-     * is written using exclusively ESM modules. There might be a workaround,
-     * but I think the pain-in-the-ass is not worth it. I want to wait until
-     * Nx monorepos have built-in support for ESM-only builds.
-     *
-     * See this: https://github.com/nrwl/nx/issues/7872
-     */
-    // public readonly enqueuedOperations: (() => Promise<any>)[] = [];
 
     /**
      * An index of operation invocations by invocation ID. The key of the index

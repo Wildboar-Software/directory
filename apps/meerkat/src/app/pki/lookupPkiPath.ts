@@ -1,5 +1,5 @@
-import { type MeerkatContext } from "../ctx.js";
-import { Certificate, type PkiPath, pkiPath, _decode_Certificate, cACertificate } from "@wildboar/x500/AuthenticationFramework";
+import type { MeerkatContext } from "../ctx.js";
+import { Certificate, type PkiPath, pkiPath, _decode_Certificate, cACertificate, userCertificate, crossCertificatePair, _decode_Extension } from "@wildboar/x500/AuthenticationFramework";
 import { OperationDispatcher } from "../distributed/OperationDispatcher.js";
 import {
     EntryInformationSelection,
@@ -11,16 +11,23 @@ import {
     ServiceControlOptions_dontUseCopy,
     ServiceControlOptions_copyShallDo,
     ServiceControlOptions_dontDereferenceAliases,
+    ServiceControlOptions_dontSelectFriends,
     ServiceControls,
     _decode_ReadResult,
+    type ReadResultData,
+    TypeAndContextAssertion,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { _decode_Name, type Name } from "@wildboar/x500/InformationFramework";
+import { _decode_Name, ContextAssertion, id_oa_allAttributeTypes, type Name } from "@wildboar/x500/InformationFramework";
 import { type CertificateSerialNumber } from "@wildboar/x500/AuthenticationFramework";
-import { type ASN1Element, OBJECT_IDENTIFIER, TRUE_BIT } from "@wildboar/asn1";
+import { type ASN1Element, ASN1TagClass, DERElement, OBJECT_IDENTIFIER, TRUE_BIT } from "@wildboar/asn1";
 import { compareName, EqualityMatcher, getOptionallyProtectedValue } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { stringifyDN } from "../x500/stringifyDN.js";
 import util from "node:util";
+import { subjectKeyIdentifier, type SubjectKeyIdentifier } from "@wildboar/x500/CertificateExtensions";
+import type { GeneralName } from "@wildboar/pki-stub";
+import { temporalContext, TimeAssertion } from "@wildboar/x500/SelectedAttributeTypes";
+import { DER } from "@wildboar/asn1/functional";
 
 /**
  * @description
@@ -37,38 +44,65 @@ import util from "node:util";
  * @param namingMatcher A function that returns an equality matcher for a given attribute type.
  * @returns A boolean indicating whether the issuer name and serial number match the certificate.
  */
-function matchIssuerSerialInUndecodedCert(
+function matchUndecodedCert(
     undecodedCert: ASN1Element,
-    issuerName: Name,
-    serialNumber: CertificateSerialNumber,
+    issuerNames: GeneralName[] | undefined,
+    serialNumber: CertificateSerialNumber | undefined,
+    keyIdentifier: SubjectKeyIdentifier | undefined,
     namingMatcher: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
 ): boolean {
-    const tbs = undecodedCert.sequence[0];
-    const tbsComponents = tbs.sequence;
-    const hasVersion = tbsComponents[0].tagNumber === 0;
-    const valueSerialNumber = tbsComponents[hasVersion ? 1 : 0].octetString;
-    if (Buffer.compare(valueSerialNumber, serialNumber)) {
-        // Serial numbers don't match. Ignore.
+    try {
+        const issuerDirectoryNames = issuerNames
+            ?.map((gn) => ("directoryName" in gn) && gn.directoryName)
+            .filter((n): n is Name => !!n)
+            .slice(0, 100); // 100 is a reasonable limit to prevent DoS attacks by large inputs.
+
+        const tbs = undecodedCert.sequence[0];
+        const tbsComponents = tbs.sequence;
+        const hasVersion = tbsComponents[0].tagNumber === 0;
+        const valueSerialNumber = tbsComponents[hasVersion ? 1 : 0].octetString;
+        if (serialNumber && Buffer.compare(valueSerialNumber, serialNumber)) {
+            return false; // Serial numbers don't match. Ignore.
+        }
+        const valueIssuer = _decode_Name(tbsComponents[hasVersion ? 3 : 2]);
+        if (
+            issuerDirectoryNames
+            && !issuerDirectoryNames.some((idn) => compareName(valueIssuer, idn, namingMatcher))
+        ) {
+            return false; // Issuer names don't match. Ignore.
+        }
+        if (!keyIdentifier) {
+            return true; // Nothing more to check.
+        }
+        const extensionsEl = tbsComponents
+            .find((c) => (c.tagClass === ASN1TagClass.context) && (c.tagNumber == 3));
+        if (!extensionsEl) {
+            return true; // Nothing more to check.
+        }
+        const extensions = extensionsEl.sequenceOf;
+        for (const extension of extensions) {
+            const extnType = extension.sequence[0]?.objectIdentifier;
+            if (!extnType) {
+                return false; // Malformed extension.
+            }
+            if (extnType.isEqualTo(subjectKeyIdentifier["&id"]!)) {
+                const ext = _decode_Extension(extension);
+                const extEl = new DERElement();
+                if (extEl.fromBytes(ext.extnValue) !== ext.extnValue.length) {
+                    return false; // Malformed extension.
+                }
+                const ski = subjectKeyIdentifier.decoderFor["&ExtnType"]!(extEl);
+                if (Buffer.compare(ski, keyIdentifier)) {
+                    return false; // Key identifiers don't match.
+                }
+            }
+        }
+        return true;
+    } catch {
+        // A cert that fails to decode is treated as not matching.
         return false;
     }
-    const valueIssuer = _decode_Name(tbsComponents[hasVersion ? 3 : 2]);
-    if (!compareName(valueIssuer, issuerName, namingMatcher)) {
-        // Issuer names don't match. Ignore.
-        return false;
-    }
-    return true;
 }
-
-/*
-You can obtain the PKI path from:
-- Attribute certificate's baseCertificateID
-- Certificate's issuer and serial number
-
-- Search the DIT:
-  - Select `pkiPath`, `userCertificate`, `cACertificate` from the entry corresponding to the issuer DN
-  - Recurse up the certification chain
-  - Chaining, localScope should be configurable.
-*/
 
 export interface LookupPkiPathOptions {
     chaining: boolean;
@@ -84,22 +118,17 @@ export interface LookupPkiPathOptions {
 export
 async function lookupPkiPathViaX500 (
     ctx: MeerkatContext,
-    subjectName: Name,
-    issuerName: Name,
-    serialNumber: CertificateSerialNumber,
+    subjectName: Name, // entry to read
+    forEndEntity: boolean,
+    issuerNames?: GeneralName[],
+    serialNumber?: CertificateSerialNumber,
+    keyIdentifier?: SubjectKeyIdentifier,
+    asOfTime?: Date,
     options: Partial<LookupPkiPathOptions> = {},
-): Promise<PkiPath | null> {
-    if (
-        subjectName.rdnSequence.length === 0
-        || issuerName.rdnSequence.length === 0
-        || serialNumber.length === 0
-    ) {
-        return null;
-    }
-    const sco: ServiceControlOptions = new Uint8ClampedArray(11);
-    // TODO: If time parameter is provided, disable chaining.
+): Promise<Certificate | PkiPath | null> {
+    const sco: ServiceControlOptions = new Uint8ClampedArray(13);
     // We don't want a temporalContext to get dropped as a DAP request is converted to LDAP.
-    if (!options.chaining) {
+    if (!options.chaining && !asOfTime) {
         sco[ServiceControlOptions_chainingProhibited] = TRUE_BIT; // TODO: Make configurable.
     }
     if (options.localScope) {
@@ -117,7 +146,32 @@ async function lookupPkiPathViaX500 (
     // We set this because the OIDs used are hard-coded; we don't know
     // whether a subtype is a subtype of pkiPath or userCertificate.
     sco[ServiceControlOptions_noSubtypeSelection] = TRUE_BIT;
+    // We definitely do not want friend attributes, which could be have a
+    // purpose other than building the certification chain.
+    sco[ServiceControlOptions_dontSelectFriends] = TRUE_BIT;
+
+    const selectedAttributeTypes: OBJECT_IDENTIFIER[] = [
+        pkiPath["&id"],
+        cACertificate["&id"],
+        /* This is not specified in ITU-T Rec. X.509. This is prescribed by
+        IETF RFC 5280. */
+        crossCertificatePair["&id"],
+    ];
+    if (forEndEntity) {
+        selectedAttributeTypes.push(userCertificate["&id"]);
+    }
+
+    const timeAssertion: TimeAssertion = asOfTime
+        ? {
+            at: asOfTime,
+        }
+        : {
+            now: null,
+        };
+
+    const namingMatcher = getNamingMatcherGetter(ctx);
     // Due to poor implementation on my part, I can't really use a local search
+    let dapData: ReadResultData | undefined;
     try {
         const readOutcome = await OperationDispatcher.dispatchLocalReadRequest(
             ctx,
@@ -125,11 +179,25 @@ async function lookupPkiPathViaX500 (
                 unsigned: new ReadArgumentData(
                     subjectName,
                     new EntryInformationSelection(
+                        { select: selectedAttributeTypes },
+                        undefined,
+                        undefined,
                         {
-                            select: [
-                                pkiPath["&id"],
-                                cACertificate["&id"],
-                            ],
+                            selectedContexts: [
+                                new TypeAndContextAssertion(
+                                    id_oa_allAttributeTypes,
+                                    {
+                                        all: [
+                                            new ContextAssertion(
+                                                temporalContext["&id"],
+                                                [
+                                                    temporalContext.encoderFor["&Assertion"]!(timeAssertion, DER),
+                                                ],
+                                            ),
+                                        ],
+                                    },
+                                ),
+                            ]
                         },
                     ),
                     undefined,
@@ -149,18 +217,30 @@ async function lookupPkiPathViaX500 (
         );
         const dspData = getOptionallyProtectedValue(readOutcome.result);
         const dapResult = _decode_ReadResult(dspData.result);
-        const dapData = getOptionallyProtectedValue(dapResult);
-        const namingMatcher = getNamingMatcherGetter(ctx);
-        for (const info of dapData.entry.information ?? []) {
-            if (!("attribute" in info)) {
-                continue;
-            }
-            const attribute = info.attribute;
+        dapData = getOptionallyProtectedValue(dapResult);
+    } catch (e) {
+        if (process.env.MEERKAT_LOG_JSON !== "1") {
+            ctx.log.debug(util.inspect(e));
+        }
+        ctx.log.debug(ctx.i18n.t("log:error_looking_up_pki_path", {
+            subject: stringifyDN(ctx, subjectName.rdnSequence),
+            serial: serialNumber?.toString(),
+            e,
+        }));
+        return null;
+    }
+    const matchingCertificates: Certificate[] = [];
+    for (const info of dapData?.entry.information ?? []) {
+        if (!("attribute" in info)) {
+            continue;
+        }
+        const attribute = info.attribute;
+        const values = [
+            ...attribute.values,
+            ...attribute.valuesWithContext?.map((vwc) => vwc.value) ?? [],
+        ];
+        try {
             if (attribute.type_.isEqualTo(pkiPath["&id"])) {
-                const values = [
-                    ...attribute.values,
-                    ...attribute.valuesWithContext?.map((vwc) => vwc.value) ?? [],
-                ];
                 for (const value of values) {
                     /* Decoding the full PKI path is computationally expensive.
                     Instead, we just drill down into the certificate serial
@@ -168,10 +248,11 @@ async function lookupPkiPathViaX500 (
                     match, we then check the issuer name, then decode fully. */
                     const seqof = value.sequenceOf;
                     const lastCert = seqof[seqof.length - 1];
-                    if (!matchIssuerSerialInUndecodedCert(
+                    if (!matchUndecodedCert(
                         lastCert,
-                        issuerName,
+                        issuerNames,
                         serialNumber,
+                        keyIdentifier,
                         namingMatcher,
                     )) {
                         continue;
@@ -179,44 +260,64 @@ async function lookupPkiPathViaX500 (
                     return pkiPath.decoderFor["&Type"]!(value);
                 }
             }
-            else if (attribute.type_.isEqualTo(cACertificate["&id"])) {
-                const values = [
-                    ...attribute.values,
-                    ...attribute.valuesWithContext?.map((vwc) => vwc.value) ?? [],
-                ];
+            else if (
+                attribute.type_.isEqualTo(cACertificate["&id"])
+                || attribute.type_.isEqualTo(userCertificate["&id"])
+            ) {
                 for (const value of values) {
                     /* Decoding the full certificate is computationally expensive.
                     Instead, we just drill down into the certificate serial
                     number without decoding full data structures. If there's a
                     match, we then check the issuer name, then decode fully. */
-                    if (!matchIssuerSerialInUndecodedCert(
+                    if (!matchUndecodedCert(
                         value,
-                        issuerName,
+                        issuerNames,
                         serialNumber,
+                        keyIdentifier,
                         namingMatcher,
                     )) {
                         continue;
                     }
-                    // Return a PKI path with a single CA certificate.
-                    return [
-                        cACertificate.decoderFor["&Type"]!(value),
-                    ];
+                    const cert = _decode_Certificate(value);
+                    matchingCertificates.push(cert);
                 }
-                return null;
             }
+            else if (attribute.type_.isEqualTo(crossCertificatePair["&id"])) {
+                for (const value of values) {
+                    /* Decoding the full PKI path is computationally expensive.
+                    Instead, we just drill down into the certificate serial
+                    number without decoding full data structures. If there's a
+                    match, we then check the issuer name, then decode fully. */
+                    const maybeIssuedToThisCA = value.sequence[0];
+                    if (
+                        !maybeIssuedToThisCA
+                        || maybeIssuedToThisCA.tagNumber !== 0
+                        || maybeIssuedToThisCA.tagClass !== ASN1TagClass.context
+                    ) {
+                        // There is no issuedToThisCA.
+                        continue;
+                    }
+                    const issuedToThisCACert = maybeIssuedToThisCA.inner;
+                    if (!matchUndecodedCert(
+                        issuedToThisCACert,
+                        issuerNames,
+                        serialNumber,
+                        keyIdentifier,
+                        namingMatcher,
+                    )) {
+                        continue;
+                    }
+                    return pkiPath.decoderFor["&Type"]!(value);
+                }
+            }
+        } catch (e) {
+            ctx.log.trace(util.inspect(e));
+            continue;
         }
-        return null;
-    } catch (e) {
-        // if (process.env.MEERKAT_LOG_JSON !== "1") {
-        //     ctx.log.error(util.inspect(e));
-        // }
-        console.error(e);
-        ctx.log.error(ctx.i18n.t("log:error_looking_up_pki_path", {
-            subject: stringifyDN(ctx, subjectName.rdnSequence),
-            issuer: stringifyDN(ctx, issuerName.rdnSequence),
-            serial: serialNumber.toString(),
-            e,
-        }));
+    }
+    if (matchingCertificates.length === 1) {
+        // We only accept the outcome if a single unambiguous cert is found.
+        return matchingCertificates[0];
     }
     return null;
 }

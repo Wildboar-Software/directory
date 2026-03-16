@@ -630,6 +630,7 @@ const config: Configuration = {
         fileBufferSize: logFileBufferSize,
         fileFlushIntervalMs: logFileFlushIntervalMs,
         options: {
+            reset: !!process.env.VITEST ? true : undefined,
             sinks: {
                 ...(process.env.MEERKAT_NO_CONSOLE === "1")
                     ? {}

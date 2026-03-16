@@ -61,6 +61,8 @@ import { stringifyDN } from "../x500/stringifyDN.js";
  * @param argOrResult Whether what is being signed is an argument or a result
  * @param ae_title_rdnSequence If applicable, the AE-Title of the application
  *  that signed the `param`.
+ * @param returnCertPathResult If applicable, the return codes from cert path
+ *  validation that should be returned, instead of throwing an error.
  *
  * @async
  * @function

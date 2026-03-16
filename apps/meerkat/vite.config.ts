@@ -25,5 +25,6 @@ export default defineConfig(() => ({
             provider: 'v8' as const,
         },
         globalSetup: './test/setup.ts',
+        fileParallelism: false,
     },
 }));

@@ -510,5 +510,7 @@
     "convert_dsa_referral_fail": "Failed to convert DSA referral to referral error for invocation {{iid}} for association {{aid}}: {{e}}",
     "failed_group_member_check": "Failed to check group membership for group {{group}}: {{e}}",
     "cache_naming_contexts_error": "Failed to cache naming contexts: {{e}}",
-    "name_resolution_failed": "Name resolution of target {{target}} for operation {{opid}} failed at DSA {{aet}}."
+    "name_resolution_failed": "Name resolution of target {{target}} for operation {{opid}} failed at DSA {{aet}}.",
+    "error_looking_up_pki_path": "Error looking up PKI path for subject {{subject}} and issuer {{issuer}} with serial number {{serial}}: {{e}}",
+    "error_looking_up_attr_cert": "Error looking up attribute certificate for holder {{holder}}: {{e}}"
 }

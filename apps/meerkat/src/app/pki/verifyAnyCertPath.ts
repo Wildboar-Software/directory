@@ -1,6 +1,6 @@
 import {
     verifyCertPath,
-    VerifyCertPathArgs,
+    type VerifyCertPathArgs,
 } from "../pki/verifyCertPath.js";
 import type {
     CertificationPath,
@@ -8,8 +8,8 @@ import type {
 import {
     anyPolicy,
 } from "@wildboar/x500/CertificateExtensions";
-import { MeerkatContext } from "../ctx.js";
-import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
+import type { MeerkatContext } from "../ctx.js";
+import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type { SigningInfo } from "../types/index.js";
 
 /**
