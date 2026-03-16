@@ -163,6 +163,8 @@ async function crlCurlDAP (
     }
 }
 
+// TODO: Support IPFS.
+
 /**
  * @summary Fetchs remote CRLs for a given distribution point
  * @description

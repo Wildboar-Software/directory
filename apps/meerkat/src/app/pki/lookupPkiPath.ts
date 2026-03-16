@@ -1,5 +1,14 @@
 import type { MeerkatContext } from "../ctx.js";
-import { Certificate, type PkiPath, pkiPath, _decode_Certificate, cACertificate, userCertificate, crossCertificatePair, _decode_Extension } from "@wildboar/x500/AuthenticationFramework";
+import {
+    type Certificate,
+    type PkiPath,
+    pkiPath,
+    _decode_Certificate,
+    cACertificate,
+    userCertificate,
+    crossCertificatePair,
+    _decode_Extension,
+} from "@wildboar/x500/AuthenticationFramework";
 import { OperationDispatcher } from "../distributed/OperationDispatcher.js";
 import {
     EntryInformationSelection,
@@ -17,9 +26,22 @@ import {
     type ReadResultData,
     TypeAndContextAssertion,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { _decode_Name, ContextAssertion, id_oa_allAttributeTypes, type Name } from "@wildboar/x500/InformationFramework";
-import { type CertificateSerialNumber } from "@wildboar/x500/AuthenticationFramework";
-import { type ASN1Element, ASN1TagClass, DERElement, OBJECT_IDENTIFIER, TRUE_BIT } from "@wildboar/asn1";
+import {
+    _decode_Name,
+    ContextAssertion,
+    id_oa_allAttributeTypes,
+    type Name,
+} from "@wildboar/x500/InformationFramework";
+import type {
+    CertificateSerialNumber,
+} from "@wildboar/x500/AuthenticationFramework";
+import {
+    type ASN1Element,
+    ASN1TagClass,
+    DERElement,
+    type OBJECT_IDENTIFIER,
+    TRUE_BIT,
+} from "@wildboar/asn1";
 import { compareName, EqualityMatcher, getOptionallyProtectedValue } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { stringifyDN } from "../x500/stringifyDN.js";
@@ -28,8 +50,11 @@ import { subjectKeyIdentifier, type SubjectKeyIdentifier } from "@wildboar/x500/
 import type { GeneralName } from "@wildboar/pki-stub";
 import { temporalContext, TimeAssertion } from "@wildboar/x500/SelectedAttributeTypes";
 import { DER } from "@wildboar/asn1/functional";
+import type { LookupViaX500Options } from "../types/fetch.js";
 
+// TODO: Test this
 /**
+ * @summary Without fully decoding, check if a cert matches the issuer name and serial number.
  * @description
  * 
  * Decoding the a certificate is computationally expensive.
@@ -41,8 +66,11 @@ import { DER } from "@wildboar/asn1/functional";
  * @param undecodedCert An ASN.1 element representing an undecoded certificate.
  * @param issuerName The issuer name to match against.
  * @param serialNumber The serial number to match against.
+ * @param keyIdentifier The subject key identifier expected in a matching certificate.
  * @param namingMatcher A function that returns an equality matcher for a given attribute type.
  * @returns A boolean indicating whether the issuer name and serial number match the certificate.
+ * 
+ * @function
  */
 function matchUndecodedCert(
     undecodedCert: ASN1Element,
@@ -104,17 +132,44 @@ function matchUndecodedCert(
     }
 }
 
-export interface LookupPkiPathOptions {
-    chaining: boolean;
-    localScope: boolean;
-    dontUseCopy: boolean;
-    copyShallDo: boolean;
-    dontDereferenceAliases: boolean;
-    timeLimitInSeconds: number;
-}
-
-// TODO: Take a time parameter that populates a temporalContext assertion.
-// TODO: Recursion?
+/**
+ * @summary Fetch an PKI path using the X.500 Directory Access Protocol (DAP).
+ * @description
+ * 
+ * This function uses the X.500 Directory Access Protocol (DAP) `read` operation
+ * to obtain either a single public key certificate, or a full PKI path for a
+ * given entry. It queries the `pkiPath`, `cACertificate`, and
+ * `crossCertificatePair` attributes, also including the `userCertificate`
+ * attribute if `forEndEntity` is `true`.
+ * 
+ * If an entry contains both a PKI path and a public key certificate, the full
+ * PKI path will be returned.
+ * 
+ * @param ctx The context object
+ * @param subjectName The directory entry to query, which is typically expected
+ *  to be the `subject` in the obtained public key certificate.
+ * @param forEndEntity Whether the public key certificate is for an end entity.
+ *  If present, the query also includes the `userCertificate` attribute.
+ * @param issuerNames The issuer names to match against.
+ * @param serialNumber The serial number to match against.
+ * @param keyIdentifier The subject key identifier expected in a matching certificate.
+ * @param asOfTime Fetch the attribute certificates that were applicable as of
+ *  this time. If omitted, defaults to now. Used to populate a temporalContext
+ *  assertion in the `read` request.
+ * @param options Options for the fetch
+ * @param options.chaining Whether to tolerate chaining to remote DSAs.
+ * @param options.localScope Whether to limit the scope of the search to the local DSA.
+ * @param options.dontUseCopy Whether to do not accept shadow DSEs, nor copies of any kind.
+ * @param options.copyShallDo Whether to accept shadow DSEs, even if they don't have all desired
+ *  attributes replicated.
+ * @param options.dontDereferenceAliases If `true`, do not dereference aliases.
+ * @param options.timeLimitInSeconds The time limit in seconds for the operation.
+ * @returns The public key certificate, the full PKI path, or `null` if
+ *  neither could be obtained.
+ * 
+ * @async
+ * @function
+ */
 export
 async function lookupPkiPathViaX500 (
     ctx: MeerkatContext,
@@ -124,7 +179,7 @@ async function lookupPkiPathViaX500 (
     serialNumber?: CertificateSerialNumber,
     keyIdentifier?: SubjectKeyIdentifier,
     asOfTime?: Date,
-    options: Partial<LookupPkiPathOptions> = {},
+    options: LookupViaX500Options = {},
 ): Promise<Certificate | PkiPath | null> {
     const sco: ServiceControlOptions = new Uint8ClampedArray(13);
     // We don't want a temporalContext to get dropped as a DAP request is converted to LDAP.
@@ -321,3 +376,5 @@ async function lookupPkiPathViaX500 (
     }
     return null;
 }
+
+export default lookupPkiPathViaX500;

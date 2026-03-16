@@ -318,7 +318,15 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         });
     };
     const modify_hob_with_superior = async (params: CommonModifyOptions<HierarchicalAgreement, SubordinateToSuperior>): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> => {
+        // TODO: Replicate this elsewhere.
+        if (typeof params.timeout === "number" && params.timeout <= 0) {
+            return {
+                timeout: true,
+            };
+        }
         const newAgreement = params.newAgreement
+
+        
             ? _encode_HierarchicalAgreement(params.newAgreement, DER)
             : undefined;
         const initiator: EstablishOperationalBindingArgumentData_initiator = {

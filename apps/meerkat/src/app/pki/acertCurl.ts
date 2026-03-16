@@ -2,28 +2,57 @@ import limitBytes from "../utils/limitBytes.js";
 import { type AttributeCertificate, _decode_AttributeCertificate } from "@wildboar/x500/AttributeCertificateDefinitions";
 import { BERElement } from "@wildboar/asn1";
 import { curlFTP, curlLDAP } from "./curl.js";
-import { type TlsOptions } from "node:tls";
+import type { CurlOptions } from "../types/fetch.js";
 
-export
-interface CertCurlOptions {
-    timeoutInMilliseconds: number;
-    sizeLimit: number;
-    tlsOptions?: TlsOptions,
-    ipfsBaseUrls: string[],
-}
-
-const DEFAULT_OPTIONS: CertCurlOptions = {
+const DEFAULT_OPTIONS: CurlOptions = {
     timeoutInMilliseconds: 10000,
     sizeLimit: 1_000_000, // 1MB should be enough for a cert.
-    ipfsBaseUrls: [],
 };
 
-// TODO: Should you handle PEM encoding? NO! The spec says the file MUST be DER. Document this.
+// FIXME: Actually use the TLS options
 
+/**
+ * @summary Fetch an attribute certificate from a remote source using a URL.
+ * @description
+ * 
+ * This function fetches an attribute certificate from a remote source using a
+ * URL. It supports the following protocols:
+ * 
+ * - HTTP(S)
+ * - FTP(S)
+ * - LDAP(S)
+ * - IPFS
+ * 
+ * This function does not support PEM encoding, because ITU-T Recommendation
+ * X.509 (2019), Section 18.3.2.1 specifically says that the file MUST be
+ * DER-encoded, and that there MUST be only one attribute certificate in the
+ * file.
+ * 
+ * The same recommendation also says that the URL may point to a "filestore
+ * directory containing the set of [attribute certificates]..." but this is
+ * not going to be supported by this implementation.
+ * 
+ * If an LDAP URL results in a multiple attribute certificates, `null` is
+ * returned, since we cannot unambiguously determine which certificate to
+ * return.
+ * 
+ * @param url The URL of the attribute certificate to be fetched.
+ * @param options The options for the fetch.
+ * @param options.timeoutInMilliseconds The timeout in milliseconds for the fetch.
+ * @param options.sizeLimit The size limit in bytes for the fetched attribute certificate.
+ * @param options.tlsOptions The TLS options for protocols that use TLS.
+ * @param options.ipfsBaseUrl The base URLs of an IPFS HTTP gateway. If not
+ *  supplied, IPFS URLs will return a `null` result.
+ * @param debugLog The debug log function. No debug logging is done if omitted.
+ * @returns The attribute certificate, or `null` if it could not be obtained.
+ * 
+ * @async
+ * @function
+ */
 export
 async function acertCurl(
     url: URL,
-    options: CertCurlOptions = DEFAULT_OPTIONS,
+    options: CurlOptions = DEFAULT_OPTIONS,
     debugLog?: (message: string) => void,
 ): Promise<AttributeCertificate | null> {
     const protocol = url.protocol.trim().toLowerCase();
@@ -35,7 +64,7 @@ async function acertCurl(
                     + ", application/octet-stream",
             },
             signal: AbortSignal.timeout(options.timeoutInMilliseconds),
-        })
+        });
         if (!res.ok || !res.body) {
             return null;
         }
@@ -70,7 +99,10 @@ async function acertCurl(
         /* IETF RFC 5280 specifically restricts the syntaxes of the attributes
         queried to Certificate and CertificatePair. So no PKIPath. */
         const attributesToSearch = url.search.slice(1).split(",")
-            || ["attributeCertificateAttribute;binary"];
+            || [
+                "aACertificate;binary",
+                "attributeCertificateAttribute;binary"
+            ];
         const res = await curlLDAP(
             url,
             attributesToSearch,
@@ -85,9 +117,8 @@ async function acertCurl(
         certEl.fromBytes(res[0]);
         return _decode_AttributeCertificate(certEl);
     }
-    if (options.ipfsBaseUrls.length > 0 && protocol === "ipfs:") {
-        const randomIdx = Math.floor(Math.random() * options.ipfsBaseUrls.length);
-        const baseUrl = options.ipfsBaseUrls[randomIdx];
+    if (options.ipfsBaseUrl && options.ipfsBaseUrl.length > 0 && protocol === "ipfs:") {
+        const baseUrl = options.ipfsBaseUrl;
         let ipfsUrl = url.toString();
         if (ipfsUrl.startsWith("ipfs://")) {
             ipfsUrl = ipfsUrl.replace("ipfs://", baseUrl + "/ipfs/");

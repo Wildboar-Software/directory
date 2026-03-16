@@ -14,6 +14,9 @@ import { isCertInTrustAnchor } from "./isCertInTrustAnchor.js";
 
 const MAX_CERT_SIZE_BYTES = 1_000_000; // 1MB should be enough for a cert.
 
+/**
+ * An intermediary function that handles the recursion logic.
+ */
 async function handleNextCert(
     ctx: MeerkatContext,
     certsBySerialNumberLowerHex: Map<string, Certificate[]>,
@@ -49,6 +52,26 @@ async function handleNextCert(
     return ret;
 }
 
+// TODO: Test this
+/**
+ * @summary Sort a list of certificates into an ordered PKI path.
+ * @description
+ * 
+ * The `PKIPath` type is defined as a sequence of certificates, ordered by
+ * descending authority. This function sorts an unordered array of certificates
+ * into a valid `PKIPath`.
+ * 
+ * @param certs A list of certificates to sort into a PKI path.
+ * @param firstIssuerName The first subject name sought, which is typically
+ *  taken from the `issuer` field of a certificate you already have.
+ * @param namingMatcher A function for matching attribute values by type.
+ * @param recursionTTL The number of recursions remaining, which caps the
+ *  length of the PKI path.
+ * @returns The PKI path, or `null` if the path could not be constructed.
+ * 
+ * @function
+ */
+export
 function sortCertsIntoPkiPath(
     certs: Certificate[],
     firstIssuerName: Name,
@@ -72,9 +95,37 @@ function sortCertsIntoPkiPath(
         pkiPath.push(nextCert);
         currentIssuerName = nextCert.toBeSigned.issuer;
     }
+    pkiPath.reverse();
     return pkiPath;
 }
 
+/**
+ * @summary Resolve a PKI path, given some hints about the next certificate in the path.
+ * @description
+ * 
+ * This is a recursive function that takes information about a public key
+ * certificate (or perhaps just a subject), and iterates up the certification
+ * chain until a trust anchor is found or the recursion limit is reached or
+ * until no further resolution succeeds. It can use cached certificates to
+ * speed up this resolution.
+ * 
+ * @param ctx The context object.
+ * @param endEntityIsNext Whether the end entity is the next certificate in the
+ *  path.
+ * @param info Information about the next certificate in the path.
+ * @param certsBySerialNumberLowerHex An index of certificates by their serial
+ *  number, in lower hex.
+ * @param certsByKeyIdLowerHex An index of certificates by their subject key
+ *  identifier, in lower hex.
+ * @param trustAnchors The trust anchors. If an obtained certificate is found
+ *  to be one of these, any further recursion to resolve the PKI path ceases.
+ * @param recursionTTL The number of recursions remaining before the function
+ *  gives up.
+ * @returns The PKI path, or `null` if the path could not be constructed.
+ * 
+ * @async
+ * @function
+ */
 export
 async function resolvePkiPath(
     ctx: MeerkatContext,

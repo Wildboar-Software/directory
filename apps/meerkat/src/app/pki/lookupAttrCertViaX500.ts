@@ -1,5 +1,8 @@
 import type { MeerkatContext } from "../ctx.js";
-import { _decode_Certificate, _decode_Extension } from "@wildboar/x500/AuthenticationFramework";
+import {
+    _decode_Certificate,
+    _decode_Extension,
+} from "@wildboar/x500/AuthenticationFramework";
 import { OperationDispatcher } from "../distributed/OperationDispatcher.js";
 import {
     EntryInformationSelection,
@@ -39,23 +42,48 @@ import {
     temporalContext,
     TimeAssertion,
 } from "@wildboar/x500/SelectedAttributeTypes";
+import type { LookupViaX500Options } from "../types/fetch.js";
 
-export interface LookupPkiPathOptions {
-    chaining: boolean;
-    localScope: boolean;
-    dontUseCopy: boolean;
-    copyShallDo: boolean;
-    dontDereferenceAliases: boolean;
-    timeLimitInSeconds: number;
-}
-
+/**
+ * @summary Fetch an attribute certificate using the X.500 Directory Access Protocol (DAP).
+ * @description
+ * 
+ * This function uses the X.500 Directory Access Protocol (DAP) `read` operation
+ * to query the attribute certificate for a given entry. It queries the `delegationPath`
+ * and `aACertificate` attributes, also including the `attributeCertificate` attribute
+ * if `forEndEntity` is `true`.
+ * 
+ * If multiple attribute certificates are found, `null` is returned, since we
+ * cannot unambiguously determine which certificate to return, unless all of
+ * them are byte-for-byte equal.
+ * 
+ * @param ctx The context object
+ * @param holderName The directory name of the holder of the attribute certificate
+ * @param forEndEntity Whether the attribute certificate is for an end entity.
+ *  If present, the query also includes the `attributeCertificate` attribute.
+ * @param asOfTime Fetch the attribute certificates that were applicable as of
+ *  this time. If omitted, defaults to now. Used to populate a temporalContext
+ *  assertion in the `read` request.
+ * @param options Options for the fetch
+ * @param options.chaining Whether to tolerate chaining to remote DSAs.
+ * @param options.localScope Whether to limit the scope of the search to the local DSA.
+ * @param options.dontUseCopy Whether to do not accept shadow DSEs, nor copies of any kind.
+ * @param options.copyShallDo Whether to accept shadow DSEs, even if they don't have all desired
+ *  attributes replicated.
+ * @param options.dontDereferenceAliases If `true`, do not dereference aliases.
+ * @param options.timeLimitInSeconds The time limit in seconds for the operation.
+ * @returns The attribute certificate, or `null` if it could not be obtained.
+ * 
+ * @async
+ * @function
+ */
 export
 async function lookupAttrCertViaX500 (
     ctx: MeerkatContext,
     holderName: Name, // entry to read
     forEndEntity: boolean,
     asOfTime?: Date, // TODO: Test that certs not applicable to this time are not returned.
-    options: Partial<LookupPkiPathOptions> = {},
+    options: LookupViaX500Options = {},
 ): Promise<AttributeCertificate | null> {
     const sco: ServiceControlOptions = new Uint8ClampedArray(13);
     // We don't want a temporalContext to get dropped as a DAP request is converted to LDAP.

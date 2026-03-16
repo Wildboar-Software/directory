@@ -2,8 +2,8 @@ import limitBytes from "../utils/limitBytes.js";
 import { type Certificate, _decode_Certificate, _decode_CertificatePair } from "@wildboar/x500/AuthenticationFramework";
 import { ASN1Element, BERElement } from "@wildboar/asn1";
 import { curlFTP, curlLDAP } from "./curl.js";
-import { type TlsOptions } from "node:tls";
 import { _decode_ContentInfo, _decode_SignedData, id_signedData } from "@wildboar/cms";
+import type { CurlOptions } from "../types/fetch.js";
 
 function isCMSFilePath(filepath: string): boolean {
     const fp = filepath.slice(-4).toLowerCase();
@@ -33,27 +33,47 @@ function decodeCertsOnlyCMS(el: ASN1Element): Certificate[] | null {
     return certs;
 }
 
-export
-interface CertCurlOptions {
-    timeoutInMilliseconds: number;
-    sizeLimit: number;
-    tlsOptions?: TlsOptions,
-    ipfsBaseUrls: string[],
-}
-
-const DEFAULT_OPTIONS: CertCurlOptions = {
+const DEFAULT_OPTIONS: CurlOptions = {
     timeoutInMilliseconds: 10000,
     sizeLimit: 1_000_000, // 1MB should be enough for a cert.
-    ipfsBaseUrls: [],
 };
 
-// TODO: Should you handle PEM encoding? NO! The spec says the file MUST be DER. Document this.
-
+/**
+ * @summary Fetch public key certificates from a remote source using a URL.
+ * @description
+ * 
+ * This function fetches public key certificates from a remote source using a
+ * URL. It supports the following protocols:
+ * 
+ * - HTTP(S)
+ * - FTP(S)
+ * - LDAP(S)
+ * - IPFS
+ * 
+ * The public key certificates may be either individual DER-encoded
+ * certificates, or a certs-only CMS message, per
+ * [IETF RFC 5280, Section 4.2.2.2](https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.1).
+ * This function does not support PEM encoding on grounds of virtuous
+ * intolerance (see [IETF RFC 9413](https://datatracker.ietf.org/doc/html/rfc9413#name-virtuous-intolerance)).
+ * 
+ * @param url The URL of the public key certificates to be fetched.
+ * @param options The options for the fetch.
+ * @param options.timeoutInMilliseconds The timeout in milliseconds for the fetch.
+ * @param options.sizeLimit The size limit in bytes for the response body.
+ * @param options.tlsOptions The TLS options for protocols that use TLS.
+ * @param options.ipfsBaseUrl The base URLs of an IPFS HTTP gateway. If not
+ *  supplied, IPFS URLs will return a `null` result.
+ * @param debugLog The debug log function. No debug logging is done if omitted.
+ * @returns The public key certificates, or `null` if it could not be obtained.
+ * 
+ * @async
+ * @function
+ */
 export
 async function certsCurl(
     url: URL,
     endEntity: boolean,
-    options: CertCurlOptions = DEFAULT_OPTIONS,
+    options: CurlOptions = DEFAULT_OPTIONS,
     debugLog?: (message: string) => void,
 ): Promise<Certificate[] | null> {
     const protocol = url.protocol.trim().toLowerCase();
@@ -143,9 +163,8 @@ async function certsCurl(
             })
             .filter((c): c is Certificate => c !== undefined);
     }
-    if (options.ipfsBaseUrls.length > 0 && protocol === "ipfs:") {
-        const randomIdx = Math.floor(Math.random() * options.ipfsBaseUrls.length);
-        const baseUrl = options.ipfsBaseUrls[randomIdx];
+    if (options.ipfsBaseUrl && options.ipfsBaseUrl.length > 0 && protocol === "ipfs:") {
+        const baseUrl = options.ipfsBaseUrl;
         let ipfsUrl = url.toString();
         if (ipfsUrl.startsWith("ipfs://")) {
             ipfsUrl = ipfsUrl.replace("ipfs://", baseUrl + "/ipfs/");
