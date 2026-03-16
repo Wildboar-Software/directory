@@ -7,6 +7,7 @@ import {
     PkiPath,
 } from "@wildboar/pki-stub";
 import {
+    ACPathData,
     AttributeCertificate,
     AttributeCertificationPath,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
@@ -88,6 +89,7 @@ export const VAC_OCSP_OTHER: number = -27;
 export const VAC_OCSP_REVOKED: number = -28;
 export const VAC_MALFORMED_PUB_KEY_CERT: number = -29;
 export const VAC_DUBIOUS_CERT_PATH: number = -30;
+export const VAC_PATH_TOO_LONG: number = -31;
 export const VAC_RETURN_OCSP_REVOKED: number = -102;
 export const VAC_RETURN_OCSP_OTHER: number = -103;
 export const VAC_RETURN_CRL_REVOKED: number = -104;
@@ -309,25 +311,85 @@ function is_acert_issuer (
     return false;
 }
 
+function indexCerts(acPath: ACPathData[]): [Map<string, Certificate[]>, Map<string, Certificate[]>] {
+    const certsBySerialNumberLowerHex: Map<string, Certificate[]> = new Map();
+    const certsByKeyIdLowerHex: Map<string, Certificate[]> = new Map();
+    for (const arc of acPath) {
+        if (!arc.certificate) {
+            continue;
+        }
+        const cert = arc.certificate;
+        const serialNumber = cert.toBeSigned.serialNumber;
+        const exts = (cert.toBeSigned.extensions ?? []);
+        const skiExt = exts
+            .find((ext) => ext.extnId.isEqualTo(subjectKeyIdentifier["&id"]!))
+            ?.extnValue;
+
+        // certsBySerialNumberLowerHex.set(serialNumber.toString("hex"), cert);
+        const key1 = Buffer.from(
+            serialNumber.buffer,
+            serialNumber.byteOffset,
+            serialNumber.byteLength,
+        ).toString("hex");
+        const bySerial = certsBySerialNumberLowerHex.get(key1);
+        if (bySerial) {
+            bySerial.push(cert);
+        } else {
+            certsBySerialNumberLowerHex.set(key1, [cert]);
+        }
+
+        if (skiExt) {
+            try {
+                const skiEl = new DERElement();
+                if (skiEl.fromBytes(skiExt) !== skiExt.length) {
+                    continue; // Malformed extension.
+                }
+                const ski = subjectKeyIdentifier.decoderFor["&ExtnType"]!(skiEl);
+                const key2 = Buffer.from(
+                    ski.buffer,
+                    ski.byteOffset,
+                    ski.byteLength,
+                ).toString("hex");
+                const byKeyId = certsByKeyIdLowerHex.get(key2);
+                if (byKeyId) {
+                    byKeyId.push(cert);
+                } else {
+                    certsByKeyIdLowerHex.set(key2, [cert]);
+                }
+            } catch {
+                continue;
+            }
+        }
+    }
+    return [certsBySerialNumberLowerHex, certsByKeyIdLowerHex];
+}
+
 export
 async function verifyAttrCertPath2 (
     ctx: MeerkatContext,
     userACPath: AttributeCertificationPath,
     userPkiPath: PkiPath,
     soas: TrustAnchorList,
+    trustAnchors: TrustAnchorList,
     timeOfCheck: Date,
 ): Promise<number> {
     if (soas.length === 0) {
         return VAC_UNTRUSTED_SOA;
     }
 
-    // TODO: Bail out if the PKI or PMI paths are too long.
-    // TODO: Verify PKI path of user
+    const acPath = userACPath.acPath ?? [];
+    if (acPath.length > 100) {
+        return VAC_PATH_TOO_LONG;
+    }
+    if (acPath.filter((arc) => arc.attributeCertificate).length > 10) {
+        return VAC_PATH_TOO_LONG;
+    }
+
+    const [certsBySerialNumberLowerHex, certsByKeyIdLowerHex] = indexCerts(acPath);
 
     // This only has to be done once here as a boundary condition.
     let current_holder_pki_path: PkiPath | undefined = [ ...userPkiPath ];
     let current_ac: AttributeCertificate | null = userACPath.attributeCertificate;
-    const acPath = userACPath.acPath ?? [];
     while (current_holder_pki_path && current_ac) {
         if (current_holder_pki_path.length === 0) {
             return VAC_MISSING_BASE_CERT; // TODO: Is this the right error?
@@ -339,6 +401,17 @@ async function verifyAttrCertPath2 (
         if (timeOfCheck > actbs.attrCertValidityPeriod.notAfterTime) {
             return VAC_NOT_AFTER;
         }
+
+        // TODO: timeSpecification
+        // TODO: targetingInformation
+        // TODO: userNotice
+        // TODO: singleUse
+        // TODO: noRevAvail
+        // TODO: sOAIdentifier
+        // TODO: aAissuingDistributionPoint
+        // TODO: basicAttConstraints
+        // TODO: noAssertion
+
         const holder = actbs.holder;
         const eeCert = current_holder_pki_path[current_holder_pki_path.length - 1];
         const holder_result = is_cert_holder(ctx, eeCert, holder);
@@ -384,9 +457,9 @@ async function verifyAttrCertPath2 (
                 ctx,
                 false,
                 info,
-                new Map(), // TODO: Populate this (blocked on hydrating the AC path with AAs)
-                new Map(), // TODO: Populate this
-                soas, // TODO: Rename this variable
+                certsBySerialNumberLowerHex,
+                certsByKeyIdLowerHex,
+                trustAnchors,
                 10,
             );
             next_pki_path?.push(issuer_ac_data.certificate);
@@ -467,9 +540,9 @@ async function verifyAttrCertPath2 (
                 ctx,
                 true,
                 info,
-                new Map(), // TODO: Populate this
-                new Map(), // TODO: Populate this
-                soas, // TODO: Rename this variable
+                certsBySerialNumberLowerHex,
+                certsByKeyIdLowerHex,
+                trustAnchors,
                 10,
             );
             issuer_ac = issuer_ac_data.attributeCertificate;
@@ -517,16 +590,23 @@ async function verifyAttrCertPath2 (
         if (issuer_is_soa) {
             break; // No further verification is needed.
         }
+    
+        // TODO: acceptablePrivilegePolicies
+        // TODO: groupAC
+        // TODO: attributeDescriptor
+        // TODO: roleSpecCertIdentifier
+        // TODO: delegatedNameConstraints
+        // TODO: acceptableCertPolicies
+        // TODO: authorityAttributeIdentifier
+        // TODO: indirectIssuer
+        // TODO: issuedOnBehalfOf
+        // TODO: allowedAttributeAssignments
+        // TODO: attributeMappings
+        // TODO: holderNameConstraints
 
         current_ac = issuer_ac;
         current_holder_pki_path = issuer_pki_path;
     }
 
-    // TODO: Verify that the attribute assignment is allowed.
     return VAC_OK;
 }
-
-// Ensure holder name constraints fall within the issuer's name constraints
-// Ensure holder's allowed attribute assignments are a subset of the issuers
-// Ensure no loops.
-// Ensure indirectIssuer and issuedOnBehalfOf extensions.
