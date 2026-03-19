@@ -196,6 +196,30 @@ evaluated in a single pass over the filter. It would be faster and cleaner.
 
 I should have used a key-value store instead.
 
+## PKI and PMI validation
+
+I think I want to implement this as a standalone library, but one big thing I
+could have improved in my PKI / PMI verification code is the ability to
+return multiple validation errors, rather that immediately returning upon the
+first validation failure.
+
+What I envision is a function that returns (at least) two `u64`s: one
+containing "flags" which may or may not represent errors, and a second whose
+bits identify which of the standard X.509v3 extensions had errors.
+
+This would allow code that uses this verification logic to ignore some errors
+or treat some errors differently. For example, if a certificate's only
+problem is that it expired vert recently, the calling code could still allow
+authentication to succeed, but display a warning to the user that they will
+need to renew their certificate.
+
+This function could also return the Not Before and Not After times as
+Unix epoch times so that the caller can easily check the times without extra
+ASN.1 decoding code.
+
+It could also return a hash of the subject and issuer names, the certificate
+version, the extensions count, etc.
+
 ## Other Things
 
 - Separate classes for each connection type `DAPClient`, `DOPClient`, etc.

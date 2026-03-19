@@ -41,7 +41,7 @@ import { AttCertIssuer } from "@wildboar/pki-stub";
 import { TBSCertificate } from "@wildboar/pki-stub";
 import { issuedOnBehalfOf } from "@wildboar/x500/AttributeCertificateDefinitions";
 import stringifyDN from "../x500/stringifyDN.js";
-import { getReadDispatcher, verifySignature } from "./verifyCertPath.js";
+import { getReadDispatcher, VCP_RETURN_CRL_REVOKED, VCP_RETURN_CRL_UNREACHABLE, VCP_RETURN_OK, verifySignature } from "./verifyCertPath.js";
 import { singleUse } from "@wildboar/x500/AttributeCertificateDefinitions";
 import { groupAC } from "@wildboar/x500/AttributeCertificateDefinitions";
 import { targetingInformation } from "@wildboar/x500/AttributeCertificateDefinitions";
@@ -90,6 +90,7 @@ import { TBSAttributeCertificate, _encode_TBSAttributeCertificate } from "@wildb
 import { checkOCSP } from "./verifyCertPath.js";
 import { general_name_matches_cert } from "./general_name_matches_cert.js";
 import util from "node:util";
+import { VAC_MALFORMED_PUB_KEY_CERT } from "./verifyAttrCertPath2.js";
 
 export const VAC_OK: number = 0;
 export const VAC_NOT_BEFORE: number = -1;
@@ -1336,17 +1337,32 @@ async function verifyAttrCert (
         const crldpExt = extsGroupedByOID[cRLDistributionPoints["&id"]!.toString()]?.[0];
         if (crldpExt && crldpExt.critical) { // TODO: Make config options: ignore_critical or always_check.
             const readDispatcher = getReadDispatcher(ctx);
+            const crlEl = new DERElement();
+            if (crlEl.fromBytes(crldpExt.extnValue) !== crldpExt.extnValue.length) {
+                return VAC_MALFORMED_PUB_KEY_CERT;
+            }
+            const crldpValue = cRLDistributionPoints.decoderFor["&ExtnType"]!(crlEl);
             const crlResult = await checkRemoteCRLs(
                 ctx,
-                crldpExt,
+                crldpValue,
                 acert.toBeSigned.serialNumber,
                 [ issuerName, spki ],
                 readDispatcher,
-                ctx.config.signing,
+                {
+                    ...ctx.config.signing,
+                    // TODO: Set options
+                },
             );
-            if (crlResult) {
-                return crlResult;
+            if (crlResult === VCP_RETURN_CRL_REVOKED) {
+                return VAC_CRL_REVOKED;
             }
+            if (crlResult === VCP_RETURN_CRL_UNREACHABLE) {
+                return VAC_RETURN_CRL_UNREACHABLE;
+            }
+            if (crlResult !== VCP_RETURN_OK) {
+                return VAC_INTERNAL_ERROR;
+            }
+            // Otherwise, the CRL was valid. Continue.
         }
 
     }

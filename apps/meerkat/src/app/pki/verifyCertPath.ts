@@ -46,6 +46,7 @@ import {
     _encode_TBSCertificate,
 } from "@wildboar/x500/AuthenticationFramework";
 import type {
+    DistributionPoint,
     GeneralSubtree,
     GeneralSubtrees,
 } from "@wildboar/x500/CertificateExtensions";
@@ -950,18 +951,14 @@ async function checkOCSP (
 export
 async function checkRemoteCRLs (
     ctx: MeerkatContext,
-    ext: Extension,
+    distPoints: DistributionPoint[],
     serialNumber: Uint8Array,
     issuer: [ Name, SubjectPublicKeyInfo ],
     readDispatcher: ReadDispatcherFunction,
     options: RemoteCRLOptions,
 ): Promise<number> {
-    assert(ext.extnId.isEqualTo(cRLDistributionPoints["&id"]!));
-    const crlEl = new DERElement();
-    crlEl.fromBytes(ext.extnValue);
-    const crldpValue = cRLDistributionPoints.decoderFor["&ExtnType"]!(crlEl);
     const crls = (await Promise.all(
-        crldpValue
+        distPoints
             .slice(0, options.distributionPointAttemptsPerCertificate)
             .map((dp) => crlCurl(
                 ctx,
@@ -1636,13 +1633,21 @@ async function verifyBasicPublicKeyCertificateChecks (
     // NOTE: if the extension is marked as critical, the remote CRL MUST be checked.
     const crldpExt = extsGroupedByOID[cRLDistributionPoints["&id"]!.toString()]?.[0];
     if (crldpExt && crldpExt.critical) { // TODO: Make config options: ignore_critical or always_check.
+        const crlEl = new DERElement();
+        if (crlEl.fromBytes(crldpExt.extnValue) !== crldpExt.extnValue.length) {
+            return VCP_RETURN_MALFORMED;
+        }
+        const crldpValue = cRLDistributionPoints.decoderFor["&ExtnType"]!(crlEl);
         const crlResult = await checkRemoteCRLs(
             ctx,
-            crldpExt,
+            crldpValue,
             subjectCert.toBeSigned.serialNumber,
             [issuerCert.toBeSigned.subject, issuerCert.toBeSigned.subjectPublicKeyInfo],
             readDispatcher,
-            options,
+            {
+                ...ctx.config.signing,
+                // TODO: Set options
+            },
         );
         if (crlResult) {
             return crlResult;
@@ -2278,13 +2283,21 @@ async function verifyCACertificate (
     // NOTE: if the extension is marked as critical, the remote CRL MUST be checked.
     const crldpExt = extsGroupedByOID[cRLDistributionPoints["&id"]!.toString()]?.[0];
     if (crldpExt && crldpExt.critical) { // TODO: Make config options: ignore_critical or always_check.
+        const crlEl = new DERElement();
+        if (crlEl.fromBytes(crldpExt.extnValue) !== crldpExt.extnValue.length) {
+            return VCP_RETURN_MALFORMED;
+        }
+        const crldpValue = cRLDistributionPoints.decoderFor["&ExtnType"]!(crlEl);
         const crlResult = await checkRemoteCRLs(
             ctx,
-            crldpExt,
+            crldpValue,
             cert.toBeSigned.serialNumber,
             [cert.toBeSigned.subject, cert.toBeSigned.subjectPublicKeyInfo],
             readDispatcher,
-            options,
+            {
+                ...ctx.config.signing,
+                // TODO: Set options
+            },
         );
         if (crlResult) {
             return crlResult;

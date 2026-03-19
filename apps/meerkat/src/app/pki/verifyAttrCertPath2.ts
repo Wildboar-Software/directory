@@ -10,15 +10,26 @@ import {
     ACPathData,
     AttributeCertificate,
     AttributeCertificationPath,
+    basicAttConstraints,
+    BasicAttConstraintsSyntax,
+    DisplayText,
+    groupAC,
+    noAssertion,
+    noRevAvail,
+    singleUse,
+    targetingInformation,
+    timeSpecification,
+    userNotice,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     compareGeneralName,
+    compareIssuerSerial,
     compareName,
 } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { Name } from "@wildboar/pki-stub";
 import { Certificate, _encode_Certificate } from "@wildboar/pki-stub";
-import { GeneralNames, issuerAltName } from "@wildboar/x500/CertificateExtensions";
+import { AAIssuingDistPointSyntax, aAissuingDistributionPoint, GeneralNames, issuerAltName } from "@wildboar/x500/CertificateExtensions";
 import { BOOLEAN, DERElement, packBits } from "@wildboar/asn1";
 import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { digestOIDToNodeHash } from "./digestOIDToNodeHash.js";
@@ -43,6 +54,7 @@ import {
     altSignatureAlgorithm,
     altSignatureValue,
     subjectKeyIdentifier,
+    DistributionPoint,
 } from "@wildboar/x500/CertificateExtensions";
 import {
     authorityInfoAccess,
@@ -59,6 +71,12 @@ import { getInfoForNextCertInPath, getInfoForNextCertInPath2 } from "./getInfoFo
 import { verifySIGNED } from "./verifySIGNED.js";
 import { acertCurl } from "./acertCurl.js";
 import lookupAttrCertViaX500 from "./lookupAttrCertViaX500.js";
+import { evaluateTemporalContext } from "@wildboar/x500/matching/context";
+import { _encode_TimeAssertion, NameAndOptionalUID, TimeAssertion } from "@wildboar/x500/SelectedAttributeTypes";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
+import { crlCurl } from "./crlCurl.js";
+import { checkRemoteCRLs, getReadDispatcher, VCP_RETURN_CRL_REVOKED, VCP_RETURN_CRL_UNREACHABLE, VCP_RETURN_OK } from "./verifyCertPath.js";
+import isPrefix from "../x500/isPrefix.js";
 
 export const VAC_OK: number = 0;
 export const VAC_NOT_BEFORE: number = -1;
@@ -90,6 +108,9 @@ export const VAC_OCSP_REVOKED: number = -28;
 export const VAC_MALFORMED_PUB_KEY_CERT: number = -29;
 export const VAC_DUBIOUS_CERT_PATH: number = -30;
 export const VAC_PATH_TOO_LONG: number = -31;
+export const VAC_VIOLATED_BASIC_CONSTRAINTS_CA: number = -32;
+export const VAC_VIOLATED_BASIC_CONSTRAINTS_PATH_LEN: number = -33;
+export const VAC_GROUP_AC_ON_AA: number = -34;
 export const VAC_RETURN_OCSP_REVOKED: number = -102;
 export const VAC_RETURN_OCSP_OTHER: number = -103;
 export const VAC_RETURN_CRL_REVOKED: number = -104;
@@ -364,6 +385,19 @@ function indexCerts(acPath: ACPathData[]): [Map<string, Certificate[]>, Map<stri
     return [certsBySerialNumberLowerHex, certsByKeyIdLowerHex];
 }
 
+function displayTextToString (dt: DisplayText): string | null {
+    if ("visibleString" in dt) {
+        return dt.visibleString;
+    }
+    if ("bmpString" in dt) {
+        return dt.bmpString;
+    }
+    if ("utf8String" in dt) {
+        return dt.utf8String;
+    }
+    return null;
+}
+
 export
 async function verifyAttrCertPath2 (
     ctx: MeerkatContext,
@@ -372,6 +406,7 @@ async function verifyAttrCertPath2 (
     soas: TrustAnchorList,
     trustAnchors: TrustAnchorList,
     timeOfCheck: Date,
+    previouslyAsserted: boolean = false,
 ): Promise<number> {
     if (soas.length === 0) {
         return VAC_UNTRUSTED_SOA;
@@ -386,11 +421,16 @@ async function verifyAttrCertPath2 (
     }
 
     const [certsBySerialNumberLowerHex, certsByKeyIdLowerHex] = indexCerts(acPath);
+    const namingMatcher = getNamingMatcherGetter(ctx);
 
     // This only has to be done once here as a boundary condition.
     let current_holder_pki_path: PkiPath | undefined = [ ...userPkiPath ];
     let current_ac: AttributeCertificate | null = userACPath.attributeCertificate;
+    let iteration = 0;
     while (current_holder_pki_path && current_ac) {
+        const on_end_entity = iteration === 0;
+        let no_rev_avail = false;
+        let authority = false;
         if (current_holder_pki_path.length === 0) {
             return VAC_MISSING_BASE_CERT; // TODO: Is this the right error?
         }
@@ -401,19 +441,179 @@ async function verifyAttrCertPath2 (
         if (timeOfCheck > actbs.attrCertValidityPeriod.notAfterTime) {
             return VAC_NOT_AFTER;
         }
+        const eeCert = current_holder_pki_path[current_holder_pki_path.length - 1];
+        const is_soa = eeCert
+            .toBeSigned.extensions
+            ?.some((ext) => ext.extnId.isEqualTo(sOAIdentifier["&id"]!)) ?? false;
 
-        // TODO: timeSpecification
-        // TODO: targetingInformation
-        // TODO: userNotice
-        // TODO: singleUse
-        // TODO: noRevAvail
-        // TODO: sOAIdentifier
-        // TODO: aAissuingDistributionPoint
-        // TODO: basicAttConstraints
-        // TODO: noAssertion
+        const isPubKeyCertTrusted = false; // TODO: Implement this.
+        if (is_soa && isPubKeyCertTrusted) {
+            return VAC_UNTRUSTED_SOA;
+        }
+
+        // #region validate_extensions
+
+        // TODO: Handle role certificates.
+
+        const current_ac_exts = current_ac.toBeSigned.extensions ?? [];
+        for (const ext of current_ac_exts) {
+            try {
+                if (ext.extnId.isEqualTo(noAssertion["&id"]!)) {
+                    return VAC_NO_ASSERTION;
+                }
+                if (ext.extnId.isEqualTo(singleUse["&id"]!) && previouslyAsserted) {
+                    return VAC_SINGLE_USE;
+                }
+
+                const extEl = new DERElement();
+                if (extEl.fromBytes(ext.extnValue) !== ext.extnValue.length) {
+                    return VAC_INVALID_EXT_CRIT;
+                }
+
+                // TODO: Document that it is not clear whether this applies to roles or not. Is a role a group?
+                if (ext.extnId.isEqualTo(groupAC["&id"]!)) {
+                    if (!on_end_entity) {
+                        return VAC_GROUP_AC_ON_AA;
+                    }
+                    // Yes, this is the correct procedure:
+                    // ITU-T Recommendation X.509 (2019), Section 16.4.1, says
+                    // that the group is the subtree of the DIT.
+                    const groups = (current_ac!.toBeSigned.holder.entityName ?? [])
+                        .filter((n) => "directoryName" in n)
+                        .map((n) => n.directoryName.rdnSequence)
+                        ;
+                    const matched = groups
+                        .some((group) => isPrefix(ctx, group, eeCert.toBeSigned.subject.rdnSequence));
+                    if (!matched) {
+                        return VAC_NOT_GROUP_MEMBER;
+                    }
+                }
+                else if (ext.extnId.isEqualTo(userNotice["&id"]!)) {
+                    const notices = userNotice.decoderFor["&ExtnType"]!(extEl);
+                    for (const notice of notices) {
+                        const serial = Buffer.from(
+                            current_ac!.toBeSigned.serialNumber.buffer,
+                            current_ac!.toBeSigned.serialNumber.byteOffset,
+                            current_ac!.toBeSigned.serialNumber.byteLength,
+                        ).toString("hex");
+                        const nums = notice.noticeRef?.noticeNumbers;
+                        const org = notice.noticeRef?.organization
+                            ? (displayTextToString(notice.noticeRef.organization) ?? "?").slice(0, 200)
+                            : "";
+                        const text = notice.explicitText
+                            ? (displayTextToString(notice.explicitText) ?? "?").slice(0, 200)
+                            : ""
+                        ctx.log.debug(ctx.i18n.t("log:user_notice_ext", {
+                            context: "ac",
+                            serial,
+                            text,
+                        }), {
+                            serial,
+                            text,
+                            org,
+                            nums,
+                        });
+                    }
+                }
+                else if (ext.extnId.isEqualTo(timeSpecification["&id"]!)) {
+                    const assertion: TimeAssertion = { at: timeOfCheck };
+                    const encodedAssertion = _encode_TimeAssertion(assertion, DER);
+                    if (!evaluateTemporalContext(encodedAssertion, extEl)) {
+                        return VAC_INVALID_TIME_SPEC;
+                    }
+                }
+                else if (ext.extnId.isEqualTo(noRevAvail["&id"]!)) {
+                    no_rev_avail = true;
+                }
+                else if (ext.extnId.isEqualTo(basicAttConstraints["&id"]!)) {
+                    const bacons = basicAttConstraints.decoderFor["&ExtnType"]!(extEl);
+                    authority = bacons.authority
+                        ?? BasicAttConstraintsSyntax._default_value_for_authority;
+                    if (on_end_entity) {
+                        continue;
+                    }
+                    if (!authority) {
+                        return VAC_VIOLATED_BASIC_CONSTRAINTS_CA;
+                    }
+                    const max_intermediate_aas = bacons.pathLenConstraint
+                        ?? Number.MAX_SAFE_INTEGER;
+                    const intermediate_aas_count = iteration - 1;
+                    if (intermediate_aas_count > max_intermediate_aas) {
+                        return VAC_VIOLATED_BASIC_CONSTRAINTS_PATH_LEN;
+                    }
+                }
+                else if (ext.extnId.isEqualTo(targetingInformation["&id"]!)) {
+                    const targetingInfo = targetingInformation.decoderFor["&ExtnType"]!(extEl);
+                    const targets = targetingInfo.flatMap(g => g);
+                    let matched = false;
+                    for (const target of targets) {
+                        if ("targetName" in target) {
+                            const myname = { directoryName: ctx.dsa.accessPoint.ae_title };
+                            if (compareGeneralName(target.targetName, myname, namingMatcher)) {
+                                matched = true;
+                                break;
+                            }
+                        }
+                        else if ("targetGroup" in target) {
+                            if ("directoryName" in target.targetGroup) {
+                                const isGroupMember = getIsGroupMember(ctx, namingMatcher);
+                                const groupName = new NameAndOptionalUID(
+                                    target.targetGroup.directoryName.rdnSequence,
+                                    undefined,
+                                );
+                                const myname = new NameAndOptionalUID(
+                                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                    undefined,
+                                );
+                                // TODO: Make this search configurable.
+                                // TODO: Maybe use a read operation instead?
+                                const inGroup = await isGroupMember(groupName, myname);
+                                if (inGroup) {
+                                    matched = true;
+                                    break;
+                                }
+                            }
+                        }
+                        else if ("targetCert" in target) {
+                            if (!ctx.config.signing.certPath?.length) {
+                                continue;
+                            }
+                            // Compare to this DSA's signing certificate
+                            const myEECert = ctx.config.signing.certPath[ctx.config.signing.certPath.length - 1];
+                            const myIssuerSerial = new IssuerSerial(
+                                [
+                                    {
+                                        directoryName: myEECert.toBeSigned.issuer,
+                                    },
+                                ],
+                                myEECert.toBeSigned.serialNumber,
+                                myEECert.toBeSigned.issuerUniqueIdentifier,
+                            );
+                            const matchedIssuerSerial = compareIssuerSerial(
+                                target.targetCert.targetCertificate,
+                                myIssuerSerial,
+                                namingMatcher,
+                            );
+                            if (matchedIssuerSerial) {
+                                matched = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!matched) {
+                        return VAC_INVALID_TARGET;
+                    }
+                }
+
+            } catch (e) {
+                // TODO: Log
+                return VAC_INTERNAL_ERROR;
+            }
+        }
+
+        // #endregion validate_extensions
 
         const holder = actbs.holder;
-        const eeCert = current_holder_pki_path[current_holder_pki_path.length - 1];
         const holder_result = is_cert_holder(ctx, eeCert, holder);
         if (!holder_result) {
             if (holder_result === undefined) {
@@ -554,9 +754,10 @@ async function verifyAttrCertPath2 (
             // We could not build a verifiable PKI or PMI path for the issuer.
             return VAC_UNUSABLE_AC_PATH;
         }
+        const issuer_pkc = issuer_pki_path[issuer_pki_path.length - 1];
         // Verify the signature on the attribute certificate.
         const issuer_cert_path = new CertificationPath(
-            issuer_pki_path[issuer_pki_path.length - 1],
+            issuer_pkc,
             issuer_pki_path.slice(0, -1)
                 .map((cert) => new CertificatePair(cert, undefined))
                 .reverse(),
@@ -590,22 +791,93 @@ async function verifyAttrCertPath2 (
         if (issuer_is_soa) {
             break; // No further verification is needed.
         }
+
+        // TODO: Verify all attribute descriptor certificates (Section 17.3.2.2.1), then index the descriptors.
+        // TODO: Verify that all attribute descriptor certs are issued directly by a trusted SOA.
+        // TODO: If any fail verification, only identical values for those attributes may be delegated.
+        // TODO: For all that succeed, look up the privilege policy to obtain an ordering matcher and check that all assigned values are allowed.
+        // TODO: Define built-in privilege policies for comparing clearance values.
+        // TODO: Make it configurable which privilege policies compare clearance values like the default.    
+        
+        // TODO: Fetch all role specification certs.
+        // TODO: Separately verify each role specification certificate delegation path.
+        // TODO: For each role the entity is assigned, associate the role's attributes, and include these in verifying the delegation.
     
         // TODO: acceptablePrivilegePolicies
-        // TODO: groupAC
         // TODO: attributeDescriptor
         // TODO: roleSpecCertIdentifier
         // TODO: delegatedNameConstraints
-        // TODO: acceptableCertPolicies
-        // TODO: authorityAttributeIdentifier
-        // TODO: indirectIssuer
-        // TODO: issuedOnBehalfOf
+        // TODO: holderNameConstraints (basically same as delegatedNameConstraints, just opposite)
+        // TODO: acceptableCertPolicies (verify that, for each PKI path, one of these policies is fulfilled, and that all inferior PKI paths do too)
+        // TODO: authorityAttributeIdentifier (no action needed, always non-critical)
+        // TODO: indirectIssuer (verify that all intermediaries have it)
+        // TODO: issuedOnBehalfOf (verify that it points to the next AA)
         // TODO: allowedAttributeAssignments
         // TODO: attributeMappings
-        // TODO: holderNameConstraints
+        for (const ext of current_ac_exts) {
+            const extEl = new DERElement();
+            try {
+                if (extEl.fromBytes(ext.extnValue) !== ext.extnValue.length) {
+                    continue; // Malformed extension.
+                }
+            } catch {
+                continue; // Malformed extension.
+            }
+            if (
+                !no_rev_avail
+                && ext.extnId.isEqualTo(aAissuingDistributionPoint["&id"]!)
+                && ext.critical // TODO: Make config options: ignore_critical or always_check.
+            ) {
+                const dp = aAissuingDistributionPoint.decoderFor["&ExtnType"]!(extEl);
+                const on_end_entity = iteration === 0;
+                const containsUserAttributeCerts = dp.containsUserAttributeCerts
+                    ?? AAIssuingDistPointSyntax._default_value_for_containsUserAttributeCerts;
+                const containsAACerts = dp.containsAACerts
+                    ?? AAIssuingDistPointSyntax._default_value_for_containsAACerts;
+                if (on_end_entity && !containsUserAttributeCerts) {
+                    continue;
+                }
+                if (!on_end_entity && !containsAACerts) {
+                    continue;
+                }
+                const issuerName = issuer_pkc.toBeSigned.issuer;
+                const spki = issuer_pkc.toBeSigned.subjectPublicKeyInfo;
+                // I don't think I have to do anything for containsSOAPublicKeyCerts.
+                // The certs themselves have their own revocation information.
+                const readDispatcher = getReadDispatcher(ctx);
+                const aaDistPoint = aAissuingDistributionPoint.decoderFor["&ExtnType"]!(extEl)
+                const distPoint = new DistributionPoint(
+                    aaDistPoint.distributionPoint,
+                    aaDistPoint.onlySomeReasons,
+                    undefined,
+                );
+                const crlResult = await checkRemoteCRLs(
+                    ctx,
+                    [ distPoint ],
+                    current_ac!.toBeSigned.serialNumber,
+                    [ issuerName, spki ],
+                    readDispatcher,
+                    {
+                        ...ctx.config.signing,
+                        // TODO: Set options
+                    },
+                );
+                if (crlResult === VCP_RETURN_CRL_REVOKED) {
+                    return VAC_CRL_REVOKED;
+                }
+                if (crlResult === VCP_RETURN_CRL_UNREACHABLE) {
+                    return VAC_RETURN_CRL_UNREACHABLE;
+                }
+                if (crlResult !== VCP_RETURN_OK) {
+                    return VAC_INTERNAL_ERROR;
+                }
+                // Otherwise, the CRL was valid. Continue.
+            }
+        }
 
         current_ac = issuer_ac;
         current_holder_pki_path = issuer_pki_path;
+        iteration++;
     }
 
     return VAC_OK;
