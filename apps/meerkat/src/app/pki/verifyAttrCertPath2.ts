@@ -4,18 +4,26 @@ import {
     IndexableOID,
 } from "../types/index.js";
 import {
+    GeneralName,
     PkiPath,
 } from "@wildboar/pki-stub";
 import {
     ACPathData,
     AttributeCertificate,
     AttributeCertificationPath,
+    attributeDescriptor,
     basicAttConstraints,
     BasicAttConstraintsSyntax,
+    delegatedNameConstraints,
     DisplayText,
     groupAC,
+    holderNameConstraints,
+    HolderNameConstraintsSyntax,
     noAssertion,
     noRevAvail,
+    role,
+    roleSpecCertIdentifier,
+    type RoleSyntax,
     singleUse,
     targetingInformation,
     timeSpecification,
@@ -25,12 +33,14 @@ import {
     compareGeneralName,
     compareIssuerSerial,
     compareName,
+    dnWithinGeneralSubtree,
+    type EqualityMatcher,
 } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { Name } from "@wildboar/pki-stub";
 import { Certificate, _encode_Certificate } from "@wildboar/pki-stub";
-import { AAIssuingDistPointSyntax, aAissuingDistributionPoint, GeneralNames, issuerAltName } from "@wildboar/x500/CertificateExtensions";
-import { BOOLEAN, DERElement, packBits } from "@wildboar/asn1";
+import { AAIssuingDistPointSyntax, aAissuingDistributionPoint, GeneralNames, GeneralSubtree, issuerAltName, nameConstraints, NameConstraintsSyntax } from "@wildboar/x500/CertificateExtensions";
+import { ASN1Element, BOOLEAN, DERElement, packBits } from "@wildboar/asn1";
 import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { digestOIDToNodeHash } from "./digestOIDToNodeHash.js";
 import { createHash } from "node:crypto";
@@ -77,6 +87,7 @@ import getIsGroupMember from "../authz/getIsGroupMember.js";
 import { crlCurl } from "./crlCurl.js";
 import { checkRemoteCRLs, getReadDispatcher, VCP_RETURN_CRL_REVOKED, VCP_RETURN_CRL_UNREACHABLE, VCP_RETURN_OK } from "./verifyCertPath.js";
 import isPrefix from "../x500/isPrefix.js";
+import type { AttributeType } from "@wildboar/x500/InformationFramework";
 
 export const VAC_OK: number = 0;
 export const VAC_NOT_BEFORE: number = -1;
@@ -111,6 +122,9 @@ export const VAC_PATH_TOO_LONG: number = -31;
 export const VAC_VIOLATED_BASIC_CONSTRAINTS_CA: number = -32;
 export const VAC_VIOLATED_BASIC_CONSTRAINTS_PATH_LEN: number = -33;
 export const VAC_GROUP_AC_ON_AA: number = -34;
+export const VAC_MALFORMED_EXTENSION: number = -35;
+export const VAC_NAME_CONSTRAINT_VIOLATION: number = -36;
+export const VAC_NAME_CONSTRAINT_CHECK_DOS: number = -37;
 export const VAC_RETURN_OCSP_REVOKED: number = -102;
 export const VAC_RETURN_OCSP_OTHER: number = -103;
 export const VAC_RETURN_CRL_REVOKED: number = -104;
@@ -398,6 +412,109 @@ function displayTextToString (dt: DisplayText): string | null {
     return null;
 }
 
+function generalNameWithinNameConstraints(
+    gn: GeneralName,
+    nc: NameConstraintsSyntax,
+    namingMatcher: (attributeType: AttributeType) => EqualityMatcher | undefined,
+): boolean {
+    for (const subtree of nc.excludedSubtrees ?? []) {
+        if (dnWithinGeneralSubtree(gn, subtree, namingMatcher)) {
+            return false;
+        }
+    }
+    return (nc.permittedSubtrees ?? [])
+        .some((subtree) => dnWithinGeneralSubtree(gn, subtree, namingMatcher));
+}
+
+function getNameFormKey(gn: GeneralName): string | undefined {
+    if ("otherName" in gn) {
+        return gn.otherName.directReference?.toString();
+    } else if (gn instanceof ASN1Element) {
+        return undefined; // Unrecognized name form.
+    } else {
+        return Object.keys(gn)[0];
+    }
+}
+
+function attributeCertificateWithinNameConstraints(
+    ac: AttributeCertificate,
+    pkc: Certificate,
+    nc: NameConstraintsSyntax,
+    namingMatcher: (attributeType: AttributeType) => EqualityMatcher | undefined,
+    exclusive: boolean = false,
+): boolean | undefined {
+    // TODO: Report this?
+    /* This is not technically part of the requirements of this
+    extension, but we check it because it is possible to issue
+    attribute certificates that do not use the entity name at
+    all, so malicious issuers could still issue attribute
+    certificates outside of the constraints. */
+    const subject_gn: GeneralName = { directoryName: pkc.toBeSigned.subject };
+    const checkPKCSubject: boolean = !exclusive
+        /* If exclusive, we only check the subject name if one of the permitted
+        subtrees is a directoryName-form GeneralName. This is because the
+        holderNameConstraints extension is not meant to be checked against the
+        public key certificate's subject name, and therefore might not include
+        a directoryName-form GeneralName, but, of course, the public key
+        certificate _always_ does. */
+        || ((nc.permittedSubtrees
+            ?.some((subtree) => "directoryName" in subtree.base)) ?? false);
+
+    if (checkPKCSubject &&!generalNameWithinNameConstraints(subject_gn, nc, namingMatcher)) {
+        return false;
+    }
+    
+    const subject_entity_names = ac.toBeSigned.holder.entityName ?? [];
+    const difficulty = (
+        subject_entity_names.length
+        * (
+            (nc.permittedSubtrees?.length ?? 0)
+            + (nc.excludedSubtrees?.length ?? 0)
+        )
+    );
+    /* Denial-of-service prevention, since the loop below runs with
+    O(n^2) time complexity. There is no easy way to handle this,
+    since this is not only a many-to-many comparison, but a
+    many-to-many _substring_ comparison, basically. */
+    if (difficulty > 100) {
+        return undefined;
+    }
+    const permissibleNameForms: Set<string> = new Set();
+    if (exclusive) {
+        for (const subtree of nc.permittedSubtrees ?? []) {
+            const key = getNameFormKey(subtree.base);
+            if (!key) {
+                /* See ITU-T Recommendation X.509 (2019), Section 17.6.2.3:
+                
+                "Conformant implementations are not required to recognize all
+                possible name forms. If a privilege verifier does not recognize
+                a name form used in any base component and [...] that name form
+                does not occur in the holder component of a subsequent
+                attribute certificate in the chain, then this name form can be
+                ignored.
+                
+                That's why this here is a continue, but if you search for
+                9c5ed0b0-4e5e-47b1-b98d-61dc07759ec2, you'll see a return. */
+                continue;
+            }
+            permissibleNameForms.add(key);
+        }
+    }
+    for (const entityName of subject_entity_names) {
+        if (exclusive) {
+            const key = getNameFormKey(entityName);
+            if (!key || !permissibleNameForms.has(key)) {
+                // Search 9c5ed0b0-4e5e-47b1-b98d-61dc07759ec2 for commentary.
+                return false; // Unrecognized or not-permitted name form.
+            }
+        }
+        if (!generalNameWithinNameConstraints(entityName, nc, namingMatcher)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export
 async function verifyAttrCertPath2 (
     ctx: MeerkatContext,
@@ -416,7 +533,10 @@ async function verifyAttrCertPath2 (
     if (acPath.length > 100) {
         return VAC_PATH_TOO_LONG;
     }
-    if (acPath.filter((arc) => arc.attributeCertificate).length > 10) {
+    /* This is pretty generous, because many of these could be attribute
+    descriptor certificates or role specification certificates or other
+    things like that. */
+    if (acPath.filter((arc) => arc.attributeCertificate).length > 30) {
         return VAC_PATH_TOO_LONG;
     }
 
@@ -426,8 +546,12 @@ async function verifyAttrCertPath2 (
     // This only has to be done once here as a boundary condition.
     let current_holder_pki_path: PkiPath | undefined = [ ...userPkiPath ];
     let current_ac: AttributeCertificate | null = userACPath.attributeCertificate;
+    const ordered_path: [ AttributeCertificate, PkiPath ][] = [ [ current_ac, current_holder_pki_path ] ];
     let iteration = 0;
     while (current_holder_pki_path && current_ac) {
+        if (iteration > 10) { // TODO: Make this configurable.
+            return VAC_PATH_TOO_LONG;
+        }
         const on_end_entity = iteration === 0;
         let no_rev_avail = false;
         let authority = false;
@@ -453,8 +577,6 @@ async function verifyAttrCertPath2 (
 
         // #region validate_extensions
 
-        // TODO: Handle role certificates.
-
         const current_ac_exts = current_ac.toBeSigned.extensions ?? [];
         for (const ext of current_ac_exts) {
             try {
@@ -467,7 +589,7 @@ async function verifyAttrCertPath2 (
 
                 const extEl = new DERElement();
                 if (extEl.fromBytes(ext.extnValue) !== ext.extnValue.length) {
-                    return VAC_INVALID_EXT_CRIT;
+                    return VAC_MALFORMED_EXTENSION;
                 }
 
                 // TODO: Document that it is not clear whether this applies to roles or not. Is a role a group?
@@ -754,10 +876,10 @@ async function verifyAttrCertPath2 (
             // We could not build a verifiable PKI or PMI path for the issuer.
             return VAC_UNUSABLE_AC_PATH;
         }
-        const issuer_pkc = issuer_pki_path[issuer_pki_path.length - 1];
+        const issuer_ee_cert = issuer_pki_path[issuer_pki_path.length - 1];
         // Verify the signature on the attribute certificate.
         const issuer_cert_path = new CertificationPath(
-            issuer_pkc,
+            issuer_ee_cert,
             issuer_pki_path.slice(0, -1)
                 .map((cert) => new CertificatePair(cert, undefined))
                 .reverse(),
@@ -784,6 +906,7 @@ async function verifyAttrCertPath2 (
             return VAC_DUBIOUS_CERT_PATH;
         }
 
+        // TODO: Review. Is this okay?
         const issuer_is_soa = issuer_ac
             ?.toBeSigned
             .extensions
@@ -802,27 +925,28 @@ async function verifyAttrCertPath2 (
         // TODO: Fetch all role specification certs.
         // TODO: Separately verify each role specification certificate delegation path.
         // TODO: For each role the entity is assigned, associate the role's attributes, and include these in verifying the delegation.
+        // "A role specification attribute certificate cannot be delegated to any other entity"
+        // Actually, I think role expansion gets done at the end, basically after this function is totally done.
+        // Being permitted to assign all of the role's attributes does not give an AA permission to assign the role membership itself.
+        // So at the end, if the whole chain is valid, you can expand the roles on just the EE cert.
     
         // TODO: acceptablePrivilegePolicies
-        // TODO: attributeDescriptor
-        // TODO: roleSpecCertIdentifier
-        // TODO: delegatedNameConstraints
-        // TODO: holderNameConstraints (basically same as delegatedNameConstraints, just opposite)
         // TODO: acceptableCertPolicies (verify that, for each PKI path, one of these policies is fulfilled, and that all inferior PKI paths do too)
-        // TODO: authorityAttributeIdentifier (no action needed, always non-critical)
         // TODO: indirectIssuer (verify that all intermediaries have it)
         // TODO: issuedOnBehalfOf (verify that it points to the next AA)
         // TODO: allowedAttributeAssignments
-        // TODO: attributeMappings
+
+        // #region verify_extensions_in_subject_ac_requiring_issuer
         for (const ext of current_ac_exts) {
             const extEl = new DERElement();
             try {
                 if (extEl.fromBytes(ext.extnValue) !== ext.extnValue.length) {
-                    continue; // Malformed extension.
+                    return VAC_MALFORMED_EXTENSION;
                 }
             } catch {
-                continue; // Malformed extension.
+                return VAC_MALFORMED_EXTENSION;
             }
+            // authorityAttributeIdentifier: no action needed, always non-critical
             if (
                 !no_rev_avail
                 && ext.extnId.isEqualTo(aAissuingDistributionPoint["&id"]!)
@@ -840,8 +964,8 @@ async function verifyAttrCertPath2 (
                 if (!on_end_entity && !containsAACerts) {
                     continue;
                 }
-                const issuerName = issuer_pkc.toBeSigned.issuer;
-                const spki = issuer_pkc.toBeSigned.subjectPublicKeyInfo;
+                const issuerName = issuer_ee_cert.toBeSigned.issuer;
+                const spki = issuer_ee_cert.toBeSigned.subjectPublicKeyInfo;
                 // I don't think I have to do anything for containsSOAPublicKeyCerts.
                 // The certs themselves have their own revocation information.
                 const readDispatcher = getReadDispatcher(ctx);
@@ -874,11 +998,98 @@ async function verifyAttrCertPath2 (
                 // Otherwise, the CRL was valid. Continue.
             }
         }
+        // #endregion verify_extensions_in_subject_ac_requiring_issuer
+
+        // #region verify_extensions_in_issuer_ac_requiring_subject
+        const issuer_ac_exts = issuer_ac?.toBeSigned.extensions ?? [];
+        for (const ext of issuer_ac_exts) {
+            const extEl = new DERElement();
+            try {
+                if (extEl.fromBytes(ext.extnValue) !== ext.extnValue.length) {
+                    return VAC_MALFORMED_EXTENSION;
+                }
+            } catch {
+                return VAC_MALFORMED_EXTENSION;
+            }
+            // TODO: In cert verification, is it possible for subject cert to have broader name constraints?
+
+            // authorityAttributeIdentifier: no action needed, always non-critical
+            /*
+            All of these have the same syntax and both apply exactly the
+            same to both the AC and PKC, except that holderNameConstraints
+            requires permittedSubtrees and is exclusive to other name forms.
+            
+            Also, note that, the way that name constraints are evaluated means
+            that each name constraint extension is checked against all inferior
+            certificates. Fortunately, this means that you do not have to
+            implement code to check if name constraints in inferior
+            certificates are a subset of those in the superior certificate, but
+            it does introduce another O(n^2) time complexity problem, which is
+            solved by limiting the length of the path.
+            */
+            if (
+                ext.extnId.isEqualTo(delegatedNameConstraints["&id"]!)
+                || ext.extnId.isEqualTo(nameConstraints["&id"]!)
+                || ext.extnId.isEqualTo(holderNameConstraints["&id"]!)
+            ) {
+                /* The holderNameConstraints syntax differs from the others only
+                by requiring permittedSubtrees, so nameConstraints will suffice
+                for decoding all of them, then we can just code a few specifics
+                for holderNameConstraints. */
+                const nc = nameConstraints.decoderFor["&ExtnType"]!(extEl);
+                for (const [ ac, pkip ] of ordered_path) {
+                    const pkc = pkip[pkip.length - 1];
+                    if (!pkc) {
+                        return VAC_INTERNAL_ERROR;
+                    }
+                    const hnc = ext.extnId.isEqualTo(holderNameConstraints["&id"]!);
+                    if (hnc && !nc.permittedSubtrees?.length) {
+                        // holderNameConstraints must have at least one permitted subtree.
+                        return VAC_MALFORMED_EXTENSION;
+                    }
+                    const complies = attributeCertificateWithinNameConstraints(
+                        ac,
+                        pkc,
+                        nc,
+                        namingMatcher,
+                        hnc,
+                    );
+                    if (complies === false) {
+                        return VAC_NAME_CONSTRAINT_VIOLATION;
+                    }
+                    if (complies === undefined) {
+                        return VAC_NAME_CONSTRAINT_CHECK_DOS;
+                    }
+                }
+            }
+        }
+        // #endregion verify_extensions_in_issuer_ac_requiring_subject
+
+        // #region verify_extensions_in_issuer_pkc_requiring_subject
+        const issuer_pkc_exts = issuer_ee_cert?.toBeSigned.extensions ?? [];
+        for (const ext of issuer_pkc_exts) {
+            const extEl = new DERElement();
+            try {
+                if (extEl.fromBytes(ext.extnValue) !== ext.extnValue.length) {
+                    return VAC_MALFORMED_EXTENSION;
+                }
+            } catch {
+                return VAC_MALFORMED_EXTENSION;
+            }
+            if (ext.extnId.isEqualTo(delegatedNameConstraints["&id"]!)) {
+                // TODO: This should be the same code as above.
+            }
+        }
+        // #endregion verify_extensions_in_issuer_pkc_requiring_subject
 
         current_ac = issuer_ac;
+        issuer_ac && ordered_path.push([ issuer_ac, issuer_pki_path ]);
         current_holder_pki_path = issuer_pki_path;
         iteration++;
     }
+
+    // TODO: Verify attributeMappings
+    // TODO: Verify domination via attributeDescriptor
 
     return VAC_OK;
 }
