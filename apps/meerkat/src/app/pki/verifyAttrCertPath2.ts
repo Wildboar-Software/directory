@@ -4,6 +4,8 @@ import {
     IndexableOID,
 } from "../types/index.js";
 import {
+    _decode_UnboundedDirectoryString,
+    Attribute_valuesWithContext_Item,
     GeneralName,
     PkiPath,
 } from "@wildboar/pki-stub";
@@ -19,6 +21,7 @@ import {
     groupAC,
     holderNameConstraints,
     HolderNameConstraintsSyntax,
+    indirectIssuer,
     noAssertion,
     noRevAvail,
     role,
@@ -28,19 +31,28 @@ import {
     targetingInformation,
     timeSpecification,
     userNotice,
+    issuedOnBehalfOf,
+    attributeMappings,
+    AttributeMappings,
+    AttributeMappings_Item,
+    AttributeMappings_Item_typeValueMappings,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
+    compareElements,
     compareGeneralName,
     compareIssuerSerial,
     compareName,
+    directoryStringToString,
     dnWithinGeneralSubtree,
+    groupByOID,
+    prepString,
     type EqualityMatcher,
 } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { Name } from "@wildboar/pki-stub";
 import { Certificate, _encode_Certificate } from "@wildboar/pki-stub";
 import { AAIssuingDistPointSyntax, aAissuingDistributionPoint, GeneralNames, GeneralSubtree, issuerAltName, nameConstraints, NameConstraintsSyntax } from "@wildboar/x500/CertificateExtensions";
-import { ASN1Element, BOOLEAN, DERElement, packBits } from "@wildboar/asn1";
+import { ASN1Element, ASN1TagClass, ASN1UniversalType, BOOLEAN, DERElement, packBits } from "@wildboar/asn1";
 import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { digestOIDToNodeHash } from "./digestOIDToNodeHash.js";
 import { createHash } from "node:crypto";
@@ -87,7 +99,8 @@ import getIsGroupMember from "../authz/getIsGroupMember.js";
 import { crlCurl } from "./crlCurl.js";
 import { checkRemoteCRLs, getReadDispatcher, VCP_RETURN_CRL_REVOKED, VCP_RETURN_CRL_UNREACHABLE, VCP_RETURN_OK } from "./verifyCertPath.js";
 import isPrefix from "../x500/isPrefix.js";
-import type { AttributeType } from "@wildboar/x500/InformationFramework";
+import { Attribute, AttributeType, AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
+import applyMappingsToAttributes from "../pmi/applyMappingsToAttributes.js";
 
 export const VAC_OK: number = 0;
 export const VAC_NOT_BEFORE: number = -1;
@@ -125,6 +138,7 @@ export const VAC_GROUP_AC_ON_AA: number = -34;
 export const VAC_MALFORMED_EXTENSION: number = -35;
 export const VAC_NAME_CONSTRAINT_VIOLATION: number = -36;
 export const VAC_NAME_CONSTRAINT_CHECK_DOS: number = -37;
+export const VAC_NOT_INDIRECT_ISSUER: number = -38;
 export const VAC_RETURN_OCSP_REVOKED: number = -102;
 export const VAC_RETURN_OCSP_OTHER: number = -103;
 export const VAC_RETURN_CRL_REVOKED: number = -104;
@@ -148,6 +162,45 @@ const extensionMandatoryCriticality: Map<IndexableOID, BOOLEAN> = new Map([
     [ authorityInfoAccess["&id"]!.toString(), false ], // Always non-critical.
     [ subjectInfoAccess["&id"]!.toString(), false ], // Always non-critical.
 ]);
+
+function dumbAttributeValueIndexer (value: ASN1Element): string {
+    return Buffer.from(value.toBytes()).toString("hex");
+}
+
+const DS_STRING_TAGS = new Set([
+    ASN1UniversalType.printableString,
+    ASN1UniversalType.utf8String,
+    ASN1UniversalType.teletexString,
+    ASN1UniversalType.bmpString,
+    ASN1UniversalType.universalString,
+]);
+
+/**
+ * This implementation does not do anything smarter than normalizing strings
+ * per X.520 prepstring and normalizing their casing. `NumericString` is
+ * normalized by removing all whitespace characters.
+ */
+function attributeValueIndexer (_: AttributeType, value: ASN1Element): string {
+    if (value.tagClass !== ASN1TagClass.universal) {
+        return dumbAttributeValueIndexer(value);
+    }
+    if (DS_STRING_TAGS.has(value.tagNumber)) {
+        const ds = _decode_UnboundedDirectoryString(value);
+        const s = directoryStringToString(ds).trim();
+        const ps = prepString(s);
+        return ps?.toLowerCase() ?? s.toLowerCase();
+    }
+    if (value.tagNumber === ASN1UniversalType.ia5String) {
+        const s = value.ia5String;
+        const ps = prepString(s);
+        return ps?.toLowerCase() ?? s.toLowerCase();
+    }
+    if (value.tagNumber === ASN1UniversalType.numericString) {
+        const s = value.numericString;
+        return s.trim().replaceAll(" ", "");
+    }
+    return dumbAttributeValueIndexer(value);
+}
 
 // This is designed to be used for comparing both attribute certificate issuers
 // and holders to public key certificates.
@@ -463,7 +516,7 @@ function attributeCertificateWithinNameConstraints(
     if (checkPKCSubject &&!generalNameWithinNameConstraints(subject_gn, nc, namingMatcher)) {
         return false;
     }
-    
+
     const subject_entity_names = ac.toBeSigned.holder.entityName ?? [];
     const difficulty = (
         subject_entity_names.length
@@ -485,14 +538,14 @@ function attributeCertificateWithinNameConstraints(
             const key = getNameFormKey(subtree.base);
             if (!key) {
                 /* See ITU-T Recommendation X.509 (2019), Section 17.6.2.3:
-                
+
                 "Conformant implementations are not required to recognize all
                 possible name forms. If a privilege verifier does not recognize
                 a name form used in any base component and [...] that name form
                 does not occur in the holder component of a subsequent
                 attribute certificate in the chain, then this name form can be
                 ignored.
-                
+
                 That's why this here is a continue, but if you search for
                 9c5ed0b0-4e5e-47b1-b98d-61dc07759ec2, you'll see a return. */
                 continue;
@@ -514,6 +567,7 @@ function attributeCertificateWithinNameConstraints(
     }
     return true;
 }
+
 
 export
 async function verifyAttrCertPath2 (
@@ -743,7 +797,7 @@ async function verifyAttrCertPath2 (
             }
             return VAC_AC_PKC_MISMATCH;
         }
-        
+
         /* We need the attribute certificate. There is no way, if given a PKI
         alone, to unambiguously resolve an attribute certificate. */
         const issuer_ac_data = acPath.find((arc) => (
@@ -871,7 +925,7 @@ async function verifyAttrCertPath2 (
         }
 
         // #endregion hydrate_issuer_ac_data
-    
+
         if (!issuer_pki_path?.length) {
             // We could not build a verifiable PKI or PMI path for the issuer.
             return VAC_UNUSABLE_AC_PATH;
@@ -906,22 +960,14 @@ async function verifyAttrCertPath2 (
             return VAC_DUBIOUS_CERT_PATH;
         }
 
-        // TODO: Review. Is this okay?
-        const issuer_is_soa = issuer_ac
-            ?.toBeSigned
-            .extensions
-            ?.some((ext) => ext.extnId.isEqualTo(sOAIdentifier["&id"]!));
-        if (issuer_is_soa) {
-            break; // No further verification is needed.
-        }
-
         // TODO: Verify all attribute descriptor certificates (Section 17.3.2.2.1), then index the descriptors.
         // TODO: Verify that all attribute descriptor certs are issued directly by a trusted SOA.
         // TODO: If any fail verification, only identical values for those attributes may be delegated.
         // TODO: For all that succeed, look up the privilege policy to obtain an ordering matcher and check that all assigned values are allowed.
         // TODO: Define built-in privilege policies for comparing clearance values.
-        // TODO: Make it configurable which privilege policies compare clearance values like the default.    
-        
+        // TODO: Make it configurable which privilege policies compare clearance values like the default.
+        // TODO: What about conflicting ADCs?
+
         // TODO: Fetch all role specification certs.
         // TODO: Separately verify each role specification certificate delegation path.
         // TODO: For each role the entity is assigned, associate the role's attributes, and include these in verifying the delegation.
@@ -929,12 +975,75 @@ async function verifyAttrCertPath2 (
         // Actually, I think role expansion gets done at the end, basically after this function is totally done.
         // Being permitted to assign all of the role's attributes does not give an AA permission to assign the role membership itself.
         // So at the end, if the whole chain is valid, you can expand the roles on just the EE cert.
-    
-        // TODO: acceptablePrivilegePolicies
+        // TODO: What about conflicting ADCs?
+
+        // TODO: issuedOnBehalfOf
+
+        /* issuedOnBehalfOf handling:
+        - Find the delegator's ACPathData.
+        - Verify that the indirect issuer was issued by the same SOA as the delegator.
+
+        "The indirect issuer extension is used in either an attribute certificate or a public-key certificate issued to a DS server by an SOA."
+        "The issuer of this attribute certificate must have been granted the privilege to issue ACs on behalf of other AAs by an
+SOA, through the IndirectIssuer extension in its attribute certificate"
+        So it seems like an indirect issuer is always directly issued by an SOA. So you can use the issuer field to know who the SOA should be.
+
+        If the issuer is an indirect issuer, call verifyAttrCertPath2 with the issuer.
+        If that returns ok, then continue evaluating the chain using the issuedOnBehalfOf AA.
+
         // TODO: acceptableCertPolicies (verify that, for each PKI path, one of these policies is fulfilled, and that all inferior PKI paths do too)
-        // TODO: indirectIssuer (verify that all intermediaries have it)
-        // TODO: issuedOnBehalfOf (verify that it points to the next AA)
+        1. Get the verify cert path result from verifySIGNED
+        2. Check that the intersection of authorities_constrained_policies and
+           user_constrained_policies contains contains one of the acceptable
+           policies.
+        3. For the AC issuer, iteratively, take the intersection with all
+           previously effective policies: these are the policies that every
+           attribute certificate encountered thus far complies with.
+        4. If an accceptableCertPolicies extension has a policy that is not
+           in this intersection, it means that there was at least one path link
+           that was not compliant with that policy.
+
+        // TODO: acceptablePrivilegePolicies
+        For this one, I think you want to take a rolling intersection of the
+        acceptable privilege policies and just make sure the constrained set
+        never becomes empty, meaning that the PMI chain is invalid since the
+        AAs produced a set that is unsatisfiable. Maybe you can make an argument
+        to this function where the caller can supply the used privilege policies
+        and compare those against the acceptable set.
+
+        // ~~attributeMappings~~
+        WARNING: This is a dangerous extension. A nefarious subordinate AA could
+        use it to map a lower-valued privilege to a higher-valued one.
+        I have decided that this extension will be honored, but only if it is
+        issued directly by the trusted SOA. This avoids problems of transitive
+        mapping or nefarious mapping by deeper AAs (e.g. mapping lower to higher
+        privilege values). `allowedAttributeAssignments` extension should ALWAYS
+        be used with RoA like this; it is just too dangerous without this.
+        ... actually, maybe not. Maybe just honor this at every level.
+        (Maybe you could just implement this, then implement tests to see if it
+        can be hacked.)
+        I think the procedure will look something like this:
+        1. If the issuer AC / PKC is not a trusted SOA, reject this deep mapping.
+        1. Copy a reference to the current attribute certificate's attributes.
+        2. If the extension exists in the subject's AC, map the attributes and
+           add the new attribute values without removing the ones that were
+           mapped.
+        // TODO: Report the security problem to the ITU.
+
         // TODO: allowedAttributeAssignments
+        I think all you really have to check is that the end-entity AC complies
+        with all of the allowed attribute assignments. Beyond this, you just
+        have to make sure that each encountered AAA is a subset of those granted
+        to the superior AA. The specification does not clarify if attribute
+        values that are of lesser privilege are implicitly allowed, but I don't
+        think they should be: I think this extension should be as strict as
+        possible so that the remote SOA (or one of its subordinate AAs) can play
+        tricks by redefining domination rules.
+        // TODO: Report this problem to the ITU.
+
+        */
+
+        const mappedAttributes: Attribute[] = [];
 
         // #region verify_extensions_in_subject_ac_requiring_issuer
         for (const ext of current_ac_exts) {
@@ -997,8 +1106,31 @@ async function verifyAttrCertPath2 (
                 }
                 // Otherwise, the CRL was valid. Continue.
             }
+            else if (ext.extnId.isEqualTo(attributeMappings["&id"]!)) {
+                /* Even though this extension was defined for being inserted
+                into SOA certificates, I don't think it is a problem if this
+                transformation is applied to end-entities or anything else. */
+                const am = attributeMappings.decoderFor["&ExtnType"]!(extEl);
+                const attributesMap = groupByOID(current_ac.toBeSigned.attributes, (a) => a.type_);
+                const mapped = applyMappingsToAttributes(
+                    attributesMap,
+                    am,
+                    attributeValueIndexer,
+                    getNamingMatcherGetter(ctx),
+                    true,
+                );
+                for (const attr of mapped) {
+                    mappedAttributes.push(attr);
+                }
+            }
         }
         // #endregion verify_extensions_in_subject_ac_requiring_issuer
+
+        if (!on_end_entity /* && !indirect_issuer */) {
+            // An intermediary AA did not have an indirectIssuer extension.
+            // FIXME: I am not sure this condition is correct.
+            return VAC_NOT_INDIRECT_ISSUER;
+        }
 
         // #region verify_extensions_in_issuer_ac_requiring_subject
         const issuer_ac_exts = issuer_ac?.toBeSigned.extensions ?? [];
@@ -1013,12 +1145,17 @@ async function verifyAttrCertPath2 (
             }
             // TODO: In cert verification, is it possible for subject cert to have broader name constraints?
 
+            if (ext.extnId.isEqualTo(indirectIssuer["&id"]!)) {
+                // The issuer is an indirect issuer.
+                // TODO: Set this issuer's issuer to the expected SOA.
+                // TODO: Obtain the issuedOnBehalfOf ACPathData and continue from there.
+            }
             // authorityAttributeIdentifier: no action needed, always non-critical
             /*
             All of these have the same syntax and both apply exactly the
             same to both the AC and PKC, except that holderNameConstraints
             requires permittedSubtrees and is exclusive to other name forms.
-            
+
             Also, note that, the way that name constraints are evaluated means
             that each name constraint extension is checked against all inferior
             certificates. Fortunately, this means that you do not have to
@@ -1082,13 +1219,22 @@ async function verifyAttrCertPath2 (
         }
         // #endregion verify_extensions_in_issuer_pkc_requiring_subject
 
+        // TODO: Also break if the issuer is trusted as an SOA.
+        const issuer_is_soa = issuer_ac
+            ?.toBeSigned
+            .extensions
+            ?.some((ext) => ext.extnId.isEqualTo(sOAIdentifier["&id"]!));
+        if (issuer_is_soa) {
+            break; // No further verification is needed.
+        }
+
         current_ac = issuer_ac;
         issuer_ac && ordered_path.push([ issuer_ac, issuer_pki_path ]);
         current_holder_pki_path = issuer_pki_path;
         iteration++;
     }
 
-    // TODO: Verify attributeMappings
+    // TODO: Check that the SOA is trusted.
     // TODO: Verify domination via attributeDescriptor
 
     return VAC_OK;
