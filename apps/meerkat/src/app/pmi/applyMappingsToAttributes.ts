@@ -51,6 +51,10 @@ type ValueMap = AttributeMappings_Item_typeValueMappings;
  * const attributesMap = groupByOID(attributes, (a) => a.type_);
  * ```
  *
+ * The reason there is no function for applying a single mapping at a time is
+ * simply that there is a huge economy of scale in doing all attributes at the
+ * same time: it comes at a high computational cost to do them separately.
+ *
  * ### ASN.1 Reference
  *
  * For reference, this is the ASN.1 of the `attributeMappings` extension:
