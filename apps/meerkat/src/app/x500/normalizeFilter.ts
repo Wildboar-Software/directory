@@ -9,10 +9,15 @@ import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
  * everything beneath them are composed of ANDs, NOTs, and filter items.
  *
  * @param filter The filter to be normalized.
+ * @param recursionTTL The number of recursions remaining before deeper
+ *  normalization stops.
  * @returns A normalized filter.
  */
 export
-function normalizeFilter (filter: Filter): Filter {
+function normalizeFilter (filter: Filter, recursionTTL: number = 20): Filter {
+    if (recursionTTL <= 0) {
+        return filter;
+    }
     if ("not" in filter) {
         const subfilter = filter.not;
         if ("not" in subfilter) { // Double negative.
