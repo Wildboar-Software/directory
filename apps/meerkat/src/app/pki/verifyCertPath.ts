@@ -26,7 +26,7 @@ import {
     ASN1TagClass,
     ASN1UniversalType,
 } from "@wildboar/asn1";
-import { compareDistinguishedName } from "@wildboar/x500";
+import { compareDistinguishedName, gnWithinGeneralSubtree } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { DER } from "@wildboar/asn1/functional";
 import { getDateFromTime } from "@wildboar/x500";
@@ -69,7 +69,6 @@ import {
 import {
     PolicyQualifierInfo,
 } from "@wildboar/x500/CertificateExtensions";
-import { dnWithinGeneralSubtree } from "@wildboar/x500";
 import groupByOID from "../utils/groupByOID.js";
 import { strict as assert } from "node:assert";
 import { generalNameToString } from "@wildboar/x500";
@@ -1736,12 +1735,12 @@ async function verifyBasicPublicKeyCertificateChecks (
 
         for (const name of namesToValidate) {
             const permittedBySubtrees: boolean = state.permitted_subtrees
-                .some((subtree) => dnWithinGeneralSubtree(name, subtree, namingMatcher));
+                .some((subtree) => gnWithinGeneralSubtree(name, subtree, namingMatcher));
             if (state.permitted_subtrees.length && !permittedBySubtrees) {
                 return VCP_RETURN_NAME_NOT_PERMITTED; // Not permitted name.
             }
             const excludedBySubtree: boolean = state.excluded_subtrees
-                .some((subtree) => dnWithinGeneralSubtree(name, subtree, namingMatcher));
+                .some((subtree) => gnWithinGeneralSubtree(name, subtree, namingMatcher));
             if (excludedBySubtree) {
                 return VCP_RETURN_NAME_EXCLUDED; // Explicitly excluded name.
             }

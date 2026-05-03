@@ -36,6 +36,8 @@ import {
     AttributeMappings,
     AttributeMappings_Item,
     AttributeMappings_Item_typeValueMappings,
+    AllowedAttributeAssignments,
+    allowedAttributeAssignments,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     compareElements,
@@ -43,7 +45,7 @@ import {
     compareIssuerSerial,
     compareName,
     directoryStringToString,
-    dnWithinGeneralSubtree,
+    gnWithinGeneralSubtree,
     groupByOID,
     prepString,
     type EqualityMatcher,
@@ -471,12 +473,12 @@ function generalNameWithinNameConstraints(
     namingMatcher: (attributeType: AttributeType) => EqualityMatcher | undefined,
 ): boolean {
     for (const subtree of nc.excludedSubtrees ?? []) {
-        if (dnWithinGeneralSubtree(gn, subtree, namingMatcher)) {
+        if (gnWithinGeneralSubtree(gn, subtree, namingMatcher)) {
             return false;
         }
     }
     return (nc.permittedSubtrees ?? [])
-        .some((subtree) => dnWithinGeneralSubtree(gn, subtree, namingMatcher));
+        .some((subtree) => gnWithinGeneralSubtree(gn, subtree, namingMatcher));
 }
 
 function getNameFormKey(gn: GeneralName): string | undefined {
@@ -602,6 +604,9 @@ async function verifyAttrCertPath2 (
     let current_ac: AttributeCertificate | null = userACPath.attributeCertificate;
     const ordered_path: [ AttributeCertificate, PkiPath ][] = [ [ current_ac, current_holder_pki_path ] ];
     let iteration = 0;
+
+    let allowed_attr_assignments: AllowedAttributeAssignments | undefined;
+
     while (current_holder_pki_path && current_ac) {
         if (iteration > 10) { // TODO: Make this configurable.
             return VAC_PATH_TOO_LONG;
@@ -1198,6 +1203,12 @@ SOA, through the IndirectIssuer extension in its attribute certificate"
                         return VAC_NAME_CONSTRAINT_CHECK_DOS;
                     }
                 }
+            }
+            if (ext.extnId.isEqualTo(allowedAttributeAssignments["&id"]!)) {
+                const aaa = allowedAttributeAssignments.decoderFor["&ExtnType"]!(extEl);
+                // TODO: Check that all attribute assignments are allowed (really only has to be done for the EE acert)
+                // TODO: Check that the previous allowed_attr_assignments is an improper subset
+                // TODO: Make sure that the attributes allowed check is done even if the issuer doesn't have this extension!
             }
         }
         // #endregion verify_extensions_in_issuer_ac_requiring_subject
