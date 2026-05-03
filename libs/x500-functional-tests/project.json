@@ -1,16 +1,18 @@
 {
-    "name": "x500-functional-tests",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "libs/x500-functional-tests/src",
-    "projectType": "library",
-    "tags": [],
-    "targets": {
-        "test": {
-            "executor": "@nx/vitest:test",
-            "outputs": ["{options.reportsDirectory}"],
-            "options": {
-                "reportsDirectory": "../../coverage/libs/x500-functional-tests"
-            }
-        }
+  "name": "x500-functional-tests",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/x500-functional-tests/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "{projectRoot}/../../coverage/libs/x500-functional-tests"
+      }
     }
+  }
 }

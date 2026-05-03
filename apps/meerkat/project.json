@@ -1,81 +1,91 @@
 {
-    "name": "meerkat",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "apps/meerkat/src",
-    "projectType": "application",
-    "tags": [],
-    "targets": {
-        "build2": {
-            "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}"],
-            "options": {
-                "outputPath": "dist/apps/meerkat",
-                "tsConfig": "apps/meerkat/tsconfig.app.json",
-                "packageJson": "apps/meerkat/package.json",
-                "main": "apps/meerkat/src/index.ts",
-                "assets": ["apps/meerkat/*.md"]
-            }
+  "name": "meerkat",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/meerkat/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build2": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/apps/meerkat",
+        "tsConfig": "apps/meerkat/tsconfig.app.json",
+        "packageJson": "apps/meerkat/package.json",
+        "main": "apps/meerkat/src/index.ts",
+        "assets": [
+          "apps/meerkat/*.md"
+        ]
+      }
+    },
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "main": "apps/meerkat/src/main.ts",
+        "outputPath": "dist/apps/meerkat",
+        "outputFileName": "main.mjs",
+        "tsConfig": "apps/meerkat/tsconfig.app.json",
+        "platform": "node",
+        "format": [
+          "esm"
+        ],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "minify": false,
+          "banner": {
+            "js": "#!/bin/env node"
+          },
+          "footer": {
+            "js": "// Minified Meerkat DSA Javascript Source - Copyright (c) Wildboar Software 2025 - MIT License"
+          },
+          "keepNames": true,
+          "sourcemap": true
         },
-        "build": {
-            "executor": "@nx/esbuild:esbuild",
-            "outputs": ["{options.outputPath}"],
-            "options": {
-                "main": "apps/meerkat/src/main.ts",
-                "outputPath": "dist/apps/meerkat",
-                "outputFileName": "main.mjs",
-                "tsConfig": "apps/meerkat/tsconfig.app.json",
-                "platform": "node",
-                "format": ["esm"],
-                "generatePackageJson": true,
-                "esbuildOptions": {
-                    "minify": false,
-                    "banner": {
-                        "js": "#!/bin/env node"
-                    },
-                    "footer": {
-                        "js": "// Minified Meerkat DSA Javascript Source - Copyright (c) Wildboar Software 2025 - MIT License"
-                    },
-                    "keepNames": true,
-                    "sourcemap": true
-                },
-                "assets": [
-                    {
-                        "glob": "apps/meerkat/README.md",
-                        "input": "apps/meerkat/src",
-                        "output": "."
-                    },
-                    {
-                        "glob": "assets/**",
-                        "input": "apps/meerkat/src",
-                        "output": "."
-                    },
-                    {
-                        "glob": "prisma/**",
-                        "input": "apps/meerkat/src",
-                        "output": "."
-                    },
-                                        {
-                        "glob": ".npmrc",
-                        "input": "apps/meerkat",
-                        "output": "."
-                    }
-                ]
-            }
-        },
-        "serve": {
-            "executor": "@nx/js:node",
-            "options": {
-                "buildTarget": "meerkat:build:dev",
-                "inspect": "inspect",
-                "port": 24010
-            }
-        },
-        "test": {
-            "executor": "@nx/vitest:test",
-            "outputs": ["{options.reportsDirectory}"],
-            "options": {
-                "reportsDirectory": "../../coverage/apps/meerkat"
-            }
-        }
+        "assets": [
+          {
+            "glob": "apps/meerkat/README.md",
+            "input": "apps/meerkat/src",
+            "output": "."
+          },
+          {
+            "glob": "assets/**",
+            "input": "apps/meerkat/src",
+            "output": "."
+          },
+          {
+            "glob": "prisma/**",
+            "input": "apps/meerkat/src",
+            "output": "."
+          },
+          {
+            "glob": ".npmrc",
+            "input": "apps/meerkat",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "meerkat:build:dev",
+        "inspect": "inspect",
+        "port": 24010
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "{projectRoot}/../../coverage/apps/meerkat"
+      }
     }
+  }
 }

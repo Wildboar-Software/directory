@@ -1,27 +1,33 @@
 {
-    "name": "osi-net",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "libs/osi-net/src",
-    "projectType": "library",
-    "tags": [],
-    "targets": {
-        "build": {
-            "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}"],
-            "options": {
-                "outputPath": "dist/libs/osi-net",
-                "tsConfig": "libs/osi-net/tsconfig.lib.json",
-                "packageJson": "libs/osi-net/package.json",
-                "main": "libs/osi-net/src/index.ts",
-                "assets": ["libs/osi-net/*.md"]
-            }
-        },
-        "test": {
-            "executor": "@nx/vitest:test",
-            "outputs": ["{options.reportsDirectory}"],
-            "options": {
-                "reportsDirectory": "../../coverage/libs/osi-net"
-            }
-        }
+  "name": "osi-net",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/osi-net/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/osi-net",
+        "tsConfig": "libs/osi-net/tsconfig.lib.json",
+        "packageJson": "libs/osi-net/package.json",
+        "main": "libs/osi-net/src/index.ts",
+        "assets": [
+          "libs/osi-net/*.md"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
+      "options": {
+        "reportsDirectory": "{projectRoot}/../../coverage/libs/osi-net"
+      }
     }
+  }
 }

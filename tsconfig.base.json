@@ -18,7 +18,6 @@
         "strictBindCallApply": true,
         "noImplicitThis": true,
         "alwaysStrict": true,
-        "baseUrl": ".",
         "paths": {
             "@wildboar/idm": ["libs/idm/src/index.ts"],
             "@wildboar/ldap-socket": ["libs/ldap-socket/src/index.ts"],
