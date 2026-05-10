@@ -1,7 +1,8 @@
 import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     AllowedAttributeAssignments,
-    AllowedAttributeAssignments_Item_attributes_Item,
+    AllowedAttributeAssignments_Item,
+    AllowedAttributeAssignments_Item_attributes_Item as AAAAttrItem,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import { Attribute } from "@wildboar/pki-stub";
 import type { IndexableOID } from "../types/types.js";
@@ -300,6 +301,39 @@ function useMatcherToCompareValues(
 }
 
 /**
+ * @summary Index all attribute values and their contexts
+ * @description
+ * 
+ * Convert all attribute values to strings so that they can be used as keys
+ * in a `Map`. This returned `Map` has the corresponding context lists for
+ * these attribute values. If duplicate attribute values are found, those
+ * without contexts override those with contexts.
+ * 
+ * @param allowed The attribute whose values are allowed.
+ * @returns A map of attribute value keys to context lists.
+ * 
+ * @function
+ */
+function indexAllAllowedValues(allowed: Attribute): Map<string, Context[]> {
+    const allowedAndContextLists: Map<string, Context[]> = new Map();
+    for (const value of allowed.valuesWithContext ?? []) {
+        const key = getDistinguishedValueKey(allowed.type_, value.value);
+        if (typeof key !== "string") {
+            continue; // Malformed value: ignore it.
+        }
+        allowedAndContextLists.set(key, value.contextList);
+    }
+    for (const value of allowed.values) {
+        const key = getDistinguishedValueKey(allowed.type_, value);
+        if (typeof key !== "string") {
+            continue; // Malformed value: ignore it.
+        }
+        allowedAndContextLists.set(key, []);
+    }
+    return allowedAndContextLists;
+}
+
+/**
  * @summary Compares values of an attribute to those allowed by a supposed superset.
  * @description
  * 
@@ -324,22 +358,7 @@ function useIndexingToCompareValues(
     allowed: Attribute,
     attr: Attribute,
 ): boolean {
-    // TODO: Refactor this indexing code out.
-    const allowedAndContextLists: Map<string, Context[]> = new Map();
-    for (const value of allowed.valuesWithContext ?? []) {
-        const key = getDistinguishedValueKey(allowed.type_, value.value);
-        if (typeof key !== "string") {
-            continue; // Malformed value: ignore it.
-        }
-        allowedAndContextLists.set(key, value.contextList);
-    }
-    for (const value of allowed.values) {
-        const key = getDistinguishedValueKey(allowed.type_, value);
-        if (typeof key !== "string") {
-            continue; // Malformed value: ignore it.
-        }
-        allowedAndContextLists.set(key, []);
-    }
+    const allowedAndContextLists: Map<string, Context[]> = indexAllAllowedValues(allowed);
     for (const value of attr.values) {
         const key = getDistinguishedValueKey(attr.type_, value);
         if (typeof key !== "string") {
@@ -440,6 +459,158 @@ export function checkIfAllValuesAreAllowed(
 }
 
 /**
+ * @summary Index all attribute types and values allowed by a supposed superset.
+ * @description
+ * 
+ * Convert all attribute types and values to strings so that they can be used
+ * as keys in a `Set` and `Map`. This returned `Set` has the attribute types
+ * that are allowed and the returned `Map` has the attribute values allowed
+ * for each attribute type.
+ * 
+ * @param allowed The attribute whose values are allowed.
+ * @returns A set of attribute types that are allowed and a map of attribute
+ *  types to their allowed values.
+ * 
+ * @function
+ */
+function indexAAAItems(
+    allowed: AAAAttrItem[],
+): [Set<IndexableOID>, Map<IndexableOID, Attribute>] {
+    const allowedTypes: Set<IndexableOID> = new Set();
+    const allowedValues: Map<IndexableOID, Attribute> = new Map();
+    for (const allowance of allowed) {
+        if ("attributeType" in allowance) {
+            allowedTypes.add(allowance.attributeType.toString());
+        }
+    }
+    for (const allowance of allowed) {
+        if ("attributeTypeandValues" in allowance) {
+            const newAttr = allowance.attributeTypeandValues;
+            const key = newAttr.type_.toString();
+            /* If only specific values are allowed, the whole type becomes
+            disallowed. */
+            allowedTypes.delete(key);
+            const existingAttr = allowedValues.get(key);
+            if (existingAttr) {
+                /* There could be duplicate attribute values associated with
+                different levels in the holder domain. We have to merge
+                these attribute values to obtain the complete set of
+                attribute values allowed for this holder domain. */
+                const hasContexts = (
+                    existingAttr.valuesWithContext?.length
+                    || newAttr.valuesWithContext?.length
+                );
+                const mergedAttr = new Attribute(
+                    newAttr.type_,
+                    [
+                        ...existingAttr.values,
+                        ...newAttr.values,
+                    ],
+                    hasContexts
+                        ? [
+                            ...(existingAttr.valuesWithContext ?? []),
+                            ...(newAttr.valuesWithContext ?? []),
+                        ]
+                        : undefined,
+                );
+                allowedValues.set(key, mergedAttr);
+            } else {
+                allowedValues.set(key, newAttr);
+            }
+        }
+    }
+    return [allowedTypes, allowedValues];
+}
+
+// TODO: Move to @wildboar/x500
+/**
+ * @summary Check if attributes comply with a list of allowed attribute types and values
+ * @description
+ * 
+ * This function is intended for use with the `allowedAttributeAssignments`
+ * X.509v3 extension to check if a list of attribute values comply with the
+ * allowed attribute types and values.
+ * 
+ * @param allowed The attribute types and values allowed
+ * @param attributes The presented attribute values
+ * @returns `true` if all the presented attribute values are allowed, `false` if not.
+ * 
+ * @function
+ */
+export function checkAttributeAssignments(
+    allowed: AAAAttrItem[],
+    attributes: Attribute[],
+): boolean {
+    const [allowedTypes, allowedValues] = indexAAAItems(allowed);
+    for (const attr of attributes) {
+        const key = attr.type_.toString();
+        if (allowedTypes.has(key)) {
+            // The whole type is allowed, so any subset of values is fine.
+            continue;
+        }
+        const allowedAttr = allowedValues.get(key);
+        if (!allowedAttr) {
+            return false; // No attribute values were explicitly allowed by the superset.
+        }
+        if (!checkIfAllValuesAreAllowed(allowedAttr, attr)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * @summary Determines if a single holder domain has an improper subset of allowed attribute assignments.
+ * @param supersetTrie The trie of holder domains and the attribute assignments
+ *  allowed to each of them.
+ * @param aaaItem A single holder domain attribute assignment allowance to check.
+ * @returns `true` if the attribute assignment allowance is an improper subset
+ *  of the supposed superset, `false` if not.
+ */
+function checkIfHolderDomainIsImproperSubset(
+    supersetTrie: GeneralNameTrie<AAAAttrItem[]>,
+    aaaItem: AllowedAttributeAssignments_Item,
+): boolean {
+    /** The attributes allowed by the supposed superset. */
+    const nodes = Array.from(supersetTrie.descendOptionalValues(aaaItem.holderDomain));
+    if (nodes.length === 0) {
+        return false; // Holder domain in subset is not even a name form used by the superset.
+    }
+    if (nodes.every((node) => node === undefined)) {
+        // Holder domain has a name form used by the superset,
+        // but no attribute assignments were authorized for this value
+        // of this name form.
+        return false;
+    }
+    const nodesWithAAAs = nodes.filter((node) => node !== undefined);
+    const allowed = nodesWithAAAs.flat();
+    const [allowedTypes, allowedValues] = indexAAAItems(allowed);
+    for (const allowance of aaaItem.attributes) {
+        if ("attributeType" in allowance) {
+            const key = allowance.attributeType.toString();
+            if (!allowedTypes.has(key)) {
+                return false; // Forbidden attribute type.
+            }
+        } else if ("attributeTypeandValues" in allowance) {
+            const attr = allowance.attributeTypeandValues;
+            const key = attr.type_.toString();
+            if (allowedTypes.has(key)) {
+                // The whole type is allowed, so any subset of values is fine.
+                continue;
+            }
+            const allowedAttr = allowedValues.get(key);
+            if (!allowedAttr) {
+                return false; // No attribute values were explicitly allowed by the superset.
+            }
+            if (!checkIfAllValuesAreAllowed(allowedAttr, attr)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/**
  * @summary Determines if a purported subset is an improper subset of a supposed superset.
  * @description
  * 
@@ -472,8 +643,7 @@ function aaaIsImproperSubset (
     superset: AllowedAttributeAssignments,
     subset: AllowedAttributeAssignments,
 ): boolean | undefined { // TODO: I think you could have more informative return types here.
-    const supersetTrie = new GeneralNameTrie<AllowedAttributeAssignments_Item_attributes_Item[]>();
-
+    const supersetTrie = new GeneralNameTrie<AAAAttrItem[]>();
     for (const s of superset) {
         if (!supersetTrie.setValue(s.holderDomain, s.attributes)) {
             return undefined; // There was a malformed GeneralName.
@@ -481,90 +651,12 @@ function aaaIsImproperSubset (
     }
 
     for (const s of subset) {
-
-        // TODO: I think you could refactor the section below into its own function.
-
-        // TODO: I am not sure if the code below will handle the superset allowing all
-        // holder domains under the root node correctly. Test this.
-        /** The attributes allowed by the supposed superset. */
-        const nodes = Array.from(supersetTrie.descendOptionalValues(s.holderDomain));
-        if (nodes.length === 0) {
-            return false; // Holder domain in subset is not even a name form used by the superset.
-        }
-        if (nodes.every((node) => node === undefined)) {
-            // Holder domain has a name form used by the superset,
-            // but no attribute assignments were authorized for this value
-            // of this name form.
+        const isHolderDomainCompliant = checkIfHolderDomainIsImproperSubset(
+            supersetTrie,
+            s,
+        );
+        if (!isHolderDomainCompliant) {
             return false;
-        }
-        const nodesWithAAAs = nodes.filter((node) => node !== undefined);
-        const allowed = nodesWithAAAs.flat();
-        const allowedTypes: Set<IndexableOID> = new Set();
-        const allowedValues: Map<IndexableOID, Attribute> = new Map();
-        for (const allowance of allowed) {
-            if ("attributeType" in allowance) {
-                allowedTypes.add(allowance.attributeType.toString());
-            }
-        }
-        for (const allowance of allowed) {
-            if ("attributeTypeandValues" in allowance) {
-                const newAttr = allowance.attributeTypeandValues;
-                const key = newAttr.type_.toString();
-                /* If only specific values are allowed, the whole type becomes
-                disallowed. */
-                allowedTypes.delete(key);
-                const existingAttr = allowedValues.get(key);
-                if (existingAttr) {
-                    /* There could be duplicate attribute values associated with
-                    different levels in the holder domain. We have to merge
-                    these attribute values to obtain the complete set of
-                    attribute values allowed for this holder domain. */
-                    const hasContexts = (
-                        existingAttr.valuesWithContext?.length
-                        || newAttr.valuesWithContext?.length
-                    );
-                    const mergedAttr = new Attribute(
-                        newAttr.type_,
-                        [
-                            ...existingAttr.values,
-                            ...newAttr.values,
-                        ],
-                        hasContexts
-                            ? [
-                                ...(existingAttr.valuesWithContext ?? []),
-                                ...(newAttr.valuesWithContext ?? []),
-                            ]
-                            : undefined,
-                    );
-                    allowedValues.set(key, mergedAttr);
-                } else {
-                    allowedValues.set(key, newAttr);
-                }
-            }
-        }
-
-        // TODO: Check that each attribute of s
-        for (const allowance of s.attributes) {
-            if ("attributeType" in allowance) {
-                const key = allowance.attributeType.toString();
-                if (!allowedTypes.has(key)) {
-                    return false; // Forbidden attribute type.
-                }
-            } else if ("attributeTypeandValues" in allowance) {
-                const attr = allowance.attributeTypeandValues;
-                const key = attr.type_.toString();
-                if (allowedTypes.has(key)) {
-                    // The whole type is allowed, so any subset of values is fine.
-                    continue;
-                }
-                const allowedAttr = allowedValues.get(key);
-                if (!allowedAttr) {
-                    return false; // No attribute values were explicitly allowed by the superset.
-                }
-                if (!checkIfAllValuesAreAllowed(allowedAttr, attr)) {
-                    return false;
-                }
-            }
         }
     }
 
