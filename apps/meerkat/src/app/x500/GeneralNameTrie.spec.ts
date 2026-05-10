@@ -14,6 +14,22 @@ import { ObjectIdentifier } from "@wildboar/asn1";
 import { DistinguishedName } from "@wildboar/x500/InformationFramework";
 
 describe("GeneralNameTrie", () => {
+
+    it("returns no results when empty", () => {
+        const gn: GeneralName = {
+            dNSName: "asdf.zxcv.com",
+        };
+        const trie = new GeneralNameTrie();
+        expect(trie.getValue(gn)).toBeUndefined();
+        expect(Array.from(trie.descendOptionalValues(gn))).toEqual([
+            undefined,
+            undefined,
+            undefined,
+        ]);
+        expect(Array.from(trie.descendValues(gn))).toEqual([]);
+    });
+
+
     it("can index a value with a deep DNS name", () => {
         const gn: GeneralName = {
             dNSName: "asdf.zxcv.com",
