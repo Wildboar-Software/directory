@@ -215,6 +215,8 @@ function getDistinguishedValueKey (type_: AttributeType, value: ASN1Element): st
         const os = value.octetString;
         return hex(os);
     }
+    // TODO: Sort sets, and recurse into sequences. This would make this work
+    // with DN types, even though that was not an intended use.
     /* All remaining types are either unrecognized, have no common X.500
     directory usage, or are encoded the exact same way between BER, CER, and
     DER serializations. */

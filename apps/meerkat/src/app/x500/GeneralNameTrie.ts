@@ -6,23 +6,6 @@ import { getDistinguishedValueKey } from "../x500/getDistinguishedValueKey.js";
 // hierarchical elements.
 const ASCII_UNIT_SEPARATOR = "\x1F";
 
-// TODO: subset checking
-/*
-One GeneralNameTrie<AllowedAttributeAssignments> is a subset of another IFF:
-
-Iterate over every node in the "subset" trie. All of the attributes in each
-node must be present in that node's analog (or one of its ancestors) in the
-"superset" trie.
-
-AllowedAttributeAssignments  ::=  SET OF SEQUENCE {
-    attributes              [0]  SET OF CHOICE {
-        attributeType           [0]  AttributeType,
-        attributeTypeandValues  [1]  Attribute{{SupportedAttributes}},
-        ... },
-    holderDomain            [1]  GeneralName,
-    ... }
-*/
-
 export class GeneralNameTrie<V> {
     protected dnsRoot: Map<string, V> = new Map();
     protected x500Root: Map<string, V> = new Map();
