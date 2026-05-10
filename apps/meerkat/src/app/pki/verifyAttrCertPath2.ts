@@ -103,6 +103,7 @@ import { checkRemoteCRLs, getReadDispatcher, VCP_RETURN_CRL_REVOKED, VCP_RETURN_
 import isPrefix from "../x500/isPrefix.js";
 import { Attribute, AttributeType, AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
 import applyMappingsToAttributes from "../pmi/applyMappingsToAttributes.js";
+import { aaaIsImproperSubset, checkAttributeAssignments } from "../pmi/aaaIsImproperSubset.js";
 
 export const VAC_OK: number = 0;
 export const VAC_NOT_BEFORE: number = -1;
@@ -145,6 +146,7 @@ export const VAC_RETURN_OCSP_REVOKED: number = -102;
 export const VAC_RETURN_OCSP_OTHER: number = -103;
 export const VAC_RETURN_CRL_REVOKED: number = -104;
 export const VAC_RETURN_CRL_UNREACHABLE: number = -105;
+export const VAC_AAA_VIOLATION: number = -106;
 
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
@@ -605,7 +607,8 @@ async function verifyAttrCertPath2 (
     const ordered_path: [ AttributeCertificate, PkiPath ][] = [ [ current_ac, current_holder_pki_path ] ];
     let iteration = 0;
 
-    let allowed_attr_assignments: AllowedAttributeAssignments | undefined;
+    let ee_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
+    let current_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
 
     while (current_holder_pki_path && current_ac) {
         if (iteration > 10) { // TODO: Make this configurable.
@@ -1035,7 +1038,7 @@ SOA, through the IndirectIssuer extension in its attribute certificate"
            mapped.
         // TODO: Report the security problem to the ITU.
 
-        // TODO: allowedAttributeAssignments
+        // ~~allowedAttributeAssignments~~
         I think all you really have to check is that the end-entity AC complies
         with all of the allowed attribute assignments. Beyond this, you just
         have to make sure that each encountered AAA is a subset of those granted
@@ -1205,10 +1208,33 @@ SOA, through the IndirectIssuer extension in its attribute certificate"
                 }
             }
             if (ext.extnId.isEqualTo(allowedAttributeAssignments["&id"]!)) {
-                const aaa = allowedAttributeAssignments.decoderFor["&ExtnType"]!(extEl);
-                // TODO: Check that all attribute assignments are allowed (really only has to be done for the EE acert)
-                // TODO: Check that the previous allowed_attr_assignments is an improper subset
-                // TODO: Make sure that the attributes allowed check is done even if the issuer doesn't have this extension!
+                const superset = allowedAttributeAssignments.decoderFor["&ExtnType"]!(extEl);
+                const applicableSuperset = superset
+                    .filter((aaa) => {
+                        const subtree = new GeneralSubtree(aaa.holderDomain);
+                        const gns: GeneralNames = [
+                            {
+                                directoryName: eeCert.toBeSigned.subject,
+                            },
+                            ...(current_ac?.toBeSigned.holder.entityName ?? [])
+                        ].slice(0, 100); // denial-of-service prevention.
+                        for (const gn of gns) {
+                            if (gnWithinGeneralSubtree(gn, subtree, namingMatcher)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                const subset = current_allowed_attr_assignments;
+                if (subset && !aaaIsImproperSubset(applicableSuperset, subset)) {
+                    /* The inferior AA was allowed to assign attributes that
+                    the superior AA was not allowed to assign. */
+                    return VAC_AAA_VIOLATION;
+                }
+                current_allowed_attr_assignments = applicableSuperset;
+                if (!ee_allowed_attr_assignments) {
+                    ee_allowed_attr_assignments = applicableSuperset;
+                }
             }
         }
         // #endregion verify_extensions_in_issuer_ac_requiring_subject
@@ -1247,6 +1273,23 @@ SOA, through the IndirectIssuer extension in its attribute certificate"
 
     // TODO: Check that the SOA is trusted.
     // TODO: Verify domination via attributeDescriptor
+
+    /* I think this check only needs to be done here. I think it is perfectly
+    valid if we just check that all AAA extension values present in AA ACs
+    are subsets of those of their issuing AA's, then just check that the EE
+    AC only contains the allowed values at the end. What does it matter for
+    our purposes if an intermediary AA is illicitly delegated with an
+    attribute value if it does not delegate it further? */
+    if (ee_allowed_attr_assignments && current_ac) {
+        const allowed = ee_allowed_attr_assignments
+            .map((aaa) => aaa.attributes)
+            .flat();
+        const attrs = current_ac.toBeSigned.attributes;
+        const compliant = checkAttributeAssignments(allowed, attrs);
+        if (!compliant) {
+            return VAC_AAA_VIOLATION;
+        }
+    }
 
     return VAC_OK;
 }
