@@ -21,6 +21,42 @@ import { DER } from "@wildboar/asn1/functional";
 import { getDistinguishedValueKey } from "../x500/getDistinguishedValueKey.js";
 
 // TODO: Move this to @wildboar/x500?
+/**
+ * @summary Convert context values to strings for efficient many-to-many comparisons.
+ * @description
+ * 
+ * For a given context type, this function returns an iterable iterator of
+ * string representations of context values having the property that two
+ * matching context values will produce the same string. The purpose of this
+ * is so that these strings can be indexed in a `Set` or `Map` for efficient
+ * many-to-many comparisons, duplication checks, mapping to other data, etc.
+ * 
+ * This function does not handle errors that arise from decoding malformed
+ * values.
+ * 
+ * This function has special handling for these context types:
+ * 
+ * - `temporalContext`: Time values need to be normalized before comparison,
+ *   because the same time may be represented with different time zones, and
+ *   time periods can be represented in a lot of ways.
+ * - `ldapAttributeOptionContext`: LDAP attribute option values can appear in
+ *   any order and with any casing, so we have to sort and case-normalize them
+ *   before comparison.
+ * - `localeContext`: It's too difficult to explain, but it needs normalization
+ * - `languageContext`: The specification does not say to case-normalize, but I
+ *   think it is maybe the right thing to do here.
+ * 
+ * All other context types are assumed to require byte-for-byte equality: in
+ * these cases, the strings are simply the hex-encoded bytes of the value.
+ * 
+ * @param contextType The context type to get the value keys for.
+ * @param values The values to get the keys for.
+ * @returns An iterable iterator of the value keys.
+ * @yields A string representation of the context value suitable for matching two
+ *  context values.
+ * 
+ * @function
+ */
 function* getContextValueKeys(
     contextType: OBJECT_IDENTIFIER,
     values: ASN1Element[],
@@ -51,7 +87,6 @@ function* getContextValueKeys(
                     .join("%");
                 s += `@${normalizedPeriodHexes}`;
             }
-            // out.add(s);
             yield s;
         }
         return;
@@ -107,6 +142,31 @@ function* getContextValueKeys(
 }
 
 // TODO: Move this to @wildboar/x500?
+/**
+ * @summary Checks a list of contexts against those allowed
+ * @description
+ * 
+ * This function checks if the `presented` contexts match the `allowed`
+ * contexts. If a context type appears in `presented` but not in `allowed`,
+ * then the function returns `false`. If `matchAllTypes` is `true`, then
+ * all context types in `presented` must also appear in `allowed`: both
+ * context lists must have the same types. If `matchAllValues` is `true`,
+ * then, for a given context type present in both `allowed` and `presented`,
+ * all values for that context in `allowed` must also appear in `presented`;
+ * if `matchAllValues` is `false` or unset, the `presented` context may have
+ * a subset of the values in the corresponding `allowed` context. In any
+ * case, `fallback` must always match to return `true`.
+ * 
+ * @param allowed The context types and values that are allowed.
+ * @param presented The context types and values that are being checked.
+ * @param matchAllValues Whether all allowed context values are required to be present.
+ * @param matchAllTypes Whether all allowed context types are required to be present.
+ * @returns `true` if the presented context types and values are allowed,
+ *  `false` if not, and `undefined` if the allowed context types or values are
+ *  duplicated or malformed in some other way.
+ * 
+ * @function
+ */
 function matchContexts(
     allowed: Context[],
     presented: Context[],
@@ -162,6 +222,36 @@ function matchContexts(
     return true; // No non-allowed context types or values found.
 }
 
+/**
+ * @summary Compares values of an attribute to those allowed by a supposed superset.
+ * 
+ * This function compares values of an attribute to those allowed by a supposed
+ * superset of allowed attribute assignments. This function does so by using a
+ * given equality matcher to compare the attribute values to the allowed values.
+ *
+ * This function is only safe to use when you know that the `allowed` and
+ * `attr` attributes have a small number of combinations of values; while this
+ * function is more accurate than `useIndexingToCompareValues`, it is
+ * vulnerable to denial-of-service attacks from larger user-supplied inputs.
+ * 
+ * Hence, this function should never be exposed in the public API.
+ * 
+ * This function handles errors thrown when attempting to decode or match
+ * values. Values that decode incorrectly (or throw some other error when used
+ * in a match) are effectively ignored.
+ * 
+ * If the superset specifies that an attribute value with contexts, all of its
+ * context types and context values must be present to count as being allowed.
+ * 
+ * @param allowed The attribute whose values are allowed.
+ * @param attr The attribute whose values are being checked.
+ * @param equalityMatcher The equality matcher to use.
+ * @param getEqualityMatcher An optional function to get the equality matcher for
+ *  the attribute type.
+ * @returns `true` if all values of the attribute are allowed, `false` if not.
+ * 
+ * @function
+ */
 function useMatcherToCompareValues(
     allowed: Attribute,
     attr: Attribute,
@@ -209,6 +299,27 @@ function useMatcherToCompareValues(
     return true;
 }
 
+/**
+ * @summary Compares values of an attribute to those allowed by a supposed superset.
+ * @description
+ * 
+ * This function compares values of an attribute to those allowed by a supposed
+ * superset of allowed attribute assignments. This function does so by
+ * converting all allowed values to strings and pre-indexing them to avoid
+ * O(n^2) time complexity.
+ * 
+ * Malformed allowed values are ignored, but malformed attribute values are
+ * treated as errors.
+ * 
+ * If the superset specifies that an attribute value with contexts, all of its
+ * context types and context values must be present to count as being allowed.
+ * 
+ * @param allowed The attribute whose values are allowed.
+ * @param attr The attribute whose values are being checked.
+ * @returns `true` if all values of the attribute are allowed, `false` if not.
+ * 
+ * @function
+ */
 function useIndexingToCompareValues(
     allowed: Attribute,
     attr: Attribute,
@@ -266,7 +377,24 @@ function useIndexingToCompareValues(
     return true;
 }
 
-function allValuesAllowed(
+/**
+ * @summary Determines if all values of an attribute are allowed.
+ * @description
+ * 
+ * This function determines if all values of an attribute are allowed by a
+ * supposed superset of allowed attribute assignments.
+ * 
+ * This function does not ensure that all allowed values are present.
+ * 
+ * @param allowed The attribute whose values are allowed.
+ * @param attr The attribute whose values are being checked.
+ * @param getEqualityMatcher An optional function to get the equality matcher for
+ *  the attribute type.
+ * @returns `true` if all values of the attribute are allowed, `false` if not.
+ * 
+ * @function
+ */
+export function checkIfAllValuesAreAllowed(
     allowed: Attribute,
     attr: Attribute,
     getEqualityMatcher?: (attributeType: OBJECT_IDENTIFIER) => EqualityMatcher | undefined,
@@ -306,9 +434,39 @@ function allValuesAllowed(
             }
         }
     }
+    // ...otherwise, to avoid O(n^2) complexity, we convert the attribute
+    // values to strings and pre-index them.
     return useIndexingToCompareValues(allowed, attr);
 }
 
+/**
+ * @summary Determines if a purported subset is an improper subset of a supposed superset.
+ * @description
+ * 
+ * This function determines if a purported subset of allowed attribute
+ * assignments is an improper subset of a supposed superset of them. The
+ * purpose of this function is for comparing two values of the
+ * `allowedAttributeAssignments` X.509v3 extension to ensure that an
+ * Attribute Authority (AA) has not illicitly authorized a subordinate AA to
+ * assign attributes that the issuer itself cannot assign; this is done by
+ * checking that the subject AA's `allowedAttributeAssignments` is a subset of
+ * the issuer AA's `allowedAttributeAssignments`.
+ * 
+ * One AAA value is a subset of another if and only if each holder domain in
+ * the list has an improper subset of all AAA values granted by the superset.
+ * So we index the superset into a trie of holder domains and what attribute
+ * types and values are authorized beneath each vertex, then we iterate over
+ * each holder domain in the subset and check if it only contains allowed
+ * attributes, given where it falls in the trie.
+ * 
+ * @param superset The supposed superset of the purported subset.
+ * @param subset The purported subset of the supposed superset.
+ * @returns `true` if the purported subset is an improper subset of the
+ *  supposed superset, `false` if not, and `undefined` in the case of a
+ *  malformed `GeneralName`.
+ * 
+ * @function
+ */
 export
 function aaaIsImproperSubset (
     superset: AllowedAttributeAssignments,
@@ -403,28 +561,12 @@ function aaaIsImproperSubset (
                 if (!allowedAttr) {
                     return false; // No attribute values were explicitly allowed by the superset.
                 }
-                if (!allValuesAllowed(allowedAttr, attr)) {
+                if (!checkIfAllValuesAreAllowed(allowedAttr, attr)) {
                     return false;
                 }
             }
         }
     }
-
-    /*
-    One GeneralNameTrie<AllowedAttributeAssignments> is a subset of another IFF:
-
-    Iterate over every node in the "subset" trie. All of the attributes in each
-    node must be present in that node's analog (or one of its ancestors) in the
-    "superset" trie.
-
-    AllowedAttributeAssignments  ::=  SET OF SEQUENCE {
-        attributes              [0]  SET OF CHOICE {
-            attributeType           [0]  AttributeType,
-            attributeTypeandValues  [1]  Attribute{{SupportedAttributes}},
-            ... },
-        holderDomain            [1]  GeneralName,
-        ... }
-    */
 
     // None of the `subset` items were a superset of the purported `superset`,
     // meaning that the purported `subset` is indeed an improper subset.
