@@ -109,6 +109,7 @@ import { PrismaClient } from './generated/client.js';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
 import { readFileSync } from "node:fs";
 import decodeLDAPDN from "./ldap/decodeLDAPDN.js";
+import wildboarPrivilegeComparator from "./pmi/wildboarPrivilegeComparator.js";
 
 const adapter = new PrismaLibSql({
     url: process.env.DATABASE_URL ?? ":memory:",
@@ -608,6 +609,9 @@ const config: Configuration = {
     attributeCertificateDuration: process.env.MEERKAT_ATTR_CERT_DURATION
         ? Number.parseInt(process.env.MEERKAT_ATTR_CERT_DURATION, 10)
         : 3600,
+    privilegePoliciesToComparators: new Map([
+        [ "1.3.6.1.4.1.56490.403.23", () => wildboarPrivilegeComparator ],
+    ]),
     authn: {
         lookupPkiPathForUncertifiedStrongAuth: (process.env.MEERKAT_LOOKUP_UNCERT_STRONG_AUTH === "1"),
         attributeCertificationPath,

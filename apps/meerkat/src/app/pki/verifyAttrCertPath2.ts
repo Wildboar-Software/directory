@@ -2,12 +2,14 @@ import { Buffer } from "node:buffer";
 import {
     Context,
     IndexableOID,
+    PrivilegeComparator,
 } from "../types/index.js";
 import {
     _decode_UnboundedDirectoryString,
     Attribute_valuesWithContext_Item,
     GeneralName,
     PkiPath,
+    Context as X500Context,
 } from "@wildboar/pki-stub";
 import {
     ACPathData,
@@ -38,10 +40,13 @@ import {
     AttributeMappings_Item_typeValueMappings,
     AllowedAttributeAssignments,
     allowedAttributeAssignments,
+    AttributeDescriptorSyntax,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
+    compareAlgorithmIdentifier,
     compareElements,
     compareGeneralName,
+    compareGeneralNames,
     compareIssuerSerial,
     compareName,
     directoryStringToString,
@@ -54,7 +59,7 @@ import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { Name } from "@wildboar/pki-stub";
 import { Certificate, _encode_Certificate } from "@wildboar/pki-stub";
 import { AAIssuingDistPointSyntax, aAissuingDistributionPoint, GeneralNames, GeneralSubtree, issuerAltName, nameConstraints, NameConstraintsSyntax } from "@wildboar/x500/CertificateExtensions";
-import { ASN1Element, ASN1TagClass, ASN1UniversalType, BOOLEAN, DERElement, packBits } from "@wildboar/asn1";
+import { ASN1Element, ASN1TagClass, ASN1UniversalType, BOOLEAN, DERElement, OBJECT_IDENTIFIER, ObjectIdentifier, packBits } from "@wildboar/asn1";
 import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { digestOIDToNodeHash } from "./digestOIDToNodeHash.js";
 import { createHash } from "node:crypto";
@@ -104,6 +109,14 @@ import isPrefix from "../x500/isPrefix.js";
 import { Attribute, AttributeType, AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
 import applyMappingsToAttributes from "../pmi/applyMappingsToAttributes.js";
 import { aaaIsImproperSubset, checkAttributeAssignments } from "../pmi/aaaIsImproperSubset.js";
+import defaultPrivilegeComparator from "../pmi/defaultPrivilegeComparator.js";
+
+/*
+TODO: For OID Sets and Maps make a wrapper type that takes OIDs and translates
+commonly used prefixes into integers.
+I don't think it incurs the heterogeneous types cost. Map<number | string, T>
+should be about as fast as Map<string, T>.
+*/
 
 export const VAC_OK: number = 0;
 export const VAC_NOT_BEFORE: number = -1;
@@ -142,6 +155,9 @@ export const VAC_MALFORMED_EXTENSION: number = -35;
 export const VAC_NAME_CONSTRAINT_VIOLATION: number = -36;
 export const VAC_NAME_CONSTRAINT_CHECK_DOS: number = -37;
 export const VAC_NOT_INDIRECT_ISSUER: number = -38;
+export const VAC_ATTR_DESC_CONFLICT: number = -39;
+export const VAC_ATTR_DELEGATION_VIOLATION: number = -40;
+export const VAC_DUPLICATE_ATTR: number = -41;
 export const VAC_RETURN_OCSP_REVOKED: number = -102;
 export const VAC_RETURN_OCSP_OTHER: number = -103;
 export const VAC_RETURN_CRL_REVOKED: number = -104;
@@ -572,6 +588,304 @@ function attributeCertificateWithinNameConstraints(
     return true;
 }
 
+function isAttributeDescriptorCertFor(ctx: Context, ac: AttributeCertificate): typeof attributeDescriptor["&ExtnType"] | null {
+    if (ac.toBeSigned.attributes.length > 0) {
+        return null;
+    }
+    if (!ac.toBeSigned.extensions?.length) {
+        return null;
+    }
+    // TODO: It might be beneficial to have a separate implementation
+    // that just checks if they are completely identical: none of the
+    // convoluted O(n^2) matching logic.
+    if (!is_acert_issuer(ctx, ac, ac)) {
+        return null; // Not self-signed / self-issued.
+    }
+    const exts = ac.toBeSigned.extensions
+        .filter((ext) => ext.extnId.isEqualTo(attributeDescriptor["&id"]!));
+    if (exts.length !== 1) {
+        return null;
+    }
+    const ext = exts[0];
+    try {
+        const el = new DERElement();
+        const bytesRead = el.fromBytes(ext.extnValue);
+        if (bytesRead !== ext.extnValue.length) {
+            return null;
+        }
+        return attributeDescriptor.decoderFor["&ExtnType"]!(el);
+    } catch {
+        return null;
+    }
+// ITU X.509 (2021), Section 17.3.2.2.1:
+// Although syntactically identical to an
+// AttributeCertificate, an attribute descriptor certificate:
+// –contains an empty SEQUENCE in its attributes component;
+// –is a self-issued certificate (i.e., the issuer and holder are the same entity); and
+// –includes the attribute descriptor extension.
+}
+
+// TODO: Move to @wildboar/x500 or perhaps @wildboar/pki-stub?
+function compareContextLists(
+    a: X500Context[],
+    b: X500Context[],
+): boolean {
+    if (a.length !== b.length) {
+        return false; // The contexts did not match exactly.
+    }
+    const asorted = [ ...a ]
+        .sort((a, b) => a.contextType.toString().localeCompare(b.contextType.toString()));
+    const bsorted = [ ...b ]
+        .sort((a, b) => a.contextType.toString().localeCompare(b.contextType.toString()));
+    for (let i = 0; i < asorted.length; i++) {
+        const ctxa = asorted[i];
+        const ctxb = bsorted[i];
+        if (!ctxa.contextType.isEqualTo(ctxb.contextType)) {
+            return false; // The contexts did not match exactly.
+        }
+        // Actually, they could differ in length if they have
+        // duplicate values, too, which is not semantically a problem,
+        // but it is not technically allowed. Since this code is
+        // expected to be used in verifying PMI delegation (and the
+        // usage of contexts is likely to be rare anyway), we are going
+        // to be virtuously strict, so incorrectness of this sort is not
+        // allowed to propagate through the AA delegation path.
+        if (ctxa.contextValues.length !== ctxb.contextValues.length) {
+            return false; // The contexts did not match exactly.
+        }
+        const fallbacka = ctxa.fallback ?? X500Context._default_value_for_fallback;
+        const fallbackb = ctxb.fallback ?? X500Context._default_value_for_fallback;
+        if (fallbacka !== fallbackb) {   
+            return false; // The fallback did not match exactly.
+        }
+        const avalues: Set<string> = new Set();
+        for (const v of ctxa.contextValues) {
+            const buf = v.toBytes();
+            // latin1 is fastest: it basically turns the bytes directly into a string.
+            // I'm not sure if it allocates a new buffer under the hood or not.
+            // TODO: Refactor this whole ternary + toString() trick into a function.
+            const key = (Buffer.isBuffer(buf)
+                ? buf
+                : Buffer.from(
+                    buf.buffer,
+                    buf.byteOffset,
+                    buf.byteLength,
+                )).toString("latin1");
+            avalues.add(key);
+        }
+        for (const v of ctxb.contextValues) {
+            const buf = v.toBytes();
+            const key = (Buffer.isBuffer(buf)
+                ? buf
+                : Buffer.from(
+                    buf.buffer,
+                    buf.byteOffset,
+                    buf.byteLength,
+                )).toString("latin1");
+            if (!avalues.has(key)) {
+                return false; // The context values did not match exactly.
+            }
+            // Remove this so duplicates fail.
+            avalues.delete(key);
+        }
+        if (avalues.size > 0) {
+            return false; // The context values did not match exactly.
+        }
+    }
+    return true; // No differences were found.
+}
+
+function hashAttributeValue(value: ASN1Element): string {
+    const buf = value.toBytes();
+    return (Buffer.isBuffer(buf)
+        ? buf
+        : Buffer.from(
+            buf.buffer,
+            buf.byteOffset,
+            buf.byteLength,
+        )).toString("latin1");
+}
+
+function isAttributeDelegationAllowedDumb(
+    delegated_attr: Attribute,
+    delegating_attr: Attribute,
+): boolean {
+    // Hash the values of the delegating attribute into a Map<string, Context[]>.
+    const delegating_values_map: Map<string, X500Context[]> = new Map();
+    for (const delegating_value of delegating_attr.values) {
+        const key = hashAttributeValue(delegating_value);
+        delegating_values_map.set(key, []);
+    }
+    for (const delegating_value of delegating_attr.valuesWithContext ?? []) {
+        const key = hashAttributeValue(delegating_value.value);
+        delegating_values_map.set(key, delegating_value.contextList);
+    }
+    for (const delegated_value of delegated_attr.values) {
+        const key = hashAttributeValue(delegated_value);
+        const existing = delegating_values_map.get(key);
+        if (!existing) {
+            return false;
+        }
+        if (existing.length > 0) {
+            return false; // The delegating value had contexts, but this one does not.
+        }
+    }
+    for (const delegated_vwc of delegated_attr.valuesWithContext ?? []) {
+        const key = hashAttributeValue(delegated_vwc.value);
+        const delegatingContextList = delegating_values_map.get(key);
+        if (!delegatingContextList) {
+            return false;
+        }
+        const contexts_matched = compareContextLists(
+            delegated_vwc.contextList,
+            delegatingContextList,
+        );
+        if (!contexts_matched) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * @description
+ * 
+ * The delegating AA may have attribute values that are both above and below
+ * the privilege of the delegated attribute value. We, therefore, should not
+ * fail just because. We only need to check that each delegated attribute value
+ * has a corresponding delegating attribute value that is at least as
+ * privileged.
+ * 
+ * @param delegated_attr 
+ * @param delegating_attr 
+ * @param comparator 
+ * @returns 
+ */
+function isAttributeDelegationAllowed(
+    delegated_attr: Attribute,
+    delegating_attr: Attribute,
+    comparator: PrivilegeComparator,
+): boolean {
+
+    const delegated_values_count = delegated_attr.values.length
+        + (delegated_attr.valuesWithContext?.length ?? 0);
+    const delegating_values_count = delegating_attr.values.length
+        + (delegating_attr.valuesWithContext?.length ?? 0);
+    const complexity = delegated_values_count * delegating_values_count;
+    if (complexity > 100) {
+        // This is O(n^2) time complexity. Fall back on hash-based dumb comparison.
+        return isAttributeDelegationAllowedDumb(delegated_attr, delegating_attr);
+    }
+
+    // Check that all context-less values were permitted by other context-less values.
+    for (const delegated_value of delegated_attr.values) {
+        let matched = false;
+        for (const delegating_value of delegating_attr.values) {
+            const cmp_result = comparator(delegated_attr.type_, delegated_value, delegating_value);
+            if (cmp_result === undefined || cmp_result === null || cmp_result < 0) {
+                continue;
+            }
+            // TODO: Test the heck out of this. I'm not sure this is the right logic.
+            matched = true;
+            break;
+        }
+        if (!matched) {
+            return false;
+        }
+    }
+
+    // Check that contextual values were permitted by any delegating values, contextual or not.
+    for (const delegated_vwc of delegated_attr.valuesWithContext ?? []) {
+        let matched = false;
+
+        // Check context-less values.
+        // It is assumed that an AA with delegation powers for a given
+        // attribute value will also have delegation powers for itself or
+        // inferior values that are constrained by contexts.
+        for (const delegating_value of delegating_attr.values) {
+            const cmp_result = comparator(delegated_attr.type_, delegated_vwc.value, delegating_value);
+            if (cmp_result === undefined || cmp_result === null || cmp_result < 0) {
+                continue;
+            }
+            // TODO: Test the heck out of this. I'm not sure this is the right logic.
+            matched = true;
+            break;
+        }
+
+        // Check contextual values.
+        if (!matched) {
+            for (const delegating_vwc of delegating_attr.valuesWithContext ?? []) {
+                const cmp_result = comparator(delegated_attr.type_, delegated_vwc.value, delegating_vwc.value);
+                if (cmp_result === undefined || cmp_result === null || cmp_result < 0) {
+                    continue;
+                }
+                // TODO: Implement OID sorting functions in asn1-ts.
+                const contexts_matched = compareContextLists(
+                    delegated_vwc.contextList,
+                    delegating_vwc.contextList,
+                );
+                if (!contexts_matched) {
+                    continue;
+                }
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            return false;
+        }
+    }
+    return false;
+}
+
+function isSameIssuer(a: AttCertIssuer, b: AttCertIssuer, namingMatcher: (attributeType: AttributeType) => EqualityMatcher | undefined): boolean {
+    let compared_something = false;
+    if (a.issuerName && b.issuerName) {
+        if (!compareGeneralNames(a.issuerName, b.issuerName, namingMatcher)) {
+            return false;
+        }
+        compared_something = true;
+    }
+    if (a.baseCertificateID && b.baseCertificateID) {
+        if (!compareIssuerSerial(a.baseCertificateID, b.baseCertificateID, namingMatcher)) {
+            return false;
+        }
+        compared_something = true;
+    }
+    if (a.objectDigestInfo && b.objectDigestInfo) {
+        if (a.objectDigestInfo.digestedObjectType !== b.objectDigestInfo.digestedObjectType) {
+            return false;
+        }
+        if (
+            a.objectDigestInfo.otherObjectTypeID
+            && b.objectDigestInfo.otherObjectTypeID
+            && !a.objectDigestInfo.otherObjectTypeID.isEqualTo(b.objectDigestInfo.otherObjectTypeID)
+        ) {
+            return false;
+        }
+        if (!compareAlgorithmIdentifier(a.objectDigestInfo.digestAlgorithm, b.objectDigestInfo.digestAlgorithm)) {
+            return false;
+        }
+        if (a.objectDigestInfo.objectDigest.length !== b.objectDigestInfo.objectDigest.length) {
+            return false;
+        }
+        const a_digest = Buffer.from(
+            a.objectDigestInfo.objectDigest.buffer,
+            a.objectDigestInfo.objectDigest.byteOffset,
+            a.objectDigestInfo.objectDigest.byteLength,
+        );
+        const b_digest = Buffer.from(
+            b.objectDigestInfo.objectDigest.buffer,
+            b.objectDigestInfo.objectDigest.byteOffset,
+            b.objectDigestInfo.objectDigest.byteLength,
+        );
+        if (!Buffer.compare(a_digest, b_digest)) {
+            return false;
+        }
+        compared_something = true;
+    }
+    return compared_something;
+}
 
 export
 async function verifyAttrCertPath2 (
@@ -609,6 +923,40 @@ async function verifyAttrCertPath2 (
 
     let ee_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
     let current_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
+    let expected_soa: AttCertIssuer | undefined;
+
+    // TODO: Actually, it's not clear to me that the AttributeCertificationPath may even contain ADCs.
+    const attribute_descriptor_certs: Map<IndexableOID, [AttributeCertificate, AttributeDescriptorSyntax]> = new Map();
+    for (const pathdata of userACPath.acPath ?? []) {
+        if (!pathdata.attributeCertificate) {
+            continue;
+        }
+        const acert = pathdata.attributeCertificate;
+        const adesc = isAttributeDescriptorCertFor(ctx, acert);
+        if (!adesc) {
+            continue;
+        }
+        const key = adesc.identifier.toString();
+        const existing = attribute_descriptor_certs.get(key);
+        if (existing) {
+            // Duplicate attribute descriptor certificates presented.
+            if (
+                !existing[0].originalDER
+                || !acert.originalDER
+                || !Buffer.compare(existing[0].originalDER, acert.originalDER)
+            ) {
+                // We only return an error if the certificates differ bytewise.
+                return VAC_ATTR_DESC_CONFLICT;
+            }
+        }
+        attribute_descriptor_certs.set(key, [acert, adesc]);
+        if (expected_soa && !isSameIssuer(expected_soa, acert.toBeSigned.issuer, namingMatcher)) {
+            /* The specification does not say that all ADCs have to come from
+            the same SOA, but I w */
+            return VAC_ATTR_DESC_CONFLICT;
+        }
+        expected_soa = acert.toBeSigned.issuer;
+    }
 
     while (current_holder_pki_path && current_ac) {
         if (iteration > 10) { // TODO: Make this configurable.
@@ -974,7 +1322,6 @@ async function verifyAttrCertPath2 (
         // TODO: For all that succeed, look up the privilege policy to obtain an ordering matcher and check that all assigned values are allowed.
         // TODO: Define built-in privilege policies for comparing clearance values.
         // TODO: Make it configurable which privilege policies compare clearance values like the default.
-        // TODO: What about conflicting ADCs?
 
         // TODO: Fetch all role specification certs.
         // TODO: Separately verify each role specification certificate delegation path.
@@ -1007,7 +1354,7 @@ SOA, through the IndirectIssuer extension in its attribute certificate"
         3. For the AC issuer, iteratively, take the intersection with all
            previously effective policies: these are the policies that every
            attribute certificate encountered thus far complies with.
-        4. If an accceptableCertPolicies extension has a policy that is not
+        4. If an acceptableCertPolicies extension has a policy that is not
            in this intersection, it means that there was at least one path link
            that was not compliant with that policy.
 
@@ -1265,14 +1612,44 @@ SOA, through the IndirectIssuer extension in its attribute certificate"
             break; // No further verification is needed.
         }
 
+        // #region verify_attribute_delegation
+        // Pre-index the delegated attributes.
+        const delegating_attr_map = new Map<IndexableOID, Attribute>();
+        for (const a of issuer_ac?.toBeSigned.attributes ?? []) {
+            const key = a.type_.toString();
+            if (delegating_attr_map.has(key)) {
+                return VAC_DUPLICATE_ATTR;
+            }
+            delegating_attr_map.set(key, a);
+        }
+        for (const attr of current_ac.toBeSigned.attributes) {
+            const key = attr.type_.toString();
+            const delegating_attr = delegating_attr_map.get(key);
+            if (!delegating_attr) {
+                // This attribute was entirely absent from the delegating AA.
+                return VAC_ATTR_DELEGATION_VIOLATION;
+            }
+            const [ , adesc ] = attribute_descriptor_certs.get(key) ?? [];
+            const privpol = adesc?.dominationRule.privilegePolicy.toString();
+            const privilegeComparator: PrivilegeComparator = ctx
+                .config
+                .privilegePoliciesToComparators
+                .get(privpol ?? "")?.(attr.type_)
+                ?? defaultPrivilegeComparator;
+            if (!isAttributeDelegationAllowed(attr, delegating_attr, privilegeComparator)) {
+                return VAC_AAA_VIOLATION;
+            }
+        }
+        // #endregion verify_attribute_delegation
+
         current_ac = issuer_ac;
         issuer_ac && ordered_path.push([ issuer_ac, issuer_pki_path ]);
         current_holder_pki_path = issuer_pki_path;
         iteration++;
     }
 
+    // TODO: At the end, verify that the SOA is the expected_soa
     // TODO: Check that the SOA is trusted.
-    // TODO: Verify domination via attributeDescriptor
 
     /* I think this check only needs to be done here. I think it is perfectly
     valid if we just check that all AAA extension values present in AA ACs
