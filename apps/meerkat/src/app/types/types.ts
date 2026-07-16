@@ -1618,6 +1618,12 @@ interface Configuration {
      */
     requireMutualAuth: boolean;
 
+    /**
+     * A mapping of privilege policy object identifiers to functions that can
+     * be used to compare privilege attribute values under that policy.
+     */
+    privilegePoliciesToComparators: Map<IndexableOID, PrivilegeComparatorLookup>;
+
     xr: CrossReferencesOptions;
 
     authn: AuthenticationConfiguration;
@@ -3892,3 +3898,38 @@ export const OB_AUTO_ACCEPT_MYISSUER: OBAutoAcceptSetting = 3;
  * @constant
  */
 export const OB_AUTO_ACCEPT_MYROOTCA: OBAutoAcceptSetting = 4;
+
+/**
+ * A function used for comparing privilege attribute values within the
+ * Privilege Management Infrastructure (PMI). Functions of this type MUST
+ * return a number so that, if used as a predicate in `Array.sort()`, the
+ * values would be sorted in ascending privilege order.
+ * 
+ * However, if the attribute type is unrecognized, or the privilege policy
+ * does not define any comparison logic for values, `undefined` may be
+ * returned. `null` may be returned if the attribute type is recognized and
+ * its comparison procedures are defined, but the values cannot be compared
+ * for some other reason (excluding errors from decoding / malformed values).
+ * 
+ * Errors when decoding values, or resulting from malformed values, MUST NOT
+ * be caught by this function; they MUST propagate out of this function so the
+ * caller can handle it. Generally speaking, a malformed value, if used in PKI
+ * or PMI, should invalidate the entire verification.
+ */
+export
+type PrivilegeComparator = (attr_type: AttributeType, a: ASN1Element, b: ASN1Element) => number | undefined | null;
+
+/**
+ * A function that looks up a privilege comparator for a given attribute type.
+ * @description
+ *
+ * A function that looks up a privilege comparator for a given attribute type.
+ * There is no option to return `undefined` or `null` from this function: if
+ * the handling of an attribute type is not defined, `compareElements` or some
+ * similar function should be returned so that attributes unrecognized by the
+ * privilege policy can still be 
+ *
+ * @type
+ */
+export
+type PrivilegeComparatorLookup = (attr_type: AttributeType) => PrivilegeComparator;
