@@ -588,6 +588,7 @@ function attributeCertificateWithinNameConstraints(
     return true;
 }
 
+// TODO: Move to @wildboar/x500 or perhaps @wildboar/pki-stub?
 function isAttributeDescriptorCertFor(ctx: Context, ac: AttributeCertificate): typeof attributeDescriptor["&ExtnType"] | null {
     if (ac.toBeSigned.attributes.length > 0) {
         return null;
@@ -695,6 +696,7 @@ function compareContextLists(
     return true; // No differences were found.
 }
 
+// TODO: Move to @wildboar/x500 or perhaps @wildboar/pki-stub?
 function hashAttributeValue(value: ASN1Element): string {
     const buf = value.toBytes();
     return (Buffer.isBuffer(buf)
@@ -706,6 +708,7 @@ function hashAttributeValue(value: ASN1Element): string {
         )).toString("latin1");
 }
 
+// TODO: Move to @wildboar/x500 or perhaps @wildboar/pki-stub?
 function isAttributeDelegationAllowedDumb(
     delegated_attr: Attribute,
     delegating_attr: Attribute,
@@ -747,6 +750,7 @@ function isAttributeDelegationAllowedDumb(
     return true;
 }
 
+// TODO: Move to @wildboar/x500 or perhaps @wildboar/pki-stub?
 /**
  * @description
  * 
@@ -838,7 +842,12 @@ function isAttributeDelegationAllowed(
     return false;
 }
 
-function isSameIssuer(a: AttCertIssuer, b: AttCertIssuer, namingMatcher: (attributeType: AttributeType) => EqualityMatcher | undefined): boolean {
+// TODO: Move to @wildboar/x500 or perhaps @wildboar/pki-stub?
+function isSameIssuer(
+    a: AttCertIssuer,
+    b: AttCertIssuer,
+    namingMatcher: (attributeType: AttributeType) => EqualityMatcher | undefined,
+): boolean {
     let compared_something = false;
     if (a.issuerName && b.issuerName) {
         if (!compareGeneralNames(a.issuerName, b.issuerName, namingMatcher)) {
@@ -887,6 +896,13 @@ function isSameIssuer(a: AttCertIssuer, b: AttCertIssuer, namingMatcher: (attrib
     return compared_something;
 }
 
+// TODO: Assume that elements of acPath are ordered just like CertificationPath.
+// It was my opinion that this was the correct interpretation and LLMs independently
+// arrived at the same conclusion. This is virtuous strictness. And since my
+// implementation is probably the only one that will ever exist, I will be strict.
+// This code is already convoluted and slow enough. Nefarious users should not be
+// able to submit mis-ordered delegation paths and make this code do all the work
+// in re-ordering the certs correctly.
 export
 async function verifyAttrCertPath2 (
     ctx: MeerkatContext,
@@ -924,39 +940,6 @@ async function verifyAttrCertPath2 (
     let ee_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
     let current_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
     let expected_soa: AttCertIssuer | undefined;
-
-    // TODO: Actually, it's not clear to me that the AttributeCertificationPath may even contain ADCs.
-    const attribute_descriptor_certs: Map<IndexableOID, [AttributeCertificate, AttributeDescriptorSyntax]> = new Map();
-    for (const pathdata of userACPath.acPath ?? []) {
-        if (!pathdata.attributeCertificate) {
-            continue;
-        }
-        const acert = pathdata.attributeCertificate;
-        const adesc = isAttributeDescriptorCertFor(ctx, acert);
-        if (!adesc) {
-            continue;
-        }
-        const key = adesc.identifier.toString();
-        const existing = attribute_descriptor_certs.get(key);
-        if (existing) {
-            // Duplicate attribute descriptor certificates presented.
-            if (
-                !existing[0].originalDER
-                || !acert.originalDER
-                || !Buffer.compare(existing[0].originalDER, acert.originalDER)
-            ) {
-                // We only return an error if the certificates differ bytewise.
-                return VAC_ATTR_DESC_CONFLICT;
-            }
-        }
-        attribute_descriptor_certs.set(key, [acert, adesc]);
-        if (expected_soa && !isSameIssuer(expected_soa, acert.toBeSigned.issuer, namingMatcher)) {
-            /* The specification does not say that all ADCs have to come from
-            the same SOA, but I w */
-            return VAC_ATTR_DESC_CONFLICT;
-        }
-        expected_soa = acert.toBeSigned.issuer;
-    }
 
     while (current_holder_pki_path && current_ac) {
         if (iteration > 10) { // TODO: Make this configurable.
@@ -1629,12 +1612,11 @@ SOA, through the IndirectIssuer extension in its attribute certificate"
                 // This attribute was entirely absent from the delegating AA.
                 return VAC_ATTR_DELEGATION_VIOLATION;
             }
-            const [ , adesc ] = attribute_descriptor_certs.get(key) ?? [];
-            const privpol = adesc?.dominationRule.privilegePolicy.toString();
+            // TODO: Make the privilege policy customizable.
             const privilegeComparator: PrivilegeComparator = ctx
                 .config
                 .privilegePoliciesToComparators
-                .get(privpol ?? "")?.(attr.type_)
+                .get("1.3.6.1.4.1.56490.403.23")?.(attr.type_)
                 ?? defaultPrivilegeComparator;
             if (!isAttributeDelegationAllowed(attr, delegating_attr, privilegeComparator)) {
                 return VAC_AAA_VIOLATION;
