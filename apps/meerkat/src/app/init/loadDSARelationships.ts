@@ -109,7 +109,7 @@ async function loadDSARelationships (ctx: Context): Promise<void> {
             continue;
         }
         const aeTitleDN = ap.ae_title
-            .map((rdn: Record<string, string>) => rdnFromJson(rdn));
+            .map((rdn) => rdnFromJson(rdn as Record<string, string>));
         const normalizedDN = normalizeDN(ctx, _encode_DistinguishedName(aeTitleDN, DER))
             ?? stringifyDN(ctx, aeTitleDN);
         ctx.otherDSAs.byStringDN.set(normalizedDN, {

@@ -313,7 +313,7 @@ async function updateHOBSubordinateDSA (
                         assn.peer_ae_title?.rdnSequence
                             ?? targetSystem.ae_title.rdnSequence,
                     );
-                } catch (e) {
+                } catch (e: any) {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }

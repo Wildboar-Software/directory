@@ -338,7 +338,7 @@ async function handleRequestAndErrors (
                 bytesWritten: assn.socket.bytesWritten,
             },
         });
-    } catch (e) {
+    } catch (e: any) {
         ctx.telemetry.trackRequest({
             name: Object.keys(message.protocolOp)[0],
             url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
@@ -705,7 +705,7 @@ class LDAPAssociation extends ClientAssociation {
             let bytesRead = 0;
             try {
                 bytesRead = el.fromBytes(this.buffer);
-            } catch (e) {
+            } catch (e: any) {
                 if (e instanceof ASN1TruncationError) {
                     return;
                 }
@@ -725,7 +725,7 @@ class LDAPAssociation extends ClientAssociation {
             let message!: LDAPMessage;
             try {
                 message = _decode_LDAPMessage(el);
-            } catch (e) {
+            } catch (e: any) {
                 if (e instanceof ASN1TruncationError) { // This can happen here with indefinite-length messages.
                     return;
                 }

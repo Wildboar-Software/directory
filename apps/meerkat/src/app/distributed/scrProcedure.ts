@@ -240,7 +240,7 @@ async function scrProcedure (
                     // Whether signed or not, we still just add the search result.
                     // This preserves the performer.
                     searchState.resultSets.push(searchResult);
-                } catch (e) {
+                } catch (e: any) {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }

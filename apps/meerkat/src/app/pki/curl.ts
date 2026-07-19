@@ -167,7 +167,7 @@ function curlLDAP (
                 const el = new BERElement();
                 try {
                     bytesRead += el.fromBytes(receivedData);
-                } catch (e) {
+                } catch (e: any) {
                     if (e instanceof ASN1TruncationError) {
                         break;
                     } else {
@@ -254,7 +254,7 @@ async function curlFTP (
         }
         const ret = await readFile(localFilePath);
         return ret;
-    } catch (e) {
+    } catch (e: any) {
         return null;
     } finally {
         client.close();

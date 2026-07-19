@@ -81,7 +81,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
     signErrors: boolean = false,
     timeLimit: number | Date = 30_000,
 ): Promise<ClientType | null> {
-    const logInfo = {
+    const logInfo: Record<string, any> = {
         protocol_id: protocol_id.toString(),
         association_id: assn?.id,
         op: op?.invokeId.toString(),
@@ -508,7 +508,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                         rose.write_abort(AbortReason.authentication_required);
                         return null;
                     }
-                } catch (e) {
+                } catch (e: any) {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }

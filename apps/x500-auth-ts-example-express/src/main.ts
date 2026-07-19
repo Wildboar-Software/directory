@@ -168,6 +168,18 @@ passport.deserializeUser(function(id, cb) {
     });
 });
 
+
+// declare global {
+//   namespace Express {
+//     interface Request {
+//         user?: {
+//             uid: string,
+//             phone?: string;
+//         };
+//     }
+//   }
+// }
+
 export
 async function main () {
     const app = express();
@@ -304,7 +316,7 @@ async function main () {
     app.post("/login",
         passport.authenticate('local', { failureRedirect: '/failure' }),
         (req, res) => {
-            res.redirect(`/success?uid=${req.user?.["uid"]}&phone=${req.user?.["phone"]}`);
+            res.redirect(`/success?uid=${(req.user as any)?.["uid"]}&phone=${(req.user as any)?.["phone"]}`);
         });
 
     const port = 3001;

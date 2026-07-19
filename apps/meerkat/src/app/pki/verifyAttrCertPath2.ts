@@ -1155,7 +1155,7 @@ async function verifyAttrCertPath2 (
                         return VAC_INVALID_CERT_POLICY;
                     }
                 }
-            } catch (e) {
+            } catch (e: any) {
                 // TODO: Log
                 return VAC_INTERNAL_ERROR;
             }
@@ -1347,7 +1347,7 @@ async function verifyAttrCertPath2 (
                     }
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.debug(util.inspect(e));
             }

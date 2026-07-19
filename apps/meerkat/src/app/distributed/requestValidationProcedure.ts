@@ -1004,7 +1004,7 @@ async function requestValidationProcedure (
                 signErrors,
             );
             authLevelSigned = true;
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }

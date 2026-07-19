@@ -34,7 +34,7 @@
                 "libs/x500-functional-tests/src/index.ts"
             ]
         },
-        "strict": false,
+        "strict": true,
         "noUncheckedSideEffectImports": true,
         "esModuleInterop": false,
         "ignoreDeprecations": "6.0"

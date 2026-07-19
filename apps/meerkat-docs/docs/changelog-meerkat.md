@@ -161,6 +161,7 @@ details of this algorith are documented [here](./distributed.md#local-scope).
     - I think this patent expires in 2029, so it might be possible to use
       Metaphone 3 in a few years.
 - TODO: What is `7af8973bcaa39a78b27ef07328206a962ce571d5`?
+- TODO: Re-enable TypeScript `"strict": true`
 
 ### Other Projects
 

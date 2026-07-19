@@ -128,7 +128,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                     Array.isArray(n.ae_title)
                     && decoded.some((mosap) => compareRDNSequence(
                         mosap.ae_title.rdnSequence,
-                        (n.ae_title as Prisma.JsonArray).map(rdnFromJson),
+                        (n.ae_title as Prisma.JsonArray).map((rdn) => rdnFromJson(rdn as Record<string, string>)),
                         getNamingMatcherGetter(ctx),
                     ))
                 ));

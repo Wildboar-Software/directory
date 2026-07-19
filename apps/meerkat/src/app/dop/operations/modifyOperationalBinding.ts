@@ -317,7 +317,7 @@ async function modifyOperationalBinding (
                 return false;
             }
             const authorized_ae_title: DistinguishedName | undefined = Array.isArray(ob.access_point.ae_title)
-                ? ob.access_point.ae_title.map((rdn: Record<string, string>) => rdnFromJson(rdn))
+                ? ob.access_point.ae_title.map((rdn) => rdnFromJson(rdn as Record<string, string>))
                 : undefined;
             if (!authorized_ae_title) {
                 ctx.log.warn(ctx.i18n.t("log:ap_missing_ae_title", { id: ob.access_point.id }));

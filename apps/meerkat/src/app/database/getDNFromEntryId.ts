@@ -24,7 +24,7 @@ async function getDNFromEntryId (ctx: Context, id: number): Promise<Distinguishe
     const dn: DistinguishedName = [];
     let currentId: number | undefined | null = id;
     while (typeof currentId === "number") {
-        const current = await ctx.db.entry.findUnique({
+        const current: { immediate_superior_id: number | null } | null = await ctx.db.entry.findUnique({
             where: {
                 id: currentId,
             },

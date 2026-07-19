@@ -3,7 +3,8 @@ import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecur
 import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
 import {
-    SignedSecurityLabel, _decode_SignedSecurityLabel,
+    SignedSecurityLabel,
+    _decode_SignedSecurityLabel,
 } from "@wildboar/x500/EnhancedSecurity";
 import {
     Context as X500Context,
@@ -104,7 +105,7 @@ async function get_security_labels_for_rdn (
                 value: atav.value,
                 contexts,
             }, labels ]);
-            delete atavsByType[type_str];
+            atavsByType.delete(type_str);
         }
     }
     return ret;

@@ -395,9 +395,7 @@ async function administerPassword (
                 },
             }))
                 .map((dbv) => Number(attributeValueFromDB(dbv).integer))
-                // Do not reduce with initialValue = 0! Use undefined, then default to a large number.
-                .reduce((acc, curr) => Math.min(Number(acc), Number(curr)), undefined)
-                ?? 10_000_000;
+                .reduce((acc, curr) => Math.min(Number(acc), Number(curr)), 10_000_000);
             const oldestPasswordTimeInHistory = Number.isSafeInteger(minPasswordHistorySlots)
                 ? (await ctx.db.passwordHistory.findMany({
                     where: {

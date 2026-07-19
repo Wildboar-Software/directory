@@ -169,14 +169,11 @@ async function setEntryPassword (
     ]);
     const expiryAge: number | undefined = expiryAgeValues
         .map((dbv) => Number(attributeValueFromDB(dbv).integer))
-        // Do not reduce with initialValue = 0! Use undefined, then default to 0.
-        .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
+        .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), 100_000_000);
 
     const maxAge: number | undefined = maxAgeValues
         .map((dbv) => Number(attributeValueFromDB(dbv).integer))
-        // Do not reduce with initialValue = 0! Use undefined, then default to 0.
-        .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
-
+        .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), 100_000_000);
 
     // const pwdMaxAge: number = Number(relevantSubentries
     //     .map((sub) => sub.dse.subentry?.pwdMaxAge ?? Infinity)

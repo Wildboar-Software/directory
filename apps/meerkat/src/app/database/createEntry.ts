@@ -197,7 +197,7 @@ async function createDse (
             admPoint: isAdmPoint
                 ? {
                     administrativeRole: new Set(adminRoles.map((ar) => ar.toString())),
-                    accessControlScheme: groupedAttrs[ID_ACS]?.[0]?.values[0]?.objectIdentifier,
+                    accessControlScheme: groupedAttrs.get(ID_ACS)?.[0]?.values[0]?.objectIdentifier,
                 }
                 : undefined,
             alias: isAlias && aliasedEntryValue

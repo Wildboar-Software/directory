@@ -210,7 +210,7 @@ async function getRemoteSecurityInfo(
             context: ctx.config.log.boundDN ? "with_dn" : undefined,
         }));
         return [ clearances, unique_id ];
-    } catch (e) {
+    } catch (e: any) {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         }
@@ -344,7 +344,7 @@ async function remotePasswordCheckingProcedure(
                 false,
             );
         }
-    } catch (e) {
+    } catch (e: any) {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         }

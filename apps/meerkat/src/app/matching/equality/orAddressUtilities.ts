@@ -1255,7 +1255,7 @@ function recursivelyNormalize <T> (value: T): T {
             return value;
         }
         for (const key of Object.keys(value)) {
-            value[key] = recursivelyNormalize(value[key]);
+            value[key as keyof T] = recursivelyNormalize(value[key as keyof T]);
         }
         return value;
     } else {

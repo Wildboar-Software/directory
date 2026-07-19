@@ -1321,7 +1321,7 @@ async function modifyDN (
             await updateSuperiorDSA(ctx, targetDN, target, state.chainingArguments.aliasDereferenced ?? false, {
                 timeLimitInMilliseconds: timeRemainingInMilliseconds,
             });
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
@@ -1969,7 +1969,7 @@ async function modifyDN (
     }
     try {
         await renameEntry(ctx, target, superior, newRDN, newGoverningStructureRule);
-    } catch (e) {
+    } catch (e: any) {
         // If the update failed, reload the entry to negate any in-memory
         // changes that took place. This same code exists in modifyEntry.
         const dbe = await ctx.db.entry.findUnique({
@@ -2022,7 +2022,7 @@ async function modifyDN (
             };
             try {
                 await removeValues(ctx, target, [valueToDelete], assn.boundNameAndUID?.dn ?? []);
-            } catch (e) {
+            } catch (e: any) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
                     ctx.log.error(util.inspect(e));
                 }

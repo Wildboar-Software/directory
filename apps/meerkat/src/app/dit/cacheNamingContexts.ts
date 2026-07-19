@@ -29,7 +29,7 @@ async function cacheNamingContexts (ctx: Context): Promise<void> {
         });
         ctx.dsa.namingContexts = await Promise.all(context_prefixes
             .map(async ({ id }) => getDNFromEntryId(ctx, id)));
-    } catch (e) {
+    } catch (e: any) {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         }

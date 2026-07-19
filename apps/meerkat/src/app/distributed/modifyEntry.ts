@@ -3589,7 +3589,7 @@ async function modifyEntry (
     checkTimeLimit();
     try {
         await ctx.db.$transaction(pendingUpdates);
-    } catch (e) {
+    } catch (e: any) {
         // If the update failed, reload the entry to negate any in-memory
         // changes that took place. This same code exists in modifyDN.
         const dbe = await ctx.db.entry.findUnique({

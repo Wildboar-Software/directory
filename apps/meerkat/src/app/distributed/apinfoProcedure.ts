@@ -493,7 +493,7 @@ async function apinfoProcedure (
                                 signErrors,
                                 "result",
                             );
-                        } catch (e) {
+                        } catch (e: any) {
                             if (process.env.MEERKAT_LOG_JSON !== "1") {
                                 ctx.log.error(util.inspect(e));
                             }
@@ -674,8 +674,8 @@ async function apinfoProcedure (
                     }
                     let referralParam: OPTIONALLY_PROTECTED<DsaReferralData>;
                     try {
-                        referralParam = dsaReferral.decoderFor["&ResultType"]!(response.error.parameter);
-                    } catch (e) {
+                        referralParam = dsaReferral.decoderFor["&ParameterType"]!(response.error.parameter);
+                    } catch (e: any) {
                         const aet = stringifyDN(ctx, ap.ae_title.rdnSequence);
                         ctx.log.warn(ctx.i18n.t("log:referral_parameter_malformed", {
                             ...logInfo,
@@ -759,7 +759,7 @@ async function apinfoProcedure (
                                 assert(HOST_DEPENDENT_CERT_PATH_ERRORS.includes(sigVerifyResult.returnCode));
                                 return response;
                             }
-                        } catch (e) {
+                        } catch (e: any) {
                             if (process.env.MEERKAT_LOG_JSON !== "1") {
                                 ctx.log.error(util.inspect(e));
                             }
@@ -831,7 +831,7 @@ async function apinfoProcedure (
                 }
                 continue; // Always try another.
             }
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }

@@ -1,4 +1,4 @@
-import type { Buffer } from "node:buffer";
+import { Buffer } from "node:buffer";
 import type { Context } from "../types/index.js";
 import {
     AccessPoint,
@@ -123,17 +123,17 @@ async function saveAccessPoint (
             active: true,
             NSAP: {
                 createMany: {
-                    data: ap.address.nAddresses.map((nsap: Uint8Array<ArrayBuffer>) => {
+                    data: ap.address.nAddresses.map((nsap) => {
                         const uri = naddrToURI(nsap);
                         if (!uri) {
                             return {
-                                bytes: nsap,
+                                bytes: Buffer.from(nsap),
                             };
                         }
                         const url = new URL(uri);
                         return {
                             url: url.toString(),
-                            bytes: nsap,
+                            bytes: Buffer.from(nsap),
                             hostname: url.hostname,
                         };
                     }),

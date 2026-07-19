@@ -403,7 +403,7 @@ function attachUnboundEventListenersToIDMConnection (
                     idmFramesReceived: idm.getFramesReceived(),
                 },
             });
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
@@ -665,7 +665,7 @@ function handleIDM (
                 rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
             });
             attachUnboundEventListenersToIDMConnection(ctx, c, source, idm, startTimes);
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
@@ -804,7 +804,7 @@ function handleLDAP (
         try {
             const conn = new LDAPAssociation(ctx, c);
             ctx.associations.set(c, conn);
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
@@ -905,7 +905,7 @@ function attachUnboundEventListenersToITOTConnection (
                     bytesWritten: itot.network.socket.bytesWritten,
                 },
             });
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
@@ -1084,17 +1084,17 @@ function attachUnboundEventListenersToITOTConnection (
                 },
             );
             attachUnboundEventListenersToITOTConnection(ctx, c, source, itot, startTimes);
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
-                e: e.message,
+                e: (e as any)?.message,
                 host: c.remoteAddress,
                 source,
             }), {
                 ...extraLogData,
-                stack: e?.stack,
+                stack: (e as any)?.stack,
             });
             c.destroy();
             startTimes.delete(c);

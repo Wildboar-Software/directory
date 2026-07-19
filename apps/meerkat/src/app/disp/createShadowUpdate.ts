@@ -463,7 +463,7 @@ async function _updateShadowConsumer (
                 data: updateOutcome.other,
             }));
         }
-    } catch (e) {
+    } catch (e: any) {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         }
@@ -483,7 +483,7 @@ async function _updateShadowConsumer (
     } finally {
         try {
             await disp_client?.unbind({ disconnectSocket: true }); // INTENTIONAL_NO_AWAIT
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
@@ -528,7 +528,7 @@ async function updateShadowConsumer (
     ctx.updatingShadow.add(ob_db_id);
     try {
         await _updateShadowConsumer(ctx, ob_db_id, forceTotalRefresh);
-    } catch (e) {
+    } catch (e: any) {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         }

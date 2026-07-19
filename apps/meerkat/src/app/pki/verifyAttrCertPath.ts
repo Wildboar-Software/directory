@@ -1163,7 +1163,7 @@ async function verifyAttrCert (
             if (!in_group) {
                 return VAC_NOT_GROUP_MEMBER;
             }
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
@@ -1316,7 +1316,7 @@ async function verifyAttrCert (
     }
 
     if (!no_rev_avail && issuerName) {
-        const aiaExt = extsGroupedByOID[authorityInfoAccess["&id"]!.toString()]?.[0];
+        const aiaExt = extsGroupedByOID.get(authorityInfoAccess["&id"]!.toString())?.[0];
         if (aiaExt) {
             const ocspCheckiness = ctx.config.signing.bindOverrides?.ocspCheckiness
                 ?? ctx.config.signing.ocspCheckiness;
@@ -1334,7 +1334,7 @@ async function verifyAttrCert (
             }
         }
 
-        const crldpExt = extsGroupedByOID[cRLDistributionPoints["&id"]!.toString()]?.[0];
+        const crldpExt = extsGroupedByOID.get(cRLDistributionPoints["&id"]!.toString())?.[0];
         if (crldpExt && crldpExt.critical) { // TODO: Make config options: ignore_critical or always_check.
             const readDispatcher = getReadDispatcher(ctx);
             const crlEl = new DERElement();

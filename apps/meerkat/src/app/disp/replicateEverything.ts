@@ -203,7 +203,7 @@ async function establishReplicateEverythingAgreement(
                 is_the_replicate_everything_ob: true,
             },
         });
-    } catch (e) {
+    } catch (e: any) {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         }
@@ -218,7 +218,7 @@ async function establishReplicateEverythingAgreement(
                     terminated_time: now,
                 },
             });
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }
@@ -275,7 +275,7 @@ async function establishReplicateEverythingAgreement(
                     "error",
                     yourAccessPoint.ae_title.rdnSequence,
                 );
-            } catch (e) {
+            } catch (e: any) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
                     ctx.log.error(util.inspect(e));
                 }
@@ -515,7 +515,7 @@ async function modifyReplicateEverythingAgreement(
                     assn.peer_ae_title?.rdnSequence
                         ?? yourAccessPoint.ae_title.rdnSequence,
                 );
-            } catch (e) {
+            } catch (e: any) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
                     ctx.log.error(util.inspect(e));
                 }

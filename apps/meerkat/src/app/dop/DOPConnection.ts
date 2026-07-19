@@ -428,7 +428,7 @@ async function handleRequestAndErrors (
                 // idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
-    } catch (e) {
+    } catch (e: any) {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         }
@@ -653,7 +653,7 @@ class DOPAssociation extends ClientAssociation {
         let outcome!: BindReturn;
         try {
             outcome = await doBind(ctx, this.socket, arg_, signErrors);
-        } catch (e) {
+        } catch (e: any) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.error(util.inspect(e));
             }

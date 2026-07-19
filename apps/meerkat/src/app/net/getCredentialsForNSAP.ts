@@ -16,6 +16,8 @@ import {
     AlgorithmIdentifier,
 } from "@wildboar/x500/AuthenticationFramework";
 import { BERElement, ObjectIdentifier, unpackBits } from "@wildboar/asn1";
+import { JsonArray } from "../generated/internal/prismaNamespace.js";
+import { JsonObject, JsonValue } from "@prisma/client/runtime/client";
 
 /**
  * @summary Get credentials to try when establishing a connection to a remote DSA
@@ -54,7 +56,8 @@ async function getCredentialsForNSAP (
             const ret: DSACredentials[] = [];
             let name: DistinguishedName | undefined;
             if (c.simple_name && Array.isArray(c.simple_name)) {
-                name = c.simple_name.map(rdnFromJson);
+                name = c.simple_name.map((v) => rdnFromJson(v as Record<string, string>));
+                // name = c.simple_name.map((v) => rdnFromJson(v as Record<string, string>));
                 if (
                     c.simple_password_hash_algorithm_oid
                     && c.simple_password_hash_value

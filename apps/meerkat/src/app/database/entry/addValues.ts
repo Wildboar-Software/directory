@@ -87,7 +87,7 @@ async function validateValues(
         if (attrSpec?.validator) {
             try {
                 attrSpec.validator(value.value);
-            } catch (e) {
+            } catch (e: any) {
                 throw new AttributeError(
                     ctx.i18n.t("err:invalid_attribute_syntax", {
                         type: value.type.toString(),
@@ -256,7 +256,7 @@ async function validateValues(
                 for (const cvalue of context.contextValues) {
                     try {
                         contextSpec.validator(cvalue);
-                    } catch (e) {
+                    } catch (e: any) {
                         throw new AttributeError(
                             ctx.i18n.t("err:invalid_context_syntax", {
                                 type: CONTEXT_TYPE,

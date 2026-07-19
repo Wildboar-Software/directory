@@ -1371,7 +1371,7 @@ async function addEntry (
                 sub2sup,
                 signErrors,
             );
-        } catch (e) {
+        } catch (e: any) {
             // TODO: Terminate the OB
             ctx.db.operationalBinding.update({
                 where: {

@@ -132,12 +132,12 @@ async function dseFromDatabaseEntry (
         governingStructureRule: dbe.governingStructureRule ?? undefined,
         creatorsName: {
             rdnSequence: Array.isArray(dbe.creatorsName)
-                ? dbe.creatorsName.map((rdn: Record<string, string>) => rdnFromJson(rdn))
+                ? dbe.creatorsName.map((rdn) => rdnFromJson(rdn as Record<string, string>))
                 : [],
         },
         modifiersName: {
             rdnSequence: Array.isArray(dbe.modifiersName)
-                ? dbe.modifiersName.map((rdn: Record<string, string>) => rdnFromJson(rdn))
+                ? dbe.modifiersName.map((rdn) => rdnFromJson(rdn as Record<string, string>))
                 : [],
         },
         createTimestamp: dbe.createTimestamp ?? undefined,
@@ -253,7 +253,7 @@ async function dseFromDatabaseEntry (
     if (ret.objectClass.has(ALIAS) || ret.alias) {
         ret.alias = ret.alias ?? {
             aliasedEntryName: Array.isArray(dbe.aliased_entry_name)
-                ? dbe.aliased_entry_name?.map((rdn: Record<string, string>) => rdnFromJson(rdn))
+                ? dbe.aliased_entry_name?.map((rdn) => rdnFromJson(rdn as Record<string, string>))
                 : undefined,
         };
     }
@@ -438,9 +438,9 @@ async function dseFromDatabaseEntry (
         ret.hierarchy = {
             level: dbe.hierarchyLevel ?? 0,
             parent: Array.isArray(dbe.hierarchyParentDN)
-                ? dbe.hierarchyParentDN.map(rdnFromJson)
+                ? dbe.hierarchyParentDN.map((rdn) => rdnFromJson(rdn as Record<string, string>))
                 : undefined,
-            top: dbe.hierarchyTopDN.map(rdnFromJson),
+            top: dbe.hierarchyTopDN.map((rdn) => rdnFromJson(rdn as Record<string, string>)),
             path: dbe.hierarchyPath,
             parent_id: dbe.hierarchyParent_id ?? undefined,
             top_id: dbe.hierarchyTop_id,

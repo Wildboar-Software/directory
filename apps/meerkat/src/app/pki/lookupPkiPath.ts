@@ -273,7 +273,7 @@ async function lookupPkiPathViaX500 (
         const dspData = getOptionallyProtectedValue(readOutcome.result);
         const dapResult = _decode_ReadResult(dspData.result);
         dapData = getOptionallyProtectedValue(dapResult);
-    } catch (e) {
+    } catch (e: any) {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.debug(util.inspect(e));
         }
@@ -365,7 +365,7 @@ async function lookupPkiPathViaX500 (
                     return pkiPath.decoderFor["&Type"]!(value);
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
             ctx.log.trace(util.inspect(e));
             continue;
         }

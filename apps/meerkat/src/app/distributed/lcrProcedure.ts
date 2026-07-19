@@ -227,7 +227,7 @@ async function lcrProcedure (
                     // Whether signed or not, we still just add the list result.
                     // This preserves the performer.
                     listState.resultSets.push(listResult);
-                } catch (e) {
+                } catch (e: any) {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }

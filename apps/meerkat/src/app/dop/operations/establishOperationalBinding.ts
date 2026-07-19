@@ -161,7 +161,13 @@ import { becomeShadowSupplier } from "../establish/becomeShadowSupplier.js";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate.js";
 import { AttributeUsage_dSAOperation } from "@wildboar/x500/InformationFramework";
 import { addYears, subSeconds } from "date-fns";
-import { ModificationParameter, _encode_ModificationParameter } from "@wildboar/x500/DirectoryShadowAbstractService";
+import {
+    ModificationParameter,
+    _encode_ModificationParameter,
+    Knowledge_knowledgeType_both,
+    Knowledge_knowledgeType_master,
+    Knowledge_knowledgeType_shadow,
+} from "@wildboar/x500/DirectoryShadowAbstractService";
 import { AreaSpecification } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { id_op_modifyOperationalBinding } from "@wildboar/x500/CommonProtocolSpecification";
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates.js";
@@ -1025,9 +1031,9 @@ async function relayedEstablishOperationalBinding (
                         knowledge_type: (agr.shadowSubject.knowledge === undefined)
                             ? undefined
                             : ({
-                                Knowledge_knowledgeType_both: ShadowedKnowledgeType.BOTH,
-                                Knowledge_knowledgeType_master: ShadowedKnowledgeType.MASTER,
-                                Knowledge_knowledgeType_shadow: ShadowedKnowledgeType.SHADOW,
+                                [Knowledge_knowledgeType_both]: ShadowedKnowledgeType.BOTH,
+                                [Knowledge_knowledgeType_master]: ShadowedKnowledgeType.MASTER,
+                                [Knowledge_knowledgeType_shadow]: ShadowedKnowledgeType.SHADOW,
                             })[agr.shadowSubject.knowledge.knowledgeType],
                         subordinates: agr.shadowSubject.subordinates,
                         supply_contexts: (agr.shadowSubject.supplyContexts === undefined)
@@ -1752,7 +1758,7 @@ async function establishOperationalBinding (
                 );
                 structuralObjectClass = soc;
                 governingStructureRule = gsr;
-            } catch (e) {
+            } catch (e: any) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
                     ctx.log.error(util.inspect(e));
                 }
@@ -1918,7 +1924,7 @@ async function establishOperationalBinding (
                         undefined,
                     ),
                 };
-            } catch (e) {
+            } catch (e: any) {
                 ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
                     uuid: created.uuid,
                     e,
@@ -2126,7 +2132,7 @@ async function establishOperationalBinding (
                         undefined,
                     ),
                 };
-            } catch (e) {
+            } catch (e: any) {
                 ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
                     uuid: created.uuid,
                     e,
@@ -2367,7 +2373,7 @@ async function establishOperationalBinding (
                         undefined,
                     ),
                 };
-            } catch (e) {
+            } catch (e: any) {
                 ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
                     uuid: created.uuid,
                     e,
@@ -2577,7 +2583,7 @@ async function establishOperationalBinding (
                         undefined,
                     ),
                 };
-            } catch (e) {
+            } catch (e: any) {
                 ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
                     uuid: created.uuid,
                     e,
@@ -2763,9 +2769,9 @@ async function establishOperationalBinding (
                 knowledge_type: (agreement.shadowSubject.knowledge === undefined)
                     ? undefined
                     : ({
-                        Knowledge_knowledgeType_both: ShadowedKnowledgeType.BOTH,
-                        Knowledge_knowledgeType_master: ShadowedKnowledgeType.MASTER,
-                        Knowledge_knowledgeType_shadow: ShadowedKnowledgeType.SHADOW,
+                        [Knowledge_knowledgeType_both]: ShadowedKnowledgeType.BOTH,
+                        [Knowledge_knowledgeType_master]: ShadowedKnowledgeType.MASTER,
+                        [Knowledge_knowledgeType_shadow]: ShadowedKnowledgeType.SHADOW,
                     })[agreement.shadowSubject.knowledge.knowledgeType],
                 subordinates: agreement.shadowSubject.subordinates,
                 supply_contexts: (agreement.shadowSubject.supplyContexts === undefined)
@@ -2938,7 +2944,7 @@ async function establishOperationalBinding (
                         undefined,
                     ),
                 };
-            } catch (e) {
+            } catch (e: any) {
                 ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
                     uuid: created.uuid,
                     e,
@@ -3150,7 +3156,7 @@ async function establishOperationalBinding (
                         undefined,
                     ),
                 };
-            } catch (e) {
+            } catch (e: any) {
                 ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
                     uuid: created.uuid,
                     e,

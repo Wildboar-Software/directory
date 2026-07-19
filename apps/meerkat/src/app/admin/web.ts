@@ -365,14 +365,14 @@ function canFail (cb: () => string): string {
 function errorHandlingMiddleware (req: MeerkatReq, res: Response, next: NextFunction): void {
     try {
         next();
-    } catch (e) {
+    } catch (e: any) {
         if (process.env.MEERKAT_LOG_JSON !== "1") {
             ctx.log.error(util.inspect(e));
         } else {
             req.ctx.log.error(`${e}`);
         }
         if (!res.headersSent) {
-            res.status(500).send(e.message);
+            res.status(500).send((e as any)?.message);
         }
     }
 }
@@ -1825,11 +1825,17 @@ function createPublicKeyFile (cert: Certificate): string {
     return pem.encoded;
 }
 
-interface MeerkatReq extends Request {
-    ctx: MeerkatContext;
+declare global {
+  namespace Express {
+    interface Request {
+        ctx: MeerkatContext;
+    }
+  }
 }
 
-function setMeerkatContext (req: MeerkatReq, res: Response, next: NextFunction): void {
+type MeerkatReq = Request;
+
+function setMeerkatContext (req: Request, res: Response, next: NextFunction): void {
     req.ctx = ctx;
     next();
 }
@@ -1968,7 +1974,7 @@ function getOperationalBindingDetails(req: MeerkatReq, res: Response, next: Next
             ? rdnFromJson(ob.new_context_prefix_rdn as Record<string, string>)
             : undefined;
         const cp_superior_dn = Array.isArray(ob.immediate_superior)
-            ? ob.immediate_superior.map(rdnFromJson)
+            ? ob.immediate_superior.map((rdn) => rdnFromJson(rdn as Record<string, string>))
             : undefined;
         const cpdn = (cp_superior_dn && cp_rdn)
             ? [ ...cp_superior_dn, cp_rdn ]
@@ -1977,7 +1983,7 @@ function getOperationalBindingDetails(req: MeerkatReq, res: Response, next: Next
             ? "WAITING DECISION"
             : (ob.accepted ? "ACCEPTED" : "REJECTED");
         const ap_ae_title: string | undefined = Array.isArray(ob.access_point?.ae_title)
-            ? stringifyDN(req.ctx, ob.access_point!.ae_title.map((rdn: Record<string, string>) => rdnFromJson(rdn)))
+            ? stringifyDN(req.ctx, ob.access_point!.ae_title.map((rdn) => rdnFromJson(rdn as Record<string, string>)))
             : undefined;
         const templateVariables = {
             ...ob,
@@ -2280,7 +2286,7 @@ function getDseById(req: MeerkatReq, res: Response, next: NextFunction): void {
             shadow: !!vertex.dse.shadow,
             subcomplete: vertex.dse.shadow?.subordinateCompleteness,
             attrcomplete: vertex.dse.shadow?.attributeCompleteness,
-            attrValuesIncomplete: Array.from(vertex.dse.shadow?.attributeValuesIncomplete ?? new Set())
+            attrValuesIncomplete: Array.from(vertex.dse.shadow?.attributeValuesIncomplete ?? new Set<string>())
                 .map((oid_str: string) => {
                     const name = req.ctx.objectIdentifierToName.get(oid_str);
                     if (name) {
@@ -2789,7 +2795,7 @@ function getTlsCertPKIPath(req: MeerkatReq, res: Response): void {
     res.send(der);
 }
 
-function getTlsDhParams(req: MeerkatReq, res: Response): void {
+function getTlsDhParams(req: Request, res: Response): void {
     if (!process.env.MEERKAT_TLS_DH_PARAM_FILE) {
         res.status(404).send("No DH parameters file.");
         return;
@@ -2864,7 +2870,7 @@ async function getPkiSelfCheck(req: MeerkatReq, res: Response): Promise<void> {
     });
 }
 
-function getRemoteCRLCache(req: MeerkatReq, res: Response): void {
+function getRemoteCRLCache(req: Request, res: Response): void {
     return res.render("crl-cache", {
         crls: Array.from(crlCache.entries())
             .map(([ url, [ date, crls ]]) => ({
@@ -2875,15 +2881,15 @@ function getRemoteCRLCache(req: MeerkatReq, res: Response): void {
     });
 }
 
-function getUpdates(req: MeerkatReq, res: Response): void {
+function getUpdates(req: Request, res: Response): void {
     res.render("updates", {});
 }
 
-function getHelp(req: MeerkatReq, res: Response): void {
+function getHelp(req: Request, res: Response): void {
     res.render("help", {});
 }
 
-function getAbout(req: MeerkatReq, res: Response): void {
+function getAbout(req: Request, res: Response, next: NextFunction): void {
     res.render("about", {
         version: pkg.version ?? "UNKNOWN",
         os_arch: canFail(() => os.arch()),

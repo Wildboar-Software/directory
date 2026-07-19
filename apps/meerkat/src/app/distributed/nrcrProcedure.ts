@@ -411,7 +411,7 @@ async function nrcrProcedure(
                     partialNameResolution,
                     followReferralTTL,
                 );
-            } catch (e) {
+            } catch (e: any) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
                     ctx.log.error(util.inspect(e));
                 }
@@ -437,7 +437,7 @@ async function nrcrProcedure(
                                 : chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter),
                         },
                     };
-                } catch (e) {
+                } catch (e: any) {
                     if (process.env.MEERKAT_LOG_JSON !== "1") {
                         ctx.log.error(util.inspect(e));
                     }

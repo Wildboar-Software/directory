@@ -31,7 +31,7 @@ function isSubstringSubset (value: unknown, assertion: unknown): boolean {
         if (!assertion) {
             return true;
         }
-        return Object.keys(value).every(ele => isSubstringSubset(value[ele], assertion[ele]));
+        return Object.entries(value).every(([ k, v ]) => isSubstringSubset(v, assertion[k as keyof typeof assertion]));
     }
     return true;
 }

@@ -2384,7 +2384,7 @@ async function search_i_ex (
             );
             try {
                 filterResult = evaluateFilter(filter, familyInfos, filterOptions);
-            } catch (e) {
+            } catch (e: any) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
                     ctx.log.error(util.inspect(e));
                 }
@@ -2705,7 +2705,7 @@ async function search_i_ex (
             );
             try {
                 filterResult = evaluateFilter(filter, familyInfos, filterOptions);
-            } catch (e) {
+            } catch (e: any) {
                 if (process.env.MEERKAT_LOG_JSON !== "1") {
                     ctx.log.error(util.inspect(e));
                 }
