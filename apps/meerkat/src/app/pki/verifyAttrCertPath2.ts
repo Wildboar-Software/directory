@@ -43,6 +43,7 @@ import {
     AttributeDescriptorSyntax,
     acceptablePrivilegePolicies,
     acceptableCertPolicies,
+    Targets,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     compareAlgorithmIdentifier,
@@ -900,6 +901,29 @@ function isSameIssuer(
     return compared_something;
 }
 
+export interface VerifyAttrCertOpts {
+    /**
+     * The time to use for verification. Defaults to now.
+     */
+    timeOfCheck?: Date;
+    /**
+     * Whether the attribute certificate was previously asserted.
+     */
+    previouslyAsserted?: boolean;
+    /**
+     * The privilege policies according to which the end-entity attribute
+     * certificate must be valid. The end entity certificate must be valid for
+     * one or more of these privilege policies, or verification fails.
+     */
+    privilegePolicies?: OBJECT_IDENTIFIER[];
+    /**
+     * Targets against which the PMI assertion is verified. In particular, this
+     * is compared against values of the `targetingInformation` X.509v3
+     * extension, if present.
+     */
+    targets?: Targets;
+}
+
 // TODO: I think this could return the index of the accepted privilege policy as well.
 // TODO: Make this function an async iterator?
 // TODO: Add caching
@@ -929,10 +953,7 @@ async function verifyAttrCertPath2 (
     userPkiPath: PkiPath,
     soas: TrustAnchorList,
     trustAnchors: TrustAnchorList,
-    timeOfCheck: Date,
-    previouslyAsserted: boolean = false,
-    privilegePolicies?: OBJECT_IDENTIFIER[],
-    // TODO: targetingInformation extension?
+    opts: VerifyAttrCertOpts = {},
 ): Promise<number> {
     if (soas.length === 0) {
         return VAC_UNTRUSTED_SOA;
@@ -948,6 +969,13 @@ async function verifyAttrCertPath2 (
     if (acPath.filter((arc) => arc.attributeCertificate).length > 30) {
         return VAC_PATH_TOO_LONG;
     }
+
+    const {
+        timeOfCheck = new Date(),
+        previouslyAsserted = false,
+        privilegePolicies = undefined,
+        targets = undefined,
+    } = opts;
 
     const [certsBySerialNumberLowerHex, certsByKeyIdLowerHex] = indexCerts(acPath);
     const namingMatcher = getNamingMatcherGetter(ctx);
