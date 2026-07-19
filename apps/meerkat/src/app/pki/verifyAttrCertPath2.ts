@@ -60,7 +60,7 @@ import {
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { Name } from "@wildboar/pki-stub";
 import { Certificate, _encode_Certificate } from "@wildboar/pki-stub";
-import { AAIssuingDistPointSyntax, aAissuingDistributionPoint, GeneralNames, GeneralSubtree, issuerAltName, nameConstraints, NameConstraintsSyntax, PolicyInformation } from "@wildboar/x500/CertificateExtensions";
+import { AAIssuingDistPointSyntax, aAissuingDistributionPoint, GeneralNames, GeneralSubtree, issuerAltName, nameConstraints, NameConstraintsSyntax, anyPolicy, PolicyInformation } from "@wildboar/x500/CertificateExtensions";
 import { ASN1Element, ASN1TagClass, ASN1UniversalType, BOOLEAN, DERElement, OBJECT_IDENTIFIER, ObjectIdentifier, packBits } from "@wildboar/asn1";
 import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { digestOIDToNodeHash } from "./digestOIDToNodeHash.js";
@@ -932,7 +932,6 @@ async function verifyAttrCertPath2 (
     timeOfCheck: Date,
     previouslyAsserted: boolean = false,
     privilegePolicies?: OBJECT_IDENTIFIER[],
-    certPolicies?: OBJECT_IDENTIFIER[],
     // TODO: targetingInformation extension?
 ): Promise<number> {
     if (soas.length === 0) {
@@ -961,6 +960,10 @@ async function verifyAttrCertPath2 (
 
     let ee_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
     let current_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
+
+    /** The certification policies that all PKI chains up until now have
+    been certified with. */
+    let cert_policies_intersection: Set<IndexableOID> | null = null;
 
     while (current_holder_pki_path && current_ac) {
         if (iteration > 10) { // TODO: Make this configurable.
@@ -1139,8 +1142,19 @@ async function verifyAttrCertPath2 (
                     if (!matched) {
                         return VAC_INVALID_TARGET;
                     }
+                // This applies to all PKI paths _inferior_ to this one. So it
+                // is correct that we check this here, _then_ verify the signature
+                // of the issuer AC and update `cert_policies_intersection`.
+                } else if (ext.extnId.isEqualTo(acceptableCertPolicies["&id"]!)) {
+                    const acp = acceptableCertPolicies.decoderFor["&ExtnType"]!(extEl);
+                    const match = !cert_policies_intersection
+                        || acp.some((cp) => cert_policies_intersection!.has(cp.toString()));
+                    if (!match) {
+                        // The PKI chains before this did not share a common
+                        // certification policy that was acceptable.
+                        return VAC_INVALID_CERT_POLICY;
+                    }
                 }
-
             } catch (e) {
                 // TODO: Log
                 return VAC_INTERNAL_ERROR;
@@ -1313,13 +1327,26 @@ async function verifyAttrCertPath2 (
                 false,
                 "result", // TODO: Define an "acert" context.
             );
-            // if (vcpResult?.returnCode === VCP_RETURN_OK) {
-            //     const accepted = vcpResult.user_constrained_policies
-            //         .some((pol) => !acceptable_cert_policies || acceptable_cert_policies.has(pol.policyIdentifier.toString()));
-            //     if (!accepted) {
-            //         return VAC_INVALID_CERT_POLICY;
-            //     }
-            // }
+            if (vcpResult?.returnCode === VCP_RETURN_OK) {
+                if (cert_policies_intersection) {                    
+                    // TODO: Can user-constrained-policies be empty?
+                    const usedAnyPolicy = vcpResult
+                        .user_constrained_policies
+                        .some((pol) => pol.policyIdentifier.isEqualTo(anyPolicy));
+                    if (!usedAnyPolicy) {
+                        const ucpset = new Set();
+                        for (const cp of vcpResult.user_constrained_policies) {
+                            ucpset.add(cp.policyIdentifier.toString());
+                        }
+                        cert_policies_intersection = cert_policies_intersection.intersection(ucpset);
+                    }
+                } else {
+                    cert_policies_intersection = new Set();
+                    for (const cp of vcpResult.user_constrained_policies) {
+                        cert_policies_intersection.add(cp.policyIdentifier.toString());
+                    }
+                }
+            }
         } catch (e) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.debug(util.inspect(e));
@@ -1471,12 +1498,6 @@ async function verifyAttrCertPath2 (
                     return VAC_UNACCEPTABLE_PRIV_POLICY;
                 }
             }
-            // else if (ext.extnId.isEqualTo(acceptableCertPolicies["&id"]!)) {
-            //     const ac = acceptableCertPolicies.decoderFor["&ExtnType"]!(extEl);
-            //     for (const certpol of ac) {
-
-            //     }
-            // }
         }
         // #endregion verify_extensions_in_subject_ac_requiring_issuer
 
@@ -1499,11 +1520,6 @@ async function verifyAttrCertPath2 (
             }
             // TODO: In cert verification, is it possible for subject cert to have broader name constraints?
 
-            if (ext.extnId.isEqualTo(indirectIssuer["&id"]!)) {
-                // The issuer is an indirect issuer.
-                // TODO: Set this issuer's issuer to the expected SOA.
-                // TODO: Obtain the issuedOnBehalfOf ACPathData and continue from there.
-            }
             // authorityAttributeIdentifier: no action needed, always non-critical
             /*
             All of these have the same syntax and both apply exactly the
@@ -1552,8 +1568,7 @@ async function verifyAttrCertPath2 (
                         return VAC_NAME_CONSTRAINT_CHECK_DOS;
                     }
                 }
-            }
-            if (ext.extnId.isEqualTo(allowedAttributeAssignments["&id"]!)) {
+            } else if (ext.extnId.isEqualTo(allowedAttributeAssignments["&id"]!)) {
                 const superset = allowedAttributeAssignments.decoderFor["&ExtnType"]!(extEl);
                 const applicableSuperset = superset
                     .filter((aaa) => {
