@@ -41,6 +41,8 @@ import {
     AllowedAttributeAssignments,
     allowedAttributeAssignments,
     AttributeDescriptorSyntax,
+    acceptablePrivilegePolicies,
+    acceptableCertPolicies,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     compareAlgorithmIdentifier,
@@ -58,7 +60,7 @@ import {
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { Name } from "@wildboar/pki-stub";
 import { Certificate, _encode_Certificate } from "@wildboar/pki-stub";
-import { AAIssuingDistPointSyntax, aAissuingDistributionPoint, GeneralNames, GeneralSubtree, issuerAltName, nameConstraints, NameConstraintsSyntax } from "@wildboar/x500/CertificateExtensions";
+import { AAIssuingDistPointSyntax, aAissuingDistributionPoint, GeneralNames, GeneralSubtree, issuerAltName, nameConstraints, NameConstraintsSyntax, PolicyInformation } from "@wildboar/x500/CertificateExtensions";
 import { ASN1Element, ASN1TagClass, ASN1UniversalType, BOOLEAN, DERElement, OBJECT_IDENTIFIER, ObjectIdentifier, packBits } from "@wildboar/asn1";
 import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { digestOIDToNodeHash } from "./digestOIDToNodeHash.js";
@@ -158,6 +160,8 @@ export const VAC_NOT_INDIRECT_ISSUER: number = -38;
 export const VAC_ATTR_DESC_CONFLICT: number = -39;
 export const VAC_ATTR_DELEGATION_VIOLATION: number = -40;
 export const VAC_DUPLICATE_ATTR: number = -41;
+export const VAC_UNACCEPTABLE_PRIV_POLICY: number = -42;
+export const VAC_INVALID_CERT_POLICY: number = -43;
 export const VAC_RETURN_OCSP_REVOKED: number = -102;
 export const VAC_RETURN_OCSP_OTHER: number = -103;
 export const VAC_RETURN_CRL_REVOKED: number = -104;
@@ -896,6 +900,19 @@ function isSameIssuer(
     return compared_something;
 }
 
+// TODO: I think this could return the index of the accepted privilege policy as well.
+// TODO: Make this function an async iterator?
+// TODO: Add caching
+
+// IETF RFC 5755 can be useful for gleaning information that isn't obvious
+// in ITU Rec. X.509:
+// > Note: [X.509-2000] defines the extension syntax as a "SEQUENCE OF
+// > Targets".  Conforming AC issuer implementations MUST only produce one
+// > "Targets" element.  Conforming AC users MUST be able to accept a
+// > "SEQUENCE OF Targets".  If more than one Targets element is found in
+// > an AC, the extension MUST be treated as if all Target elements had
+// > been found within one Targets element.
+
 // TODO: Assume that elements of acPath are ordered just like CertificationPath.
 // It was my opinion that this was the correct interpretation and LLMs independently
 // arrived at the same conclusion. This is virtuous strictness. And since my
@@ -903,6 +920,8 @@ function isSameIssuer(
 // This code is already convoluted and slow enough. Nefarious users should not be
 // able to submit mis-ordered delegation paths and make this code do all the work
 // in re-ordering the certs correctly.
+// Document: this function does not expand roles. The caller, if needed, must expand roles to permissions.
+// The caller can trust that, if this returns VAC_OK, all roles in the EE attribute certificate are valid, however.
 export
 async function verifyAttrCertPath2 (
     ctx: MeerkatContext,
@@ -912,6 +931,9 @@ async function verifyAttrCertPath2 (
     trustAnchors: TrustAnchorList,
     timeOfCheck: Date,
     previouslyAsserted: boolean = false,
+    privilegePolicies?: OBJECT_IDENTIFIER[],
+    certPolicies?: OBJECT_IDENTIFIER[],
+    // TODO: targetingInformation extension?
 ): Promise<number> {
     if (soas.length === 0) {
         return VAC_UNTRUSTED_SOA;
@@ -939,7 +961,6 @@ async function verifyAttrCertPath2 (
 
     let ee_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
     let current_allowed_attr_assignments: AllowedAttributeAssignments | undefined;
-    let expected_soa: AttCertIssuer | undefined;
 
     while (current_holder_pki_path && current_ac) {
         if (iteration > 10) { // TODO: Make this configurable.
@@ -1278,7 +1299,8 @@ async function verifyAttrCertPath2 (
                 .reverse(),
         );
         try {
-            await verifySIGNED(
+            // This verifies the _issuer_ cert path.
+            const vcpResult = await verifySIGNED(
                 ctx,
                 undefined,
                 issuer_cert_path,
@@ -1291,6 +1313,13 @@ async function verifyAttrCertPath2 (
                 false,
                 "result", // TODO: Define an "acert" context.
             );
+            // if (vcpResult?.returnCode === VCP_RETURN_OK) {
+            //     const accepted = vcpResult.user_constrained_policies
+            //         .some((pol) => !acceptable_cert_policies || acceptable_cert_policies.has(pol.policyIdentifier.toString()));
+            //     if (!accepted) {
+            //         return VAC_INVALID_CERT_POLICY;
+            //     }
+            // }
         } catch (e) {
             if (process.env.MEERKAT_LOG_JSON !== "1") {
                 ctx.log.debug(util.inspect(e));
@@ -1299,86 +1328,46 @@ async function verifyAttrCertPath2 (
             return VAC_DUBIOUS_CERT_PATH;
         }
 
-        // TODO: Verify all attribute descriptor certificates (Section 17.3.2.2.1), then index the descriptors.
-        // TODO: Verify that all attribute descriptor certs are issued directly by a trusted SOA.
-        // TODO: If any fail verification, only identical values for those attributes may be delegated.
-        // TODO: For all that succeed, look up the privilege policy to obtain an ordering matcher and check that all assigned values are allowed.
-        // TODO: Define built-in privilege policies for comparing clearance values.
-        // TODO: Make it configurable which privilege policies compare clearance values like the default.
+        /* TODO: issuedOnBehalfOf handling:
 
-        // TODO: Fetch all role specification certs.
-        // TODO: Separately verify each role specification certificate delegation path.
-        // TODO: For each role the entity is assigned, associate the role's attributes, and include these in verifying the delegation.
-        // "A role specification attribute certificate cannot be delegated to any other entity"
-        // Actually, I think role expansion gets done at the end, basically after this function is totally done.
-        // Being permitted to assign all of the role's attributes does not give an AA permission to assign the role membership itself.
-        // So at the end, if the whole chain is valid, you can expand the roles on just the EE cert.
-        // TODO: What about conflicting ADCs?
+        Actually, do none of this. An indirectly-issued acert uses the same
+        exact verification procedures unless the issuer does not have an
+        improper superset of the privileges of the acert it issued. This
+        is a bizarre situation. There is not a single reason I can think of
+        for why you would want to do this. The noAssertion extension already
+        blocks the DS server itself from asserting those privileges.
 
-        // TODO: issuedOnBehalfOf
+        I do think, in Meerkat DSA's case, you have to fail verification if
+        the IOBO extension is marked as critical. Because Meerkat DSA is not
+        going to check this.
 
-        /* issuedOnBehalfOf handling:
+        The ordering of attr certs in AttributeCertPath seems to conflict with
+        the idea of "branching" delegation paths that need verification.
+        Verifying this would require calling this function multiple times for
+        each branch.
+
+        And if this function is turned into an async iterator, the caller
+        could just execute a separate verification chain for the DS issuer,
+        so this stupid scenario is handled in that case anyway.
+
         - Find the delegator's ACPathData.
         - Verify that the indirect issuer was issued by the same SOA as the delegator.
 
-        "The indirect issuer extension is used in either an attribute certificate or a public-key certificate issued to a DS server by an SOA."
-        "The issuer of this attribute certificate must have been granted the privilege to issue ACs on behalf of other AAs by an
-SOA, through the IndirectIssuer extension in its attribute certificate"
-        So it seems like an indirect issuer is always directly issued by an SOA. So you can use the issuer field to know who the SOA should be.
+        "The indirect issuer extension is used in either an attribute certificate or
+        a public-key certificate issued to a DS server by an SOA."
+        "The issuer of this attribute certificate must have been granted the
+        privilege to issue ACs on behalf of other AAs by an SOA, through the
+        IndirectIssuer extension in its attribute certificate"
+        So it seems like an indirect issuer is always directly issued by an SOA.
+        So you can use the issuer field to know who the SOA should be.
 
         If the issuer is an indirect issuer, call verifyAttrCertPath2 with the issuer.
         If that returns ok, then continue evaluating the chain using the issuedOnBehalfOf AA.
 
-        // TODO: acceptableCertPolicies (verify that, for each PKI path, one of these policies is fulfilled, and that all inferior PKI paths do too)
-        1. Get the verify cert path result from verifySIGNED
-        2. Check that the intersection of authorities_constrained_policies and
-           user_constrained_policies contains contains one of the acceptable
-           policies.
-        3. For the AC issuer, iteratively, take the intersection with all
-           previously effective policies: these are the policies that every
-           attribute certificate encountered thus far complies with.
-        4. If an acceptableCertPolicies extension has a policy that is not
-           in this intersection, it means that there was at least one path link
-           that was not compliant with that policy.
-
-        // TODO: acceptablePrivilegePolicies
-        For this one, I think you want to take a rolling intersection of the
-        acceptable privilege policies and just make sure the constrained set
-        never becomes empty, meaning that the PMI chain is invalid since the
-        AAs produced a set that is unsatisfiable. Maybe you can make an argument
-        to this function where the caller can supply the used privilege policies
-        and compare those against the acceptable set.
-
-        // ~~attributeMappings~~
-        WARNING: This is a dangerous extension. A nefarious subordinate AA could
-        use it to map a lower-valued privilege to a higher-valued one.
-        I have decided that this extension will be honored, but only if it is
-        issued directly by the trusted SOA. This avoids problems of transitive
-        mapping or nefarious mapping by deeper AAs (e.g. mapping lower to higher
-        privilege values). `allowedAttributeAssignments` extension should ALWAYS
-        be used with RoA like this; it is just too dangerous without this.
-        ... actually, maybe not. Maybe just honor this at every level.
-        (Maybe you could just implement this, then implement tests to see if it
-        can be hacked.)
-        I think the procedure will look something like this:
-        1. If the issuer AC / PKC is not a trusted SOA, reject this deep mapping.
-        1. Copy a reference to the current attribute certificate's attributes.
-        2. If the extension exists in the subject's AC, map the attributes and
-           add the new attribute values without removing the ones that were
-           mapped.
-        // TODO: Report the security problem to the ITU.
-
-        // ~~allowedAttributeAssignments~~
-        I think all you really have to check is that the end-entity AC complies
-        with all of the allowed attribute assignments. Beyond this, you just
-        have to make sure that each encountered AAA is a subset of those granted
-        to the superior AA. The specification does not clarify if attribute
-        values that are of lesser privilege are implicitly allowed, but I don't
-        think they should be: I think this extension should be as strict as
-        possible so that the remote SOA (or one of its subordinate AAs) can play
-        tricks by redefining domination rules.
-        // TODO: Report this problem to the ITU.
-
+        Actually, indirectIssuer and issuedOnBehalfOf do not matter at all
+        unless the DS server does not itself possess all of the attributes
+        necessary. I don't know why you would even do this. This is a really
+        stupid use case. So dumb, I consider not even supporting it.
         */
 
         const mappedAttributes: Attribute[] = [];
@@ -1461,6 +1450,33 @@ SOA, through the IndirectIssuer extension in its attribute certificate"
                     mappedAttributes.push(attr);
                 }
             }
+            /* The specifications do not say that you have to check that each
+            subsequent AC in the chain has a subset of PPs listed in the AA's
+            extension. I checked both ITU Rec. X.509 and IETF RFC 5755. I
+            searched Google too and read a Chadwick paper that mentions this
+            extension. Nothing. And when I think about it, there could be a
+            valid use case for an AA cert to have fewer applicable privilege
+            policies than one of its delegatees. So we only check the first
+            attribute certificate against the caller-supplied privilege
+            policies, if provided. */
+            else if (
+                iteration === 0
+                && privilegePolicies?.length
+                && ext.extnId.isEqualTo(acceptablePrivilegePolicies["&id"]!)
+            ) {
+                const app = acceptablePrivilegePolicies.decoderFor["&ExtnType"]!(extEl);
+                const acceptableSet = new Set(privilegePolicies.map((pp) => pp.toString()));
+                const match = app.some((pp) => acceptableSet.has(pp.toString()));
+                if (!match) {
+                    return VAC_UNACCEPTABLE_PRIV_POLICY;
+                }
+            }
+            // else if (ext.extnId.isEqualTo(acceptableCertPolicies["&id"]!)) {
+            //     const ac = acceptableCertPolicies.decoderFor["&ExtnType"]!(extEl);
+            //     for (const certpol of ac) {
+
+            //     }
+            // }
         }
         // #endregion verify_extensions_in_subject_ac_requiring_issuer
 
@@ -1612,11 +1628,12 @@ SOA, through the IndirectIssuer extension in its attribute certificate"
                 // This attribute was entirely absent from the delegating AA.
                 return VAC_ATTR_DELEGATION_VIOLATION;
             }
-            // TODO: Make the privilege policy customizable.
+            // TODO: Make the privilege policy customizable. (Maybe the user can configure ADCs at startup or something.)
+            const privilegePolicy = privilegePolicies?.reduce((acc, cur) => acc ?? cur);
             const privilegeComparator: PrivilegeComparator = ctx
                 .config
                 .privilegePoliciesToComparators
-                .get("1.3.6.1.4.1.56490.403.23")?.(attr.type_)
+                .get(privilegePolicy?.toString() ?? "1.3.6.1.4.1.56490.403.23")?.(attr.type_)
                 ?? defaultPrivilegeComparator;
             if (!isAttributeDelegationAllowed(attr, delegating_attr, privilegeComparator)) {
                 return VAC_AAA_VIOLATION;

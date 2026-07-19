@@ -277,4 +277,5 @@ async function verifySIGNED <T> (
             signErrors,
         );
     }
+    return vacpResult;
 }
