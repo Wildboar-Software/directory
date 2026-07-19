@@ -12,9 +12,10 @@
             "@docusaurus/module-type-aliases",
             "@docusaurus/theme-classic"
         ],
-        "baseUrl": ".",
+        "baseUrl": "../..",
         "paths": {
             "@site/*": ["./*"]
-        }
+        },
+        "ignoreDeprecations": "6.0"
     }
 }

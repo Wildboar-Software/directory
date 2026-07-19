@@ -33,7 +33,14 @@
             "x500-functional-tests": [
                 "libs/x500-functional-tests/src/index.ts"
             ]
-        }
+        },
+        "strict": false,
+        "noUncheckedSideEffectImports": false,
+        "types": [
+          "*"
+        ],
+        "esModuleInterop": false,
+        "ignoreDeprecations": "6.0"
     },
     "exclude": ["node_modules", "tmp"]
 }
