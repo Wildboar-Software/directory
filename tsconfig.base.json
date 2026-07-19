@@ -35,10 +35,7 @@
             ]
         },
         "strict": false,
-        "noUncheckedSideEffectImports": false,
-        "types": [
-          "*"
-        ],
+        "noUncheckedSideEffectImports": true,
         "esModuleInterop": false,
         "ignoreDeprecations": "6.0"
     },
