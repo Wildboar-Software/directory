@@ -113,6 +113,7 @@ import { Attribute, AttributeType, AttributeTypeAndValue } from "@wildboar/x500/
 import applyMappingsToAttributes from "../pmi/applyMappingsToAttributes.js";
 import { aaaIsImproperSubset, checkAttributeAssignments } from "../pmi/aaaIsImproperSubset.js";
 import defaultPrivilegeComparator from "../pmi/defaultPrivilegeComparator.js";
+import isCertInTrustAnchor from "./isCertInTrustAnchor.js";
 
 /*
 TODO: For OID Sets and Maps make a wrapper type that takes OIDs and translates
@@ -895,6 +896,18 @@ export interface VerifyAttrCertYield {
     pkiPath: PkiPath;
 }
 
+function verifyAttrCert(
+    ctx: MeerkatContext,
+    userACPath: AttributeCertificationPath,
+    userPkiPath: PkiPath,
+    soas: TrustAnchorList,
+    trustAnchors: TrustAnchorList,
+    opts: VerifyAttrCertOpts = {},
+    on_end_entity: boolean = false,
+): number {
+
+}
+
 // IETF RFC 5755 can be useful for gleaning information that isn't obvious
 // in ITU Rec. X.509:
 // > Note: [X.509-2000] defines the extension syntax as a "SEQUENCE OF
@@ -982,8 +995,9 @@ async function* verifyAttrCertPath2 (
             .toBeSigned.extensions
             ?.some((ext) => ext.extnId.isEqualTo(sOAIdentifier["&id"]!)) ?? false;
 
-        const isPubKeyCertTrusted = false; // TODO: Implement this.
-        if (is_soa && isPubKeyCertTrusted) {
+        const isPubKeyCertTrusted = soas
+            .some((soa) => isCertInTrustAnchor(eeCert, soa, eeCert.originalDER)); 
+        if (is_soa && !isPubKeyCertTrusted) {
             return VAC_UNTRUSTED_SOA;
         }
 
