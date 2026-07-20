@@ -370,7 +370,6 @@ function compare_attr_cert_to_pk_cert (
  * @param issuerCert The issuer certificate of the end-entity
  * @returns A return code
  */
-export
 function is_cert_holder (
     ctx: Context,
     eeCert: Certificate,
@@ -383,46 +382,6 @@ function is_cert_holder (
         holder.entityName,
         holder.objectDigestInfo,
     );
-}
-
-export
-function is_cert_issuer (
-    ctx: Context,
-    issuerCert: Certificate,
-    issuerAc: AttCertIssuer,
-): boolean | undefined {
-    return compare_attr_cert_to_pk_cert(
-        ctx,
-        issuerCert,
-        issuerAc.baseCertificateID,
-        issuerAc.issuerName,
-        issuerAc.objectDigestInfo,
-    );
-}
-
-export
-function is_acert_issuer (
-    ctx: Context,
-    issuerAttrCert: AttributeCertificate,
-    holderAttrCert: AttributeCertificate,
-): boolean | undefined {
-    if (
-        !holderAttrCert.toBeSigned.issuer.issuerName?.length
-        || !issuerAttrCert.toBeSigned.holder.entityName?.length
-    ) {
-        return undefined; // Not really comparable.
-    }
-    const names_from_subject = holderAttrCert.toBeSigned.issuer.issuerName;
-    const names_from_issuer = issuerAttrCert.toBeSigned.holder.entityName;
-    // WARNING: O(n^2) time complexity, but bounded.
-    for (const nfs of names_from_subject.slice(0, 10)) {
-        for (const nfi of names_from_issuer.slice(0, 10)) {
-            if (compareGeneralName(nfs, nfi, getNamingMatcherGetter(ctx))) {
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 function indexCerts(acPath: ACPathData[]): [Map<string, Certificate[]>, Map<string, Certificate[]>] {
@@ -810,60 +769,6 @@ function isAttributeDelegationAllowed(
     return false;
 }
 
-// TODO: Move to @wildboar/x500 or perhaps @wildboar/pki-stub?
-function isSameIssuer(
-    a: AttCertIssuer,
-    b: AttCertIssuer,
-    namingMatcher: (attributeType: AttributeType) => EqualityMatcher | undefined,
-): boolean {
-    let compared_something = false;
-    if (a.issuerName && b.issuerName) {
-        if (!compareGeneralNames(a.issuerName, b.issuerName, namingMatcher)) {
-            return false;
-        }
-        compared_something = true;
-    }
-    if (a.baseCertificateID && b.baseCertificateID) {
-        if (!compareIssuerSerial(a.baseCertificateID, b.baseCertificateID, namingMatcher)) {
-            return false;
-        }
-        compared_something = true;
-    }
-    if (a.objectDigestInfo && b.objectDigestInfo) {
-        if (a.objectDigestInfo.digestedObjectType !== b.objectDigestInfo.digestedObjectType) {
-            return false;
-        }
-        if (
-            a.objectDigestInfo.otherObjectTypeID
-            && b.objectDigestInfo.otherObjectTypeID
-            && !a.objectDigestInfo.otherObjectTypeID.isEqualTo(b.objectDigestInfo.otherObjectTypeID)
-        ) {
-            return false;
-        }
-        if (!compareAlgorithmIdentifier(a.objectDigestInfo.digestAlgorithm, b.objectDigestInfo.digestAlgorithm)) {
-            return false;
-        }
-        if (a.objectDigestInfo.objectDigest.length !== b.objectDigestInfo.objectDigest.length) {
-            return false;
-        }
-        const a_digest = Buffer.from(
-            a.objectDigestInfo.objectDigest.buffer,
-            a.objectDigestInfo.objectDigest.byteOffset,
-            a.objectDigestInfo.objectDigest.byteLength,
-        );
-        const b_digest = Buffer.from(
-            b.objectDigestInfo.objectDigest.buffer,
-            b.objectDigestInfo.objectDigest.byteOffset,
-            b.objectDigestInfo.objectDigest.byteLength,
-        );
-        if (!Buffer.compare(a_digest, b_digest)) {
-            return false;
-        }
-        compared_something = true;
-    }
-    return compared_something;
-}
-
 export interface VerifyAttrCertOpts {
     /**
      * The time to use for verification. Defaults to now.
@@ -924,7 +829,60 @@ function verifyAttrCert(
 // This code is already convoluted and slow enough. Nefarious users should not be
 // able to submit mis-ordered delegation paths and make this code do all the work
 // in re-ordering the certs correctly.
+// My original thought was that the acPathData could include role specification
+// certificates and attribute descriptor certificates, but I have since decided
+// against both of these decisions. These should not be supplied as a part of
+// the user inputs for bandwidth, efficiency, and security purposes. Once
+// defined, the description of an attribute does not change (or should not).
+// Roles could change, but those are still likely to be cached, and get handled
+// outside of this function (basically "not my problem").
+// Basically, I don't see a good reason for `AttributeCertificationPath` to
+// contain anything but the delegation path, in order.
+
+/* TODO: Document issuedOnBehalfOf handling:
+
+Actually, do none of this. An indirectly-issued acert uses the same
+exact verification procedures unless the issuer does not have an
+improper superset of the privileges of the acert it issued. This
+is a bizarre situation. There is not a single reason I can think of
+for why you would want to do this. The noAssertion extension already
+blocks the DS server itself from asserting those privileges.
+
+I do think, in Meerkat DSA's case, you have to fail verification if
+the IOBO extension is marked as critical. Because Meerkat DSA is not
+going to check this.
+
+The ordering of attr certs in AttributeCertPath seems to conflict with
+the idea of "branching" delegation paths that need verification.
+Verifying this would require calling this function multiple times for
+each branch.
+
+And if this function is turned into an async iterator, the caller
+could just execute a separate verification chain for the DS issuer,
+so this stupid scenario is handled in that case anyway.
+
+- Find the delegator's ACPathData.
+- Verify that the indirect issuer was issued by the same SOA as the delegator.
+
+"The indirect issuer extension is used in either an attribute certificate or
+a public-key certificate issued to a DS server by an SOA."
+"The issuer of this attribute certificate must have been granted the
+privilege to issue ACs on behalf of other AAs by an SOA, through the
+IndirectIssuer extension in its attribute certificate"
+So it seems like an indirect issuer is always directly issued by an SOA.
+So you can use the issuer field to know who the SOA should be.
+
+If the issuer is an indirect issuer, call verifyAttrCertPath2 with the issuer.
+If that returns ok, then continue evaluating the chain using the issuedOnBehalfOf AA.
+
+Actually, indirectIssuer and issuedOnBehalfOf do not matter at all
+unless the DS server does not itself possess all of the attributes
+necessary. I don't know why you would even do this. This is a really
+stupid use case. So dumb, I consider not even supporting it.
+*/
+
 // Document: this function does not expand roles. The caller, if needed, must expand roles to permissions.
+// TODO: Document that the caller must also expand groups.
 // The caller can trust that, if this returns VAC_OK, all roles in the EE attribute certificate are valid, however.
 export
 async function* verifyAttrCertPath2 (
@@ -936,13 +894,23 @@ async function* verifyAttrCertPath2 (
     opts: VerifyAttrCertOpts = {},
 ): AsyncIterableIterator<VerifyAttrCertYield, number> {
     if (soas.length === 0) {
-        return VAC_UNTRUSTED_SOA;
+        return VAC_UNTRUSTED_SOA; // TODO: Better error message
     }
-
     const acPath = userACPath.acPath ?? [];
     if (acPath.length > 100) {
         return VAC_PATH_TOO_LONG;
     }
+
+    // TODO: This might be able to go in the loop instead.
+    if (acPath.length === 0) {
+        // TODO: What if the cert claims to be an SOA? Or doesn't?
+        // TODO: What if the user just provided the lone cert and expected the DSA to fill in the rest?
+        const eeCert = userPkiPath[userPkiPath.length - 1];
+        return (eeCert && soas.some((soa) => isCertInTrustAnchor(eeCert, soa)))
+            ? VAC_OK
+            : VAC_NO_SOA_CERT;
+    }
+
     /* This is pretty generous, because many of these could be attribute
     descriptor certificates or role specification certificates or other
     things like that. */
@@ -1183,20 +1151,7 @@ async function* verifyAttrCertPath2 (
 
         /* We need the attribute certificate. There is no way, if given a PKI
         alone, to unambiguously resolve an attribute certificate. */
-        const issuer_ac_data = acPath.find((arc) => (
-            (arc.attributeCertificate || arc.certificate)
-            && (
-                ( // Do cert comparison first: better performance and more likely.
-                    arc.certificate
-                    && is_cert_issuer(ctx, arc.certificate, current_ac!)
-                )
-                || (
-                    arc.attributeCertificate
-                    && is_acert_issuer(ctx, arc.attributeCertificate, current_ac!))
-                )
-            )
-        );
-
+        const issuer_ac_data = acPath[iteration];
         if (!issuer_ac_data) {
             // FIXME: This error does not make sense if we haven't iterated at least once.
             // This means we didn't trust the highest up issuer we found.
@@ -1204,11 +1159,14 @@ async function* verifyAttrCertPath2 (
                 ? VAC_UNTRUSTED_SOA
                 : VAC_NO_SOA_CERT;
         }
+        if (!issuer_ac_data.attributeCertificate && !issuer_ac_data.certificate) {
+            return VAC_UNUSABLE_AC_PATH;
+        }
 
         // #region hydrate_issuer_ac_data
 
         let issuer_pki_path: PkiPath | null = null;
-        let issuer_ac: AttributeCertificate | null = null;
+        let issuer_ac: AttributeCertificate | null = issuer_ac_data.attributeCertificate ?? null;
         if (issuer_ac_data.certificate) {
             const info = getInfoForNextCertInPath(issuer_ac_data.certificate);
             const next_pki_path = await resolvePkiPath(
@@ -1222,65 +1180,55 @@ async function* verifyAttrCertPath2 (
             );
             next_pki_path?.push(issuer_ac_data.certificate);
             issuer_pki_path = next_pki_path;
-            if (!issuer_ac_data.attributeCertificate) {
-                /* If the arc does not have an AC, we check the remaining arcs
-                for a matching AC. We don't have to check all of them--just
-                the ones that come after issuer_ac_data, because we already
-                checked the ones prior for a matching AC. */
-                const i = acPath.findIndex((arc) => arc === issuer_ac_data);
-                const issuer_cert = issuer_ac_data.certificate;
-                const arc_with_ac = (i > -1)
-                    ? acPath.slice(i).find((arc) => (
-                        arc.attributeCertificate
-                        && (
-                            is_cert_holder(ctx, issuer_cert, arc.attributeCertificate.toBeSigned.holder)
-                            || is_acert_issuer(ctx, arc.attributeCertificate, current_ac!)
-                        )
-                    ))
-                    : undefined;
-                issuer_ac = arc_with_ac?.attributeCertificate ?? null;
-                if (!issuer_ac) {
-                    const aias = (current_ac.toBeSigned.extensions ?? [])
-                        .filter((ext) => ext.extnId.isEqualTo(authorityInfoAccess["&id"]!))
-                        .flatMap((ext) => {
-                            const el = new DERElement();
-                            try {
-                                if (el.fromBytes(ext.extnValue) !== ext.extnValue.length) {
-                                    return []; // Malformed extension.
-                                }
-                                return authorityInfoAccess.decoderFor["&ExtnType"]!(el);
-                            } catch {
+            if (!issuer_ac) {
+                // If there was no attribute certificate provided, look it up.
+                const aias = (current_ac.toBeSigned.extensions ?? [])
+                    .filter((ext) => ext.extnId.isEqualTo(authorityInfoAccess["&id"]!))
+                    .flatMap((ext) => {
+                        const el = new DERElement();
+                        try {
+                            if (el.fromBytes(ext.extnValue) !== ext.extnValue.length) {
                                 return []; // Malformed extension.
                             }
-                        })
-                        .filter((aia) => aia.accessMethod.isEqualTo(id_ad_caIssuers))
-                        ;
-                    for (const aia of aias) {
-                        const loc = aia.accessLocation;
-                        if ("directoryName" in loc) {
-                            const dirName = loc.directoryName;
-                            const acert = await lookupAttrCertViaX500(
-                                ctx,
-                                dirName,
-                                false,
-                                undefined,
-                                {
-                                    // TODO: Set options
-                                },
-                            );
-                            if (acert) {
-                                issuer_ac = acert;
-                                break;
-                            }
+                            return authorityInfoAccess.decoderFor["&ExtnType"]!(el);
+                        } catch {
+                            return []; // Malformed extension.
                         }
-                        else if ("uniformResourceIdentifier" in loc) {
-                            const urlStr = loc.uniformResourceIdentifier.trim();
-                            const url = new URL(urlStr);
-                            const acert = await acertCurl(url);
-                            if (acert) {
-                                issuer_ac = acert;
-                                break;
-                            }
+                    })
+                    .filter((aia) => aia.accessMethod.isEqualTo(id_ad_caIssuers))
+                    .slice(0, 3) // TODO: Make configurable look ups.
+                    ;
+                for (const aia of aias) {
+                    const loc = aia.accessLocation;
+                    if ("directoryName" in loc) {
+                        const dirName = loc.directoryName;
+                        const acert = await lookupAttrCertViaX500(
+                            ctx,
+                            dirName,
+                            false,
+                            timeOfCheck,
+                            {
+                                chaining: false,
+                                copyShallDo: true,
+                                timeLimitInSeconds: 5, // TODO: Calculate based on time remaining.
+                            },
+                        );
+                        if (acert) {
+                            issuer_ac = acert;
+                            break;
+                        }
+                    }
+                    else if ("uniformResourceIdentifier" in loc) {
+                        const urlStr = loc.uniformResourceIdentifier.trim();
+                        const url = new URL(urlStr);
+                        const acert = await acertCurl(url, {
+                            timeoutInMilliseconds: 5000, // TODO: Calculate based on time remaining.
+                            sizeLimit: 1_000_000,
+                            // ipfsBaseUrl: ctx.config // TODO: Make configurable.
+                        });
+                        if (acert) {
+                            issuer_ac = acert;
+                            break;
                         }
                     }
                 }
@@ -1290,7 +1238,7 @@ async function* verifyAttrCertPath2 (
                 }
             }
         } else {
-            assert(issuer_ac_data.attributeCertificate);
+            assert(issuer_ac_data.attributeCertificate, "no attribute certificate"); // We ruled this out above.
             /* If we do not have the issuer's PKC already, we have to use the
             attribute certificate to find the full PKI path. */
             const info = getInfoForNextCertInPath2(issuer_ac_data.attributeCertificate);
@@ -1313,6 +1261,7 @@ async function* verifyAttrCertPath2 (
             return VAC_UNUSABLE_AC_PATH;
         }
         const issuer_ee_cert = issuer_pki_path[issuer_pki_path.length - 1];
+        // FIXME: I don't think you ever check that the issuer_ee_cert actually issued the current_ac
         // Verify the signature on the attribute certificate.
         const issuer_cert_path = new CertificationPath(
             issuer_ee_cert,
@@ -1362,48 +1311,6 @@ async function* verifyAttrCertPath2 (
             // TODO: Log
             return VAC_DUBIOUS_CERT_PATH;
         }
-
-        /* TODO: issuedOnBehalfOf handling:
-
-        Actually, do none of this. An indirectly-issued acert uses the same
-        exact verification procedures unless the issuer does not have an
-        improper superset of the privileges of the acert it issued. This
-        is a bizarre situation. There is not a single reason I can think of
-        for why you would want to do this. The noAssertion extension already
-        blocks the DS server itself from asserting those privileges.
-
-        I do think, in Meerkat DSA's case, you have to fail verification if
-        the IOBO extension is marked as critical. Because Meerkat DSA is not
-        going to check this.
-
-        The ordering of attr certs in AttributeCertPath seems to conflict with
-        the idea of "branching" delegation paths that need verification.
-        Verifying this would require calling this function multiple times for
-        each branch.
-
-        And if this function is turned into an async iterator, the caller
-        could just execute a separate verification chain for the DS issuer,
-        so this stupid scenario is handled in that case anyway.
-
-        - Find the delegator's ACPathData.
-        - Verify that the indirect issuer was issued by the same SOA as the delegator.
-
-        "The indirect issuer extension is used in either an attribute certificate or
-        a public-key certificate issued to a DS server by an SOA."
-        "The issuer of this attribute certificate must have been granted the
-        privilege to issue ACs on behalf of other AAs by an SOA, through the
-        IndirectIssuer extension in its attribute certificate"
-        So it seems like an indirect issuer is always directly issued by an SOA.
-        So you can use the issuer field to know who the SOA should be.
-
-        If the issuer is an indirect issuer, call verifyAttrCertPath2 with the issuer.
-        If that returns ok, then continue evaluating the chain using the issuedOnBehalfOf AA.
-
-        Actually, indirectIssuer and issuedOnBehalfOf do not matter at all
-        unless the DS server does not itself possess all of the attributes
-        necessary. I don't know why you would even do this. This is a really
-        stupid use case. So dumb, I consider not even supporting it.
-        */
 
         const mappedAttributes: Attribute[] = [];
 
@@ -1508,12 +1415,6 @@ async function* verifyAttrCertPath2 (
             }
         }
         // #endregion verify_extensions_in_subject_ac_requiring_issuer
-
-        if (!on_end_entity /* && !indirect_issuer */) {
-            // An intermediary AA did not have an indirectIssuer extension.
-            // FIXME: I am not sure this condition is correct.
-            return VAC_NOT_INDIRECT_ISSUER;
-        }
 
         // #region verify_extensions_in_issuer_ac_requiring_subject
         const issuer_ac_exts = issuer_ac?.toBeSigned.extensions ?? [];
