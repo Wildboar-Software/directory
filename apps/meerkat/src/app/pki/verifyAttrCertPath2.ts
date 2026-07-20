@@ -189,7 +189,7 @@ const extensionMandatoryCriticality: Map<IndexableOID, BOOLEAN> = new Map([
 ]);
 
 function dumbAttributeValueIndexer (value: ASN1Element): string {
-    return Buffer.from(value.toBytes()).toString("hex");
+    return Buffer.from(value.toBytes()).toString("latin1");
 }
 
 const DS_STRING_TAGS = new Set([
@@ -594,44 +594,6 @@ function attributeCertificateWithinNameConstraints(
 }
 
 // TODO: Move to @wildboar/x500 or perhaps @wildboar/pki-stub?
-function isAttributeDescriptorCertFor(ctx: Context, ac: AttributeCertificate): typeof attributeDescriptor["&ExtnType"] | null {
-    if (ac.toBeSigned.attributes.length > 0) {
-        return null;
-    }
-    if (!ac.toBeSigned.extensions?.length) {
-        return null;
-    }
-    // TODO: It might be beneficial to have a separate implementation
-    // that just checks if they are completely identical: none of the
-    // convoluted O(n^2) matching logic.
-    if (!is_acert_issuer(ctx, ac, ac)) {
-        return null; // Not self-signed / self-issued.
-    }
-    const exts = ac.toBeSigned.extensions
-        .filter((ext) => ext.extnId.isEqualTo(attributeDescriptor["&id"]!));
-    if (exts.length !== 1) {
-        return null;
-    }
-    const ext = exts[0];
-    try {
-        const el = new DERElement();
-        const bytesRead = el.fromBytes(ext.extnValue);
-        if (bytesRead !== ext.extnValue.length) {
-            return null;
-        }
-        return attributeDescriptor.decoderFor["&ExtnType"]!(el);
-    } catch {
-        return null;
-    }
-// ITU X.509 (2021), Section 17.3.2.2.1:
-// Although syntactically identical to an
-// AttributeCertificate, an attribute descriptor certificate:
-// –contains an empty SEQUENCE in its attributes component;
-// –is a self-issued certificate (i.e., the issuer and holder are the same entity); and
-// –includes the attribute descriptor extension.
-}
-
-// TODO: Move to @wildboar/x500 or perhaps @wildboar/pki-stub?
 function compareContextLists(
     a: X500Context[],
     b: X500Context[],
@@ -928,6 +890,11 @@ export interface VerifyAttrCertOpts {
 // TODO: Make this function an async iterator?
 // TODO: Add caching
 
+export interface VerifyAttrCertYield {
+    attributeCertificate: AttributeCertificate;
+    pkiPath: PkiPath;
+}
+
 // IETF RFC 5755 can be useful for gleaning information that isn't obvious
 // in ITU Rec. X.509:
 // > Note: [X.509-2000] defines the extension syntax as a "SEQUENCE OF
@@ -947,14 +914,14 @@ export interface VerifyAttrCertOpts {
 // Document: this function does not expand roles. The caller, if needed, must expand roles to permissions.
 // The caller can trust that, if this returns VAC_OK, all roles in the EE attribute certificate are valid, however.
 export
-async function verifyAttrCertPath2 (
+async function* verifyAttrCertPath2 (
     ctx: MeerkatContext,
     userACPath: AttributeCertificationPath,
     userPkiPath: PkiPath,
     soas: TrustAnchorList,
     trustAnchors: TrustAnchorList,
     opts: VerifyAttrCertOpts = {},
-): Promise<number> {
+): AsyncIterableIterator<VerifyAttrCertYield, number> {
     if (soas.length === 0) {
         return VAC_UNTRUSTED_SOA;
     }
@@ -974,7 +941,7 @@ async function verifyAttrCertPath2 (
         timeOfCheck = new Date(),
         previouslyAsserted = false,
         privilegePolicies = undefined,
-        targets = undefined,
+        targets = undefined, // TODO: Use this.
     } = opts;
 
     const [certsBySerialNumberLowerHex, certsByKeyIdLowerHex] = indexCerts(acPath);
@@ -1216,11 +1183,10 @@ async function verifyAttrCertPath2 (
             )
         );
 
-        let exts: Extension[] = current_ac.toBeSigned.extensions ?? [];
         if (!issuer_ac_data) {
             // FIXME: This error does not make sense if we haven't iterated at least once.
             // This means we didn't trust the highest up issuer we found.
-            return exts.some((ext) => ext.extnId.isEqualTo(sOAIdentifier["&id"]!))
+            return current_ac_exts.some((ext) => ext.extnId.isEqualTo(sOAIdentifier["&id"]!))
                 ? VAC_UNTRUSTED_SOA
                 : VAC_NO_SOA_CERT;
         }
@@ -1683,6 +1649,11 @@ async function verifyAttrCertPath2 (
             }
         }
         // #endregion verify_attribute_delegation
+
+        yield {
+            attributeCertificate: current_ac,
+            pkiPath: current_holder_pki_path,
+        };
 
         current_ac = issuer_ac;
         issuer_ac && ordered_path.push([ issuer_ac, issuer_pki_path ]);
