@@ -125,7 +125,7 @@ should be about as fast as Map<string, T>.
 export const VAC_OK: number = 0;
 export const VAC_NOT_BEFORE: number = -1;
 export const VAC_NOT_AFTER: number = -2;
-export const VAC_MISSING_BASE_CERT: number = -3;
+export const VAC_EMPTY_PKI_PATH: number = -3;
 export const VAC_AC_PKC_MISMATCH: number = -4;
 const VAC_UNSUPPORTED_DIGEST: number = -5;
 export const VAC_UNSUPPORTED_DIGESTED_OBJECT: number = -6;
@@ -905,7 +905,7 @@ function verifyAttrCert(
     opts: VerifyAttrCertOpts = {},
     on_end_entity: boolean = false,
 ): number {
-
+    return VAC_OK;
 }
 
 // IETF RFC 5755 can be useful for gleaning information that isn't obvious
@@ -981,7 +981,7 @@ async function* verifyAttrCertPath2 (
         let no_rev_avail = false;
         let authority = false;
         if (current_holder_pki_path.length === 0) {
-            return VAC_MISSING_BASE_CERT; // TODO: Is this the right error?
+            return VAC_EMPTY_PKI_PATH;
         }
         const actbs = current_ac.toBeSigned;
         if (timeOfCheck < actbs.attrCertValidityPeriod.notBeforeTime) {
