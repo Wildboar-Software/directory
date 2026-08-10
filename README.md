@@ -1,4 +1,6 @@
 # Wildboar X.500 Directory Applications
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FWildboar-Software%2Fdirectory.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FWildboar-Software%2Fdirectory?ref=badge_shield)
+
 
 ![Are We Bun Yet?](https://github.com/Wildboar-Software/directory/actions/workflows/bun.yml/badge.svg)
 
@@ -193,3 +195,7 @@ directory:
 - IDM TypeScript Library
 - Meerkat Types TypeScript Library
 - X.500 Directory Studio
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FWildboar-Software%2Fdirectory.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FWildboar-Software%2Fdirectory?ref=badge_large)
