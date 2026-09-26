@@ -3,11 +3,11 @@
 ![Are We Bun Yet?](https://github.com/Wildboar-Software/directory/actions/workflows/bun.yml/badge.svg)
 
 This repository is an [Nx](https://nx.dev) monorepo that houses several projects
-pertaining to X.500 directories. Most of these projects are written in
-[TypeScript](https://www.typescriptlang.org/), but this repo also contains some
-[Go](https://go.dev/), and will eventually contain many other languages. These
-projects are written by [Wildboar Software](https://wildboarsoftware.com/en) and
-are licensed under an MIT license unless otherwise noted.
+pertaining to X.500 directories. Currently, all of these projects are written in
+[TypeScript](https://www.typescriptlang.org/), and will eventually contain many
+other languages. These projects are written by
+[Wildboar Software](https://wildboarsoftware.com/en) and are licensed under an
+MIT license unless otherwise noted.
 
 The primary project in this repository is Meerkat DSA.
 
