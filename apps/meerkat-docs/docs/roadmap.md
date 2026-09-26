@@ -4,31 +4,21 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 3.4.0 - Schema Update ("Wildboar Schema")
-
-This update will introduce thousands of new schema objects defined by Wildboar
-Software into the default schema. This is desirable so that X.500 directories
-can build upon a common framework of mutually-understood schemata, rather than
-"re-inventing the wheel" each in isolation from each other. For instance, there
-may be a desire for X.500 directories to store marital information about users,
-using a `married` auxiliary object class that permits the presence of a
-`spouseDN` attribute in an entry. It would be unfortunate for directory
-administrators everywhere to define their own equivalent object classes, thereby
-duplicating work and reducing inter-domain compatibility.
-
-This change might get lumped in with [Version 4.0.0](#version-400---huge-breaking-update).
-
 ## Version 4.0.0 - Huge Breaking Update
 
 - Use SQLite as the backing data store for better performance and smaller footprint
 - Use Javascript-based configuration (or at least a file format) instead of
   environment variables
-- Use [Pino](https://getpino.io/) for logging
 - Switch to using ESM modules
 - Fix possibly wrong encoding of NSAP addresses
   - (Sorry, it's not like I have a reference implementation to go off of.)
+- Getting rid of Prisma ORM
+- Sigstore Release
+- SBOM
+- Deno runtime (possibly)
+- `strictNullChecks` (somehow this slipped through the cracks)
 
-## Version 4.1.0 - Privacy and Security Features
+## After Version 4.0.0
 
 - TOR Routing
 - I2P Routing
@@ -37,6 +27,22 @@ This change might get lumped in with [Version 4.0.0](#version-400---huge-breakin
 - DNS-over-HTTPS (DoH)
 - DNS-over-QUIC (DoQ)
 - DNSCrypt
+- MCP Server
+- Websockets-based IDM transport
+- CMIP
+- AI-generated language translations
+- i18next Upgrade (I didn't do this before because it didn't work right)
+- New `Name` alternatives (`dnsName`, `oid`)
+- Use HTTPS Agent (small feature that probably doesn't belong on this roadmap)
+- X.510 Protocols
+- Built-in Kerberos
+- Multithreading (if possible)
+- WASM / Native Extensions (if possible)
+- Tracing / Diagnostics Channel Usage
+- NodeJS Permissions Model (if not using Deno)
+- ISO Virtual Terminal (VT) Protocol (just because it is cool)
+- ISO Remote Database Access (RDA) Protocol (again, just because it is cool; disabled by default)
+- ISO Document Filing and Retrieval (DFR) Protocol (again, just because it is cool)
 
 ## Integration, Scalability, and Security
 
@@ -112,6 +118,18 @@ alongside all other phases, but enterprise users will have these features:
   - Generate keypair and cert for an entry
   - Generate attribute certificate for an entry
 - Automation
+
+## Future Version - Schema Update ("Wildboar Schema")
+
+This update will introduce thousands of new schema objects defined by Wildboar
+Software into the default schema. This is desirable so that X.500 directories
+can build upon a common framework of mutually-understood schemata, rather than
+"re-inventing the wheel" each in isolation from each other. For instance, there
+may be a desire for X.500 directories to store marital information about users,
+using a `married` auxiliary object class that permits the presence of a
+`spouseDN` attribute in an entry. It would be unfortunate for directory
+administrators everywhere to define their own equivalent object classes, thereby
+duplicating work and reducing inter-domain compatibility.
 
 ## Never Will Support
 
