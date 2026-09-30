@@ -72,8 +72,10 @@ constructs in `doc/modules`.
 ## Cursor Cloud specific instructions
 
 Meerkat DSA requires the Node.js version in `.nvmrc` (currently 25.2.1) because
-it uses the Argon2 API added in Node.js 24.7. Select that version with nvm
-before `npm`, `npx`, or `node`:
+it uses the Argon2 API added in Node.js 24.7. Cloud Agent shells put
+`/exec-daemon/node` (Node.js 22) ahead of nvm on `PATH`, so a bare `node`
+command is the wrong runtime until nvm's bin directory is first. Select 25
+with nvm before `npm`, `npx`, or `node`:
 
 ```bash
 export NVM_DIR="$HOME/.nvm"
