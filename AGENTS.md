@@ -69,3 +69,55 @@ a Helm chart. Most of these packaging files are located in `pkg/`.
 You can find the ASN.1 modules for the X.500 protocols, schema, and other X.500
 constructs in `doc/modules`.
 
+## Cursor Cloud specific instructions
+
+Meerkat DSA requires the Node.js version in `.nvmrc` (currently 25.2.1) because
+it uses the Argon2 API added in Node.js 24.7. Cloud Agent shells put
+`/exec-daemon/node` (Node.js 22) ahead of nvm on `PATH`, so a bare `node`
+command is the wrong runtime until nvm's bin directory is first. Select 25
+with nvm before `npm`, `npx`, or `node`:
+
+```bash
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+nvm install
+nvm use
+```
+
+From the repository root, refresh dependencies and produce a runnable server
+with:
+
+```bash
+npm ci
+npx prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+npx nx run meerkat:build
+```
+
+The esbuild bundle is `dist/apps/meerkat/main.js`. Start Meerkat from the
+repository root so `dotenv` loads `.env`. Apply migrations first; SQLite
+reports `database is locked` if `prisma migrate deploy` runs while Meerkat
+already has `dev.db` open.
+
+```bash
+export DATABASE_URL="${DATABASE_URL:-file:./dev.db}"
+npx prisma migrate deploy --schema=apps/meerkat/src/prisma/schema.prisma
+node dist/apps/meerkat/main.js start
+```
+
+The checked-in `.env` points SQLite at `file:./dev.db`, LDAP at port 1389, and
+the web administration console at port 18080. `MEERKAT_WEB_ADMIN_USE_TLS=1`
+sends an HSTS header; the console process serves HTTP, so open
+`http://127.0.0.1:18080/`. Credentials are `MEERKAT_WEB_ADMIN_AUTH_USERNAME`
+and `MEERKAT_WEB_ADMIN_AUTH_PASSWORD` in `.env`. Startup creates the root DSE
+when it is missing. Anonymous LDAP bind is enabled in this local file.
+First-level entries can be added immediately. Entries beneath them need a
+subschema administrative area and a governing structure rule, as described in
+`apps/meerkat-docs/docs/tutorial02.md`.
+
+`npx nx run-many --target=test --all` is disabled in `.github/workflows/meerkat.yml`
+because the full suite hangs. Run specific Vitest files instead, for example:
+
+```bash
+npx vitest run --config apps/meerkat/vite.config.ts src/app/matching/equality/uuidMatch.spec.ts
+```
+
