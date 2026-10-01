@@ -46,9 +46,13 @@ invariant(
 
 process.chdir(outputPath);
 
-// Updating the version in "package.json" before publishing
+// Updating the version in "package.json" before publishing.
+// The publish directory is the package itself, so restore package.json
+// after npm publish instead of leaving the version rewrite in the tree.
+let originalPackageJson;
 try {
-    const json = JSON.parse(readFileSync(`package.json`).toString());
+    originalPackageJson = readFileSync(`package.json`);
+    const json = JSON.parse(originalPackageJson.toString());
     json.version = version;
     writeFileSync(`package.json`, JSON.stringify(json, null, 2));
 } catch (e) {
@@ -60,4 +64,10 @@ try {
 }
 
 // Execute "npm publish" to publish
-execSync(`npm publish --access public --tag ${tag}`);
+try {
+    execSync(`npm publish --access public --tag ${tag}`);
+} finally {
+    if (originalPackageJson) {
+        writeFileSync(`package.json`, originalPackageJson);
+    }
+}

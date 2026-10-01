@@ -30,6 +30,17 @@
     "check-updates": "npx npm-check-updates"
   },
   "private": true,
+  "workspaces": [
+    "libs/idm",
+    "libs/ldap-socket",
+    "libs/ocsp-client",
+    "libs/osi-net",
+    "libs/rose-transport",
+    "libs/schema-level-ii",
+    "libs/x500-auth-ts",
+    "libs/x500-cli-config",
+    "libs/x500-client-ts"
+  ],
   "dependencies": {
     "@docusaurus/core": "3.9.2",
     "@docusaurus/plugin-pwa": "3.9.2",

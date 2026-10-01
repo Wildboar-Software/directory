@@ -6,14 +6,22 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}", "{options.outputPath}/src/index.d.ts"],
+            "executor": "nx:run-commands",
+            "outputs": [
+                "{projectRoot}/dist"
+            ],
             "options": {
-                "outputPath": "dist/libs/schema-level-ii",
-                "main": "libs/schema-level-ii/src/index.ts",
-                "tsConfig": "libs/schema-level-ii/tsconfig.lib.json",
-                "assets": ["libs/schema-level-ii/*.md"]
-            }
+                "command": "tsc --build tsconfig.lib.json --pretty",
+                "cwd": "libs/schema-level-ii",
+                "outputPath": "libs/schema-level-ii",
+                "forwardAllArgs": false
+            },
+            "dependsOn": [
+                {
+                    "target": "build",
+                    "dependencies": true
+                }
+            ]
         }
     }
 }

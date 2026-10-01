@@ -1,10 +1,21 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "outDir": "../../dist/out-tsc",
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "tsBuildInfoFile": "./dist/tsconfig.lib.tsbuildinfo",
         "declaration": true,
-        "types": ["node"]
+        "declarationMap": true,
+        "composite": true,
+        "types": [
+            "node"
+        ],
+        // Dependents resolve through workspace package exports, not source paths.
+        "paths": {}
     },
+    "include": [
+        "src/**/*.ts"
+    ],
     "exclude": [
         "**/*.spec.ts",
         "**/*.test.ts",
@@ -20,6 +31,5 @@
         "src/**/*.spec.js",
         "src/**/*.test.jsx",
         "src/**/*.spec.jsx"
-    ],
-    "include": ["**/*.ts"]
+    ]
 }

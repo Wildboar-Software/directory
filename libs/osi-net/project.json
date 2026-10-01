@@ -6,20 +6,22 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
       "outputs": [
-        "{options.outputPath}",
-        "{options.outputPath}/src/index.d.ts"
+        "{projectRoot}/dist"
       ],
       "options": {
-        "outputPath": "dist/libs/osi-net",
-        "tsConfig": "libs/osi-net/tsconfig.lib.json",
-        "packageJson": "libs/osi-net/package.json",
-        "main": "libs/osi-net/src/index.ts",
-        "assets": [
-          "libs/osi-net/*.md"
-        ]
-      }
+        "command": "tsc --build tsconfig.lib.json --pretty",
+        "cwd": "libs/osi-net",
+        "outputPath": "libs/osi-net",
+        "forwardAllArgs": false
+      },
+      "dependsOn": [
+        {
+          "target": "build",
+          "dependencies": true
+        }
+      ]
     },
     "test": {
       "executor": "@nx/vitest:test",

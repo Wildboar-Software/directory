@@ -6,13 +6,15 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}", "{options.outputPath}/src/index.d.ts"],
+            "executor": "nx:run-commands",
+            "outputs": [
+                "{projectRoot}/dist"
+            ],
             "options": {
-                "outputPath": "dist/libs/x500-auth-ts",
-                "main": "libs/x500-auth-ts/src/index.ts",
-                "tsConfig": "libs/x500-auth-ts/tsconfig.lib.json",
-                "assets": ["libs/x500-auth-ts/*.md"]
+                "command": "tsc --build tsconfig.lib.json --pretty",
+                "cwd": "libs/x500-auth-ts",
+                "outputPath": "libs/x500-auth-ts",
+                "forwardAllArgs": false
             },
             "dependsOn": [
                 {

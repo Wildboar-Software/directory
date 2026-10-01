@@ -6,14 +6,22 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}", "{options.outputPath}/src/index.d.ts"],
+            "executor": "nx:run-commands",
+            "outputs": [
+                "{projectRoot}/dist"
+            ],
             "options": {
-                "outputPath": "dist/libs/rose-transport",
-                "main": "libs/rose-transport/src/index.ts",
-                "tsConfig": "libs/rose-transport/tsconfig.lib.json",
-                "assets": ["libs/rose-transport/*.md"]
-            }
+                "command": "tsc --build tsconfig.lib.json --pretty",
+                "cwd": "libs/rose-transport",
+                "outputPath": "libs/rose-transport",
+                "forwardAllArgs": false
+            },
+            "dependsOn": [
+                {
+                    "target": "build",
+                    "dependencies": true
+                }
+            ]
         },
         "publish": {
             "executor": "nx:run-commands",

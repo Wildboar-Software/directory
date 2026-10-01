@@ -6,20 +6,22 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
       "outputs": [
-        "{options.outputPath}",
-        "{options.outputPath}/src/index.d.ts"
+        "{projectRoot}/dist"
       ],
       "options": {
-        "outputPath": "dist/libs/ocsp-client",
-        "tsConfig": "libs/ocsp-client/tsconfig.lib.json",
-        "packageJson": "libs/ocsp-client/package.json",
-        "main": "libs/ocsp-client/src/index.ts",
-        "assets": [
-          "libs/ocsp-client/*.md"
-        ]
-      }
+        "command": "tsc --build tsconfig.lib.json --pretty",
+        "cwd": "libs/ocsp-client",
+        "outputPath": "libs/ocsp-client",
+        "forwardAllArgs": false
+      },
+      "dependsOn": [
+        {
+          "target": "build",
+          "dependencies": true
+        }
+      ]
     },
     "test": {
       "executor": "@nx/vitest:test",

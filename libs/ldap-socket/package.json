@@ -1,8 +1,24 @@
 {
     "name": "@wildboar/ldap-socket",
-    "type": "module",
     "version": "1.0.1",
+    "type": "module",
     "license": "MIT",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist",
+        "!**/*.tsbuildinfo",
+        "LICENSE.txt"
+    ],
     "dependencies": {
         "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.6",
         "@wildboar/ldap": "npm:@jsr/wildboar__ldap@^2.0.1"

@@ -6,15 +6,22 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}", "{options.outputPath}/src/index.d.ts"],
+            "executor": "nx:run-commands",
+            "outputs": [
+                "{projectRoot}/dist"
+            ],
             "options": {
-                "outputPath": "dist/libs/x500-cli-config",
-                "tsConfig": "libs/x500-cli-config/tsconfig.lib.json",
-                "packageJson": "libs/x500-cli-config/package.json",
-                "main": "libs/x500-cli-config/src/index.ts",
-                "assets": ["libs/x500-cli-config/*.md"]
-            }
+                "command": "tsc --build tsconfig.lib.json --pretty",
+                "cwd": "libs/x500-cli-config",
+                "outputPath": "libs/x500-cli-config",
+                "forwardAllArgs": false
+            },
+            "dependsOn": [
+                {
+                    "target": "build",
+                    "dependencies": true
+                }
+            ]
         }
     }
 }
