@@ -4,7 +4,7 @@ import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboa
 import { DistinguishedName, _decode_DistinguishedName, _encode_DistinguishedName } from "@wildboar/x500/InformationFramework";
 import { distinguishedNameMatch } from "@wildboar/x500/InformationFramework";
 import { dn } from "@wildboar/x500/SelectedAttributeTypes";
-import { id_at_voPersonCertificateDN } from "../VOPerson/id-at-voPersonCertificateDN.va";
+import { id_at_voPersonCertificateDN } from "../VOPerson/id-at-voPersonCertificateDN.va.js";
 
 
 

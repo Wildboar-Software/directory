@@ -5,7 +5,7 @@ import {
     ASN1Element as _Element
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { HardwareSerialEntry_block, _decode_HardwareSerialEntry_block, _encode_HardwareSerialEntry_block } from "../CMSFirmwareWrapper/HardwareSerialEntry-block.ta";
+import { HardwareSerialEntry_block, _decode_HardwareSerialEntry_block, _encode_HardwareSerialEntry_block } from "../CMSFirmwareWrapper/HardwareSerialEntry-block.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION HardwareSerialEntry */

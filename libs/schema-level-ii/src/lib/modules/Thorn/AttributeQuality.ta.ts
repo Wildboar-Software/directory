@@ -5,8 +5,8 @@ import {
     OPTIONAL
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { _decode_AttributeQuality_attribute_completeness, _encode_AttributeQuality_attribute_completeness, _enum_for_AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */ } from "../Thorn/AttributeQuality-attribute-completeness.ta";
-import { _decode_AttributeQuality_maintenance_level, _encode_AttributeQuality_maintenance_level, _enum_for_AttributeQuality_maintenance_level, AttributeQuality_maintenance_level } from "../Thorn/AttributeQuality-maintenance-level.ta";
+import { _decode_AttributeQuality_attribute_completeness, _encode_AttributeQuality_attribute_completeness, _enum_for_AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */ } from "../Thorn/AttributeQuality-attribute-completeness.ta.js";
+import { _decode_AttributeQuality_maintenance_level, _encode_AttributeQuality_maintenance_level, _enum_for_AttributeQuality_maintenance_level, AttributeQuality_maintenance_level } from "../Thorn/AttributeQuality-maintenance-level.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION AttributeQuality */

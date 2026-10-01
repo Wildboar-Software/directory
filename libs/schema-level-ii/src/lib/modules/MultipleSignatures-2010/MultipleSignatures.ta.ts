@@ -5,10 +5,10 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
-import { ESSCertIDv2, _decode_ESSCertIDv2, _encode_ESSCertIDv2 } from "../MultipleSignatures-2010/ESSCertIDv2.ta";
-import { SignAttrsHash, _decode_SignAttrsHash, _encode_SignAttrsHash } from "../MultipleSignatures-2010/SignAttrsHash.ta";
-import { SignatureAlgorithmIdentifier, _decode_SignatureAlgorithmIdentifier, _encode_SignatureAlgorithmIdentifier } from "../MultipleSignatures-2010/SignatureAlgorithmIdentifier.ta";
+import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta.js";
+import { ESSCertIDv2, _decode_ESSCertIDv2, _encode_ESSCertIDv2 } from "../MultipleSignatures-2010/ESSCertIDv2.ta.js";
+import { SignAttrsHash, _decode_SignAttrsHash, _encode_SignAttrsHash } from "../MultipleSignatures-2010/SignAttrsHash.ta.js";
+import { SignatureAlgorithmIdentifier, _decode_SignatureAlgorithmIdentifier, _encode_SignatureAlgorithmIdentifier } from "../MultipleSignatures-2010/SignatureAlgorithmIdentifier.ta.js";
 
 
 

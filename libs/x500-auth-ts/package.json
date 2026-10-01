@@ -1,5 +1,6 @@
 {
     "name": "@wildboar/x500-auth",
+    "type": "module",
     "version": "0.2.2",
     "license": "MIT",
     "dependencies": {

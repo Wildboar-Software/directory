@@ -3,7 +3,7 @@ import {
     ASN1Element as _Element
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { CommunityIdentifier, _decode_CommunityIdentifier, _encode_CommunityIdentifier } from "../CMSFirmwareWrapper/CommunityIdentifier.ta";
+import { CommunityIdentifier, _decode_CommunityIdentifier, _encode_CommunityIdentifier } from "../CMSFirmwareWrapper/CommunityIdentifier.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION CommunityIdentifiers */

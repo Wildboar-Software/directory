@@ -7,7 +7,7 @@ import {
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { id_deviceOwner } from "../DeviceOwnerAttribute-2008/id-deviceOwner.va";
+import { id_deviceOwner } from "../DeviceOwnerAttribute-2008/id-deviceOwner.va.js";
 
 
 

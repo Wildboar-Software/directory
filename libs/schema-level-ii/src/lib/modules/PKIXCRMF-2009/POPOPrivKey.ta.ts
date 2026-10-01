@@ -6,8 +6,8 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { PKMACValue, _decode_PKMACValue, _encode_PKMACValue } from "../PKIXCRMF-2009/PKMACValue.ta";
-import { SubsequentMessage, _decode_SubsequentMessage, _encode_SubsequentMessage } from "../PKIXCRMF-2009/SubsequentMessage.ta";
+import { PKMACValue, _decode_PKMACValue, _encode_PKMACValue } from "../PKIXCRMF-2009/PKMACValue.ta.js";
+import { SubsequentMessage, _decode_SubsequentMessage, _encode_SubsequentMessage } from "../PKIXCRMF-2009/SubsequentMessage.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION POPOPrivKey */

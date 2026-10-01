@@ -4,7 +4,7 @@ import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboa
 import { UnboundedDirectoryString, _decode_UnboundedDirectoryString, _encode_UnboundedDirectoryString } from "@wildboar/x500/SelectedAttributeTypes";
 import { caseExactMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { directoryString } from "@wildboar/x500/SelectedAttributeTypes";
-import { id_at_eduCourseMember } from "../EduCourseSchema/id-at-eduCourseMember.va";
+import { id_at_eduCourseMember } from "../EduCourseSchema/id-at-eduCourseMember.va.js";
 
 
 

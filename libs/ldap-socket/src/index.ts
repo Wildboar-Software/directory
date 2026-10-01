@@ -1,2 +1,2 @@
-export * from "./lib/LDAPSocket";
-export * from "./lib/LDAPSocketOptions";
+export * from "./lib/LDAPSocket.js";
+export * from "./lib/LDAPSocketOptions.js";

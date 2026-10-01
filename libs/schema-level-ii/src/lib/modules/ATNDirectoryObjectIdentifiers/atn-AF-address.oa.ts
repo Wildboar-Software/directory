@@ -9,7 +9,7 @@ import {
     PrintableString
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { id_at_atn_AF_address } from "../ATNDirectoryObjectIdentifiers/id-at-atn-AF-address.va";
+import { id_at_atn_AF_address } from "../ATNDirectoryObjectIdentifiers/id-at-atn-AF-address.va.js";
 
 
 /* START_OF_SYMBOL_DEFINITION atn_AF_address */

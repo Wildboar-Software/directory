@@ -6,7 +6,7 @@ import {
     PrintableString
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { _decode_DSAQualitySyntax_serviceQuality, _encode_DSAQualitySyntax_serviceQuality, _enum_for_DSAQualitySyntax_serviceQuality, DSAQualitySyntax_serviceQuality } from "../Thorn/DSAQualitySyntax-serviceQuality.ta";
+import { _decode_DSAQualitySyntax_serviceQuality, _encode_DSAQualitySyntax_serviceQuality, _enum_for_DSAQualitySyntax_serviceQuality, DSAQualitySyntax_serviceQuality } from "../Thorn/DSAQualitySyntax-serviceQuality.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION DSAQualitySyntax */

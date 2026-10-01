@@ -8,7 +8,7 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { POPOSigningKeyInput, _decode_POPOSigningKeyInput, _encode_POPOSigningKeyInput } from "../PKIXCRMF-2009/POPOSigningKeyInput.ta";
+import { POPOSigningKeyInput, _decode_POPOSigningKeyInput, _encode_POPOSigningKeyInput } from "../PKIXCRMF-2009/POPOSigningKeyInput.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION POPOSigningKey */

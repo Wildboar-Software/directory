@@ -1,5 +1,6 @@
 {
     "name": "@wildboar/ldap-socket",
+    "type": "module",
     "version": "1.0.1",
     "license": "MIT",
     "dependencies": {

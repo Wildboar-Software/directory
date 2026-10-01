@@ -3,12 +3,12 @@ import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
 import { auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { top } from "@wildboar/x500/InformationFramework";
 import { commonName } from "@wildboar/x500/SelectedAttributeTypes";
-import { eduOrgHomePageURI } from "../EduOrgSchema/eduOrgHomePageURI.oa";
-import { eduOrgIdentityAuthNPolicyURI } from "../EduOrgSchema/eduOrgIdentityAuthNPolicyURI.oa";
-import { eduOrgLegalName } from "../EduOrgSchema/eduOrgLegalName.oa";
-import { eduOrgSuperiorURI } from "../EduOrgSchema/eduOrgSuperiorURI.oa";
-import { eduOrgWhitePagesURI } from "../EduOrgSchema/eduOrgWhitePagesURI.oa";
-import { id_oc_eduOrg } from "../EduOrgSchema/id-oc-eduOrg.va";
+import { eduOrgHomePageURI } from "../EduOrgSchema/eduOrgHomePageURI.oa.js";
+import { eduOrgIdentityAuthNPolicyURI } from "../EduOrgSchema/eduOrgIdentityAuthNPolicyURI.oa.js";
+import { eduOrgLegalName } from "../EduOrgSchema/eduOrgLegalName.oa.js";
+import { eduOrgSuperiorURI } from "../EduOrgSchema/eduOrgSuperiorURI.oa.js";
+import { eduOrgWhitePagesURI } from "../EduOrgSchema/eduOrgWhitePagesURI.oa.js";
+import { id_oc_eduOrg } from "../EduOrgSchema/id-oc-eduOrg.va.js";
 
 
 

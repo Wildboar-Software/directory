@@ -3,7 +3,7 @@ import {
     ASN1Element as _Element
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta";
+import { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION CertReq */

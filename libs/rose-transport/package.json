@@ -1,5 +1,6 @@
 {
     "name": "@wildboar/rose-transport",
+    "type": "module",
     "version": "1.2.1",
     "license": "MIT",
     "dependencies": {

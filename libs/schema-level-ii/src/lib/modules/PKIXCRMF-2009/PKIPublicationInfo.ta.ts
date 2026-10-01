@@ -5,8 +5,8 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { PKIPublicationInfo_action, _decode_PKIPublicationInfo_action, _encode_PKIPublicationInfo_action } from "../PKIXCRMF-2009/PKIPublicationInfo-action.ta";
-import { SinglePubInfo, _decode_SinglePubInfo, _encode_SinglePubInfo } from "../PKIXCRMF-2009/SinglePubInfo.ta";
+import { PKIPublicationInfo_action, _decode_PKIPublicationInfo_action, _encode_PKIPublicationInfo_action } from "../PKIXCRMF-2009/PKIPublicationInfo-action.ta.js";
+import { SinglePubInfo, _decode_SinglePubInfo, _encode_SinglePubInfo } from "../PKIXCRMF-2009/SinglePubInfo.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION PKIPublicationInfo */

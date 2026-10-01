@@ -2,8 +2,8 @@
 import { mhs_user_agent } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
 import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa";
-import { id_oc_atn_AmhsUserAgent } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsUserAgent.va";
+import { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa.js";
+import { id_oc_atn_AmhsUserAgent } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsUserAgent.va.js";
 
 
 

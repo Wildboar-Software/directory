@@ -1,5 +1,6 @@
 {
     "name": "@wildboar/x500-client-ts",
+    "type": "module",
     "version": "1.1.2",
     "license": "MIT",
     "dependencies": {

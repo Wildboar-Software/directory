@@ -3,7 +3,7 @@ import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
-import { id_aca } from "./id-aca.va";
+import { id_aca } from "./id-aca.va.js";
 
 /* START_OF_SYMBOL_DEFINITION id_aca_wlanSSID */
 /**

@@ -7,7 +7,7 @@
     "targets": {
         "build": {
             "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}"],
+            "outputs": ["{options.outputPath}", "{options.outputPath}/src/index.d.ts"],
             "options": {
                 "outputPath": "dist/libs/x500-cli-config",
                 "tsConfig": "libs/x500-cli-config/tsconfig.lib.json",

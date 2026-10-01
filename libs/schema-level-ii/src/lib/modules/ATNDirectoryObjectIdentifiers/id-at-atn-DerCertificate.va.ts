@@ -3,7 +3,7 @@ import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
-import { id_at } from "../ATNDirectoryObjectIdentifiers/id-at.va";
+import { id_at } from "../ATNDirectoryObjectIdentifiers/id-at.va.js";
 
 
 /* START_OF_SYMBOL_DEFINITION id_at_atn_DerCertificate */

@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { CommunityIdentifiers, _decode_CommunityIdentifiers, _encode_CommunityIdentifiers } from "../CMSFirmwareWrapper/CommunityIdentifiers.ta";
-import { id_aa_communityIdentifiers } from "../CMSFirmwareWrapper/id-aa-communityIdentifiers.va";
+import { CommunityIdentifiers, _decode_CommunityIdentifiers, _encode_CommunityIdentifiers } from "../CMSFirmwareWrapper/CommunityIdentifiers.ta.js";
+import { id_aa_communityIdentifiers } from "../CMSFirmwareWrapper/id-aa-communityIdentifiers.va.js";
 
 
 

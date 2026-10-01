@@ -8,8 +8,8 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
-import { Hash, _decode_Hash, _encode_Hash } from "../MultipleSignatures-2010/Hash.ta";
+import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta.js";
+import { Hash, _decode_Hash, _encode_Hash } from "../MultipleSignatures-2010/Hash.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION ESSCertIDv2 */
