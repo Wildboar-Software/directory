@@ -6,22 +6,20 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "nx:run-commands",
+            "executor": "@nx/js:tsc",
             "outputs": [
-                "{projectRoot}/dist"
+                "{options.outputPath}",
+                "{options.outputPath}/src/index.d.ts"
             ],
             "options": {
-                "command": "tsc --build tsconfig.lib.json --pretty",
-                "cwd": "libs/idm",
-                "outputPath": "libs/idm",
-                "forwardAllArgs": false
-            },
-            "dependsOn": [
-                {
-                    "target": "build",
-                    "dependencies": true
-                }
-            ]
+                "outputPath": "dist/libs/idm",
+                "tsConfig": "libs/idm/tsconfig.lib.json",
+                "packageJson": "libs/idm/package.json",
+                "main": "libs/idm/src/index.ts",
+                "assets": [
+                    "libs/idm/*.md"
+                ]
+            }
         }
     }
 }

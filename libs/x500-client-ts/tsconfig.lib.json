@@ -1,21 +1,11 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "rootDir": "./src",
-        "outDir": "./dist",
-        "tsBuildInfoFile": "./dist/tsconfig.lib.tsbuildinfo",
+        "outDir": "../../dist/out-tsc",
         "declaration": true,
-        "declarationMap": true,
-        "composite": true,
-        "types": [
-            "node"
-        ],
-        // Dependents resolve through workspace package exports, not source paths.
-        "paths": {}
+        "types": ["node"]
     },
-    "include": [
-        "src/**/*.ts"
-    ],
+    "include": ["**/*.ts"],
     "exclude": [
         "**/*.spec.ts",
         "**/*.test.ts",
@@ -31,16 +21,5 @@
         "src/**/*.spec.js",
         "src/**/*.test.jsx",
         "src/**/*.spec.jsx"
-    ],
-    "references": [
-        {
-            "path": "../idm/tsconfig.lib.json"
-        },
-        {
-            "path": "../osi-net/tsconfig.lib.json"
-        },
-        {
-            "path": "../rose-transport/tsconfig.lib.json"
-        }
     ]
 }

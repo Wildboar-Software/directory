@@ -27,7 +27,6 @@ debian/meerkat-dsa.substvars
 
 # compiled output
 /dist
-libs/*/dist
 /tmp
 /out-tsc
 

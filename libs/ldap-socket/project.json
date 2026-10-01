@@ -6,22 +6,20 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "nx:run-commands",
+            "executor": "@nx/js:tsc",
             "outputs": [
-                "{projectRoot}/dist"
+                "{options.outputPath}",
+                "{options.outputPath}/src/index.d.ts"
             ],
             "options": {
-                "command": "tsc --build tsconfig.lib.json --pretty",
-                "cwd": "libs/ldap-socket",
-                "outputPath": "libs/ldap-socket",
-                "forwardAllArgs": false
-            },
-            "dependsOn": [
-                {
-                    "target": "build",
-                    "dependencies": true
-                }
-            ]
+                "outputPath": "dist/libs/ldap-socket",
+                "tsConfig": "libs/ldap-socket/tsconfig.lib.json",
+                "packageJson": "libs/ldap-socket/package.json",
+                "main": "libs/ldap-socket/src/index.ts",
+                "assets": [
+                    "libs/ldap-socket/*.md"
+                ]
+            }
         }
     }
 }
