@@ -1,220 +1,183 @@
 import type { Buffer } from "node:buffer";
 import type { Context, Connection } from "../types.js";
-import {
-    IDM_PDU,
-    _encode_IDM_PDU,
-} from "@wildboar/x500/IDMProtocolSpecification";
-import {
-    IdmBind,
-} from "@wildboar/x500/IDMProtocolSpecification";
-import {
-    Request as IdmRequest,
-} from "@wildboar/x500/IDMProtocolSpecification";
-import {
-    DSABindArgument,
-    _encode_DSABindArgument,
-} from "@wildboar/x500/DistributedOperations";
-import type {
-    Credentials,
-} from "@wildboar/x500/DirectoryAbstractService";
+import type { Request } from "@wildboar/x500";
+import type { ResultOrError } from "@wildboar/x500";
 import {
     SimpleCredentials,
+    StrongCredentials,
+    Token,
+    TokenContent,
+    _encode_TokenContent,
+    DirectoryBindArgument,
+    type Credentials,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
-    StrongCredentials,
-} from "@wildboar/x500/DirectoryAbstractService";
+    DSABindArgument,
+    type DSACredentials,
+} from "@wildboar/x500/DistributedOperations";
 import {
     AttributeCertificationPath,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
-    CertificationData,
-    SPKM_REQ,
-} from "@wildboar/x500/SpkmGssTokens";
-import {
-    REQ_TOKEN, Req_contents, _encode_Req_contents,
-} from "@wildboar/x500/SpkmGssTokens";
-import {
-    Token,
-} from "@wildboar/x500/DirectoryAbstractService";
-import {
-    TokenContent,
-    _encode_TokenContent,
-} from "@wildboar/x500/DirectoryAbstractService";
-import type { Request } from "@wildboar/x500";
-import type { ResultOrError } from "@wildboar/x500";
-import * as net from "node:net";
-import * as tls from "node:tls";
-import { EventEmitter } from "node:events";
-import { IDMConnection } from "@wildboar/idm";
-import { URL } from "node:url";
-import * as crypto from "node:crypto";
-import destringifyDN from "../utils/destringifyDN.js";
-import generateSimpleCredsValidity from "../utils/generateSimpleCredsValidity.js";
-import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
-import { strict as assert } from "node:assert";
-import { DER } from "@wildboar/asn1/functional";
-import { OBJECT_IDENTIFIER, TRUE_BIT, unpackBits } from "@wildboar/asn1";
-import {
     CertificationPath,
-} from "@wildboar/x500/AuthenticationFramework";
-import {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
-import { KeyObject, sign, createSign } from "node:crypto";
-import { getAlgorithmInfoFromKey } from "../crypto/getAlgorithmInfoFromKey.js";
 import { DistinguishedName } from "@wildboar/x500/InformationFramework";
-import { addSeconds, addYears } from "date-fns";
-import { Name } from "@wildboar/pki-stub";
-import { Context_Data } from "@wildboar/x500/SpkmGssTokens";
-import { Validity } from "@wildboar/pki-stub";
-import {
-    CertificationPath as SpkmCertificationPath,
-} from "@wildboar/x500/SpkmGssTokens";
-import { ConfigDSA } from "@wildboar/x500-cli-config";
+import { dap_ip, dsp_ip, dop_ip, disp_ip } from "@wildboar/x500/DirectoryIDMProtocols";
+import { TRUE_BIT, OBJECT_IDENTIFIER, unpackBits } from "@wildboar/asn1";
+import { DER } from "@wildboar/asn1/functional";
+import { KeyObject, randomBytes, sign, createSign } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { EventEmitter } from "node:events";
+import type { TLSSocketOptions } from "node:tls";
+import { strict as assert } from "node:assert";
+import { addSeconds } from "date-fns";
+import { URL } from "node:url";
+import type { ConfigAccessPoint, ConfigDSA } from "@wildboar/x500-cli-config";
+import {
+    abortReasonToString,
+    rejectReasonToString,
+    type AsyncROSEClient,
+    type BindOutcome,
+} from "@wildboar/rose-transport";
+import {
+    create_dap_client,
+    create_disp_client,
+    create_dop_client,
+    create_dsp_client,
+    generateUnusedInvokeId,
+    rose_from_url,
+} from "@wildboar/x500-client-ts";
+import destringifyDN from "../utils/destringifyDN.js";
+import generateSimpleCredsValidity from "../utils/generateSimpleCredsValidity.js";
+import { getAlgorithmInfoFromKey } from "../crypto/getAlgorithmInfoFromKey.js";
 
-// I created this function for testing SPKM auth. Tested and works.
-// I am keeping this around in case I want to integrate it later.
-function createSpkmCreds (
-    certPath: CertificationPath,
-    signingKey: KeyObject,
-    targ_name: Name,
-): SPKM_REQ | null {
-    const subjectName = certPath.userCertificate.toBeSigned.subject;
-    const alg_info = getAlgorithmInfoFromKey(signingKey);
-    if (!alg_info) {
-        return null;
-    }
-    const req_contents = new Req_contents(
-        256,
-        unpackBits(crypto.randomBytes(4)),
-        new Uint8ClampedArray([ TRUE_BIT ]),
-        new Date(),
-        unpackBits(crypto.randomBytes(4)),
-        targ_name,
-        subjectName,
-        new Context_Data(
-            undefined,
-            undefined,
-            new Uint8ClampedArray([
+const ASSOCIATION_TIMEOUT_MS: number = 30_000;
 
-            ]),
-            {
-                null_: null,
-            },
-            [],
-            [],
-        ),
-        new Validity(
-            { generalizedTime: new Date() },
-            { generalizedTime: addYears(new Date(), 1) },
-        ),
-        [],
-        undefined,
-        undefined,
-    );
+/**
+ * @summary A directory bind was attempted and the peer rejected it.
+ * @description
+ *
+ * Thrown when `@wildboar/x500-client-ts` reports a bind error outcome, which
+ * is how authentication failures are signaled on a directory association.
+ */
+export class DirectoryBindRejected extends Error {
+    public constructor () {
+        super("Directory bind was rejected.");
+        this.name = "DirectoryBindRejected";
+    }
+}
 
-    const [ sig_alg_id, hash_str ] = alg_info;
-    const tbs_bytes = _encode_Req_contents(req_contents, DER).toBytes();
-    let token: REQ_TOKEN | undefined;
-    if (hash_str) {
-        const signer = createSign(hash_str);
-        signer.update(tbs_bytes);
-        const signature = signer.sign(signingKey);
-        token = new REQ_TOKEN(
-            req_contents,
-            sig_alg_id,
-            unpackBits(signature),
-        );
-    } else {
-        const signature = sign(null, tbs_bytes, signingKey);
-        token = new REQ_TOKEN(
-            req_contents,
-            sig_alg_id,
-            unpackBits(signature),
-        );
+function directoryAETitle (dn: DistinguishedName) {
+    return {
+        directoryName: {
+            rdnSequence: dn,
+        },
+    };
+}
+
+function createBoundClient (
+    protocol: OBJECT_IDENTIFIER,
+    rose: NonNullable<ReturnType<typeof rose_from_url>>,
+    credentials: Credentials,
+    commonBind: {
+        protocol_id: OBJECT_IDENTIFIER;
+        calling_ae_title?: ReturnType<typeof directoryAETitle>;
+        called_ae_title?: ReturnType<typeof directoryAETitle>;
+        implementation_information: string;
+        timeout: number;
+    },
+): {
+    client: Pick<AsyncROSEClient, "request" | "unbind">;
+    bind: Promise<BindOutcome<unknown>>;
+} {
+    const versions = new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT ]);
+    if (protocol.isEqualTo(dsp_ip["&id"]!)) {
+        const client = create_dsp_client(rose);
+        return {
+            client,
+            bind: client.bind({
+                ...commonBind,
+                parameter: new DSABindArgument(credentials as DSACredentials, versions),
+            }),
+        };
     }
-    if (!token) {
-        return null;
+    if (protocol.isEqualTo(dop_ip["&id"]!)) {
+        const client = create_dop_client(rose);
+        return {
+            client,
+            bind: client.bind({
+                ...commonBind,
+                parameter: new DSABindArgument(credentials as DSACredentials, versions),
+            }),
+        };
     }
-    return new SPKM_REQ(
-        token,
-        new CertificationData(
-            new SpkmCertificationPath(
-                undefined,
-                certPath.userCertificate,
-                undefined,
-                undefined,
-                certPath.theCACertificates,
-            ),
-        ),
-        undefined,
-    );
+    if (protocol.isEqualTo(disp_ip["&id"]!)) {
+        const client = create_disp_client(rose);
+        return {
+            client,
+            bind: client.bind({
+                ...commonBind,
+                parameter: new DSABindArgument(credentials as DSACredentials, versions),
+            }),
+        };
+    }
+    const client = create_dap_client(rose);
+    return {
+        client,
+        bind: client.bind({
+            ...commonBind,
+            parameter: new DirectoryBindArgument(credentials, versions),
+        }),
+    };
+}
+
+function bindFailureMessage (hostURL: string, outcome: BindOutcome<unknown>): string {
+    if ("abort" in outcome) {
+        return `Bind to ${hostURL} aborted (${abortReasonToString(outcome.abort)}).`;
+    }
+    if ("timeout" in outcome) {
+        return `Bind to ${hostURL} timed out.`;
+    }
+    if ("other" in outcome) {
+        const message = outcome.other.message;
+        return `Bind to ${hostURL} failed${typeof message === "string" ? `: ${message}` : "."}`;
+    }
+    return `Bind to ${hostURL} failed.`;
 }
 
 export
 async function connect (
     ctx: Context,
-    dsa: ConfigDSA,
+    dsa: ConfigDSA | undefined,
     hostURL: string,
     bindDN: string,
     password?: Buffer,
     protocol: OBJECT_IDENTIFIER = dap_ip["&id"]!,
     certPath?: CertificationPath,
     signingKey?: KeyObject | null,
-    aeTitle?: DistinguishedName,
+    calledAETitle?: DistinguishedName,
     attrCertPath?: AttributeCertificationPath,
-    // TODO: Config file
-): Promise<Connection | undefined> {
-    const bindDN_ = destringifyDN(ctx, bindDN ?? "");
+    callingAETitle?: DistinguishedName,
+    accessPoint?: ConfigAccessPoint,
+): Promise<Connection> {
     const url = new URL(hostURL);
-    let socket = net.createConnection({
-        host: url.hostname,
-        port: url.port
-            ? Number.parseInt(url.port)
-            : 102,
-    });
-    socket.on("error", (e) => {
-        console.error(e);
-        process.exit(192);
-    });
-    socket.on("lookup", (err, addr, fam, host) => {
-        if (err) {
-            console.error(`Lookup error: ${err} ${addr} ${fam} ${host}`);
-            process.exit(53);
-        }
-        ctx.log.debug(`Resolved host '${host}' to ${addr}.`);
-    });
-    socket.on("timeout", () => {
-        console.error("Socket timeout");
-        process.exit(2359);
-    });
-    if (url.protocol.replace(":", "").toLowerCase().endsWith("s")) {
-        socket = new tls.TLSSocket(socket, {
-            rejectUnauthorized: true,
-            ca: dsa.ca,
-            crl: dsa.crl,
-            cert: dsa.tlsCertChain
-                ? await readFile(dsa.tlsCertChain, { encoding: "utf-8" })
-                : undefined,
-            key: dsa.tlsKey
-                ? await readFile(dsa.tlsKey, { encoding: "utf-8" })
-                : undefined,
-        });
-        // FIXME: Check .authorized!
+    if (!url.port) {
+        url.port = "102";
     }
+    const bindDN_ = destringifyDN(ctx, bindDN ?? "");
     let token: Token | undefined;
-    if (signingKey && certPath && aeTitle) {
+    if (signingKey && certPath && calledAETitle) {
         const alg_info = getAlgorithmInfoFromKey(signingKey);
         if (alg_info) {
             const [ sig_alg_id, hash_str ] = alg_info;
             const token_content = new TokenContent(
                 sig_alg_id,
-                aeTitle,
+                calledAETitle,
                 {
                     generalizedTime: addSeconds(new Date(), 60),
                 },
-                unpackBits(crypto.randomBytes(4)),
+                unpackBits(randomBytes(4)),
             );
             const tbs_bytes = _encode_TokenContent(token_content, DER).toBytes();
             if (hash_str) {
@@ -242,123 +205,147 @@ async function connect (
     }
 
     const eeCert = certPath?.userCertificate;
-    const idm = new IDMConnection(socket);
-    { // Bind
-        // const spkmCreds = certPath
-        //     && signingKey
-        //     && aeTitle
-        //     && createSpkmCreds(certPath, signingKey, { rdnSequence: aeTitle });
-        const credentials: Credentials = token
-            ? {
-                strong: new StrongCredentials(
-                    certPath,
-                    token,
-                    eeCert?.toBeSigned.subject.rdnSequence,
-                    attrCertPath,
-                ),
-                // spkm: {
-                //     req: spkmCreds,
-                // }
-            }
-            : {
-                simple: new SimpleCredentials(
-                    bindDN_,
-                    generateSimpleCredsValidity(),
-                    password
-                        ? {
-                            /**
-                             * It seems like the password must be transmitted in the
-                             * clear, because there is no way for us to know how the
-                             * DSA stores passwords.
-                             *
-                             * // TODO: Allow user to specify hashing algorithm.
-                             * // TODO: Expose what algorithm the DSA uses in the root DSE.
-                             */
-                            unprotected: password,
-                        }
-                        : undefined,
-                ),
-            };
-        const pdu: IDM_PDU = {
-            bind: new IdmBind(
-                protocol,
-                {
-                    directoryName: {
-                        rdnSequence: [], // FIXME:
-                    },
-                },
-                {
-                    directoryName: {
-                        rdnSequence: [], // FIXME:
-                    },
-                },
-                _encode_DSABindArgument(new DSABindArgument(
-                    credentials,
-                    // {
-                    //     externalProcedure: new External(
-                    //         ObjectIdentifier.fromParts([ 1, 3, 6, 1, 4, 1, 56490, 401, 1 ]),
-                    //         undefined,
-                    //         undefined,
-                    //         _encodeNull(null, DER),
-                    //     ),
-                    // },
-                    new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT ]), // v1 and v2
-                ), DER),
+    const credentials: Credentials = token
+        ? {
+            strong: new StrongCredentials(
+                certPath,
+                token,
+                eeCert?.toBeSigned.subject.rdnSequence,
+                attrCertPath,
+            ),
+        }
+        : {
+            simple: new SimpleCredentials(
+                bindDN_,
+                generateSimpleCredsValidity(),
+                password
+                    ? {
+                        unprotected: password,
+                    }
+                    : undefined,
             ),
         };
-        const encoded = _encode_IDM_PDU(pdu, DER);
-        await new Promise((resolve, reject) => {
-            idm.events.once("bindError", (err) => {
-                reject(err);
-            });
-            idm.events.once("bindResult", (result) => {
-                resolve(result);
-            });
-            idm.write(encoded.toBytes());
-        });
+
+    const tlsOptions: TLSSocketOptions = {
+        rejectUnauthorized: accessPoint?.["insecure-skip-tls-verify"] !== true,
+        ca: accessPoint?.["certificate-authority"] ?? dsa?.ca,
+        crl: dsa?.crl,
+        cert: dsa?.tlsCertChain
+            ? await readFile(dsa.tlsCertChain, { encoding: "utf-8" })
+            : undefined,
+        key: dsa?.tlsKey
+            ? await readFile(dsa.tlsKey, { encoding: "utf-8" })
+            : undefined,
+    };
+    const rose = rose_from_url(url, undefined, undefined, tlsOptions, ASSOCIATION_TIMEOUT_MS);
+    if (!rose) {
+        throw new Error(`Unrecognized directory URL: ${url.toString()}`);
     }
+    rose.socket?.on("error", (e: Error) => {
+        ctx.log.debug(`Socket error while connecting to ${url.toString()}: ${e.message}`);
+        // ROSE waits on "end" for bind and operation timeouts. A socket error
+        // does not emit "end", so signal it to settle anything still in flight.
+        rose.socket?.emit("end");
+    });
+    rose.socket?.on("lookup", (err, addr, fam, host) => {
+        if (err) {
+            ctx.log.debug(`Lookup error: ${err.message} ${addr} ${fam} ${host}`);
+            return;
+        }
+        ctx.log.debug(`Resolved host '${host}' to ${addr}.`);
+    });
+
+    const { client, bind: bindPromise } = createBoundClient(protocol, rose, credentials, {
+        protocol_id: protocol,
+        calling_ae_title: callingAETitle ? directoryAETitle(callingAETitle) : undefined,
+        called_ae_title: calledAETitle ? directoryAETitle(calledAETitle) : undefined,
+        implementation_information: "@wildboar/x500-cli",
+        timeout: ASSOCIATION_TIMEOUT_MS,
+    });
+    const abandon = (): void => {
+        // `end` settles the in-flight bind and clears its timer. `destroy`
+        // then releases the socket when the peer never sends a bind response.
+        rose.socket?.emit("end");
+        rose.socket?.destroy();
+    };
+    const outcome = await new Promise<BindOutcome<unknown>>((resolve, reject) => {
+        const onError = (error: Error): void => {
+            rose.socket?.off("error", onError);
+            reject(error);
+        };
+        rose.socket?.once("error", onError);
+        bindPromise.then((value) => {
+            rose.socket?.off("error", onError);
+            resolve(value);
+        }, (error: unknown) => {
+            rose.socket?.off("error", onError);
+            reject(error);
+        });
+    }).catch((error: unknown) => {
+        abandon();
+        throw error;
+    });
+
+    if ("error" in outcome) {
+        abandon();
+        throw new DirectoryBindRejected();
+    }
+    if (!("result" in outcome)) {
+        abandon();
+        throw new Error(bindFailureMessage(hostURL, outcome));
+    }
+
     const ret: Connection = {
         writeOperation: async (req: Omit<Request, "invokeId">): Promise<ResultOrError> => {
             assert(req.opCode);
             assert(req.argument);
-            const invokeID: number = crypto.randomInt(2147483648);
-            const pdu: IDM_PDU = {
-                request: new IdmRequest(invokeID, req.opCode, req.argument),
-            };
-            const encoded = _encode_IDM_PDU(pdu, DER);
-            return new Promise((resolve) => {
-                idm.events.on(invokeID.toString(), (roe: ResultOrError) => {
-                    if ("error" in roe) {
-                        resolve(roe);
-                    } else {
-                        resolve({
-                            invokeId: {
-                                present: invokeID,
-                            },
-                            opCode: req.opCode,
-                            result: roe.result,
-                        });
-                    }
-                });
-                idm.write(encoded.toBytes());
+            const invokeID: number = generateUnusedInvokeId();
+            const operation = await client.request({
+                invoke_id: {
+                    present: invokeID,
+                },
+                code: req.opCode,
+                parameter: req.argument,
             });
+            if ("result" in operation) {
+                return {
+                    invokeId: {
+                        present: invokeID,
+                    },
+                    opCode: req.opCode,
+                    result: operation.result.parameter,
+                };
+            }
+            if ("error" in operation) {
+                return {
+                    invokeId: operation.error.invoke_id,
+                    errcode: operation.error.code,
+                    error: operation.error.parameter,
+                };
+            }
+            ret.events.emit("error", undefined);
+            if ("reject" in operation) {
+                throw new Error(`Directory operation rejected (${rejectReasonToString(operation.reject.problem)}).`);
+            }
+            if ("abort" in operation) {
+                throw new Error(`Directory association aborted (${abortReasonToString(operation.abort)}).`);
+            }
+            if ("timeout" in operation) {
+                throw new Error("Directory operation timed out.");
+            }
+            throw new Error("Directory operation failed.");
         },
         close: async (): Promise<void> => {
-            idm.close();
+            await client.unbind({
+                timeout: 2_000,
+                disconnectSocket: true,
+            });
+            rose.socket?.destroy();
         },
         events: new EventEmitter(),
     };
-    // idm.events.on("error_", (e) => {
-    //     console.error(e);
-    //     ret.events.emit("error", undefined);
-    // });
-    idm.events.on("reject", () => {
+    rose.events.on("abort", () => {
         ret.events.emit("error", undefined);
-        // console.log("REJECTED.");
-    });
-    idm.events.on("abort", () => {
-        ret.events.emit("error", undefined);
-        // console.log("ABORTED.");
     });
     return ret;
 }
