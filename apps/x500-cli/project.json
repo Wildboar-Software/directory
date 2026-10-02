@@ -43,6 +43,12 @@
             "options": {
                 "buildTarget": "x500-cli:build"
             }
+        },
+        "test": {
+            "executor": "@nx/vitest:test",
+            "options": {
+                "config": "apps/x500-cli/vite.config.ts"
+            }
         }
     }
 }
