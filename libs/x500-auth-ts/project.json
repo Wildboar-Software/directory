@@ -22,10 +22,8 @@
                 "packageJson": "libs/x500-auth-ts/package.json"
             },
             "dependsOn": [
-                {
-                    "target": "build",
-                    "dependencies": true
-                }
+                "rose-transport:build",
+                "x500-client-ts:build"
             ]
         },
         "publish": {

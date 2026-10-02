@@ -30,9 +30,6 @@
     "check-updates": "npx npm-check-updates"
   },
   "private": true,
-  "workspaces": [
-    "libs/*"
-  ],
   "dependencies": {
     "@docusaurus/core": "3.9.2",
     "@docusaurus/plugin-pwa": "3.9.2",

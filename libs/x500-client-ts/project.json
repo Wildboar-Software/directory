@@ -22,10 +22,9 @@
         "packageJson": "libs/x500-client-ts/package.json"
       },
       "dependsOn": [
-        {
-          "target": "build",
-          "dependencies": true
-        }
+        "idm:build",
+        "osi-net:build",
+        "rose-transport:build"
       ]
     },
     "publish": {

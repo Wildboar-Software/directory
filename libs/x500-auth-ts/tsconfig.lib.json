@@ -3,7 +3,11 @@
     "compilerOptions": {
         "outDir": "../../dist/out-tsc",
         "declaration": true,
-        "types": ["node"]
+        "types": ["node"],
+        "paths": {
+            "@wildboar/rose-transport": ["../../dist/libs/rose-transport/src/index.d.ts"],
+            "@wildboar/x500-client-ts": ["../../dist/libs/x500-client-ts/src/index.d.ts"]
+        }
     },
     "include": ["**/*.ts"],
     "exclude": ["**/*.spec.ts", "**/*.test.ts"]
