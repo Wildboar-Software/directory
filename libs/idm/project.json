@@ -8,8 +8,7 @@
         "build": {
             "executor": "@nx/js:tsc",
             "outputs": [
-                "{options.outputPath}",
-                "{options.outputPath}/src/index.d.ts"
+                "{options.outputPath}"
             ],
             "options": {
                 "outputPath": "dist/libs/idm",
@@ -17,7 +16,9 @@
                 "packageJson": "libs/idm/package.json",
                 "main": "libs/idm/src/index.ts",
                 "assets": [
-                    "libs/idm/*.md"
+                    "libs/idm/*.md",
+                    "libs/idm/LICENSE.txt",
+                    "libs/idm/package.json"
                 ]
             }
         }

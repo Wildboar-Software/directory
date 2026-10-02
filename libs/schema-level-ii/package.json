@@ -2,6 +2,7 @@
     "name": "@wildboar/schema-level-ii",
     "version": "0.0.1",
     "type": "module",
+    "module": "./src/index.js",
     "main": "./src/index.js",
     "types": "./src/index.d.ts",
     "exports": {

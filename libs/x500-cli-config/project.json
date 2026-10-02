@@ -8,8 +8,7 @@
         "build": {
             "executor": "@nx/js:tsc",
             "outputs": [
-                "{options.outputPath}",
-                "{options.outputPath}/src/index.d.ts"
+                "{options.outputPath}"
             ],
             "options": {
                 "outputPath": "dist/libs/x500-cli-config",
@@ -17,7 +16,9 @@
                 "packageJson": "libs/x500-cli-config/package.json",
                 "main": "libs/x500-cli-config/src/index.ts",
                 "assets": [
-                    "libs/x500-cli-config/*.md"
+                    "libs/x500-cli-config/*.md",
+                    "libs/x500-cli-config/LICENSE.txt",
+                    "libs/x500-cli-config/package.json"
                 ]
             }
         }

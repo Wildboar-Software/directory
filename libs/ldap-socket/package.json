@@ -3,6 +3,7 @@
     "version": "1.0.1",
     "type": "module",
     "license": "MIT",
+    "module": "./src/index.js",
     "main": "./src/index.js",
     "types": "./src/index.d.ts",
     "exports": {
