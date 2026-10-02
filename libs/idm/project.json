@@ -3,5 +3,23 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/idm/src",
     "projectType": "library",
-    "tags": []
+    "tags": [],
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": [
+                "{options.outputPath}",
+                "{options.outputPath}/src/index.d.ts"
+            ],
+            "options": {
+                "outputPath": "dist/libs/idm",
+                "tsConfig": "libs/idm/tsconfig.lib.json",
+                "packageJson": "libs/idm/package.json",
+                "main": "libs/idm/src/index.ts",
+                "assets": [
+                    "libs/idm/*.md"
+                ]
+            }
+        }
+    }
 }

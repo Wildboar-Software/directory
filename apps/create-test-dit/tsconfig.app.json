@@ -17,18 +17,5 @@
         "src/**/*.test.jsx",
         "src/**/*.spec.jsx"
     ],
-    "include": [
-      "**/*.ts"
-    ],
-    "references": [
-      {
-        "path": "../../libs/x500-cli-config/tsconfig.lib.json"
-      },
-      {
-        "path": "../../libs/idm/tsconfig.lib.json"
-      },
-      {
-        "path": "../../libs/parity-schema"
-      }
-    ]
+    "include": ["**/*.ts"]
 }

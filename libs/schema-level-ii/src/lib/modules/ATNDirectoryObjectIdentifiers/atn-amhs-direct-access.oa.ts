@@ -1,0 +1,59 @@
+/* eslint-disable */
+import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
+import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
+import { boolean_ } from "@wildboar/x500/SelectedAttributeTypes";
+import { booleanMatch } from "@wildboar/x500/SelectedAttributeTypes";
+import {
+    BOOLEAN
+} from "@wildboar/asn1";
+import * as $ from "@wildboar/asn1/functional";
+import { id_at_atn_amhs_direct_access } from "../ATNDirectoryObjectIdentifiers/id-at-atn-amhs-direct-access.va.js";
+
+
+
+
+/* START_OF_SYMBOL_DEFINITION atn_amhs_direct_access */
+/**
+ * @summary atn_amhs_direct_access
+ * @description
+ *
+ * ### ASN.1 Definition:
+ *
+ * ```asn1
+ * atn-amhs-direct-access ATTRIBUTE ::= {
+ *     WITH SYNTAX                 BOOLEAN
+ *     EQUALITY MATCHING RULE      booleanMatch
+ *     LDAP-SYNTAX                 boolean.&id
+ *     LDAP-NAME                   {"atn-amhs-direct-access"}
+ *     ID                          id-at-atn-amhs-direct-access
+ * }
+ * ```
+ *
+ * @constant
+ * @type {ATTRIBUTE<BOOLEAN>}
+ * @implements {ATTRIBUTE<BOOLEAN>}
+ */
+export
+const atn_amhs_direct_access: ATTRIBUTE<BOOLEAN> = {
+    class: "ATTRIBUTE",
+    decoderFor: {
+        "&Type": $._decodeBoolean,
+    },
+    encoderFor: {
+        "&Type": $._encodeBoolean,
+    },
+    "&equality-match": booleanMatch /* OBJECT_FIELD_SETTING */,
+    "&ldapSyntax": boolean_["&id"] /* OBJECT_FIELD_SETTING */,
+    "&ldapName": [ "atn-amhs-direct-access" ] /* OBJECT_FIELD_SETTING */,
+    "&id": id_at_atn_amhs_direct_access /* OBJECT_FIELD_SETTING *//* UNIQUE_OBJECT_FIELD_SETTING */,
+    "&Type": 0 as never /* OBJECT_FIELD_SETTING OBJECT_TYPE_FIELD_SETTING */,
+    "&single-valued": false /* OBJECT_FIELD_SETTING DEFAULT_OBJECT_FIELD_SETTING */,
+    "&collective": false /* OBJECT_FIELD_SETTING DEFAULT_OBJECT_FIELD_SETTING */,
+    "&dummy": false /* OBJECT_FIELD_SETTING DEFAULT_OBJECT_FIELD_SETTING */,
+    "&no-user-modification": false /* OBJECT_FIELD_SETTING DEFAULT_OBJECT_FIELD_SETTING */,
+    "&usage": userApplications /* OBJECT_FIELD_SETTING DEFAULT_OBJECT_FIELD_SETTING */,
+    "&obsolete": false /* OBJECT_FIELD_SETTING DEFAULT_OBJECT_FIELD_SETTING */,
+};
+/* END_OF_SYMBOL_DEFINITION atn_amhs_direct_access */
+
+/* eslint-enable */

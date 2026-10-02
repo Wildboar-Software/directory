@@ -20,15 +20,5 @@
         "src/**/*.test.jsx",
         "src/**/*.spec.jsx"
     ],
-    "include": [
-      "**/*.ts"
-    ],
-    "references": [
-      {
-        "path": "../ldap-socket/tsconfig.lib.json"
-      },
-      {
-        "path": "../idm/tsconfig.lib.json"
-      }
-    ]
+    "include": ["**/*.ts"]
 }

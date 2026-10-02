@@ -5,6 +5,27 @@
     "projectType": "library",
     "tags": [],
     "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": [
+                "{options.outputPath}",
+                "{options.outputPath}/src/index.d.ts"
+            ],
+            "options": {
+                "outputPath": "dist/libs/x500-auth-ts",
+                "main": "libs/x500-auth-ts/src/index.ts",
+                "tsConfig": "libs/x500-auth-ts/tsconfig.lib.json",
+                "assets": [
+                    "libs/x500-auth-ts/*.md"
+                ]
+            },
+            "dependsOn": [
+                {
+                    "target": "build",
+                    "dependencies": true
+                }
+            ]
+        },
         "publish": {
             "executor": "@nx/workspace:run-commands",
             "options": {

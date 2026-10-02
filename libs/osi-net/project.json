@@ -5,6 +5,22 @@
   "projectType": "library",
   "tags": [],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}",
+        "{options.outputPath}/src/index.d.ts"
+      ],
+      "options": {
+        "outputPath": "dist/libs/osi-net",
+        "tsConfig": "libs/osi-net/tsconfig.lib.json",
+        "packageJson": "libs/osi-net/package.json",
+        "main": "libs/osi-net/src/index.ts",
+        "assets": [
+          "libs/osi-net/*.md"
+        ]
+      }
+    },
     "test": {
       "executor": "@nx/vitest:test",
       "outputs": [

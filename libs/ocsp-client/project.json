@@ -5,6 +5,22 @@
   "projectType": "library",
   "tags": [],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}",
+        "{options.outputPath}/src/index.d.ts"
+      ],
+      "options": {
+        "outputPath": "dist/libs/ocsp-client",
+        "tsConfig": "libs/ocsp-client/tsconfig.lib.json",
+        "packageJson": "libs/ocsp-client/package.json",
+        "main": "libs/ocsp-client/src/index.ts",
+        "assets": [
+          "libs/ocsp-client/*.md"
+        ]
+      }
+    },
     "test": {
       "executor": "@nx/vitest:test",
       "outputs": [

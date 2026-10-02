@@ -5,6 +5,21 @@
     "projectType": "library",
     "tags": [],
     "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": [
+                "{options.outputPath}",
+                "{options.outputPath}/src/index.d.ts"
+            ],
+            "options": {
+                "outputPath": "dist/libs/rose-transport",
+                "main": "libs/rose-transport/src/index.ts",
+                "tsConfig": "libs/rose-transport/tsconfig.lib.json",
+                "assets": [
+                    "libs/rose-transport/*.md"
+                ]
+            }
+        },
         "publish": {
             "executor": "nx:run-commands",
             "options": {

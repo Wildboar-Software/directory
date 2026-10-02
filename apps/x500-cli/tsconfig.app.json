@@ -7,18 +7,5 @@
         "esModuleInterop": true
     },
     "exclude": ["**/*.spec.ts"],
-    "include": [
-      "**/*.ts"
-    ],
-    "references": [
-      {
-        "path": "../../libs/idm/tsconfig.lib.json"
-      },
-      {
-        "path": "../../libs/x500-cli-config/tsconfig.lib.json"
-      },
-      {
-        "path": "../../libs/parity-schema"
-      }
-    ]
+    "include": ["**/*.ts"]
 }

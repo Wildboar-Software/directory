@@ -9,8 +9,7 @@
 import process from "node:process";
 import { readCachedProjectGraph } from '@nrwl/devkit';
 import { execSync } from 'child_process';
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
 import chalk from 'chalk';
 
 function invariant(condition, message) {
@@ -39,45 +38,13 @@ invariant(
     `Could not find project "${name}" in the workspace. Is the project.json configured correctly?`
 );
 
-const projectRoot = resolve(project.data.root);
-const configuredOutput = project.data?.targets?.build?.options?.outputPath;
-const outputPath = configuredOutput
-    ? resolve(configuredOutput)
-    : join(projectRoot, 'dist');
+const outputPath = project.data?.targets?.build?.options?.outputPath;
+invariant(
+    outputPath,
+    `Could not find "build.options.outputPath" of project "${name}". Is project.json configured  correctly?`
+);
 
 process.chdir(outputPath);
-
-// tsc --build writes declarations next to the package and leaves package.json
-// at the project root. Publish the emitted directory with entry points rewritten
-// to that directory.
-if (!existsSync('package.json')) {
-    const source = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf8'));
-    const rewrite = (value) =>
-        typeof value === 'string' ? value.replace(/^\.\/dist\//, './') : value;
-    for (const field of ['main', 'module', 'types']) {
-        if (source[field]) {
-            source[field] = rewrite(source[field]);
-        }
-    }
-    const dot = source.exports?.['.'];
-    if (dot && typeof dot === 'object') {
-        const published = {};
-        for (const [key, value] of Object.entries(dot)) {
-            if (key === 'development') {
-                continue;
-            }
-            published[key] = rewrite(value);
-        }
-        source.exports['.'] = published;
-    }
-    writeFileSync('package.json', JSON.stringify(source, null, 2));
-    for (const asset of ['README.md', 'LICENSE.txt']) {
-        const from = join(projectRoot, asset);
-        if (existsSync(from)) {
-            copyFileSync(from, asset);
-        }
-    }
-}
 
 // Updating the version in "package.json" before publishing
 try {
