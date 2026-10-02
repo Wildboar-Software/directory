@@ -3,22 +3,5 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/schema-level-ii/src",
     "projectType": "library",
-    "tags": [],
-    "targets": {
-        "build": {
-            "executor": "@nx/js:tsc",
-            "outputs": [
-                "{options.outputPath}",
-                "{options.outputPath}/src/index.d.ts"
-            ],
-            "options": {
-                "outputPath": "dist/libs/schema-level-ii",
-                "main": "libs/schema-level-ii/src/index.ts",
-                "tsConfig": "libs/schema-level-ii/tsconfig.lib.json",
-                "assets": [
-                    "libs/schema-level-ii/*.md"
-                ]
-            }
-        }
-    }
+    "tags": []
 }

@@ -12,7 +12,8 @@
         "strictFunctionTypes": true,
         "strictPropertyInitialization": true,
         "alwaysStrict": true,
-        "ignoreDeprecations": "6.0"
+        "ignoreDeprecations": "6.0",
+        "composite": true
     },
     "files": [],
     "include": [],

@@ -5,8 +5,8 @@
         "types": ["node"]
     },
     "include": [
-        "src/**/*.test.ts",
-        "src/**/*.spec.ts",
+        "src/**/*.test.mts",
+        "src/**/*.spec.mts",
         "src/**/*.d.ts"
     ]
 }

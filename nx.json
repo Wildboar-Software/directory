@@ -19,6 +19,33 @@
       "!{projectRoot}/src/test-setup.[jt]s"
     ]
   },
+  "plugins": [
+    {
+      "plugin": "@nx/js/typescript",
+      "include": [
+        "libs/idm/**",
+        "libs/ldap-socket/**",
+        "libs/ocsp-client/**",
+        "libs/osi-net/**",
+        "libs/rose-transport/**",
+        "libs/schema-level-ii/**",
+        "libs/x500-auth-ts/**",
+        "libs/x500-cli-config/**",
+        "libs/x500-client-ts/**"
+      ],
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        },
+        "build": {
+          "targetName": "build",
+          "configName": "tsconfig.lib.json",
+          "buildDepsName": "build-deps",
+          "watchDepsName": "watch-deps"
+        }
+      }
+    }
+  ],
   "targetDefaults": {
     "build": {
       "inputs": [

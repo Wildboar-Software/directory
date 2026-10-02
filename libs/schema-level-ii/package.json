@@ -2,18 +2,16 @@
     "name": "@wildboar/schema-level-ii",
     "version": "0.0.1",
     "type": "module",
-    "main": "./src/index.js",
-    "types": "./src/index.d.ts",
+    "main": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
     "exports": {
         "./package.json": "./package.json",
         ".": {
-            "types": "./src/index.d.ts",
-            "import": "./src/index.js",
-            "default": "./src/index.js"
+            "development": "./src/index.mts",
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs",
+            "default": "./dist/index.mjs"
         }
-    },
-    "files": [
-        "src",
-        "!**/*.tsbuildinfo"
-    ]
+    }
 }

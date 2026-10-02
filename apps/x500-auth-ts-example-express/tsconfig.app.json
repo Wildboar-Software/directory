@@ -7,5 +7,12 @@
         "baseUrl": "../.."
     },
     "exclude": ["**/*.spec.ts", "**/*.test.ts"],
-    "include": ["**/*.ts"]
+    "include": [
+      "**/*.ts"
+    ],
+    "references": [
+      {
+        "path": "../../libs/x500-auth-ts/tsconfig.lib.json"
+      }
+    ]
 }

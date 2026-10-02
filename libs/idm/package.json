@@ -3,21 +3,18 @@
     "version": "3.1.3",
     "type": "module",
     "license": "MIT",
-    "main": "./src/index.js",
-    "types": "./src/index.d.ts",
+    "main": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
     "exports": {
         "./package.json": "./package.json",
         ".": {
-            "types": "./src/index.d.ts",
-            "import": "./src/index.js",
-            "default": "./src/index.js"
+            "development": "./src/index.mts",
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs",
+            "default": "./dist/index.mjs"
         }
     },
-    "files": [
-        "src",
-        "!**/*.tsbuildinfo",
-        "LICENSE.txt"
-    ],
     "dependencies": {
         "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.6",
         "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4"

@@ -1,25 +1,33 @@
 {
-    "extends": "./tsconfig.json",
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "outDir": "../../dist/out-tsc",
+        "rootDir": "src",
+        "outDir": "dist",
+        "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
         "declaration": true,
-        "types": ["node"]
+        "declarationMap": true,
+        "composite": true,
+        "types": [
+            "node"
+        ]
     },
-    "include": ["**/*.ts"],
+    "include": [
+        "src/**/*.mts"
+    ],
     "exclude": [
-        "**/*.spec.ts",
-        "**/*.test.ts",
-        "src/**/*.spec.ts",
-        "src/**/*.test.ts",
-        "vite.config.ts",
-        "vite.config.mts",
-        "vitest.config.ts",
-        "vitest.config.mts",
-        "src/**/*.test.tsx",
-        "src/**/*.spec.tsx",
-        "src/**/*.test.js",
-        "src/**/*.spec.js",
-        "src/**/*.test.jsx",
-        "src/**/*.spec.jsx"
+        "src/**/*.spec.mts",
+        "src/**/*.test.mts",
+        "src/**/*.denotest.mts"
+    ],
+    "references": [
+        {
+            "path": "../idm/tsconfig.lib.json"
+        },
+        {
+            "path": "../osi-net/tsconfig.lib.json"
+        },
+        {
+            "path": "../rose-transport/tsconfig.lib.json"
+        }
     ]
 }

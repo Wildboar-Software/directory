@@ -29,6 +29,7 @@ debian/meerkat-dsa.substvars
 /dist
 /tmp
 /out-tsc
+libs/*/dist
 
 # dependencies
 **/node_modules

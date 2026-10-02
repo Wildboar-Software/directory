@@ -5,12 +5,17 @@
         "sourceMap": true,
         "declaration": false,
         "moduleResolution": "nodenext",
+        "customConditions": [
+            "development"
+        ],
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "importHelpers": true,
         "target": "es2025",
         "module": "nodenext",
-        "lib": ["ESNext"],
+        "lib": [
+            "ESNext"
+        ],
         "skipLibCheck": true,
         "skipDefaultLibCheck": true,
         "strictNullChecks": true,
@@ -19,19 +24,41 @@
         "noImplicitThis": true,
         "alwaysStrict": true,
         "paths": {
-            "@wildboar/idm": ["libs/idm/src/index.ts"],
-            "@wildboar/ldap-socket": ["libs/ldap-socket/src/index.ts"],
-            "@wildboar/ocsp-client": ["libs/ocsp-client/src/index.ts"],
-            "@wildboar/osi-net": ["libs/osi-net/src/index.ts"],
-            "@wildboar/parity-schema/*": ["libs/parity-schema/*"],
-            "@wildboar/passport-x500": ["libs/passport-x500/src/index.ts"],
-            "@wildboar/rose-transport": ["libs/rose-transport/src/index.ts"],
-            "@wildboar/schema-level-ii": ["libs/schema-level-ii/src/index.ts"],
-            "@wildboar/x500-auth": ["libs/x500-auth-ts/src/index.ts"],
-            "@wildboar/x500-cli-config": ["libs/x500-cli-config/src/index.ts"],
-            "@wildboar/x500-client-ts": ["libs/x500-client-ts/src/index.ts"],
+            "@wildboar/idm": [
+                "./libs/idm/src/index.mts"
+            ],
+            "@wildboar/ldap-socket": [
+                "./libs/ldap-socket/src/index.mts"
+            ],
+            "@wildboar/ocsp-client": [
+                "./libs/ocsp-client/src/index.mts"
+            ],
+            "@wildboar/osi-net": [
+                "./libs/osi-net/src/index.mts"
+            ],
+            "@wildboar/parity-schema/*": [
+                "./libs/parity-schema/*"
+            ],
+            "@wildboar/passport-x500": [
+                "./libs/passport-x500/src/index.ts"
+            ],
+            "@wildboar/rose-transport": [
+                "./libs/rose-transport/src/index.mts"
+            ],
+            "@wildboar/schema-level-ii": [
+                "./libs/schema-level-ii/src/index.mts"
+            ],
+            "@wildboar/x500-auth": [
+                "./libs/x500-auth-ts/src/index.mts"
+            ],
+            "@wildboar/x500-cli-config": [
+                "./libs/x500-cli-config/src/index.mts"
+            ],
+            "@wildboar/x500-client-ts": [
+                "./libs/x500-client-ts/src/index.mts"
+            ],
             "x500-functional-tests": [
-                "libs/x500-functional-tests/src/index.ts"
+                "./libs/x500-functional-tests/src/index.ts"
             ]
         },
         "strict": true,
@@ -39,5 +66,8 @@
         "esModuleInterop": false,
         "ignoreDeprecations": "6.0"
     },
-    "exclude": ["node_modules", "tmp"]
+    "exclude": [
+        "node_modules",
+        "tmp"
+    ]
 }

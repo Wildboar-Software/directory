@@ -1,0 +1,34 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./libs/schema-level-ii"
+    },
+    {
+      "path": "./libs/x500-cli-config"
+    },
+    {
+      "path": "./libs/rose-transport"
+    },
+    {
+      "path": "./libs/x500-client-ts"
+    },
+    {
+      "path": "./libs/x500-auth-ts"
+    },
+    {
+      "path": "./libs/ldap-socket"
+    },
+    {
+      "path": "./libs/ocsp-client"
+    },
+    {
+      "path": "./libs/osi-net"
+    },
+    {
+      "path": "./libs/idm"
+    }
+  ]
+}

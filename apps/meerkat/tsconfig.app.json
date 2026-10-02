@@ -28,5 +28,30 @@
         "src/**/*.spec.jsx",
         "test/**/*",
     ],
-    "include": ["**/*.ts"]
+    "include": [
+      "**/*.ts"
+    ],
+    "references": [
+      {
+        "path": "../../libs/ocsp-client/tsconfig.lib.json"
+      },
+      {
+        "path": "../../libs/osi-net/tsconfig.lib.json"
+      },
+      {
+        "path": "../../libs/idm/tsconfig.lib.json"
+      },
+      {
+        "path": "../../libs/schema-level-ii/tsconfig.lib.json"
+      },
+      {
+        "path": "../../libs/x500-client-ts/tsconfig.lib.json"
+      },
+      {
+        "path": "../../libs/rose-transport/tsconfig.lib.json"
+      },
+      {
+        "path": "../../libs/parity-schema"
+      }
+    ]
 }

@@ -1,10 +1,23 @@
 {
-    "extends": "./tsconfig.json",
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "outDir": "../../dist/out-tsc",
+        "rootDir": "src",
+        "outDir": "dist",
+        "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
         "declaration": true,
-        "types": ["node"]
+        "declarationMap": true,
+        "composite": true,
+        "types": [
+            "node"
+        ]
     },
-    "include": ["**/*.ts"],
-    "exclude": ["**/*.spec.ts", "**/*.test.ts"]
+    "include": [
+        "src/**/*.mts"
+    ],
+    "exclude": [
+        "src/**/*.spec.mts",
+        "src/**/*.test.mts",
+        "src/**/*.denotest.mts"
+    ],
+    "references": []
 }
