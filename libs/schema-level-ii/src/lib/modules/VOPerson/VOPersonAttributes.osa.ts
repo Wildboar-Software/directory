@@ -1,20 +1,20 @@
 /* eslint-disable */
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
-import { voPersonAffiliation } from "../VOPerson/voPersonAffiliation.oa";
-import { voPersonApplicationPassword } from "../VOPerson/voPersonApplicationPassword.oa";
-import { voPersonApplicationUID } from "../VOPerson/voPersonApplicationUID.oa";
-import { voPersonAuthorName } from "../VOPerson/voPersonAuthorName.oa";
-import { voPersonCertificateDN } from "../VOPerson/voPersonCertificateDN.oa";
-import { voPersonCertificateIssuerDN } from "../VOPerson/voPersonCertificateIssuerDN.oa";
-import { voPersonExternalAffiliation } from "../VOPerson/voPersonExternalAffiliation.oa";
-import { voPersonExternalID } from "../VOPerson/voPersonExternalID.oa";
-import { voPersonID } from "../VOPerson/voPersonID.oa";
-import { voPersonPolicyAgreement } from "../VOPerson/voPersonPolicyAgreement.oa";
-import { voPersonScopedAffiliation } from "../VOPerson/voPersonScopedAffiliation.oa";
-import { voPersonSoRID } from "../VOPerson/voPersonSoRID.oa";
-import { voPersonStatus } from "../VOPerson/voPersonStatus.oa";
-import { voPersonToken } from "../VOPerson/voPersonToken.oa";
-import { voPersonVerifiedEmail } from "../VOPerson/voPersonVerifiedEmail.oa";
+import { voPersonAffiliation } from "../VOPerson/voPersonAffiliation.oa.js";
+import { voPersonApplicationPassword } from "../VOPerson/voPersonApplicationPassword.oa.js";
+import { voPersonApplicationUID } from "../VOPerson/voPersonApplicationUID.oa.js";
+import { voPersonAuthorName } from "../VOPerson/voPersonAuthorName.oa.js";
+import { voPersonCertificateDN } from "../VOPerson/voPersonCertificateDN.oa.js";
+import { voPersonCertificateIssuerDN } from "../VOPerson/voPersonCertificateIssuerDN.oa.js";
+import { voPersonExternalAffiliation } from "../VOPerson/voPersonExternalAffiliation.oa.js";
+import { voPersonExternalID } from "../VOPerson/voPersonExternalID.oa.js";
+import { voPersonID } from "../VOPerson/voPersonID.oa.js";
+import { voPersonPolicyAgreement } from "../VOPerson/voPersonPolicyAgreement.oa.js";
+import { voPersonScopedAffiliation } from "../VOPerson/voPersonScopedAffiliation.oa.js";
+import { voPersonSoRID } from "../VOPerson/voPersonSoRID.oa.js";
+import { voPersonStatus } from "../VOPerson/voPersonStatus.oa.js";
+import { voPersonToken } from "../VOPerson/voPersonToken.oa.js";
+import { voPersonVerifiedEmail } from "../VOPerson/voPersonVerifiedEmail.oa.js";
 
 
 

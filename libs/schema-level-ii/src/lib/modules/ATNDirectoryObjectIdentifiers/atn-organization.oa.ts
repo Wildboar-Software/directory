@@ -2,10 +2,10 @@
 import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
 import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { organization } from "@wildboar/x500/SelectedObjectClasses";
-import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa";
-import { atn_facility_name } from "../ATNDirectoryObjectIdentifiers/atn-facility-name.oa";
-import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa";
-import { id_oc_atn_Atn_Organization } from "./id-oc-atn-Atn-Organization.va";
+import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa.js";
+import { atn_facility_name } from "../ATNDirectoryObjectIdentifiers/atn-facility-name.oa.js";
+import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa.js";
+import { id_oc_atn_Atn_Organization } from "./id-oc-atn-Atn-Organization.va.js";
 
 
 

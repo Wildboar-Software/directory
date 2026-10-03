@@ -3,7 +3,7 @@ import {
     ASN1Element as _Element
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { SSID, _decode_SSID, _encode_SSID } from "../WLANCertExtn-2010/SSID.ta";
+import { SSID, _decode_SSID, _encode_SSID } from "../WLANCertExtn-2010/SSID.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION SSIDList */

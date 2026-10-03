@@ -1,6 +1,6 @@
 import { createConnection, createServer, Server } from 'node:net';
-import { create_itot_stack, ISOTransportOverTCPStack } from './itot';
-import { dispatch_P_DTreq, get_acse_ber_context } from './presentation';
+import { create_itot_stack, ISOTransportOverTCPStack } from './itot.js';
+import { dispatch_P_DTreq, get_acse_ber_context } from './presentation.js';
 import {
     dispatch_A_ASCreq,
     dispatch_A_ASCrsp_accept,
@@ -9,7 +9,7 @@ import {
     dispatch_A_RLSrsp_accept,
     dispatch_A_ABRreq,
     dispatch_A_RLSrsp_reject,
-} from './acse';
+} from './acse.js';
 import { User_data } from '@wildboar/copp';
 import { PDV_list } from '@wildboar/copp';
 import { Context_list_Item } from '@wildboar/copp';

@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { NAME_FORM } from "@wildboar/x500/InformationFramework";
 import { commonName } from "@wildboar/x500/SelectedAttributeTypes";
-import { atn_idrp_router } from "../ATNDirectoryObjectIdentifiers/atn-idrp-router.oa";
-import { id_nf_atnIdrpRouterNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnIdrpRouterNameForm.va";
+import { atn_idrp_router } from "../ATNDirectoryObjectIdentifiers/atn-idrp-router.oa.js";
+import { id_nf_atnIdrpRouterNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnIdrpRouterNameForm.va.js";
 
 
 

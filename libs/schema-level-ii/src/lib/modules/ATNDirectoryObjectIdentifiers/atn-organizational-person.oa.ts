@@ -74,11 +74,11 @@ import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 
 import { organizationalPerson } from "@wildboar/x500/SelectedObjectClasses";
 
-import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa";
+import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa.js";
 
-import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa";
+import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa.js";
 
-import { id_oc_atn_OrganizationalPerson } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-OrganizationalPerson.va";
+import { id_oc_atn_OrganizationalPerson } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-OrganizationalPerson.va.js";
 
 
 /* START_OF_SYMBOL_DEFINITION atn_organizational_person */

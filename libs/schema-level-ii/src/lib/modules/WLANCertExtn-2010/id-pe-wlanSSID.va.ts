@@ -3,7 +3,7 @@ import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
-import { id_pe } from "./id-pe.va";
+import { id_pe } from "./id-pe.va.js";
 
 /* START_OF_SYMBOL_DEFINITION id_pe_wlanSSID */
 /**

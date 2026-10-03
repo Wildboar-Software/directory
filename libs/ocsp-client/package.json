@@ -1,7 +1,24 @@
 {
     "name": "@wildboar/ocsp-client",
     "version": "2.0.1",
+    "type": "module",
     "license": "MIT",
+    "module": "./src/index.js",
+    "main": "./src/index.js",
+    "types": "./src/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "types": "./src/index.d.ts",
+            "import": "./src/index.js",
+            "default": "./src/index.js"
+        }
+    },
+    "files": [
+        "src",
+        "!**/*.tsbuildinfo",
+        "LICENSE.txt"
+    ],
     "dependencies": {
         "@wildboar/asn1": "npm:@jsr/wildboar__asn1@^11.0.6",
         "@wildboar/ocsp": "npm:@jsr/wildboar__ocsp@^2.0.1",

@@ -1,5 +1,5 @@
 import type { Buffer } from "node:buffer";
-import IDMVersion from "./IDMVersion";
+import IDMVersion from "./IDMVersion.js";
 
 /**
  * @summary An IDM segment

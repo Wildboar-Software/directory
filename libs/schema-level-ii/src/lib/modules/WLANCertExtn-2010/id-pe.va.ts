@@ -3,7 +3,7 @@ import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
-import { id_pkix } from "../WLANCertExtn-2010/id-pkix.va";
+import { id_pkix } from "../WLANCertExtn-2010/id-pkix.va.js";
 
 
 /* START_OF_SYMBOL_DEFINITION id_pe */

@@ -2,16 +2,16 @@
 import { mhs_distribution_list } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
 import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
 import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { atn_AF_address } from "../ATNDirectoryObjectIdentifiers/atn-AF-address.oa";
-import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa";
-import { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa";
-import { atn_maximum_file_size } from "../ATNDirectoryObjectIdentifiers/atn-maximum-file-size.oa";
-import { atn_maximum_number_of_body_parts } from "../ATNDirectoryObjectIdentifiers/atn-maximum-number-of-body-parts.oa";
-import { atn_maximum_text_size } from "../ATNDirectoryObjectIdentifiers/atn-maximum-text-size.oa";
-import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa";
-import { atn_use_of_amhs_security } from "../ATNDirectoryObjectIdentifiers/atn-use-of-amhs-security.oa";
-import { atn_use_of_directory } from "../ATNDirectoryObjectIdentifiers/atn-use-of-directory.oa";
-import { id_oc_atn_AmhsDistributionList } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsDistributionList.va";
+import { atn_AF_address } from "../ATNDirectoryObjectIdentifiers/atn-AF-address.oa.js";
+import { atn_der_certificate } from "../ATNDirectoryObjectIdentifiers/atn-der-certificate.oa.js";
+import { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa.js";
+import { atn_maximum_file_size } from "../ATNDirectoryObjectIdentifiers/atn-maximum-file-size.oa.js";
+import { atn_maximum_number_of_body_parts } from "../ATNDirectoryObjectIdentifiers/atn-maximum-number-of-body-parts.oa.js";
+import { atn_maximum_text_size } from "../ATNDirectoryObjectIdentifiers/atn-maximum-text-size.oa.js";
+import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa.js";
+import { atn_use_of_amhs_security } from "../ATNDirectoryObjectIdentifiers/atn-use-of-amhs-security.oa.js";
+import { atn_use_of_directory } from "../ATNDirectoryObjectIdentifiers/atn-use-of-directory.oa.js";
+import { id_oc_atn_AmhsDistributionList } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsDistributionList.va.js";
 
 
 

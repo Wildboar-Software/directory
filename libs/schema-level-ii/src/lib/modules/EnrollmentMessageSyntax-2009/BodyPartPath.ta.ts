@@ -3,7 +3,7 @@ import {
     ASN1Element as _Element
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { BodyPartID, _decode_BodyPartID, _encode_BodyPartID } from "../EnrollmentMessageSyntax-2009/BodyPartID.ta";
+import { BodyPartID, _decode_BodyPartID, _encode_BodyPartID } from "../EnrollmentMessageSyntax-2009/BodyPartID.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION BodyPartPath */

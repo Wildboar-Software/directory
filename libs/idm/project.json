@@ -7,13 +7,19 @@
     "targets": {
         "build": {
             "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}"],
+            "outputs": [
+                "{options.outputPath}"
+            ],
             "options": {
                 "outputPath": "dist/libs/idm",
                 "tsConfig": "libs/idm/tsconfig.lib.json",
                 "packageJson": "libs/idm/package.json",
                 "main": "libs/idm/src/index.ts",
-                "assets": ["libs/idm/*.md"]
+                "assets": [
+                    "libs/idm/*.md",
+                    "libs/idm/LICENSE.txt",
+                    "libs/idm/package.json"
+                ]
             }
         }
     }

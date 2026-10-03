@@ -1,8 +1,8 @@
 import { IDMConnection } from "@wildboar/idm";
-import { create_dap_client } from "./dap";
+import { create_dap_client } from "./dap.js";
 import { createConnection } from "node:net";
-import { rose_transport_from_idm_socket } from "./idm";
-import { rose_transport_from_itot_stack } from "./itot";
+import { rose_transport_from_idm_socket } from "./idm.js";
+import { rose_transport_from_itot_stack } from "./itot.js";
 import { create_itot_stack } from "@wildboar/osi-net";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { strict as assert } from "node:assert";

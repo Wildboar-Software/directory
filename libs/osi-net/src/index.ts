@@ -3,13 +3,13 @@ import {
     AARQ_apdu,
 } from "@wildboar/acse";
 
-export * from "./lib/itot";
-export { get_acse_ber_context } from "./lib/presentation";
-export * from "./lib/acse";
-export * from "./lib/presentation";
-export type { SessionServiceConnectionState } from "./lib/session";
-export type { TransportConnection } from "./lib/transport";
-export { ITOTSocket } from "./lib/tpkt";
+export * from "./lib/itot.js";
+export { get_acse_ber_context } from "./lib/presentation.js";
+export * from "./lib/acse.js";
+export * from "./lib/presentation.js";
+export type { SessionServiceConnectionState } from "./lib/session.js";
+export type { TransportConnection } from "./lib/transport.js";
+export { ITOTSocket } from "./lib/tpkt.js";
 
 export
 interface PresentationAddress {

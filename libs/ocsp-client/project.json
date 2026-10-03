@@ -16,7 +16,9 @@
         "packageJson": "libs/ocsp-client/package.json",
         "main": "libs/ocsp-client/src/index.ts",
         "assets": [
-          "libs/ocsp-client/*.md"
+          "libs/ocsp-client/*.md",
+          "libs/ocsp-client/LICENSE.txt",
+          "libs/ocsp-client/package.json"
         ]
       }
     },

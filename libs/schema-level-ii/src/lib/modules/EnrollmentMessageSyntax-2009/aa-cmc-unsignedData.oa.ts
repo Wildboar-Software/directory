@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { CMCUnsignedData, _decode_CMCUnsignedData, _encode_CMCUnsignedData } from "../EnrollmentMessageSyntax-2009/CMCUnsignedData.ta";
-import { id_aa_cmc_unsignedData } from "./id-aa-cmc-unsignedData.va";
+import { CMCUnsignedData, _decode_CMCUnsignedData, _encode_CMCUnsignedData } from "../EnrollmentMessageSyntax-2009/CMCUnsignedData.ta.js";
+import { id_aa_cmc_unsignedData } from "./id-aa-cmc-unsignedData.va.js";
 
 
 

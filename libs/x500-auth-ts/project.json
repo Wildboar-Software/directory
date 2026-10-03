@@ -7,18 +7,23 @@
     "targets": {
         "build": {
             "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}"],
+            "outputs": [
+                "{options.outputPath}"
+            ],
             "options": {
                 "outputPath": "dist/libs/x500-auth-ts",
                 "main": "libs/x500-auth-ts/src/index.ts",
                 "tsConfig": "libs/x500-auth-ts/tsconfig.lib.json",
-                "assets": ["libs/x500-auth-ts/*.md"]
+                "assets": [
+                    "libs/x500-auth-ts/*.md",
+                    "libs/x500-auth-ts/LICENSE.txt",
+                    "libs/x500-auth-ts/package.json"
+                ],
+                "packageJson": "libs/x500-auth-ts/package.json"
             },
             "dependsOn": [
-                {
-                    "target": "build",
-                    "dependencies": true
-                }
+                "rose-transport:build",
+                "x500-client-ts:build"
             ]
         },
         "publish": {

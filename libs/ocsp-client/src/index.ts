@@ -1,1 +1,1 @@
-export * from "./lib/check";
+export * from "./lib/check.js";

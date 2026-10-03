@@ -9,7 +9,7 @@ import {
     _encode_LDAPMessage,
 } from "@wildboar/ldap";
 import { EventEmitter } from "node:events";
-import type LDAPSocketOptions from "./LDAPSocketOptions";
+import type LDAPSocketOptions from "./LDAPSocketOptions.js";
 import { decodeLDAPOID } from "@wildboar/ldap";
 import { encodeLDAPOID } from "@wildboar/ldap";
 import { extensions } from "@wildboar/ldap";

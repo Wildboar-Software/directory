@@ -7,12 +7,18 @@
     "targets": {
         "build": {
             "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}"],
+            "outputs": [
+                "{options.outputPath}"
+            ],
             "options": {
                 "outputPath": "dist/libs/schema-level-ii",
                 "main": "libs/schema-level-ii/src/index.ts",
                 "tsConfig": "libs/schema-level-ii/tsconfig.lib.json",
-                "assets": ["libs/schema-level-ii/*.md"]
+                "assets": [
+                    "libs/schema-level-ii/*.md",
+                    "libs/schema-level-ii/package.json"
+                ],
+                "packageJson": "libs/schema-level-ii/package.json"
             }
         }
     }
