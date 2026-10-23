@@ -3,7 +3,7 @@ import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
-import { id_eduOrg } from "../EduOrgSchema/id-eduOrg.va";
+import { id_eduOrg } from "../EduOrgSchema/id-eduOrg.va.js";
 
 
 /* START_OF_SYMBOL_DEFINITION id_at_eduOrgIdentityAuthNPolicyURI */

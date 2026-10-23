@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { ProtocolEncrKey, _decode_ProtocolEncrKey, _encode_ProtocolEncrKey } from "../PKIXCRMF-2009/ProtocolEncrKey.ta";
-import { id_regCtrl_protocolEncrKey } from "../PKIXCRMF-2009/id-regCtrl-protocolEncrKey.va";
+import { ProtocolEncrKey, _decode_ProtocolEncrKey, _encode_ProtocolEncrKey } from "../PKIXCRMF-2009/ProtocolEncrKey.ta.js";
+import { id_regCtrl_protocolEncrKey } from "../PKIXCRMF-2009/id-regCtrl-protocolEncrKey.va.js";
 
 
 

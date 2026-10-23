@@ -2,9 +2,9 @@
 import type { OBJECT_CLASS } from "@wildboar/x500/InformationFramework";
 import { auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { top } from "@wildboar/x500/InformationFramework";
-import { hasMember } from "../EduMemberSchema/hasMember.oa";
-import { id_oc_eduMember } from "../EduMemberSchema/id-oc-eduMember.va";
-import { isMemberOf } from "../EduMemberSchema/isMemberOf.oa";
+import { hasMember } from "../EduMemberSchema/hasMember.oa.js";
+import { id_oc_eduMember } from "../EduMemberSchema/id-oc-eduMember.va.js";
+import { isMemberOf } from "../EduMemberSchema/isMemberOf.oa.js";
 
 
 

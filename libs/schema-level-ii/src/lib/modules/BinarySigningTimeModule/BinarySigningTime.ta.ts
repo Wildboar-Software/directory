@@ -3,7 +3,7 @@ import {
     ASN1Element as _Element
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { BinaryTime, _decode_BinaryTime, _encode_BinaryTime } from "../BinarySigningTimeModule/BinaryTime.ta";
+import { BinaryTime, _decode_BinaryTime, _encode_BinaryTime } from "../BinarySigningTimeModule/BinaryTime.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION BinarySigningTime */

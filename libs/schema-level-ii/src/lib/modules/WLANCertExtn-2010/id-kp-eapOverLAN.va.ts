@@ -3,7 +3,7 @@ import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
-import { id_kp } from "./id-kp.va";
+import { id_kp } from "./id-kp.va.js";
 
 /* START_OF_SYMBOL_DEFINITION id_kp_eapOverLAN */
 /**

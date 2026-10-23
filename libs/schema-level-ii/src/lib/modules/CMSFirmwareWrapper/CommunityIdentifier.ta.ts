@@ -4,7 +4,7 @@ import {
     ASN1Element as _Element
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { HardwareModules, _decode_HardwareModules, _encode_HardwareModules } from "../CMSFirmwareWrapper/HardwareModules.ta";
+import { HardwareModules, _decode_HardwareModules, _encode_HardwareModules } from "../CMSFirmwareWrapper/HardwareModules.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION CommunityIdentifier */

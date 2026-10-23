@@ -10,8 +10,8 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta";
-import { ProofOfPossession, _decode_ProofOfPossession, _encode_ProofOfPossession } from "../PKIXCRMF-2009/ProofOfPossession.ta";
+import { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta.js";
+import { ProofOfPossession, _decode_ProofOfPossession, _encode_ProofOfPossession } from "../PKIXCRMF-2009/ProofOfPossession.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION CertReqMsg */

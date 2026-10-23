@@ -8,7 +8,7 @@ import {
     INTEGER
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { id_at_atn_maximum_number_of_body_parts } from "../ATNDirectoryObjectIdentifiers/id-at-atn-maximum-number-of-body-parts.va";
+import { id_at_atn_maximum_number_of_body_parts } from "../ATNDirectoryObjectIdentifiers/id-at-atn-maximum-number-of-body-parts.va.js";
 
 
 

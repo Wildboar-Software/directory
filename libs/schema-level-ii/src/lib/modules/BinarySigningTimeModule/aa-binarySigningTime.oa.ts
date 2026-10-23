@@ -4,8 +4,8 @@ import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboa
 import { integer } from "@wildboar/x500/SelectedAttributeTypes";
 import { integerMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { integerOrderingMatch } from "@wildboar/x500/SelectedAttributeTypes";
-import { BinarySigningTime, _decode_BinarySigningTime, _encode_BinarySigningTime } from "./BinarySigningTime.ta";
-import { id_aa_binarySigningTime } from "./id-aa-binarySigningTime.va";
+import { BinarySigningTime, _decode_BinarySigningTime, _encode_BinarySigningTime } from "./BinarySigningTime.ta.js";
+import { id_aa_binarySigningTime } from "./id-aa-binarySigningTime.va.js";
 
 
 

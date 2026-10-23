@@ -3,7 +3,7 @@ import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
-import { id_regCtrl } from "../PKIXCRMF-2009/id-regCtrl.va";
+import { id_regCtrl } from "../PKIXCRMF-2009/id-regCtrl.va.js";
 
 
 /* START_OF_SYMBOL_DEFINITION id_regCtrl_regToken */

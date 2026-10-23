@@ -7,12 +7,19 @@
     "targets": {
         "build": {
             "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}"],
+            "outputs": [
+                "{options.outputPath}"
+            ],
             "options": {
                 "outputPath": "dist/libs/rose-transport",
                 "main": "libs/rose-transport/src/index.ts",
                 "tsConfig": "libs/rose-transport/tsconfig.lib.json",
-                "assets": ["libs/rose-transport/*.md"]
+                "assets": [
+                    "libs/rose-transport/*.md",
+                    "libs/rose-transport/LICENSE.txt",
+                    "libs/rose-transport/package.json"
+                ],
+                "packageJson": "libs/rose-transport/package.json"
             }
         },
         "publish": {

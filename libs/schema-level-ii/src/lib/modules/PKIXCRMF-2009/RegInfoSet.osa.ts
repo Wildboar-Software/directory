@@ -1,7 +1,7 @@
 /* eslint-disable */
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
-import { regInfo_certReq } from "../PKIXCRMF-2009/regInfo-certReq.oa";
-import { regInfo_utf8Pairs } from "../PKIXCRMF-2009/regInfo-utf8Pairs.oa";
+import { regInfo_certReq } from "../PKIXCRMF-2009/regInfo-certReq.oa.js";
+import { regInfo_utf8Pairs } from "../PKIXCRMF-2009/regInfo-utf8Pairs.oa.js";
 
 
 

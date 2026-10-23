@@ -3,7 +3,12 @@
     "compilerOptions": {
         "outDir": "../../dist/out-tsc",
         "declaration": true,
-        "types": ["node"]
+        "types": ["node"],
+        "paths": {
+            "@wildboar/idm": ["../../dist/libs/idm/src/index.d.ts"],
+            "@wildboar/osi-net": ["../../dist/libs/osi-net/src/index.d.ts"],
+            "@wildboar/rose-transport": ["../../dist/libs/rose-transport/src/index.d.ts"]
+        }
     },
     "include": ["**/*.ts"],
     "exclude": [

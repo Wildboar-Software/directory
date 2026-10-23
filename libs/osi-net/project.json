@@ -16,7 +16,9 @@
         "packageJson": "libs/osi-net/package.json",
         "main": "libs/osi-net/src/index.ts",
         "assets": [
-          "libs/osi-net/*.md"
+          "libs/osi-net/*.md",
+          "libs/osi-net/LICENSE.txt",
+          "libs/osi-net/package.json"
         ]
       }
     },

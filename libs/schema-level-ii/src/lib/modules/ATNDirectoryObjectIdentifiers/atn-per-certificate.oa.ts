@@ -8,7 +8,7 @@ import {
     OCTET_STRING
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { id_at_atn_PerCertificate } from "../ATNDirectoryObjectIdentifiers/id-at-atn-PerCertificate.va";
+import { id_at_atn_PerCertificate } from "../ATNDirectoryObjectIdentifiers/id-at-atn-PerCertificate.va.js";
 
 
 

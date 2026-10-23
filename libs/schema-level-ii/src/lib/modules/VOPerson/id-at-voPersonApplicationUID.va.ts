@@ -2,8 +2,8 @@
 import {
     ObjectIdentifier as _OID
 } from "@wildboar/asn1";
-import { ID } from "../VOPerson/ID.ta";
-import { id_voPersonObjectClass } from "../VOPerson/id-voPersonObjectClass.va";
+import { ID } from "../VOPerson/ID.ta.js";
+import { id_voPersonObjectClass } from "../VOPerson/id-voPersonObjectClass.va.js";
 
 
 /* START_OF_SYMBOL_DEFINITION id_at_voPersonApplicationUID */

@@ -1,6 +1,6 @@
 // Run with: deno test src/lib/check.denotest.ts --no-check --allow-net
 import { Buffer } from "node:buffer";
-import { getOCSPResponse as check } from "./check.ts";
+import { getOCSPResponse as check } from "./check.js";
 import { URL } from "node:url";
 import { PEMObject } from "@wildboar/pem";
 import { BERElement } from "@wildboar/asn1";

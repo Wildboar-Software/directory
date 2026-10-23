@@ -3,7 +3,7 @@ import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
-import { id_ct } from "../PKIXCRMF-2009/id-ct.va";
+import { id_ct } from "../PKIXCRMF-2009/id-ct.va.js";
 
 
 /* START_OF_SYMBOL_DEFINITION id_ct_encKeyWithID */

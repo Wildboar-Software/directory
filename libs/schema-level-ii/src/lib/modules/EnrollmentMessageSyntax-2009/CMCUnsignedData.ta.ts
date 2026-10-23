@@ -6,7 +6,7 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { BodyPartPath, _decode_BodyPartPath, _encode_BodyPartPath } from "../EnrollmentMessageSyntax-2009/BodyPartPath.ta";
+import { BodyPartPath, _decode_BodyPartPath, _encode_BodyPartPath } from "../EnrollmentMessageSyntax-2009/BodyPartPath.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION CMCUnsignedData */

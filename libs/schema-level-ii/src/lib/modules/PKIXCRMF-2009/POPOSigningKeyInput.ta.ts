@@ -5,7 +5,7 @@ import {
     ASN1Element as _Element
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { POPOSigningKeyInput_authInfo, _decode_POPOSigningKeyInput_authInfo, _encode_POPOSigningKeyInput_authInfo } from "../PKIXCRMF-2009/POPOSigningKeyInput-authInfo.ta";
+import { POPOSigningKeyInput_authInfo, _decode_POPOSigningKeyInput_authInfo, _encode_POPOSigningKeyInput_authInfo } from "../PKIXCRMF-2009/POPOSigningKeyInput-authInfo.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION POPOSigningKeyInput */

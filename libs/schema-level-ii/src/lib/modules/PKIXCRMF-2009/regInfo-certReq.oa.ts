@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { CertReq, _decode_CertReq, _encode_CertReq } from "../PKIXCRMF-2009/CertReq.ta";
-import { id_regInfo_certReq } from "../PKIXCRMF-2009/id-regInfo-certReq.va";
+import { CertReq, _decode_CertReq, _encode_CertReq } from "../PKIXCRMF-2009/CertReq.ta.js";
+import { id_regInfo_certReq } from "../PKIXCRMF-2009/id-regInfo-certReq.va.js";
 
 
 

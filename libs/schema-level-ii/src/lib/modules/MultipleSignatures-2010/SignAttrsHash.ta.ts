@@ -6,7 +6,7 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
+import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION SignAttrsHash */

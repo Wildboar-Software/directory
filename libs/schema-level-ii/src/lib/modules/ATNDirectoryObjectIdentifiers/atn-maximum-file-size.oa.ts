@@ -5,7 +5,7 @@ import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboa
 import { integer } from "@wildboar/x500/SelectedAttributeTypes";
 import { integerMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { integerOrderingMatch } from "@wildboar/x500/SelectedAttributeTypes";
-import { id_at_atn_maximum_file_size } from "../ATNDirectoryObjectIdentifiers/id-at-atn-maximum-file-size.va";
+import { id_at_atn_maximum_file_size } from "../ATNDirectoryObjectIdentifiers/id-at-atn-maximum-file-size.va.js";
 
 
 

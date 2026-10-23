@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { NAME_FORM } from "@wildboar/x500/InformationFramework";
-import { atn_facility_name } from "../ATNDirectoryObjectIdentifiers/atn-facility-name.oa";
-import { atn_facility } from "../ATNDirectoryObjectIdentifiers/atn-facility.oa";
-import { id_nf_atnFacilityNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnFacilityNameForm.va";
+import { atn_facility_name } from "../ATNDirectoryObjectIdentifiers/atn-facility-name.oa.js";
+import { atn_facility } from "../ATNDirectoryObjectIdentifiers/atn-facility.oa.js";
+import { id_nf_atnFacilityNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnFacilityNameForm.va.js";
 
 
 

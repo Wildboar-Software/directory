@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import { getOCSPResponse as check } from "./check";
+import { getOCSPResponse as check } from "./check.js";
 import { URL } from "node:url";
 import { PEMObject } from "@wildboar/pem";
 import { BERElement } from "@wildboar/asn1";

@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { NAME_FORM } from "@wildboar/x500/InformationFramework";
-import { atn_aircraft } from "../ATNDirectoryObjectIdentifiers/atn-aircraft.oa";
-import { atn_aircraftIDName } from "../ATNDirectoryObjectIdentifiers/atn-aircraftIDName.oa";
-import { id_nf_atnAircraftNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnAircraftNameForm.va";
+import { atn_aircraft } from "../ATNDirectoryObjectIdentifiers/atn-aircraft.oa.js";
+import { atn_aircraftIDName } from "../ATNDirectoryObjectIdentifiers/atn-aircraftIDName.oa.js";
+import { id_nf_atnAircraftNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnAircraftNameForm.va.js";
 
 
 

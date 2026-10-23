@@ -7,8 +7,8 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { FWReceiptVersion, _decode_FWReceiptVersion, _encode_FWReceiptVersion, v1 /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../CMSFirmwareWrapper/FWReceiptVersion.ta";
-import { PreferredOrLegacyPackageIdentifier, _decode_PreferredOrLegacyPackageIdentifier, _encode_PreferredOrLegacyPackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyPackageIdentifier.ta";
+import { FWReceiptVersion, _decode_FWReceiptVersion, _encode_FWReceiptVersion, v1 /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../CMSFirmwareWrapper/FWReceiptVersion.ta.js";
+import { PreferredOrLegacyPackageIdentifier, _decode_PreferredOrLegacyPackageIdentifier, _encode_PreferredOrLegacyPackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyPackageIdentifier.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION FirmwarePackageLoadReceipt */

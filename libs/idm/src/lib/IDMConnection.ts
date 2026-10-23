@@ -1,8 +1,8 @@
 import { Buffer } from "node:buffer";
 import * as net from "node:net";
 import * as tls from "node:tls";
-import IDMVersion from "./IDMVersion";
-import IDMSegment from "./IDMSegment";
+import IDMVersion from "./IDMVersion.js";
+import IDMSegment from "./IDMSegment.js";
 import { BERElement, ASN1Element, INTEGER, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     IDM_PDU,
@@ -22,7 +22,7 @@ import {
 import type { IdmReject_reason } from "@wildboar/x500/IDMProtocolSpecification";
 import type { GeneralName } from "@wildboar/x500/CertificateExtensions";
 import { EventEmitter } from "node:events";
-import type IDMEventEmitter from "./IDMEventEmitter";
+import type IDMEventEmitter from "./IDMEventEmitter.js";
 import { BER } from "@wildboar/asn1/functional";
 import {
     IdmBind,
@@ -50,8 +50,8 @@ import {
     IDM_WARN_NEGATIVE_INVOKE_ID,
     IDM_WARN_VERSION_CHANGE,
     IDM_WARN_BIG_INVOKE_ID,
-} from "./warnings";
-import IDMStatus from "./IDMStatus";
+} from "./warnings.js";
+import IDMStatus from "./IDMStatus.js";
 
 // NOTE: It does not seem to clearly state what the code for version 2 is.
 

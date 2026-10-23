@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { ImplementedCryptoAlgorithms, _decode_ImplementedCryptoAlgorithms, _encode_ImplementedCryptoAlgorithms } from "../CMSFirmwareWrapper/ImplementedCryptoAlgorithms.ta";
-import { id_aa_implCryptoAlgs } from "../CMSFirmwareWrapper/id-aa-implCryptoAlgs.va";
+import { ImplementedCryptoAlgorithms, _decode_ImplementedCryptoAlgorithms, _encode_ImplementedCryptoAlgorithms } from "../CMSFirmwareWrapper/ImplementedCryptoAlgorithms.ta.js";
+import { id_aa_implCryptoAlgs } from "../CMSFirmwareWrapper/id-aa-implCryptoAlgs.va.js";
 
 
 

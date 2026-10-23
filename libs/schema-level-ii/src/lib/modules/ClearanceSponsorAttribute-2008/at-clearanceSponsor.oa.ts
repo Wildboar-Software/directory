@@ -3,8 +3,8 @@ import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
 import { caseIgnoreMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { directoryString } from "@wildboar/x500/SelectedAttributeTypes";
-import { ClearanceSponsorType, _decode_ClearanceSponsorType, _encode_ClearanceSponsorType } from "../ClearanceSponsorAttribute-2008/ClearanceSponsorType.ta";
-import { id_clearanceSponsor } from "../ClearanceSponsorAttribute-2008/id-clearanceSponsor.va";
+import { ClearanceSponsorType, _decode_ClearanceSponsorType, _encode_ClearanceSponsorType } from "../ClearanceSponsorAttribute-2008/ClearanceSponsorType.ta.js";
+import { id_clearanceSponsor } from "../ClearanceSponsorAttribute-2008/id-clearanceSponsor.va.js";
 
 /* START_OF_SYMBOL_DEFINITION at_clearanceSponsor */
 /**

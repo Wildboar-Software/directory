@@ -5,7 +5,7 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { EncryptedValue, _decode_EncryptedValue, _encode_EncryptedValue } from "../PKIXCRMF-2009/EncryptedValue.ta";
+import { EncryptedValue, _decode_EncryptedValue, _encode_EncryptedValue } from "../PKIXCRMF-2009/EncryptedValue.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION EncryptedKey */

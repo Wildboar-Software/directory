@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
-import { ITOTSocket } from './tpkt';
-import { OSINetworkingOptions, WithOSINetworkingOptions } from "../index";
+import { ITOTSocket } from './tpkt.js';
+import { OSINetworkingOptions, WithOSINetworkingOptions } from "../index.js";
 import {
     TransportConnection,
     createTransportConnection,
@@ -17,7 +17,7 @@ import {
     DEFAULT_MAX_TSDU_SIZE_FOR_ITOT,
     RETURN_OK,
     handle_transport_protocol_error,
-} from './transport';
+} from './transport.js';
 import {
     SessionServiceConnectionState,
     newSessionConnection,
@@ -44,7 +44,7 @@ import {
     TRANSPORT_DISCONNECT_RELEASED,
     SUR_DUPLEX,
     SUR_HALF_DUPLEX,
-} from './session';
+} from './session.js';
 import {
     createPresentationConnection,
     PresentationConnection,
@@ -69,7 +69,7 @@ import {
     dispatch_S_UERind,
     dispatch_S_GTind,
     get_acse_ber_context,
-} from './presentation';
+} from './presentation.js';
 import {
     createAssociationControlState,
     ACPMState,
@@ -86,7 +86,7 @@ import {
     dispatch_RLRQ,
     dispatch_P_CONcnf_reject,
     dispatch_ABRT,
-} from './acse';
+} from './acse.js';
 import {
     CP_type,
     _decode_CP_type,

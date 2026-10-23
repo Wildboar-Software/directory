@@ -8,7 +8,7 @@ import {
     INTEGER
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { id_at_atn_aircraftIDName } from "../ATNDirectoryObjectIdentifiers/id-at-atn-aircraftIDName.va";
+import { id_at_atn_aircraftIDName } from "../ATNDirectoryObjectIdentifiers/id-at-atn-aircraftIDName.va.js";
 
 
 

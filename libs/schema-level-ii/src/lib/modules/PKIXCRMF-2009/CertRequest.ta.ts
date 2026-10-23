@@ -6,8 +6,8 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { CertTemplate, _decode_CertTemplate, _encode_CertTemplate } from "../PKIXCRMF-2009/CertTemplate.ta";
-import { Controls, _decode_Controls, _encode_Controls } from "../PKIXCRMF-2009/Controls.ta";
+import { CertTemplate, _decode_CertTemplate, _encode_CertTemplate } from "../PKIXCRMF-2009/CertTemplate.ta.js";
+import { Controls, _decode_Controls, _encode_Controls } from "../PKIXCRMF-2009/Controls.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION CertRequest */

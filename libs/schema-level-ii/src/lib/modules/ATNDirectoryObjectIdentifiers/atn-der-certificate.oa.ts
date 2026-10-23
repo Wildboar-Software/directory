@@ -4,7 +4,7 @@ import { x509Certificate } from "@wildboar/x500/AuthenticationFramework";
 import { certificateExactMatch } from "@wildboar/x500/CertificateExtensions";
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { id_at_atn_DerCertificate } from "../ATNDirectoryObjectIdentifiers/id-at-atn-DerCertificate.va";
+import { id_at_atn_DerCertificate } from "../ATNDirectoryObjectIdentifiers/id-at-atn-DerCertificate.va.js";
 
 
 

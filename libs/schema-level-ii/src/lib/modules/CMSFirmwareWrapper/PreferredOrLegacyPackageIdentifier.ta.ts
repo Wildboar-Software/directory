@@ -4,7 +4,7 @@ import {
     ASN1Element as _Element
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { PreferredPackageIdentifier, _decode_PreferredPackageIdentifier, _encode_PreferredPackageIdentifier } from "../CMSFirmwareWrapper/PreferredPackageIdentifier.ta";
+import { PreferredPackageIdentifier, _decode_PreferredPackageIdentifier, _encode_PreferredPackageIdentifier } from "../CMSFirmwareWrapper/PreferredPackageIdentifier.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION PreferredOrLegacyPackageIdentifier */

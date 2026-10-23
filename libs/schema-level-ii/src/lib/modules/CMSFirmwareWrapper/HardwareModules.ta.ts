@@ -6,7 +6,7 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { HardwareSerialEntry, _decode_HardwareSerialEntry, _encode_HardwareSerialEntry } from "../CMSFirmwareWrapper/HardwareSerialEntry.ta";
+import { HardwareSerialEntry, _decode_HardwareSerialEntry, _encode_HardwareSerialEntry } from "../CMSFirmwareWrapper/HardwareSerialEntry.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION HardwareModules */

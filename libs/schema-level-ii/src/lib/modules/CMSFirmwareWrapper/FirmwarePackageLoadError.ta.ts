@@ -7,11 +7,11 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { CurrentFWConfig, _decode_CurrentFWConfig, _encode_CurrentFWConfig } from "../CMSFirmwareWrapper/CurrentFWConfig.ta";
-import { FWErrorVersion, _decode_FWErrorVersion, _encode_FWErrorVersion, v1 /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../CMSFirmwareWrapper/FWErrorVersion.ta";
-import { FirmwarePackageLoadErrorCode, _decode_FirmwarePackageLoadErrorCode, _encode_FirmwarePackageLoadErrorCode, _enum_for_FirmwarePackageLoadErrorCode } from "../CMSFirmwareWrapper/FirmwarePackageLoadErrorCode.ta";
-import { PreferredOrLegacyPackageIdentifier, _decode_PreferredOrLegacyPackageIdentifier, _encode_PreferredOrLegacyPackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyPackageIdentifier.ta";
-import { VendorLoadErrorCode, _decode_VendorLoadErrorCode, _encode_VendorLoadErrorCode } from "../CMSFirmwareWrapper/VendorLoadErrorCode.ta";
+import { CurrentFWConfig, _decode_CurrentFWConfig, _encode_CurrentFWConfig } from "../CMSFirmwareWrapper/CurrentFWConfig.ta.js";
+import { FWErrorVersion, _decode_FWErrorVersion, _encode_FWErrorVersion, v1 /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../CMSFirmwareWrapper/FWErrorVersion.ta.js";
+import { FirmwarePackageLoadErrorCode, _decode_FirmwarePackageLoadErrorCode, _encode_FirmwarePackageLoadErrorCode, _enum_for_FirmwarePackageLoadErrorCode } from "../CMSFirmwareWrapper/FirmwarePackageLoadErrorCode.ta.js";
+import { PreferredOrLegacyPackageIdentifier, _decode_PreferredOrLegacyPackageIdentifier, _encode_PreferredOrLegacyPackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyPackageIdentifier.ta.js";
+import { VendorLoadErrorCode, _decode_VendorLoadErrorCode, _encode_VendorLoadErrorCode } from "../CMSFirmwareWrapper/VendorLoadErrorCode.ta.js";
 
 
 

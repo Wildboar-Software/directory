@@ -7,7 +7,7 @@ import {
     BOOLEAN
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { id_at_atn_group_of_addresses } from "../ATNDirectoryObjectIdentifiers/id-at-atn-group-of-addresses.va";
+import { id_at_atn_group_of_addresses } from "../ATNDirectoryObjectIdentifiers/id-at-atn-group-of-addresses.va.js";
 
 
 

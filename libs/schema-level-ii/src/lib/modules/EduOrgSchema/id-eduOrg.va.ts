@@ -3,7 +3,7 @@ import {
     ObjectIdentifier as _OID,
     OBJECT_IDENTIFIER
 } from "@wildboar/asn1";
-import { id_mace } from "../EduOrgSchema/id-mace.va";
+import { id_mace } from "../EduOrgSchema/id-mace.va.js";
 
 
 /* START_OF_SYMBOL_DEFINITION id_eduOrg */

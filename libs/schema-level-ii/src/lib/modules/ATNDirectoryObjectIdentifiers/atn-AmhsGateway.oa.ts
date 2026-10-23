@@ -12,9 +12,9 @@ import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500
 import { owner } from "@wildboar/x500/SelectedAttributeTypes";
 import { protocolInformation } from "@wildboar/x500/SelectedAttributeTypes";
 import { applicationEntity } from "@wildboar/x500/SelectedObjectClasses";
-import { atn_AF_address } from "../ATNDirectoryObjectIdentifiers/atn-AF-address.oa";
-import { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa";
-import { id_oc_atn_AmhsGateway } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsGateway.va";
+import { atn_AF_address } from "../ATNDirectoryObjectIdentifiers/atn-AF-address.oa.js";
+import { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa.js";
+import { id_oc_atn_AmhsGateway } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsGateway.va.js";
 
 /* START_OF_SYMBOL_DEFINITION atn_AmhsGateway */
 /**

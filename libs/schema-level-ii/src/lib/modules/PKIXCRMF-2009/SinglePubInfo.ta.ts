@@ -6,7 +6,7 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { SinglePubInfo_pubMethod, _decode_SinglePubInfo_pubMethod, _encode_SinglePubInfo_pubMethod } from "../PKIXCRMF-2009/SinglePubInfo-pubMethod.ta";
+import { SinglePubInfo_pubMethod, _decode_SinglePubInfo_pubMethod, _encode_SinglePubInfo_pubMethod } from "../PKIXCRMF-2009/SinglePubInfo-pubMethod.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION SinglePubInfo */

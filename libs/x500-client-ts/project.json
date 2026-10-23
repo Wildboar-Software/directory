@@ -15,14 +15,16 @@
         "main": "libs/x500-client-ts/src/index.ts",
         "tsConfig": "libs/x500-client-ts/tsconfig.lib.json",
         "assets": [
-          "libs/x500-client-ts/*.md"
-        ]
+          "libs/x500-client-ts/*.md",
+          "libs/x500-client-ts/LICENSE.txt",
+          "libs/x500-client-ts/package.json"
+        ],
+        "packageJson": "libs/x500-client-ts/package.json"
       },
       "dependsOn": [
-        {
-          "target": "build",
-          "dependencies": true
-        }
+        "idm:build",
+        "osi-net:build",
+        "rose-transport:build"
       ]
     },
     "publish": {

@@ -5,8 +5,8 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { EncryptedKey, _decode_EncryptedKey, _encode_EncryptedKey } from "../PKIXCRMF-2009/EncryptedKey.ta";
-import { KeyGenParameters, _decode_KeyGenParameters, _encode_KeyGenParameters } from "../PKIXCRMF-2009/KeyGenParameters.ta";
+import { EncryptedKey, _decode_EncryptedKey, _encode_EncryptedKey } from "../PKIXCRMF-2009/EncryptedKey.ta.js";
+import { KeyGenParameters, _decode_KeyGenParameters, _encode_KeyGenParameters } from "../PKIXCRMF-2009/KeyGenParameters.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION PKIArchiveOptions */

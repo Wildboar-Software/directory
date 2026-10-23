@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { NAME_FORM } from "@wildboar/x500/InformationFramework";
 import { organizationName } from "@wildboar/x500/SelectedAttributeTypes";
-import { atn_organization } from "../ATNDirectoryObjectIdentifiers/atn-organization.oa";
-import { id_nf_atnOrgNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnOrgNameForm.va";
+import { atn_organization } from "../ATNDirectoryObjectIdentifiers/atn-organization.oa.js";
+import { id_nf_atnOrgNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnOrgNameForm.va.js";
 
 
 

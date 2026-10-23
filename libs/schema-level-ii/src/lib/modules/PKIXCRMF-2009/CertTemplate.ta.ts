@@ -12,7 +12,7 @@ import {
     ASN1TagClass as _TagClass
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
-import { OptionalValidity, _decode_OptionalValidity, _encode_OptionalValidity } from "../PKIXCRMF-2009/OptionalValidity.ta";
+import { OptionalValidity, _decode_OptionalValidity, _encode_OptionalValidity } from "../PKIXCRMF-2009/OptionalValidity.ta.js";
 
 
 /* START_OF_SYMBOL_DEFINITION CertTemplate */

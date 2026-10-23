@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { ImplementedCompressAlgorithms, _decode_ImplementedCompressAlgorithms, _encode_ImplementedCompressAlgorithms } from "../CMSFirmwareWrapper/ImplementedCompressAlgorithms.ta";
-import { id_aa_implCompressAlgs } from "../CMSFirmwareWrapper/id-aa-implCompressAlgs.va";
+import { ImplementedCompressAlgorithms, _decode_ImplementedCompressAlgorithms, _encode_ImplementedCompressAlgorithms } from "../CMSFirmwareWrapper/ImplementedCompressAlgorithms.ta.js";
+import { id_aa_implCompressAlgs } from "../CMSFirmwareWrapper/id-aa-implCompressAlgs.va.js";
 
 
 

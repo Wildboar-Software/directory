@@ -4,7 +4,7 @@ import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboa
 import { UnboundedDirectoryString, _decode_UnboundedDirectoryString, _encode_UnboundedDirectoryString } from "@wildboar/x500/SelectedAttributeTypes";
 import { caseIgnoreMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { directoryString } from "@wildboar/x500/SelectedAttributeTypes";
-import { id_at_voPersonSoRID } from "../VOPerson/id-at-voPersonSoRID.va";
+import { id_at_voPersonSoRID } from "../VOPerson/id-at-voPersonSoRID.va.js";
 
 
 

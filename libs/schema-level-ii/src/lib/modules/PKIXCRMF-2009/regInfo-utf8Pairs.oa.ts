@@ -1,8 +1,8 @@
 /* eslint-disable */
 import type { ATTRIBUTE } from "@wildboar/x500/InformationFramework";
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/InformationFramework";
-import { UTF8Pairs, _decode_UTF8Pairs, _encode_UTF8Pairs } from "../PKIXCRMF-2009/UTF8Pairs.ta";
-import { id_regInfo_utf8Pairs } from "../PKIXCRMF-2009/id-regInfo-utf8Pairs.va";
+import { UTF8Pairs, _decode_UTF8Pairs, _encode_UTF8Pairs } from "../PKIXCRMF-2009/UTF8Pairs.ta.js";
+import { id_regInfo_utf8Pairs } from "../PKIXCRMF-2009/id-regInfo-utf8Pairs.va.js";
 
 
 
