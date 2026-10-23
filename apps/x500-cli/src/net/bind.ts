@@ -1,13 +1,11 @@
 import { Buffer } from "node:buffer";
 import process from "node:process";
+import { URL } from "node:url";
 import type { Context, Connection } from "../types.js";
 import * as fs from "node:fs";
 import * as readline from "readline";
 import MutableWriteable from "../utils/MutableWriteable.js";
-import connect from "./connect.js";
-import {
-    IdmBindError,
-} from "@wildboar/x500/IDMProtocolSpecification";
+import connect, { DirectoryBindRejected } from "./connect.js";
 import type {
     ConfigDSA,
     ConfigContext,
@@ -183,42 +181,62 @@ async function createConnection (
     const called_ae_title = dsa?.aeTitle
         ? destringifyDN(ctx, dsa.aeTitle)
         : undefined;
+    const preferenceName = currentContext?.context.preferences;
+    const preferenceProfile = preferenceName
+        ? ctx.config?.["preference-profiles"]?.find((profile) => profile.name === preferenceName)
+        : undefined;
+    const callingAETitle = (typeof preferenceProfile?.callingAETitle === "string" && preferenceProfile.callingAETitle.length > 0)
+        ? destringifyDN(ctx, preferenceProfile.callingAETitle)
+        : undefined;
 
     for (const accessPoint of accessPoints) {
         const bindDN = argv.bindDN
             ?? credentials?.credential.name
             ?? "";
-        try {
-            // TODO: Iterate over URLs.
-            const connection = await connect(
-                ctx,
-                dsa!,
-                accessPoint.urls[0],
-                bindDN,
-                password,
-                protocol,
-                certPath,
-                key,
-                called_ae_title,
-                attrCertPath,
-            );
-            if (!connection) {
-                ctx.log.warn(`Could not create connection to this access point: ${accessPoint.url}.`);
-                continue;
+        for (const urlString of accessPoint.urls) {
+            if (argv.noTLS) {
+                let scheme: string;
+                try {
+                    scheme = new URL(urlString).protocol.replace(":", "").toLowerCase();
+                } catch {
+                    ctx.log.warn(`Could not create connection to ${urlString}.`);
+                    continue;
+                }
+                if (scheme.endsWith("s")) {
+                    ctx.log.warn(`Skipping ${urlString} because --noTLS was set.`);
+                    continue;
+                }
             }
-            connection.called_ae_title = called_ae_title;
-            connection.signingKey = key;
-            connection.certPath = certPath;
-            connection.attrCertPath = attrCertPath;
-            ctx.log.debug("Connected.");
-            return connection;
-        } catch (e) {
-            if (e instanceof IdmBindError) {
-                ctx.log.error("Authentication error.");
-                process.exit(3);
-            } else {
-                ctx.log.warn(`Could not create connection to this access point: ${accessPoint.url}.`);
-                continue;
+            try {
+                const connection = await connect(
+                    ctx,
+                    dsa,
+                    urlString,
+                    bindDN,
+                    password,
+                    protocol,
+                    certPath,
+                    key,
+                    called_ae_title,
+                    attrCertPath,
+                    callingAETitle,
+                    accessPoint,
+                );
+                connection.called_ae_title = called_ae_title;
+                connection.signingKey = key;
+                connection.certPath = certPath;
+                connection.attrCertPath = attrCertPath;
+                ctx.log.debug("Connected.");
+                return connection;
+            } catch (e) {
+                if (e instanceof DirectoryBindRejected) {
+                    ctx.log.error("Authentication error.");
+                    process.exit(3);
+                } else {
+                    const message = e instanceof Error ? e.message : String(e);
+                    ctx.log.warn(`Could not create connection to ${urlString}: ${message}`);
+                    continue;
+                }
             }
         }
     }
