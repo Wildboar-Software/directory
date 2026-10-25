@@ -1,5 +1,6 @@
 import process from "node:process";
-import yargs from "yargs/yargs";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 import type { Argv } from "yargs";
 import ctx from "./ctx.js";
 import loadAttributeTypes from "./utils/loadAttributeTypes.js";
@@ -124,7 +125,7 @@ async function main () {
     loadContextTypes(ctx);
     ctx.config = await getConfig(ctx);
     try {
-        yargs(process.argv.slice(2))
+        await yargs(hideBin(process.argv))
             .scriptName("x500")
             .command("dap", "Directory Access Protocol", (dapYargs) => {
                 add_protocol_args(dapYargs)
@@ -319,8 +320,7 @@ async function main () {
             .demandCommand()
             .help()
             .wrap(100)
-            .argv // This is a getter, and calling it is necessary to get yargs to run.
-            ;
+            .parse();
     } catch (e) {
         const properties = (typeof e === "object" && !!e) ? { ...e } : {};
         ctx.log.error("err", properties);
