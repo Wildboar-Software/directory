@@ -51,6 +51,7 @@ import _ from "lodash";
 import { administrativeRole, pwdAttribute } from "@wildboar/x500/InformationFramework";
 import { accessControlScheme } from "@wildboar/x500/BasicAccessControl";
 import { attributeValueFromDB } from "./attributeValueFromDB.js";
+import { readGoverningStructureRule } from "./governingStructureRule.js";
 
 
 const ALIAS: string = alias["&id"].toString();
@@ -74,6 +75,9 @@ let collectiveAttributeTypes: Uint8Array<ArrayBuffer>[] = [];
  *
  * @param ctx The context object
  * @param dbe The DSE as returned by the Prisma
+ * @param preloadedGoverningStructureRule When supplied, this value is used
+ *  instead of reading `governingStructureRule` again. `null` means the
+ *  attribute is absent.
  * @returns The DSE
  *
  * @function
@@ -95,6 +99,7 @@ async function dseFromDatabaseEntry (
             content_octets: Uint8Array<ArrayBuffer>,
         }[];
     }),
+    preloadedGoverningStructureRule?: number | null,
 ): Promise<DSE> {
     const rdn = dbe.RDN?.map((atav) => {
         const type_el = new BERElement();
@@ -119,6 +124,9 @@ async function dseFromDatabaseEntry (
             object_class: true,
         },
     }));
+    const governingStructureRule = (preloadedGoverningStructureRule !== undefined)
+        ? (preloadedGoverningStructureRule ?? undefined)
+        : await readGoverningStructureRule(ctx, dbe.id);
     const ret: DSE = {
         id: dbe.id,
         materializedPath: dbe.materialized_path,
@@ -129,7 +137,7 @@ async function dseFromDatabaseEntry (
         structuralObjectClass: dbe.structuralObjectClass
             ? ObjectIdentifier.fromString(dbe.structuralObjectClass)
             : undefined,
-        governingStructureRule: dbe.governingStructureRule ?? undefined,
+        governingStructureRule,
         creatorsName: {
             rdnSequence: Array.isArray(dbe.creatorsName)
                 ? dbe.creatorsName.map((rdn) => rdnFromJson(rdn as Record<string, string>))

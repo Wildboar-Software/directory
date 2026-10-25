@@ -29,7 +29,6 @@ export type AggregateEntry = {
 export type EntryAvgAggregateOutputType = {
   id: number | null
   immediate_superior_id: number | null
-  governingStructureRule: number | null
   hierarchyParent_id: number | null
   hierarchyTop_id: number | null
   hierarchyLevel: number | null
@@ -39,7 +38,6 @@ export type EntryAvgAggregateOutputType = {
 export type EntrySumAggregateOutputType = {
   id: number | null
   immediate_superior_id: number | null
-  governingStructureRule: number | null
   hierarchyParent_id: number | null
   hierarchyTop_id: number | null
   hierarchyLevel: number | null
@@ -71,7 +69,6 @@ export type EntryMinAggregateOutputType = {
   deleteTimestamp: Date | null
   expiresTimestamp: Date | null
   modifyNameTimestamp: Date | null
-  governingStructureRule: number | null
   structuralObjectClass: string | null
   subordinate_completeness: boolean | null
   attribute_completeness: boolean | null
@@ -112,7 +109,6 @@ export type EntryMaxAggregateOutputType = {
   deleteTimestamp: Date | null
   expiresTimestamp: Date | null
   modifyNameTimestamp: Date | null
-  governingStructureRule: number | null
   structuralObjectClass: string | null
   subordinate_completeness: boolean | null
   attribute_completeness: boolean | null
@@ -156,7 +152,6 @@ export type EntryCountAggregateOutputType = {
   expiresTimestamp: number
   modifyNameTimestamp: number
   previousName: number
-  governingStructureRule: number
   structuralObjectClass: number
   subordinate_completeness: number
   attribute_completeness: number
@@ -181,7 +176,6 @@ export type EntryCountAggregateOutputType = {
 export type EntryAvgAggregateInputType = {
   id?: true
   immediate_superior_id?: true
-  governingStructureRule?: true
   hierarchyParent_id?: true
   hierarchyTop_id?: true
   hierarchyLevel?: true
@@ -191,7 +185,6 @@ export type EntryAvgAggregateInputType = {
 export type EntrySumAggregateInputType = {
   id?: true
   immediate_superior_id?: true
-  governingStructureRule?: true
   hierarchyParent_id?: true
   hierarchyTop_id?: true
   hierarchyLevel?: true
@@ -223,7 +216,6 @@ export type EntryMinAggregateInputType = {
   deleteTimestamp?: true
   expiresTimestamp?: true
   modifyNameTimestamp?: true
-  governingStructureRule?: true
   structuralObjectClass?: true
   subordinate_completeness?: true
   attribute_completeness?: true
@@ -264,7 +256,6 @@ export type EntryMaxAggregateInputType = {
   deleteTimestamp?: true
   expiresTimestamp?: true
   modifyNameTimestamp?: true
-  governingStructureRule?: true
   structuralObjectClass?: true
   subordinate_completeness?: true
   attribute_completeness?: true
@@ -308,7 +299,6 @@ export type EntryCountAggregateInputType = {
   expiresTimestamp?: true
   modifyNameTimestamp?: true
   previousName?: true
-  governingStructureRule?: true
   structuralObjectClass?: true
   subordinate_completeness?: true
   attribute_completeness?: true
@@ -443,7 +433,6 @@ export type EntryGroupByOutputType = {
   expiresTimestamp: Date | null
   modifyNameTimestamp: Date | null
   previousName: runtime.JsonValue | null
-  governingStructureRule: number | null
   structuralObjectClass: string | null
   subordinate_completeness: boolean | null
   attribute_completeness: boolean | null
@@ -514,7 +503,6 @@ export type EntryWhereInput = {
   expiresTimestamp?: Prisma.DateTimeNullableFilter<"Entry"> | Date | string | null
   modifyNameTimestamp?: Prisma.DateTimeNullableFilter<"Entry"> | Date | string | null
   previousName?: Prisma.JsonNullableFilter<"Entry">
-  governingStructureRule?: Prisma.IntNullableFilter<"Entry"> | number | null
   structuralObjectClass?: Prisma.StringNullableFilter<"Entry"> | string | null
   subordinate_completeness?: Prisma.BoolNullableFilter<"Entry"> | boolean | null
   attribute_completeness?: Prisma.BoolNullableFilter<"Entry"> | boolean | null
@@ -589,7 +577,6 @@ export type EntryOrderByWithRelationInput = {
   expiresTimestamp?: Prisma.SortOrderInput | Prisma.SortOrder
   modifyNameTimestamp?: Prisma.SortOrderInput | Prisma.SortOrder
   previousName?: Prisma.SortOrderInput | Prisma.SortOrder
-  governingStructureRule?: Prisma.SortOrderInput | Prisma.SortOrder
   structuralObjectClass?: Prisma.SortOrderInput | Prisma.SortOrder
   subordinate_completeness?: Prisma.SortOrderInput | Prisma.SortOrder
   attribute_completeness?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -667,7 +654,6 @@ export type EntryWhereUniqueInput = Prisma.AtLeast<{
   expiresTimestamp?: Prisma.DateTimeNullableFilter<"Entry"> | Date | string | null
   modifyNameTimestamp?: Prisma.DateTimeNullableFilter<"Entry"> | Date | string | null
   previousName?: Prisma.JsonNullableFilter<"Entry">
-  governingStructureRule?: Prisma.IntNullableFilter<"Entry"> | number | null
   structuralObjectClass?: Prisma.StringNullableFilter<"Entry"> | string | null
   subordinate_completeness?: Prisma.BoolNullableFilter<"Entry"> | boolean | null
   attribute_completeness?: Prisma.BoolNullableFilter<"Entry"> | boolean | null
@@ -742,7 +728,6 @@ export type EntryOrderByWithAggregationInput = {
   expiresTimestamp?: Prisma.SortOrderInput | Prisma.SortOrder
   modifyNameTimestamp?: Prisma.SortOrderInput | Prisma.SortOrder
   previousName?: Prisma.SortOrderInput | Prisma.SortOrder
-  governingStructureRule?: Prisma.SortOrderInput | Prisma.SortOrder
   structuralObjectClass?: Prisma.SortOrderInput | Prisma.SortOrder
   subordinate_completeness?: Prisma.SortOrderInput | Prisma.SortOrder
   attribute_completeness?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -798,7 +783,6 @@ export type EntryScalarWhereWithAggregatesInput = {
   expiresTimestamp?: Prisma.DateTimeNullableWithAggregatesFilter<"Entry"> | Date | string | null
   modifyNameTimestamp?: Prisma.DateTimeNullableWithAggregatesFilter<"Entry"> | Date | string | null
   previousName?: Prisma.JsonNullableWithAggregatesFilter<"Entry">
-  governingStructureRule?: Prisma.IntNullableWithAggregatesFilter<"Entry"> | number | null
   structuralObjectClass?: Prisma.StringNullableWithAggregatesFilter<"Entry"> | string | null
   subordinate_completeness?: Prisma.BoolNullableWithAggregatesFilter<"Entry"> | boolean | null
   attribute_completeness?: Prisma.BoolNullableWithAggregatesFilter<"Entry"> | boolean | null
@@ -844,7 +828,6 @@ export type EntryCreateInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -916,7 +899,6 @@ export type EntryUncheckedCreateInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -985,7 +967,6 @@ export type EntryUpdateInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -1057,7 +1038,6 @@ export type EntryUncheckedUpdateInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -1128,7 +1108,6 @@ export type EntryCreateManyInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -1174,7 +1153,6 @@ export type EntryUpdateManyMutationInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -1219,7 +1197,6 @@ export type EntryUncheckedUpdateManyInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -1282,7 +1259,6 @@ export type EntryCountOrderByAggregateInput = {
   expiresTimestamp?: Prisma.SortOrder
   modifyNameTimestamp?: Prisma.SortOrder
   previousName?: Prisma.SortOrder
-  governingStructureRule?: Prisma.SortOrder
   structuralObjectClass?: Prisma.SortOrder
   subordinate_completeness?: Prisma.SortOrder
   attribute_completeness?: Prisma.SortOrder
@@ -1305,7 +1281,6 @@ export type EntryCountOrderByAggregateInput = {
 export type EntryAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   immediate_superior_id?: Prisma.SortOrder
-  governingStructureRule?: Prisma.SortOrder
   hierarchyParent_id?: Prisma.SortOrder
   hierarchyTop_id?: Prisma.SortOrder
   hierarchyLevel?: Prisma.SortOrder
@@ -1337,7 +1312,6 @@ export type EntryMaxOrderByAggregateInput = {
   deleteTimestamp?: Prisma.SortOrder
   expiresTimestamp?: Prisma.SortOrder
   modifyNameTimestamp?: Prisma.SortOrder
-  governingStructureRule?: Prisma.SortOrder
   structuralObjectClass?: Prisma.SortOrder
   subordinate_completeness?: Prisma.SortOrder
   attribute_completeness?: Prisma.SortOrder
@@ -1378,7 +1352,6 @@ export type EntryMinOrderByAggregateInput = {
   deleteTimestamp?: Prisma.SortOrder
   expiresTimestamp?: Prisma.SortOrder
   modifyNameTimestamp?: Prisma.SortOrder
-  governingStructureRule?: Prisma.SortOrder
   structuralObjectClass?: Prisma.SortOrder
   subordinate_completeness?: Prisma.SortOrder
   attribute_completeness?: Prisma.SortOrder
@@ -1397,7 +1370,6 @@ export type EntryMinOrderByAggregateInput = {
 export type EntrySumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   immediate_superior_id?: Prisma.SortOrder
-  governingStructureRule?: Prisma.SortOrder
   hierarchyParent_id?: Prisma.SortOrder
   hierarchyTop_id?: Prisma.SortOrder
   hierarchyLevel?: Prisma.SortOrder
@@ -1509,16 +1481,16 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type NullableBoolFieldUpdateOperationsInput = {
+  set?: boolean | null
+}
+
 export type NullableIntFieldUpdateOperationsInput = {
   set?: number | null
   increment?: number
   decrement?: number
   multiply?: number
   divide?: number
-}
-
-export type NullableBoolFieldUpdateOperationsInput = {
-  set?: boolean | null
 }
 
 export type EntryUpdateOneWithoutSubordinatesNestedInput = {
@@ -1989,7 +1961,6 @@ export type EntryCreateWithoutSubordinatesInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2060,7 +2031,6 @@ export type EntryUncheckedCreateWithoutSubordinatesInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2133,7 +2103,6 @@ export type EntryCreateWithoutHierarchicalChildrenInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2204,7 +2173,6 @@ export type EntryUncheckedCreateWithoutHierarchicalChildrenInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2277,7 +2245,6 @@ export type EntryCreateWithoutEntryInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2348,7 +2315,6 @@ export type EntryUncheckedCreateWithoutEntryInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2421,7 +2387,6 @@ export type EntryCreateWithoutAliasesInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2492,7 +2457,6 @@ export type EntryUncheckedCreateWithoutAliasesInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2565,7 +2529,6 @@ export type EntryCreateWithoutAliased_entryInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2636,7 +2599,6 @@ export type EntryUncheckedCreateWithoutAliased_entryInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2713,7 +2675,6 @@ export type EntryCreateWithoutImmediate_superiorInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2783,7 +2744,6 @@ export type EntryUncheckedCreateWithoutImmediate_superiorInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2861,7 +2821,6 @@ export type EntryCreateWithoutHierarchyParentInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -2932,7 +2891,6 @@ export type EntryUncheckedCreateWithoutHierarchyParentInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -3009,7 +2967,6 @@ export type EntryCreateWithoutHierarchyTopInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -3080,7 +3037,6 @@ export type EntryUncheckedCreateWithoutHierarchyTopInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -3168,7 +3124,6 @@ export type EntryUpdateWithoutSubordinatesInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -3239,7 +3194,6 @@ export type EntryUncheckedUpdateWithoutSubordinatesInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -3318,7 +3272,6 @@ export type EntryUpdateWithoutHierarchicalChildrenInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -3389,7 +3342,6 @@ export type EntryUncheckedUpdateWithoutHierarchicalChildrenInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -3468,7 +3420,6 @@ export type EntryUpdateWithoutEntryInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -3539,7 +3490,6 @@ export type EntryUncheckedUpdateWithoutEntryInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -3618,7 +3568,6 @@ export type EntryUpdateWithoutAliasesInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -3689,7 +3638,6 @@ export type EntryUncheckedUpdateWithoutAliasesInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -3778,7 +3726,6 @@ export type EntryScalarWhereInput = {
   expiresTimestamp?: Prisma.DateTimeNullableFilter<"Entry"> | Date | string | null
   modifyNameTimestamp?: Prisma.DateTimeNullableFilter<"Entry"> | Date | string | null
   previousName?: Prisma.JsonNullableFilter<"Entry">
-  governingStructureRule?: Prisma.IntNullableFilter<"Entry"> | number | null
   structuralObjectClass?: Prisma.StringNullableFilter<"Entry"> | string | null
   subordinate_completeness?: Prisma.BoolNullableFilter<"Entry"> | boolean | null
   attribute_completeness?: Prisma.BoolNullableFilter<"Entry"> | boolean | null
@@ -3872,7 +3819,6 @@ export type EntryCreateWithoutPasswordInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -3943,7 +3889,6 @@ export type EntryUncheckedCreateWithoutPasswordInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -4027,7 +3972,6 @@ export type EntryUpdateWithoutPasswordInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -4098,7 +4042,6 @@ export type EntryUncheckedUpdateWithoutPasswordInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -4166,7 +4109,6 @@ export type EntryCreateWithoutPasswordHistoryInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -4237,7 +4179,6 @@ export type EntryUncheckedCreateWithoutPasswordHistoryInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -4321,7 +4262,6 @@ export type EntryUpdateWithoutPasswordHistoryInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -4392,7 +4332,6 @@ export type EntryUncheckedUpdateWithoutPasswordHistoryInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -4460,7 +4399,6 @@ export type EntryCreateWithoutAttributeValueInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -4531,7 +4469,6 @@ export type EntryUncheckedCreateWithoutAttributeValueInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -4615,7 +4552,6 @@ export type EntryUpdateWithoutAttributeValueInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -4686,7 +4622,6 @@ export type EntryUncheckedUpdateWithoutAttributeValueInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -4754,7 +4689,6 @@ export type EntryCreateWithoutAccessPointInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -4825,7 +4759,6 @@ export type EntryUncheckedCreateWithoutAccessPointInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -4909,7 +4842,6 @@ export type EntryUpdateWithoutAccessPointInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -4980,7 +4912,6 @@ export type EntryUncheckedUpdateWithoutAccessPointInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -5048,7 +4979,6 @@ export type EntryCreateWithoutNameFormInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -5119,7 +5049,6 @@ export type EntryUncheckedCreateWithoutNameFormInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -5203,7 +5132,6 @@ export type EntryUpdateWithoutNameFormInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -5274,7 +5202,6 @@ export type EntryUncheckedUpdateWithoutNameFormInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -5342,7 +5269,6 @@ export type EntryCreateWithoutDITStructureRuleInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -5413,7 +5339,6 @@ export type EntryUncheckedCreateWithoutDITStructureRuleInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -5497,7 +5422,6 @@ export type EntryUpdateWithoutDITStructureRuleInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -5568,7 +5492,6 @@ export type EntryUncheckedUpdateWithoutDITStructureRuleInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -5636,7 +5559,6 @@ export type EntryCreateWithoutContentRuleInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -5707,7 +5629,6 @@ export type EntryUncheckedCreateWithoutContentRuleInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -5791,7 +5712,6 @@ export type EntryUpdateWithoutContentRuleInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -5862,7 +5782,6 @@ export type EntryUncheckedUpdateWithoutContentRuleInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -5930,7 +5849,6 @@ export type EntryCreateWithoutContextUseRuleInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -6001,7 +5919,6 @@ export type EntryUncheckedCreateWithoutContextUseRuleInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -6085,7 +6002,6 @@ export type EntryUpdateWithoutContextUseRuleInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -6156,7 +6072,6 @@ export type EntryUncheckedUpdateWithoutContextUseRuleInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -6224,7 +6139,6 @@ export type EntryCreateWithoutFriendshipInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -6295,7 +6209,6 @@ export type EntryUncheckedCreateWithoutFriendshipInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -6379,7 +6292,6 @@ export type EntryUpdateWithoutFriendshipInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -6450,7 +6362,6 @@ export type EntryUncheckedUpdateWithoutFriendshipInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -6518,7 +6429,6 @@ export type EntryCreateWithoutMatchingRuleUseInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -6589,7 +6499,6 @@ export type EntryUncheckedCreateWithoutMatchingRuleUseInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -6673,7 +6582,6 @@ export type EntryUpdateWithoutMatchingRuleUseInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -6744,7 +6652,6 @@ export type EntryUncheckedUpdateWithoutMatchingRuleUseInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -6812,7 +6719,6 @@ export type EntryCreateWithoutAttributeTypeDescriptionInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -6883,7 +6789,6 @@ export type EntryUncheckedCreateWithoutAttributeTypeDescriptionInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -6967,7 +6872,6 @@ export type EntryUpdateWithoutAttributeTypeDescriptionInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -7038,7 +6942,6 @@ export type EntryUncheckedUpdateWithoutAttributeTypeDescriptionInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -7106,7 +7009,6 @@ export type EntryCreateWithoutObjectClassDescriptionInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -7177,7 +7079,6 @@ export type EntryUncheckedCreateWithoutObjectClassDescriptionInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -7261,7 +7162,6 @@ export type EntryUpdateWithoutObjectClassDescriptionInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -7332,7 +7232,6 @@ export type EntryUncheckedUpdateWithoutObjectClassDescriptionInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -7400,7 +7299,6 @@ export type EntryCreateWithoutContextDescriptionInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -7471,7 +7369,6 @@ export type EntryUncheckedCreateWithoutContextDescriptionInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -7555,7 +7452,6 @@ export type EntryUpdateWithoutContextDescriptionInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -7626,7 +7522,6 @@ export type EntryUncheckedUpdateWithoutContextDescriptionInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -7694,7 +7589,6 @@ export type EntryCreateWithoutOperationalBindingInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -7765,7 +7659,6 @@ export type EntryUncheckedCreateWithoutOperationalBindingInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -7849,7 +7742,6 @@ export type EntryUpdateWithoutOperationalBindingInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -7920,7 +7812,6 @@ export type EntryUncheckedUpdateWithoutOperationalBindingInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -7988,7 +7879,6 @@ export type EntryCreateWithoutRDNInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -8059,7 +7949,6 @@ export type EntryUncheckedCreateWithoutRDNInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -8143,7 +8032,6 @@ export type EntryUpdateWithoutRDNInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -8214,7 +8102,6 @@ export type EntryUncheckedUpdateWithoutRDNInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -8282,7 +8169,6 @@ export type EntryCreateWithoutEntryObjectClassInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -8353,7 +8239,6 @@ export type EntryUncheckedCreateWithoutEntryObjectClassInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -8437,7 +8322,6 @@ export type EntryUpdateWithoutEntryObjectClassInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -8508,7 +8392,6 @@ export type EntryUncheckedUpdateWithoutEntryObjectClassInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -8576,7 +8459,6 @@ export type EntryCreateWithoutEntryAttributeValuesIncompleteInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -8647,7 +8529,6 @@ export type EntryUncheckedCreateWithoutEntryAttributeValuesIncompleteInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -8731,7 +8612,6 @@ export type EntryUpdateWithoutEntryAttributeValuesIncompleteInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -8802,7 +8682,6 @@ export type EntryUncheckedUpdateWithoutEntryAttributeValuesIncompleteInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -8870,7 +8749,6 @@ export type EntryCreateWithoutEnqueuedSearchResultInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -8941,7 +8819,6 @@ export type EntryUncheckedCreateWithoutEnqueuedSearchResultInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -9025,7 +8902,6 @@ export type EntryUpdateWithoutEnqueuedSearchResultInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -9096,7 +8972,6 @@ export type EntryUncheckedUpdateWithoutEnqueuedSearchResultInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -9164,7 +9039,6 @@ export type EntryCreateWithoutEnqueuedListResultInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -9235,7 +9109,6 @@ export type EntryUncheckedCreateWithoutEnqueuedListResultInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -9319,7 +9192,6 @@ export type EntryUpdateWithoutEnqueuedListResultInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -9390,7 +9262,6 @@ export type EntryUncheckedUpdateWithoutEnqueuedListResultInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -9460,7 +9331,6 @@ export type EntryCreateManyAliased_entryInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -9506,7 +9376,6 @@ export type EntryCreateManyImmediate_superiorInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -9554,7 +9423,6 @@ export type EntryCreateManyHierarchyParentInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -9601,7 +9469,6 @@ export type EntryCreateManyHierarchyTopInput = {
   expiresTimestamp?: Date | string | null
   modifyNameTimestamp?: Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: number | null
   structuralObjectClass?: string | null
   subordinate_completeness?: boolean | null
   attribute_completeness?: boolean | null
@@ -9646,7 +9513,6 @@ export type EntryUpdateWithoutAliased_entryInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -9717,7 +9583,6 @@ export type EntryUncheckedUpdateWithoutAliased_entryInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -9787,7 +9652,6 @@ export type EntryUncheckedUpdateManyWithoutAliased_entryInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -9832,7 +9696,6 @@ export type EntryUpdateWithoutImmediate_superiorInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -9902,7 +9765,6 @@ export type EntryUncheckedUpdateWithoutImmediate_superiorInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -9972,7 +9834,6 @@ export type EntryUncheckedUpdateManyWithoutImmediate_superiorInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -10018,7 +9879,6 @@ export type EntryUpdateWithoutHierarchyParentInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -10089,7 +9949,6 @@ export type EntryUncheckedUpdateWithoutHierarchyParentInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -10159,7 +10018,6 @@ export type EntryUncheckedUpdateManyWithoutHierarchyParentInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -10204,7 +10062,6 @@ export type EntryUpdateWithoutHierarchyTopInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -10275,7 +10132,6 @@ export type EntryUncheckedUpdateWithoutHierarchyTopInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -10345,7 +10201,6 @@ export type EntryUncheckedUpdateManyWithoutHierarchyTopInput = {
   expiresTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   modifyNameTimestamp?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   previousName?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  governingStructureRule?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   structuralObjectClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subordinate_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   attribute_completeness?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -10621,7 +10476,6 @@ export type EntrySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   expiresTimestamp?: boolean
   modifyNameTimestamp?: boolean
   previousName?: boolean
-  governingStructureRule?: boolean
   structuralObjectClass?: boolean
   subordinate_completeness?: boolean
   attribute_completeness?: boolean
@@ -10697,7 +10551,6 @@ export type EntrySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   expiresTimestamp?: boolean
   modifyNameTimestamp?: boolean
   previousName?: boolean
-  governingStructureRule?: boolean
   structuralObjectClass?: boolean
   subordinate_completeness?: boolean
   attribute_completeness?: boolean
@@ -10749,7 +10602,6 @@ export type EntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   expiresTimestamp?: boolean
   modifyNameTimestamp?: boolean
   previousName?: boolean
-  governingStructureRule?: boolean
   structuralObjectClass?: boolean
   subordinate_completeness?: boolean
   attribute_completeness?: boolean
@@ -10801,7 +10653,6 @@ export type EntrySelectScalar = {
   expiresTimestamp?: boolean
   modifyNameTimestamp?: boolean
   previousName?: boolean
-  governingStructureRule?: boolean
   structuralObjectClass?: boolean
   subordinate_completeness?: boolean
   attribute_completeness?: boolean
@@ -10821,7 +10672,7 @@ export type EntrySelectScalar = {
   otherData?: boolean
 }
 
-export type EntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entryUUID" | "dseUUID" | "materialized_path" | "immediate_superior_id" | "glue" | "cp" | "entry" | "alias" | "subr" | "nssr" | "xr" | "admPoint" | "subentry" | "shadow" | "immSupr" | "rhob" | "sa" | "dsSubentry" | "createTimestamp" | "modifyTimestamp" | "deleteTimestamp" | "creatorsName" | "modifiersName" | "expiresTimestamp" | "modifyNameTimestamp" | "previousName" | "governingStructureRule" | "structuralObjectClass" | "subordinate_completeness" | "attribute_completeness" | "lastShadowUpdate" | "keep_children_in_database" | "may_add_top_level_dse" | "hierarchyParent_id" | "hierarchyParentDN" | "hierarchyParentStr" | "hierarchyTop_id" | "hierarchyTopDN" | "hierarchyTopStr" | "hierarchyPath" | "hierarchyLevel" | "aliased_entry_name" | "aliased_entry_id" | "otherData", ExtArgs["result"]["entry"]>
+export type EntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entryUUID" | "dseUUID" | "materialized_path" | "immediate_superior_id" | "glue" | "cp" | "entry" | "alias" | "subr" | "nssr" | "xr" | "admPoint" | "subentry" | "shadow" | "immSupr" | "rhob" | "sa" | "dsSubentry" | "createTimestamp" | "modifyTimestamp" | "deleteTimestamp" | "creatorsName" | "modifiersName" | "expiresTimestamp" | "modifyNameTimestamp" | "previousName" | "structuralObjectClass" | "subordinate_completeness" | "attribute_completeness" | "lastShadowUpdate" | "keep_children_in_database" | "may_add_top_level_dse" | "hierarchyParent_id" | "hierarchyParentDN" | "hierarchyParentStr" | "hierarchyTop_id" | "hierarchyTopDN" | "hierarchyTopStr" | "hierarchyPath" | "hierarchyLevel" | "aliased_entry_name" | "aliased_entry_id" | "otherData", ExtArgs["result"]["entry"]>
 export type EntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   immediate_superior?: boolean | Prisma.Entry$immediate_superiorArgs<ExtArgs>
   hierarchyParent?: boolean | Prisma.Entry$hierarchyParentArgs<ExtArgs>
@@ -10924,7 +10775,6 @@ export type $EntryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     expiresTimestamp: Date | null
     modifyNameTimestamp: Date | null
     previousName: runtime.JsonValue | null
-    governingStructureRule: number | null
     structuralObjectClass: string | null
     subordinate_completeness: boolean | null
     attribute_completeness: boolean | null
@@ -11419,7 +11269,6 @@ export interface EntryFieldRefs {
   readonly expiresTimestamp: Prisma.FieldRef<"Entry", 'DateTime'>
   readonly modifyNameTimestamp: Prisma.FieldRef<"Entry", 'DateTime'>
   readonly previousName: Prisma.FieldRef<"Entry", 'Json'>
-  readonly governingStructureRule: Prisma.FieldRef<"Entry", 'Int'>
   readonly structuralObjectClass: Prisma.FieldRef<"Entry", 'String'>
   readonly subordinate_completeness: Prisma.FieldRef<"Entry", 'Boolean'>
   readonly attribute_completeness: Prisma.FieldRef<"Entry", 'Boolean'>

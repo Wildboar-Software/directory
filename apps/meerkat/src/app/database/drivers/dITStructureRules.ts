@@ -19,6 +19,7 @@ import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/InformationFramework";
 import { checkNameForm } from "@wildboar/x500";
+import { replaceGoverningStructureRule } from "../governingStructureRule.js";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 const ID_AR_SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
@@ -78,15 +79,11 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             if (structureRuleIsApplicableToTheAdminPoint) {
                 const newGSR = Number(decoded.ruleIdentifier);
                 vertex.immediateSuperior.dse.governingStructureRule = newGSR;
-                pendingUpdates.otherWrites.push(ctx.db.entry.update({
-                    where: {
-                        id: vertex.immediateSuperior.dse.id,
-                    },
-                    data: {
-                        governingStructureRule: newGSR,
-                    },
-                    select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                }));
+                pendingUpdates.otherWrites.push(...replaceGoverningStructureRule(
+                    ctx,
+                    vertex.immediateSuperior.dse.id,
+                    newGSR,
+                ));
                 /**
                  * We log this at a debug level here, because it looks like the
                  * GSR is just getting set for the first time, which is no
@@ -190,27 +187,20 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
             );
         });
         if (applicableStructureRule) {
-            vertex.immediateSuperior.dse.governingStructureRule = Number(decoded.ruleIdentifier);
-            pendingUpdates.otherWrites.push(ctx.db.entry.update({
-                where: {
-                    id: vertex.immediateSuperior.dse.id,
-                },
-                data: {
-                    governingStructureRule: Number(decoded.ruleIdentifier),
-                },
-                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-            }));
+            const nextRule = Number(decoded.ruleIdentifier);
+            vertex.immediateSuperior.dse.governingStructureRule = nextRule;
+            pendingUpdates.otherWrites.push(...replaceGoverningStructureRule(
+                ctx,
+                vertex.immediateSuperior.dse.id,
+                nextRule,
+            ));
         } else {
             vertex.immediateSuperior.dse.governingStructureRule = undefined;
-            pendingUpdates.otherWrites.push(ctx.db.entry.update({
-                where: {
-                    id: vertex.immediateSuperior.dse.id,
-                },
-                data: {
-                    governingStructureRule: null,
-                },
-                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-            }));
+            pendingUpdates.otherWrites.push(...replaceGoverningStructureRule(
+                ctx,
+                vertex.immediateSuperior.dse.id,
+                null,
+            ));
         }
         ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
             uuid: vertex.immediateSuperior.dse.uuid,
@@ -236,15 +226,11 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     // The admin point now has no governing structure rule.
     if (vertex.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_AR_SUBSCHEMA)) {
         vertex.immediateSuperior.dse.governingStructureRule = undefined;
-        pendingUpdates.otherWrites.push(ctx.db.entry.update({
-            where: {
-                id: vertex.immediateSuperior.dse.id,
-            },
-            data: {
-                governingStructureRule: null,
-            },
-            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-        }));
+        pendingUpdates.otherWrites.push(...replaceGoverningStructureRule(
+            ctx,
+            vertex.immediateSuperior.dse.id,
+            null,
+        ));
         ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
             uuid: vertex.immediateSuperior.dse.uuid,
         }));

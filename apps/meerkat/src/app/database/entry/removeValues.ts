@@ -8,6 +8,7 @@ import { ASN1Construction } from "@wildboar/asn1";
 import type { Prisma } from "../../generated/client.js";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson.js";
+import { clearCachedGoverningStructureRuleValue } from "../governingStructureRule.js";
 
 /**
  * @summary Delete an attribute from an entry
@@ -47,6 +48,9 @@ async function removeValues (
         values
             .map((attr) => ctx.attributeTypes.get(attr.type.toString())?.driver?.removeValue(ctx, entry, attr, pendingUpdates)),
     );
+    for (const value of values) {
+        clearCachedGoverningStructureRuleValue(entry, value);
+    }
     return [
         ctx.db.entry.update({
             where: {

@@ -3,6 +3,7 @@ import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import type { DistinguishedValueCreateManyInput } from "../generated/models/DistinguishedValue.js";
 import { ASN1Construction, INTEGER } from "@wildboar/asn1";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
+import { replaceGoverningStructureRule } from "./governingStructureRule.js";
 
 export
 async function renameEntry (
@@ -31,6 +32,8 @@ async function renameEntry (
             materialized_path: true,
         },
     });
+    const nextGoverningStructureRule = Number(newGoverningStructureRule);
+    const hasNextGoverningStructureRule = Number.isSafeInteger(nextGoverningStructureRule);
     await ctx.db.$transaction([
         ctx.db.entry.update({
             where: {
@@ -38,9 +41,6 @@ async function renameEntry (
             },
             data: {
                 immediate_superior_id: superior.dse.id,
-                governingStructureRule: Number.isSafeInteger(Number(newGoverningStructureRule))
-                    ? Number(newGoverningStructureRule)
-                    : undefined,
                 materialized_path: newMaterializedPath,
             },
             select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
@@ -76,7 +76,13 @@ async function renameEntry (
             },
             select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         })),
+        ...(hasNextGoverningStructureRule
+            ? replaceGoverningStructureRule(ctx, target.dse.id, nextGoverningStructureRule)
+            : []),
     ]);
+    if (hasNextGoverningStructureRule) {
+        target.dse.governingStructureRule = nextGoverningStructureRule;
+    }
     if (target.immediateSuperior?.subordinates?.length && (target.immediateSuperior !== superior)) {
         const entryIndex = target.immediateSuperior.subordinates
             .findIndex((child) => (child.dse.uuid === target.dse.uuid));

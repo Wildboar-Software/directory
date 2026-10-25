@@ -17,6 +17,7 @@ import {
     AttributeUsage_userApplications as userApplications,
 } from "@wildboar/x500/InformationFramework";
 import { ASN1Construction } from "@wildboar/asn1";
+import { cacheGoverningStructureRuleAttribute } from "../governingStructureRule.js";
 
 /**
  * @summary Add attributes to an entry.
@@ -89,6 +90,7 @@ async function addAttributes (
     const noContextValueCreates: AttributeValueCreateManyInput[] = [];
     const contextPromises: Prisma.PrismaPromise<any>[] = [];
     for (const attr of unspecialAttributes) {
+        cacheGoverningStructureRuleAttribute(entry, attr);
         const type_oid = attr.type_.toBytes();
         const operational = ((ctx.attributeTypes.get(attr.type_.toString())?.usage ?? userApplications) !== userApplications);
         for (const value of attr.values) {

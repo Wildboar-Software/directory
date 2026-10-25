@@ -72,14 +72,6 @@ model Entry {
   modifyNameTimestamp DateTime?
   previousName        Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
 
-  // This should be stored, rather than calculated. The reason for this is that
-  // the permitted superior structure rules refers to the governingStructureRule
-  // value of the superior entry. If this is not stored, it means that the
-  // governingStructureRule must be recursively calculated for every ancestor up
-  // until the subschema administrative point, which could be wrong as the rules
-  // change and new rules also permit the entry.
-  governingStructureRule Int?
-
   // The structural object class is not permitted to change for an entry.
   structuralObjectClass String? // OID
 

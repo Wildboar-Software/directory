@@ -45,6 +45,7 @@ import getStructuralObjectClass from "../../x500/getStructuralObjectClass.js";
 import { checkNameForm } from "@wildboar/x500";
 import { Attribute } from "@wildboar/x500/InformationFramework";
 import { governingStructureRule } from "@wildboar/x500/SchemaAdministration";
+import { replaceGoverningStructureRule } from "../../database/governingStructureRule.js";
 
 export
 async function createContextPrefixEntry (
@@ -229,16 +230,21 @@ async function becomeSubordinate (
                 const gsr = supplied_gsr !== undefined
                     ? Number(supplied_gsr)
                     : undefined;
-                await ctx.db.entry.update({
-                    where: {
-                        id: existingEntry.dse.id,
-                    },
-                    data: {
-                        immSupr: true,
-                        rhob: sup2sub.immediateSuperiorInfo ? true : undefined,
-                        governingStructureRule: gsr,
-                    },
-                });
+                await ctx.db.$transaction([
+                    ctx.db.entry.update({
+                        where: {
+                            id: existingEntry.dse.id,
+                        },
+                        data: {
+                            immSupr: true,
+                            rhob: sup2sub.immediateSuperiorInfo ? true : undefined,
+                        },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+                    }),
+                    ...(gsr !== undefined
+                        ? replaceGoverningStructureRule(ctx, existingEntry.dse.id, gsr)
+                        : []),
+                ]);
                 existingEntry.dse.immSupr = {
                     specificKnowledge: vertex.accessPoints ?? [],
                 };
