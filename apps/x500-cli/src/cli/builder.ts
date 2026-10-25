@@ -3,6 +3,7 @@ import {
     Command,
     InvalidArgumentError,
     Option,
+    type OutputConfiguration,
     type ParseOptionsResult,
 } from "commander";
 
@@ -433,6 +434,24 @@ export
 class X500Command extends Command {
     createCommand (name?: string): Command {
         return new X500Command(name);
+    }
+
+    /**
+     * Commander 14 copies output settings onto the command instead of mutating
+     * the shared object. Apply the same settings to subcommands that were
+     * created before this call.
+     */
+    configureOutput(configuration: OutputConfiguration): this;
+    configureOutput(): OutputConfiguration;
+    configureOutput(configuration?: OutputConfiguration): this | OutputConfiguration {
+        if (configuration === undefined) {
+            return super.configureOutput();
+        }
+        super.configureOutput(configuration);
+        for (const command of this.commands) {
+            command.configureOutput(configuration);
+        }
+        return this;
     }
 
     parseOptions (argv: string[]): ParseOptionsResult {
