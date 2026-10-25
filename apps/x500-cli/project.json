@@ -17,8 +17,8 @@
                 "platform": "node",
                 "format": ["esm"],
                 "esbuildOptions": {
-                    "banner": {
-                        "js": "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);"
+                    "alias": {
+                        "tiny-typed-emitter": "apps/x500-cli/shims/tiny-typed-emitter.ts"
                     }
                 },
                 "assets": [
