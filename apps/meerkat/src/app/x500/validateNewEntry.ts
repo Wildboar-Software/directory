@@ -58,6 +58,7 @@ import {
 import getStructuralObjectClass from "./getStructuralObjectClass.js";
 import { checkNameForm } from "@wildboar/x500";
 import getSubschemaSubentry from "../dit/getSubschemaSubentry.js";
+import { readGoverningStructureRule } from "../database/governingStructureRule.js";
 import extensibleObject from "../ldap/extensibleObject.js";
 import attributeTypesPermittedForEveryEntry from "./attributeTypesPermittedForEveryEntry.js";
 import mayAddTopLeveDSE from "../authz/mayAddTopLevelDSE.js";
@@ -213,18 +214,11 @@ async function validateEntry (
      */
     const isExemptFromSubschema: boolean = (isSubentry || isFirstLevel);
 
-    const gsr: number | undefined | null = immediateSuperior
+    const gsr: number | undefined = immediateSuperior
         ? (immediateSuperior.dse.governingStructureRule
             ?? await (async () => {
-                const db_gsr = (await ctx.db.entry.findUnique({
-                    where: {
-                        id: immediateSuperior.dse.id,
-                    },
-                    select: {
-                        governingStructureRule: true,
-                    },
-                }))?.governingStructureRule;
-                if (db_gsr) {
+                const db_gsr = await readGoverningStructureRule(ctx, immediateSuperior.dse.id);
+                if (typeof db_gsr === "number") {
                     immediateSuperior.dse.governingStructureRule = db_gsr;
                 }
                 return db_gsr;

@@ -33,6 +33,7 @@ import {
     countryString,
     boolean_,
 } from "@wildboar/x500/SelectedAttributeTypes";
+import { cacheGoverningStructureRuleValue } from "../governingStructureRule.js";
 
 /*
 I thought about making an analog of the function for addAttributes, but I don't
@@ -406,6 +407,9 @@ async function addValues(
     );
     const unspecialValues = values
         .filter((attr) => !ctx.attributeTypes.get(attr.type.toString())?.driver);
+    for (const value of unspecialValues) {
+        cacheGoverningStructureRuleValue(entry, value);
+    }
     const unspecialValuesWithContexts = unspecialValues.filter((v) => v.contexts?.length);
     const unspecialValuesWithNoContexts = unspecialValues.filter((v) => !(v.contexts?.length));
     return [

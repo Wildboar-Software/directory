@@ -35,6 +35,19 @@ import {
 import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 import type { EntryCreateInput } from "../generated/models/Entry.js";
 import type { DistinguishedValueCreateWithoutEntryInput } from "../generated/models/DistinguishedValue.js";
+import { withGoverningStructureRule } from "./governingStructureRule.js";
+
+/**
+ * Properties of a new entry.
+ *
+ * `governingStructureRule` is not a column. When it is set, and the supplied
+ * attributes do not already contain `governingStructureRule`, the value is
+ * stored as that attribute.
+ */
+export
+type EntryInit = Partial<EntryCreateInput> & {
+    governingStructureRule?: number | null;
+};
 
 /**
  * @summary Create a DSE more efficiently than with `createVertex`, but with a catch
@@ -62,11 +75,13 @@ async function createDse (
     ctx: Context,
     superior: Vertex,
     rdn: RDN,
-    entryInit: Partial<EntryCreateInput>,
+    entryInit: EntryInit,
     attributes: Attribute[],
     modifier: DistinguishedName = [],
     signErrors: boolean = false,
 ): Promise<Vertex> {
+    const prepared = withGoverningStructureRule(attributes, entryInit.governingStructureRule);
+    attributes = prepared.attributes;
     const groupedAttrs: Map<IndexableOID, Attribute[]> = groupByOID(attributes, attr => attr.type_);
     const objectClasses: OBJECT_IDENTIFIER[] = [];
     const objectClassIndex: Set<IndexableOID> = new Set();
@@ -138,7 +153,6 @@ async function createDse (
             admPoint: entryInit.admPoint ?? isAdmPoint,
             dsSubentry: entryInit.dsSubentry,
             structuralObjectClass: entryInit.structuralObjectClass ?? soc.toString(),
-            governingStructureRule: entryInit.governingStructureRule,
             RDN: {
                 createMany: {
                     data: rdn.map((atav, i): DistinguishedValueCreateWithoutEntryInput => ({
@@ -188,7 +202,7 @@ async function createDse (
             uuid: createdEntry.dseUUID,
             entryUUID: createdEntry.entryUUID ?? undefined,
             structuralObjectClass: soc,
-            governingStructureRule: entryInit.governingStructureRule ?? undefined,
+            governingStructureRule: prepared.governingStructureRule,
             glue: entryInit.glue,
             entry: entryInit.entry ?? couldBeAnEntry,
             rhob: entryInit.rhob,
@@ -281,11 +295,12 @@ async function createEntry (
     ctx: Context,
     superior: Vertex,
     rdn: RDN,
-    entryInit: Partial<EntryCreateInput>,
+    entryInit: EntryInit,
     attributes: Attribute[],
     modifier: DistinguishedName = [],
     signErrors: boolean = false,
 ): Promise<Vertex> {
+    attributes = withGoverningStructureRule(attributes, entryInit.governingStructureRule).attributes;
     const groupedAttrs = groupByOID(attributes, attr => attr.type_);
     const objectClasses: OBJECT_IDENTIFIER[] = [];
     const objectClassIndex: Set<IndexableOID> = new Set();
@@ -357,7 +372,6 @@ async function createEntry (
             dsSubentry: entryInit.dsSubentry,
             structuralObjectClass: entryInit.structuralObjectClass
                 ?? getStructuralObjectClass(ctx, objectClasses).toString(),
-            governingStructureRule: entryInit.governingStructureRule,
             RDN: {
                 createMany: {
                     data: rdn.map((atav, i): DistinguishedValueCreateWithoutEntryInput => ({

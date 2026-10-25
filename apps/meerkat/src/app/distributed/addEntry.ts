@@ -72,6 +72,7 @@ import {
     ChainingResults,
 } from "@wildboar/x500/DistributedOperations";
 import { createDse } from "../database/createEntry.js";
+import { replaceGoverningStructureRule } from "../database/governingStructureRule.js";
 import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
@@ -1702,19 +1703,19 @@ async function addEntry (
                 return checkNameForm(rdn, nf.mandatoryAttributes, nf.optionalAttributes);
             });
         if (structuralRuleThatAppliesToImmediateSuperior) {
-            await ctx.db.entry.update({
-                where: {
-                    id: immediateSuperior.dse.id,
-                },
-                data: {
-                    governingStructureRule: Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier),
-                },
-                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+            const newGoverningStructureRule = Number(
+                structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier,
+            );
+            await ctx.db.$transaction(replaceGoverningStructureRule(
+                ctx,
+                immediateSuperior.dse.id,
+                newGoverningStructureRule,
+            )).then(() => {
+                immediateSuperior.dse.governingStructureRule = newGoverningStructureRule;
             }).catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_update_gsr", { e }), {
                 ...logInfo,
                 new_gsr: structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier,
             }));
-            immediateSuperior.dse.governingStructureRule = Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier);
         }
     }
 

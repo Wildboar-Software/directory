@@ -746,7 +746,12 @@ interface DSE {
      */
     objectClass: Set<IndexableOID>;
 
-    /** The `ruleIdentifier` of the governing structure rule. */
+    /**
+     * The `ruleIdentifier` of the governing structure rule.
+     *
+     * Cached from the `governingStructureRule` attribute value, which is stored
+     * with the entry's other attribute values.
+     */
     governingStructureRule?: number;
 
     /** The object identifier of the structural object class of the DSE. */

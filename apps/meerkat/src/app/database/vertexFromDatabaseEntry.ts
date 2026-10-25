@@ -24,11 +24,12 @@ async function vertexFromDatabaseEntry (
     ctx: Context,
     superior: Vertex | undefined,
     dbe: Parameters<typeof dseFromDatabaseEntry>[1],
+    preloadedGoverningStructureRule?: number | null,
 ): Promise<Vertex> {
     return {
         immediateSuperior: superior,
         subordinates: null,
-        dse: await dseFromDatabaseEntry(ctx, dbe),
+        dse: await dseFromDatabaseEntry(ctx, dbe, preloadedGoverningStructureRule),
     };
 }
 

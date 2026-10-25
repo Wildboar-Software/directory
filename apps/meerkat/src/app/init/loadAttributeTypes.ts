@@ -36,7 +36,6 @@ import entryUUIDDriver from "../database/drivers/entryUUID.js";
 import family_informationDriver from "../database/drivers/family_information.js";
 import fullVendorVersionDriver from "../database/drivers/fullVendorVersion.js";
 import friendsDriver from "../database/drivers/friends.js";
-import governingStructureRuleDriver from "../database/drivers/governingStructureRule.js";
 import hasSubordinatesDriver from "../database/drivers/hasSubordinates.js";
 import hierarchyBelowDriver from "../database/drivers/hierarchyBelow.js";
 import hierarchyLevelDriver from "../database/drivers/hierarchyLevel.js";
@@ -5104,7 +5103,6 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.family_information["&id"].toString())!.driver = family_informationDriver;
     ctx.attributeTypes.get(fullVendorVersion["&id"].toString())!.driver = fullVendorVersionDriver;
     ctx.attributeTypes.get(x500at.friends["&id"].toString())!.driver = friendsDriver;
-    ctx.attributeTypes.get(x500at.governingStructureRule["&id"].toString())!.driver = governingStructureRuleDriver;
     ctx.attributeTypes.get(x500at.hasSubordinates["&id"].toString())!.driver = hasSubordinatesDriver;
     ctx.attributeTypes.get(x500at.hierarchyBelow["&id"].toString())!.driver = hierarchyBelowDriver;
     ctx.attributeTypes.get(x500at.hierarchyLevel["&id"].toString())!.driver = hierarchyLevelDriver;

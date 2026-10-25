@@ -7,6 +7,7 @@ import type { Prisma } from "../../generated/client.js";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import type { AttributeType } from "@wildboar/x500/InformationFramework";
 import rdnToJson from "../../x500/rdnToJson.js";
+import { clearCachedGoverningStructureRule } from "../governingStructureRule.js";
 
 /**
  * @summary Delete an attribute from an entry
@@ -42,6 +43,7 @@ async function removeAttribute (
         },
         otherWrites: [],
     };
+    clearCachedGoverningStructureRule(entry, type_);
     const spec = ctx.attributeTypes.get(type_.toString());
     if (spec?.driver) {
         await spec.driver.removeAttribute(ctx, entry, pendingUpdates);

@@ -125,7 +125,6 @@ export const EntryScalarFieldEnum = {
   expiresTimestamp: 'expiresTimestamp',
   modifyNameTimestamp: 'modifyNameTimestamp',
   previousName: 'previousName',
-  governingStructureRule: 'governingStructureRule',
   structuralObjectClass: 'structuralObjectClass',
   subordinate_completeness: 'subordinate_completeness',
   attribute_completeness: 'attribute_completeness',

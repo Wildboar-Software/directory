@@ -1,5 +1,6 @@
 import type { Context, Vertex } from "../types/index.js";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
+import { readGoverningStructureRules } from "../database/governingStructureRule.js";
 import type { EntryWhereInput } from "../generated/models/Entry.js";
 import { MAX_RESULTS } from "../constants.js";
 import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
@@ -34,46 +35,51 @@ async function readSubordinates (
         return []; // These types should never have children. This return is to prevent errors.
     }
     if (!entry.subordinates) {
-        return Promise.all(
-            (await ctx.db.entry.findMany({
-                take: take ?? MAX_RESULTS, // You MUST specify a "take" number when using a cursor.
-                skip: ((cursorId !== undefined) ? 1 : 0) + (skip ?? 0),
-                cursor: (cursorId !== undefined)
-                    ? {
-                        id: cursorId,
-                    }
-                    : undefined,
-                where: {
-                    ...(where ?? {}),
-                    immediate_superior_id: entry.dse.id,
-                    ...getEntryExistsFilter(),
-                },
-                include: {
-                    RDN: {
-                        select: {
-                            type_oid: true,
-                            tag_class: true,
-                            constructed: true,
-                            tag_number: true,
-                            content_octets: true,
-                        },
-                        orderBy: { // So the RDNs appear in the order in which they were entered.
-                            // This prevents an undesirable scenario where some users might show
-                            // up as GN=Jonathan+SN=Wilbur or SN=Wilbur+GN=Jonathan.
-                            order_index: "asc",
-                        },
+        const children = await ctx.db.entry.findMany({
+            take: take ?? MAX_RESULTS, // You MUST specify a "take" number when using a cursor.
+            skip: ((cursorId !== undefined) ? 1 : 0) + (skip ?? 0),
+            cursor: (cursorId !== undefined)
+                ? {
+                    id: cursorId,
+                }
+                : undefined,
+            where: {
+                ...(where ?? {}),
+                immediate_superior_id: entry.dse.id,
+                ...getEntryExistsFilter(),
+            },
+            include: {
+                RDN: {
+                    select: {
+                        type_oid: true,
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
                     },
-                    EntryObjectClass: {
-                        select: {
-                            object_class: true,
-                        },
+                    orderBy: { // So the RDNs appear in the order in which they were entered.
+                        // This prevents an undesirable scenario where some users might show
+                        // up as GN=Jonathan+SN=Wilbur or SN=Wilbur+GN=Jonathan.
+                        order_index: "asc",
                     },
                 },
-                orderBy: {
-                    id: "desc", // Theory: newer IDs are more likely to be queried.
+                EntryObjectClass: {
+                    select: {
+                        object_class: true,
+                    },
                 },
-            })).map((child) => vertexFromDatabaseEntry(ctx, entry, child)),
-        );
+            },
+            orderBy: {
+                id: "desc", // Theory: newer IDs are more likely to be queried.
+            },
+        });
+        const rules = await readGoverningStructureRules(ctx, children.map((child) => child.id));
+        return Promise.all(children.map((child) => vertexFromDatabaseEntry(
+            ctx,
+            entry,
+            child,
+            rules.get(child.id) ?? null,
+        )));
     }
     if (cursorId !== undefined) {
         let caughtUp: boolean = false;
