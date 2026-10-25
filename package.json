@@ -92,7 +92,7 @@
     "react-dom": "^19.2.3",
     "serve-static": "^2.2.1",
     "tiny-typed-emitter": "2.1.0",
-    "yargs": "^17.7.2"
+    "yargs": "^18.2.0"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.9.2",
