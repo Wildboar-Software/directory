@@ -23,7 +23,7 @@ import printCode from "../../../../printers/Code.js";
 import destringifyDN from "../../../../utils/destringifyDN.js";
 import type {
     ModAddMatchingRuleUseArgs,
-} from "../../../../yargs/dap_mod_add_mru.js";
+} from "../../../../cli/dap_mod_add_mru.js";
 import {
     matchingRuleUse,
 } from "@wildboar/x500/SchemaAdministration";

@@ -30,7 +30,7 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import type {
     BecomeServiceSubentryArgs,
-} from "../../../../yargs/dap_mod_become_svcsub.js";
+} from "../../../../cli/dap_mod_become_svcsub.js";
 import {
     SearchRuleDescription,
 } from "@wildboar/x500/InformationFramework";

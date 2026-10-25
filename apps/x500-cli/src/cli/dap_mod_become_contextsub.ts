@@ -1,0 +1,40 @@
+// import type { Context } from "../types.js";
+// import type { CliCommand } from "./builder.js";
+// import bind from "../net/bind.js";
+// import { do_modify_become_contextsub as command } from "../commands/dap/mod/become/contextsub.js";
+
+// export
+// function create (ctx: Context): CliCommand {
+//     return {
+//         command: "contextsub <object>",
+//         describe: "Make a DSE into a collectiveAttributeSubentry",
+//         builder: (y) => {
+//             return y
+//                 .positional("object", {
+//                     type: "string",
+//                     description: "The object to be modified",
+//                 })
+//                 .option("type", {
+//                     alias: "t",
+//                     type: "string",
+//                     description: "The attribute type of the first TypeAndContextAssertion",
+//                 })
+//                 .option("preference", {
+//                     alias: "p",
+//                     type: "boolean",
+//                     description: "Whether the TypeAndContextAssertion should use the 'preference' alternative rather than 'all'"
+//                 })
+//                 .
+//                 .help()
+//                 .strict()
+//                 ;
+//         },
+//         handler: async (argv) => {
+//             const connection = await bind(ctx, argv);
+//             await command(ctx, connection, argv);
+//             await connection.close();
+//         },
+//     };
+// }
+
+// export default create;

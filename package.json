@@ -91,8 +91,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "serve-static": "^2.2.1",
-    "tiny-typed-emitter": "2.1.0",
-    "yargs": "^17.7.2"
+    "tiny-typed-emitter": "2.1.0"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.9.2",
@@ -111,7 +110,6 @@
     "@types/node": "24.10.x",
     "@types/passport-local": "^1.0.34",
     "@types/passport-strategy": "^0.2.35",
-    "@types/yargs": "^17.0.19",
     "@vitest/coverage-v8": "4.0.17",
     "esbuild": "^0.27.2",
     "jsdom": "~22.1.0",

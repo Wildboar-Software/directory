@@ -1,0 +1,89 @@
+import type { Context } from "../types.js";
+import type { CliCommand } from "./builder.js";
+import bind from "../net/bind.js";
+import addEntry from "../commands/dap/add/organizationalUnit.js";
+import { add_common_add_opts, CommonAddOptions } from "./add_common_add_opts.js";
+
+export
+function create (ctx: Context): CliCommand {
+    return {
+        command: "ou <object>",
+        describe: "Add an organizational unit",
+        builder: (args) => {
+            return add_common_add_opts(args
+                .positional("object", {
+                    type: "string",
+                    description: "The object",
+                }))
+                .option("organizationUnitName", {
+                    alias: "ou",
+                    type: "array",
+                    description: "The organizational unit name",
+                })
+                .option("description", {
+                    type: "array",
+                    description: "An arbitrary description",
+                })
+                .option("seeAlso", {
+                    type: "array",
+                    description: "The distinguished name of another related entry",
+                })
+                .option("businessCategory", {
+                    type: "array",
+                    description: "A string identifying the category of the organization",
+                })
+                .option("localityName", {
+                    alias: "l",
+                    type: "array",
+                    description: "The name of the locality"
+                })
+                .option("stateOrProvinceName", {
+                    alias: "st",
+                    type: "array",
+                    description: "The name of the state or province",
+                })
+                .option("streetAddress", {
+                    type: "array",
+                    description: "The street address",
+                })
+                .option("physicalDeliveryOfficeName", {
+                    type: "array",
+                    description: "The name of the physical delivery office",
+                })
+                .option("postalAddress", {
+                    type: "array",
+                    description: "The full, multi-line postal address, where lines are separated by dollar signs '$'.",
+                })
+                .option("postalCode", {
+                    type: "array",
+                    description: "The postal code / ZIP code",
+                })
+                .option("postOfficeBox", {
+                    type: "array",
+                    description: "The post office box identifier",
+                })
+                .option("telephoneNumber", {
+                    type: "array",
+                    description: "The telephone number",
+                })
+                .option("facsimileTelephoneNumber", {
+                    type: "array",
+                    description: "The fax number",
+                })
+                .option("userPassword", {
+                    type: "string",
+                    description: "The password for the organization",
+                })
+                .demandOption("organizationUnitName")
+                .help()
+                ;
+        },
+        handler: async (argv) => {
+            const connection = await bind(ctx, argv);
+            await addEntry(ctx, connection, argv);
+            await connection.close();
+        },
+    };
+}
+
+export default create;

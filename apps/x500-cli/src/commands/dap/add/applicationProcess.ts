@@ -14,8 +14,8 @@ import {
     _encode_RDNSequence,
 } from "@wildboar/x500/InformationFramework";
 import destringifyDN from "../../../utils/destringifyDN.js";
-import type { ArgumentsCamelCase } from "yargs";
-import type { CommonAddOptions } from "../../../yargs/add_common_add_opts.js";
+import type { CommonAddOptions } from "../../../cli/add_common_add_opts.js";
+import type { CliArguments } from "../../../cli/builder.js";
 
 // applicationProcess OBJECT-CLASS ::= {
 //     SUBCLASS OF   {top}
@@ -31,7 +31,7 @@ export
 async function do_addEntry_applicationProcess (
     ctx: Context,
     conn: Connection,
-    argv: ArgumentsCamelCase<CommonAddOptions> & Record<string, any>,
+    argv: CliArguments<CommonAddOptions>,
 ): Promise<void> {
     const attributes: Attribute[] = [
         new Attribute(

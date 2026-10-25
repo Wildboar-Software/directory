@@ -36,7 +36,7 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import type {
     PwdSubArgs,
-} from "../../../../yargs/dap_mod_become_pwdsub.js";
+} from "../../../../cli/dap_mod_become_pwdsub.js";
 import {
     pwdModifyEntryAllowed,
 } from "@wildboar/x500/PasswordPolicy";

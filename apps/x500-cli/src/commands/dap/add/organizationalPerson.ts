@@ -25,8 +25,8 @@ import {
     FacsimileTelephoneNumber,
     _encode_FacsimileTelephoneNumber,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import type { ArgumentsCamelCase } from "yargs";
-import type { CommonAddOptions } from "../../../yargs/add_common_add_opts.js";
+import type { CommonAddOptions } from "../../../cli/add_common_add_opts.js";
+import type { CliArguments } from "../../../cli/builder.js";
 
 // organizationalPerson OBJECT-CLASS ::= {
 //     SUBCLASS OF  {person}
@@ -42,7 +42,7 @@ export
 async function do_addEntry_organizationalPerson (
     ctx: Context,
     conn: Connection,
-    argv: ArgumentsCamelCase<CommonAddOptions> & Record<string, any>,
+    argv: CliArguments<CommonAddOptions>,
 ): Promise<void> {
     const attributes: Attribute[] = [
         new Attribute(

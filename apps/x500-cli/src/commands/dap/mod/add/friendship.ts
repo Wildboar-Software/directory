@@ -23,7 +23,7 @@ import printCode from "../../../../printers/Code.js";
 import destringifyDN from "../../../../utils/destringifyDN.js";
 import type {
     ModAddFriendshipArgs,
-} from "../../../../yargs/dap_mod_add_friendship.js";
+} from "../../../../cli/dap_mod_add_friendship.js";
 import {
     friends,
 } from "@wildboar/x500/SchemaAdministration";

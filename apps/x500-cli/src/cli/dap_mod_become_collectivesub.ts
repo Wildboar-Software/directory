@@ -1,0 +1,35 @@
+import type { Context } from "../types.js";
+import type { CliCommand } from "./builder.js";
+import bind from "../net/bind.js";
+import { do_modify_become_collectivesub as command } from "../commands/dap/mod/become/collectivesub.js";
+
+export
+function create (ctx: Context): CliCommand {
+    return {
+        command: "collectivesub <object>",
+        describe: "Make a DSE into a collectiveAttributeSubentry",
+        builder: (y) => {
+            return y
+                .positional("object", {
+                    type: "string",
+                    description: "The object to be modified",
+                })
+                .option("collectiveValue", {
+                    alias: "c",
+                    type: "array",
+                    string: true,
+                    description: "Object-identifier=value pairs (like LDAP RDNs) with which to create collective values"
+                })
+                .help()
+                .strict()
+                ;
+        },
+        handler: async (argv) => {
+            const connection = await bind(ctx, argv);
+            await command(ctx, connection, argv);
+            await connection.close();
+        },
+    };
+}
+
+export default create;

@@ -16,6 +16,11 @@
                 "tsConfig": "apps/x500-cli/tsconfig.app.json",
                 "platform": "node",
                 "format": ["esm"],
+                "esbuildOptions": {
+                    "banner": {
+                        "js": "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);"
+                    }
+                },
                 "assets": [
                     {
                         "glob": "**/*",

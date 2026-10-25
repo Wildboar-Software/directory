@@ -23,7 +23,7 @@ import printCode from "../../../../printers/Code.js";
 import destringifyDN from "../../../../utils/destringifyDN.js";
 import type {
     ModAddNameFormArgs,
-} from "../../../../yargs/dap_mod_add_nf.js";
+} from "../../../../cli/dap_mod_add_nf.js";
 import {
     nameForms,
 } from "@wildboar/x500/SchemaAdministration";

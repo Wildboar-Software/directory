@@ -23,7 +23,7 @@ import printCode from "../../../../printers/Code.js";
 import destringifyDN from "../../../../utils/destringifyDN.js";
 import type {
     ModAddContextUseRuleArgs,
-} from "../../../../yargs/dap_mod_add_cur.js";
+} from "../../../../cli/dap_mod_add_cur.js";
 import {
     dITContextUse,
 } from "@wildboar/x500/SchemaAdministration";

@@ -11,8 +11,8 @@ import {
     _encodeUTF8String,
 } from "@wildboar/asn1/functional";
 import do_addEntry from "../add.js";
-import type { ArgumentsCamelCase } from "yargs";
-import type { CommonAddOptions } from "../../../yargs/add_common_add_opts.js";
+import type { CommonAddOptions } from "../../../cli/add_common_add_opts.js";
+import type { CliArguments } from "../../../cli/builder.js";
 import type {
     LocalName,
 } from "@wildboar/x500/InformationFramework";
@@ -32,7 +32,7 @@ export
 async function do_addEntry_subentry (
     ctx: Context,
     conn: Connection,
-    argv: ArgumentsCamelCase<CommonAddOptions> & Record<string, any>,
+    argv: CliArguments<CommonAddOptions>,
 ): Promise<void> {
     const chopsPresent: boolean = ((argv.chopBefore?.length ?? 0) + (argv.chopAfter?.length ?? 0)) > 0;
     const refinement = argv.refinement

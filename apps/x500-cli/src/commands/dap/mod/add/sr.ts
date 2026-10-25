@@ -23,7 +23,7 @@ import printCode from "../../../../printers/Code.js";
 import destringifyDN from "../../../../utils/destringifyDN.js";
 import type {
     ModAddStructureRuleArgs,
-} from "../../../../yargs/dap_mod_add_sr.js";
+} from "../../../../cli/dap_mod_add_sr.js";
 import {
     dITStructureRules,
 } from "@wildboar/x500/SchemaAdministration";

@@ -25,7 +25,7 @@ import destringifyDN from "../../../../utils/destringifyDN.js";
 import { FALSE_BIT, ObjectIdentifier, TRUE_BIT, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     ModAddACIItemArgs,
-} from "../../../../yargs/dap_mod_add_aci.js";
+} from "../../../../cli/dap_mod_add_aci.js";
 import {
     ACIItem,
 } from "@wildboar/x500/BasicAccessControl";

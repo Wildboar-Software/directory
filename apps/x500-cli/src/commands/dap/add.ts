@@ -30,8 +30,8 @@ import {
     PresentationAddress,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { uriToNSAP } from "@wildboar/x500"
-import type { ArgumentsCamelCase } from "yargs";
-import type { CommonAddOptions } from "../../yargs/add_common_add_opts.js";
+import type { CommonAddOptions } from "../../cli/add_common_add_opts.js";
+import type { CliArguments } from "../../cli/builder.js";
 import {
     ServiceControls,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -89,7 +89,7 @@ export
 async function do_addEntry (
     ctx: Context,
     conn: Connection,
-    argv: ArgumentsCamelCase<CommonAddOptions> & Record<string, any>,
+    argv: CliArguments<CommonAddOptions>,
     attributes: Attribute[],
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object);
